@@ -1,3 +1,13 @@
+TimeWarp Mediator - License Notice
+
+This project includes code from the MediatR project by Jimmy Bogard, licensed under the Apache License, Version 2.0. 
+
+Copyright Jimmy Bogard
+
+Modifications by TimeWarp Engineering are licensed under The Unlicense (see UNLICENSE).
+
+--------------------------------------------------------------------------------
+
 Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -28,7 +38,7 @@ Apache License
       source, and configuration files.
 
       "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
+      transformation or translation of Source form, including but
       not limited to compiled object code, generated documentation,
       and conversions to other media types.
 
@@ -199,4 +209,3 @@ Apache License
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-
