@@ -15,7 +15,7 @@
     <Features>strict</Features>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\MediatR.snk</AssemblyOriginatorKeyFile>
-    <PackageIcon>gradient_128x128.png</PackageIcon>
+    <PackageIcon>Logo.png</PackageIcon>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -25,7 +25,7 @@
 
   <!-- Common items -->
   <ItemGroup>
-    <None Include="..\..\assets\logo\gradient_128x128.png" Pack="true" PackagePath="" />
+    <None Include="..\..\Assets\logo\Logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
