@@ -4,7 +4,7 @@
     <Nullable>enable</Nullable>
     <Authors>Jimmy Bogard</Authors>
     <Description>Contracts package for requests, responses, and notifications</Description>
-    <Copyright>Copyright Jimmy Bogard</Copyright>
+    <Copyright>Copyright Jimmy Bogard (original MediatR); TimeWarp Engineering (Unlicense)</Copyright>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Features>strict</Features>
     <PackageTags>mediator;request;response;queries;commands;notifications</PackageTags>

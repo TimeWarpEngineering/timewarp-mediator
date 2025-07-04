@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Authors>Jimmy Bogard</Authors>
     <Description>Simple, unambitious mediator implementation in .NET</Description>
-    <Copyright>Copyright Jimmy Bogard</Copyright>
+    <Copyright>Copyright Jimmy Bogard (original MediatR); TimeWarp Engineering (Unlicense)</Copyright>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <Features>strict</Features>
