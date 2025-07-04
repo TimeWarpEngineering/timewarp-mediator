@@ -5,6 +5,7 @@
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
     <MinVerTagPrefix>v</MinVerTagPrefix>
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <LangVersion>10.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +21,7 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\Assets\Logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
