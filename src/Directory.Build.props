@@ -1,0 +1,9 @@
+<Project>
+  <!-- Source code specific settings for stricter compilation -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <Features>strict</Features>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\MediatR.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+</Project>
