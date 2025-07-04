@@ -1,14 +1,7 @@
 TimeWarp Mediator
 =================
 
-## License Notice
-
-This repository contains code under two different licenses:
-
-- **Original MediatR code** (in the `base-apache-2.0` branch): Licensed under Apache License 2.0
-- **TimeWarp modifications and additions** (new commits in `master` branch): Licensed under The Unlicense
-
-The original MediatR project was created by Jimmy Bogard and is licensed under the Apache License 2.0. All TimeWarp Engineering modifications and new features added after the fork are released under The Unlicense, making them freely available for any purpose.
+TODO:  New Readme content.
 
 ---
 
@@ -100,3 +93,7 @@ services.AddMediatR(cfg => {
 ```
 
 With additional methods for open generics and overloads for explicit service types.
+
+## License
+
+TimeWarp Mediator is released under The Unlicense (see `UNLICENSE`). Original MediatR code by Jimmy Bogard is under Apache 2.0 (see `NOTICE`).
