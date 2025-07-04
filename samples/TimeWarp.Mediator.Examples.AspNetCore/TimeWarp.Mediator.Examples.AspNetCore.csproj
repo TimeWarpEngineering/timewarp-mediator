@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -6,12 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MediatR.Examples\MediatR.Examples.csproj" />
+    <ProjectReference Include="..\TimeWarp.Mediator.Examples\TimeWarp.Mediator.Examples.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="LightInject" Version="6.6.4" />
-    <PackageReference Include="LightInject.Microsoft.DependencyInjection" Version="3.7.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
   </ItemGroup>
 

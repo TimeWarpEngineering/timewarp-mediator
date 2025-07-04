@@ -6,10 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MediatR.Examples\MediatR.Examples.csproj" />
+    <ProjectReference Include="..\TimeWarp.Mediator.Examples\TimeWarp.Mediator.Examples.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="DryIoc.Microsoft.DependencyInjection" Version="6.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
   </ItemGroup>
 

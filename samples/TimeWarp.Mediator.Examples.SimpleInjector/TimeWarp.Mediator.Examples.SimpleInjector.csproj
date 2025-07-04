@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MediatR.Examples\MediatR.Examples.csproj" />
+    <ProjectReference Include="..\TimeWarp.Mediator.Examples\TimeWarp.Mediator.Examples.csproj" />
   </ItemGroup>
 
   <ItemGroup>
