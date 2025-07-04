@@ -1,7 +1,22 @@
 <Project>
+  <!-- Set common properties regarding assembly information and nuget packages -->
+  <PropertyGroup>
+    <Authors>Steven T. Cramer</Authors>
+    <Product>TimeWarp Mediator</Product>
+    <Copyright>Copyright Jimmy Bogard (original MediatR); TimeWarp Engineering (Unlicense)</Copyright>
+    <PackageProjectUrl>https://github.com/TimeWarpEngineering/timewarp-mediator</PackageProjectUrl>
+    <PackageTags>mediator;MediatR;request;response;queries;commands;notifications;opensource;free;unlicense</PackageTags>
+    <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-mediator.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  
   <PropertyGroup>
     <LangVersion>10.0</LangVersion>
     <NoWarn>$(NoWarn);CS1701;CS1702;CS1591</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+
 </Project>
