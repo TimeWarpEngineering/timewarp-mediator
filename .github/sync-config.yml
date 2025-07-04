@@ -22,13 +22,20 @@ repos:
 
       # Assets and resources - uncomment to enable asset syncing:
       - source_path: 'TimeWarp.Architecture/Assets/Overview.md'
-      - source_path: 'Assets/Logo.png'
-      # - source_path: 'Assets/Logo.svg'
-      # - source_path: 'Assets/LogoNoMargin.svg'
-      # - source_path: 'Assets/LogoNoMarginNoShadow.svg'
-      # - source_path: 'Assets/LogoNoWordsOrShadow.svg'
-      # - source_path: 'Assets/LogoNoWordsOrShadow_512x512.png'
-      # - source_path: 'Assets/LogoNoWordsOrShadow_64x64.png'
+      - source_path: 'TimeWarp.Templates/Assets/Logo.png'
+        dest_path: 'Assets/Logo.png'
+      # - source_path: 'TimeWarp.Templates/Assets/Logo.svg'
+      #   dest_path: 'Assets/Logo.svg'
+      # - source_path: 'TimeWarp.Templates/Assets/LogoNoMargin.svg'
+      #   dest_path: 'Assets/LogoNoMargin.svg'
+      # - source_path: 'TimeWarp.Templates/Assets/LogoNoMarginNoShadow.svg'
+      #   dest_path: 'Assets/LogoNoMarginNoShadow.svg'
+      # - source_path: 'TimeWarp.Templates/Assets/LogoNoWordsOrShadow.svg'
+      #   dest_path: 'Assets/LogoNoWordsOrShadow.svg'
+      # - source_path: 'TimeWarp.Templates/Assets/LogoNoWordsOrShadow_512x512.png'
+      #   dest_path: 'Assets/LogoNoWordsOrShadow_512x512.png'
+      # - source_path: 'TimeWarp.Templates/Assets/LogoNoWordsOrShadow_64x64.png'
+      #   dest_path: 'Assets/LogoNoWordsOrShadow_64x64.png'
       
       # Kanban project management files - uncomment to enable project tracking:
       - source_path: 'TimeWarp.Architecture/Kanban/Overview.md'
