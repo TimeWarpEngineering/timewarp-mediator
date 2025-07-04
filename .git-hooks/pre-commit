@@ -1,7 +1,0 @@
-#!/bin/sh
-# 🔄 AUTO-SYNCED FILE - DO NOT EDIT DIRECTLY
-# Source: TimeWarpEngineering/timewarp-flow/Tools/GitHooks/pre-commit
-# This file is automatically synced from the master repository
-# To modify: Edit the source file in timewarp-flow and sync will update all repos
-
-exec pwsh -NoProfile -File .git/hooks/PreCommit.ps1
