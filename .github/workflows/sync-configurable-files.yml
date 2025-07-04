@@ -3,7 +3,7 @@ name: Sync Configurable Files from Parent Repository
 on:
   schedule:
     # Schedule will be dynamically loaded from sync-config.yml if available
-    - cron: '0 9 * * 1' # Default value, overridden by config if present
+    - cron: '0 9 * * *' # Default value, overridden by config if present
   workflow_dispatch:
     inputs:
       parent_repo:
