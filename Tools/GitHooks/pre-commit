@@ -4,4 +4,4 @@
 # This file is automatically synced from the master repository
 # To modify: Edit the source file in timewarp-flow and sync will update all repos
 
-exec pwsh -NoProfile -File .git/hooks/PreCommit.ps1
+exec pwsh -NoProfile -File Tools/GitHooks/PreCommit.ps1
