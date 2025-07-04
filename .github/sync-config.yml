@@ -17,22 +17,22 @@ repos:
       remove_prefix: 'TimeWarp.Architecture/'
     files:
       # Common development configuration files
-      - source_path: 'TimeWarp.Architecture/.editorconfig'
-      - source_path: 'TimeWarp.Architecture/.gitattributes'
+      # - source_path: 'TimeWarp.Architecture/.editorconfig'
+      # - source_path: 'TimeWarp.Architecture/.gitattributes'
       
       # Kanban project management files - uncomment to enable project tracking:
-      # - source_path: 'TimeWarp.Architecture/Kanban/Overview.md'
-      #   dest_path: 'Kanban/Overview.md'
-      # - source_path: 'TimeWarp.Architecture/Kanban/Backlog/Overview.md'
-      #   dest_path: 'Kanban/Backlog/Overview.md'
-      # - source_path: 'TimeWarp.Architecture/Kanban/ToDo/Overview.md'
-      #   dest_path: 'Kanban/ToDo/Overview.md'
-      # - source_path: 'TimeWarp.Architecture/Kanban/InProgress/Overview.md'
-      #   dest_path: 'Kanban/InProgress/Overview.md'
-      # - source_path: 'TimeWarp.Architecture/Kanban/Done/Overview.md'
-      #   dest_path: 'Kanban/Done/Overview.md'
-      # - source_path: 'TimeWarp.Architecture/Kanban/Task-Template.md'
-      #   dest_path: 'Kanban/Task-Template.md'
+      - source_path: 'TimeWarp.Architecture/Kanban/Overview.md'
+        dest_path: 'Kanban/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Kanban/Backlog/Overview.md'
+        dest_path: 'Kanban/Backlog/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Kanban/ToDo/Overview.md'
+        dest_path: 'Kanban/ToDo/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Kanban/InProgress/Overview.md'
+        dest_path: 'Kanban/InProgress/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Kanban/Done/Overview.md'
+        dest_path: 'Kanban/Done/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Kanban/Task-Template.md'
+        dest_path: 'Kanban/Task-Template.md'
       
       # Uncomment and customize based on your repository type:
       
