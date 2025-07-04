@@ -51,7 +51,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          ./.github/scripts/sync-configurable-files.ps1
+          ./Tools/FileSync/SyncConfigurableFiles.ps1
 
       - name: Create Pull Request
         if: steps.sync.outputs.changes_made == 'true'
