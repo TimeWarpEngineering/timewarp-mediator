@@ -42,7 +42,6 @@ if (-not (Test-Path $hooksDir)) {
 
 # Check if source hook files exist
 $sourcePreCommit = "Tools/GitHooks/pre-commit"
-$sourcePreCommitPs1 = "Tools/GitHooks/PreCommit.ps1"
 
 if (-not (Test-Path $sourcePreCommit)) {
     Write-Error "❌ Source file not found: $sourcePreCommit"
@@ -50,16 +49,9 @@ if (-not (Test-Path $sourcePreCommit)) {
     exit 1
 }
 
-if (-not (Test-Path $sourcePreCommitPs1)) {
-    Write-Error "❌ Source file not found: $sourcePreCommitPs1"
-    Write-Host "💡 Make sure the repository has been synced with the latest configuration files" -ForegroundColor Yellow
-    exit 1
-}
-
 # Copy hook files to .git/hooks
 try {
     Copy-Item $sourcePreCommit "$hooksDir/pre-commit" -Force
-    Copy-Item $sourcePreCommitPs1 "$hooksDir/PreCommit.ps1" -Force
     
     # Make pre-commit executable on Unix-like systems
     if ($IsLinux -or $IsMacOS) {
