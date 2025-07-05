@@ -17,6 +17,9 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <Deterministic>true</Deterministic>
+    
+    <!-- Unified versioning for all packages -->
+    <Version>13.0.0-beta.1</Version>
   </PropertyGroup>
 
   <!-- Common items -->

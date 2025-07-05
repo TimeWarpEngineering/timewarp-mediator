@@ -105,3 +105,7 @@ Tests are organized by feature area and include extensive coverage of:
 ## Current Project Status
 
 This repository is currently undergoing a rename from MediatR to TimeWarp.Mediator. The Kanban board in `task_000/Kanban/` tracks the progress of this epic rename project across 5 sequential tasks involving project files, namespaces, tests, samples, and build scripts.
+
+## Release Process
+
+See `Documentation/Overview.md` for the release process.

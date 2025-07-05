@@ -1,4 +1,4 @@
-name: Build and Publish
+name: NuGet Publish
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
     paths:
       - 'src/**'
   release:
-    types: [published]
+    types: [published] # Triggered when a release is published via GitHub Releases UI or gh CLI
 
 jobs:
   build-and-publish:
@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required for MinVer to read Git history
+          fetch-depth: 0 # Required for MinVer to read all tags (e.g., contracts/v*, mediator/v*)
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -36,7 +36,17 @@ jobs:
           ./BuildContracts.ps1
         shell: pwsh
 
+      - name: Check for prerelease packages
+        id: check-prerelease
+        run: |
+          if ls ./Artifacts/*.nupkg | grep -q -E '\-alpha|\-beta'; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish to MyGet
+        if: github.event_name != 'pull_request'
         run: |
           dotnet nuget push ./Artifacts/*.nupkg \
             --api-key ${{ secrets.MYGET_TIMEWARP_MEDIATOR_CI_API_KEY }} \
@@ -45,8 +55,8 @@ jobs:
         env:
           DOTNET_NUGET_SIGNATURE_VERIFICATION: false
 
-      - name: Publish to NuGet.org (Release only)
-        if: github.event_name == 'release'
+      - name: Publish to NuGet.org (Stable only)
+        if: github.event_name == 'release' && steps.check-prerelease.outputs.is_prerelease == 'false'
         run: |
           dotnet nuget push ./Artifacts/*.nupkg \
             --api-key ${{ secrets.NUGET_API_KEY }} \

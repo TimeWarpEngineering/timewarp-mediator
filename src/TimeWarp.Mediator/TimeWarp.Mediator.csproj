@@ -3,11 +3,6 @@
   <PropertyGroup>
     <Description>Simple, unambitious mediator implementation in .NET</Description>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
-    <MinVerTagPrefix>mediator/v</MinVerTagPrefix>
-    <Version>12.4.0</Version> <!-- Fallback; overridden by MinVer -->
-    <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).0</AssemblyVersion>
-    <FileVersion>$(MinVerVersion)</FileVersion>
-    <InformationalVersion>$(MinVerVersion)</InformationalVersion>
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
     <LangVersion>10.0</LangVersion>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
@@ -22,7 +17,6 @@
     <ProjectReference Include="..\TimeWarp.Mediator.Contracts\TimeWarp.Mediator.Contracts.csproj" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
-    <PackageReference Include="MinVer" Version="6.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
