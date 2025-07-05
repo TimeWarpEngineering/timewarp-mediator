@@ -29,11 +29,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Build and Test Both Packages
-        run: |
-          # Build main package
-          ./Build.ps1
-          # Build contracts package  
-          ./BuildContracts.ps1
+        run: ./Build.ps1
         shell: pwsh
 
       - name: Check for prerelease packages

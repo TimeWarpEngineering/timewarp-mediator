@@ -14,11 +14,8 @@ TimeWarp Mediator is a fork of the MediatR library that implements the mediator 
 .\Build.ps1
 ```
 
-### Contracts-Only Build
-```powershell
-# Build only the contracts package
-.\BuildContracts.ps1
-```
+### Unified Build Process
+Both packages are now built together via ProjectReference dependency.
 
 ### Manual Development Commands
 ```bash
@@ -32,19 +29,19 @@ dotnet test -c Release --no-build
 # Run tests with detailed output
 dotnet test -c Release --no-build -l trx --verbosity=normal
 
-# Create packages
-dotnet pack .\src\MediatR\MediatR.csproj -c Release -o .\artifacts --no-build
-dotnet pack .\src\MediatR.Contracts\MediatR.Contracts.csproj -c Release -o .\artifacts --no-build
+# Create packages (both built together via ProjectReference)
+dotnet pack .\src\TimeWarp.Mediator\TimeWarp.Mediator.csproj -c Release -o .\Artifacts --no-build
+dotnet pack .\src\TimeWarp.Mediator.Contracts\TimeWarp.Mediator.Contracts.csproj -c Release -o .\Artifacts --no-build
 
 # Run single test class (example)
-dotnet test test/MediatR.Tests/MediatR.Tests.csproj --filter "ClassName~SendTests"
+dotnet test test/TimeWarp.Mediator.Tests/TimeWarp.Mediator.Tests.csproj --filter "ClassName~SendTests"
 ```
 
 ## Architecture Overview
 
 ### Core Projects Structure
-- **MediatR.Contracts**: Base interfaces (`IRequest`, `INotification`, `IStreamRequest`) - contract-only package
-- **MediatR**: Main implementation with `Mediator` class, pipeline behaviors, and DI integrations
+- **TimeWarp.Mediator.Contracts**: Base interfaces (`IRequest`, `INotification`, `IStreamRequest`) - contract-only package
+- **TimeWarp.Mediator**: Main implementation with `Mediator` class, pipeline behaviors, and DI integrations
 
 ### Key Architectural Patterns
 1. **Mediator Pattern**: Central `IMediator` interface combining `ISender` and `IPublisher`
@@ -61,8 +58,8 @@ dotnet test test/MediatR.Tests/MediatR.Tests.csproj --filter "ClassName~SendTest
 
 ## Test Architecture
 
-- **MediatR.Tests**: Comprehensive unit tests covering all scenarios
-- **MediatR.Benchmarks**: Performance testing with BenchmarkDotNet
+- **TimeWarp.Mediator.Tests**: Comprehensive unit tests covering all scenarios
+- **TimeWarp.Mediator.Benchmarks**: Performance testing with BenchmarkDotNet
 - **samples/**: Multiple DI container integration examples (AspNetCore, Autofac, DryIoc, etc.)
 
 Tests are organized by feature area and include extensive coverage of:
@@ -85,7 +82,7 @@ Tests are organized by feature area and include extensive coverage of:
 - Treats warnings as errors
 - C# 10.0 language version
 - Source linking enabled
-- Strong name signing with `MediatR.snk`
+- Strong name signing with `TimeWarp.Mediator.snk`
 
 ## Development Workflow
 

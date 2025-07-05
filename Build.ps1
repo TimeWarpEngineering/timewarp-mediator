@@ -34,3 +34,5 @@ exec { & dotnet test -c Release --no-build -l trx --verbosity=normal }
 
 exec { & dotnet pack .\src\TimeWarp.Mediator\TimeWarp.Mediator.csproj -c Release -o $Artifacts --no-build }
 
+exec { & dotnet pack .\src\TimeWarp.Mediator.Contracts\TimeWarp.Mediator.Contracts.csproj -c Release -o $Artifacts --no-build }
+

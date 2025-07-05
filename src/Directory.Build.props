@@ -1,9 +1,0 @@
-<Project>
-  <!-- Source code specific settings for stricter compilation -->
-  <PropertyGroup>
-    <Nullable>enable</Nullable>
-    <Features>strict</Features>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\..\TimeWarp.Mediator.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-</Project>
