@@ -1,33 +1,26 @@
 name: Release
 
 on:
-  push:
-    tags:
-    - '*.*.*'
+  release:
+    types: [published]
 jobs:
-  build:
-    strategy:
-      matrix: 
-        os: [ubuntu-latest]
-      fail-fast: false
+  release:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Setup dotnet 8.0
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.100'
-    - name: Build and Test
-      run: ./Build.ps1
-      shell: pwsh
-    - name: Push to MyGet
-      env:
-        NUGET_URL: https://www.myget.org/F/timewarp-enterprises/api/v3/index.json
-        NUGET_API_KEY: ${{ secrets.MYGET_TIMEWARP_MEDIATOR_CI_API_KEY }}
-      run: ./.github/scripts/Push.ps1
+    - name: Build and Test Both Packages
+      run: |
+        # Build main package
+        ./Build.ps1
+        # Build contracts package  
+        ./BuildContracts.ps1
       shell: pwsh
     - name: Push to NuGet
       env:
@@ -35,8 +28,8 @@ jobs:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: ./.github/scripts/Push.ps1
       shell: pwsh
-    - name: Artifacts
+    - name: Upload Release Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Artifacts
+        name: Release-Artifacts
         path: Artifacts/**/*

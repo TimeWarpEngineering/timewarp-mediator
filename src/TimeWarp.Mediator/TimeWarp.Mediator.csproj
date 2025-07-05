@@ -3,7 +3,11 @@
   <PropertyGroup>
     <Description>Simple, unambitious mediator implementation in .NET</Description>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
-    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerTagPrefix>mediator/v</MinVerTagPrefix>
+    <Version>12.4.0</Version> <!-- Fallback; overridden by MinVer -->
+    <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).0</AssemblyVersion>
+    <FileVersion>$(MinVerVersion)</FileVersion>
+    <InformationalVersion>$(MinVerVersion)</InformationalVersion>
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
     <LangVersion>10.0</LangVersion>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>

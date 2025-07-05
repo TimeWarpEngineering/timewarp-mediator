@@ -1,0 +1,62 @@
+name: Build and Publish
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+  release:
+    types: [published]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for MinVer to read Git history
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build and Test Both Packages
+        run: |
+          # Build main package
+          ./Build.ps1
+          # Build contracts package  
+          ./BuildContracts.ps1
+        shell: pwsh
+
+      - name: Publish to MyGet
+        run: |
+          dotnet nuget push ./Artifacts/*.nupkg \
+            --api-key ${{ secrets.MYGET_TIMEWARP_MEDIATOR_CI_API_KEY }} \
+            --source https://www.myget.org/F/timewarp-enterprises/api/v3/index.json \
+            --skip-duplicate
+        env:
+          DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+
+      - name: Publish to NuGet.org (Release only)
+        if: github.event_name == 'release'
+        run: |
+          dotnet nuget push ./Artifacts/*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+        env:
+          DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Packages-${{ github.run_number }}
+          path: Artifacts/**/*
