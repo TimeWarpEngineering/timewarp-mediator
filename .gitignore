@@ -21,7 +21,7 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
-artifacts/
+Artifacts/
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -43,7 +43,7 @@ dlldata.c
 
 # DNX
 project.lock.json
-artifacts/
+Artifacts/
 
 *_i.c
 *_p.c

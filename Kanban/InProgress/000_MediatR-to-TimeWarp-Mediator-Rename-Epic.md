@@ -2,7 +2,7 @@
 
 ## Description
 Complete rebrand and rename of the MediatR library to TimeWarp.Mediator, including all namespaces, project names, file names, and assembly configurations. This epic encompasses a comprehensive refactoring that will touch nearly every file in the codebase while maintaining all functionality and establishing TimeWarp.Mediator as the open source alternative to commercial MediatR.
-
+/res
 ## Dependencies
 None - This is the master epic for the complete rename process
 

@@ -16,10 +16,6 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    - name: Setup dotnet 6.0
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '6.0.x'
     - name: Setup dotnet 8.0
       uses: actions/setup-dotnet@v4
       with:
@@ -29,18 +25,18 @@ jobs:
       shell: pwsh
     - name: Push to MyGet
       env:
-        NUGET_URL: https://www.myget.org/F/mediatr-ci/api/v3/index.json
-        NUGET_API_KEY: ${{ secrets.MYGET_MEDIATR_CI_API_KEY }}
-      run: ./Push.ps1
+        NUGET_URL: https://www.myget.org/F/timewarp-enterprises/api/v3/index.json
+        NUGET_API_KEY: ${{ secrets.MYGET_TIMEWARP_MEDIATOR_CI_API_KEY }}
+      run: ./.github/scripts/Push.ps1
       shell: pwsh
     - name: Push to NuGet
       env:
         NUGET_URL: https://api.nuget.org/v3/index.json
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-      run: ./Push.ps1
+      run: ./.github/scripts/Push.ps1
       shell: pwsh
     - name: Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: artifacts
-        path: artifacts/**/*
+        name: Artifacts
+        path: Artifacts/**/*
