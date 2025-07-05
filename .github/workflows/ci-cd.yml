@@ -6,11 +6,13 @@ on:
       - master
     paths:
       - 'src/**'
+      - '.github/workflows/**'
   pull_request:
     branches:
       - master
     paths:
       - 'src/**'
+      - '.github/workflows/**'
   release:
     types: [published] # Triggered when a release is published via GitHub Releases UI or gh CLI
 
