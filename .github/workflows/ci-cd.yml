@@ -32,15 +32,6 @@ jobs:
         run: ./Build.ps1
         shell: pwsh
 
-      - name: Check for prerelease packages
-        id: check-prerelease
-        run: |
-          if ls ./Artifacts/*.nupkg | grep -q -E '\-alpha|\-beta'; then
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_prerelease=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Check if version already published (PR only)
         if: github.event_name == 'pull_request'
         run: |
