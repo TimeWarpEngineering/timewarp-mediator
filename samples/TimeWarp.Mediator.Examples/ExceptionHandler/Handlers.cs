@@ -2,7 +2,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Examples.ExceptionHandler;
+namespace TimeWarp.Mediator.Examples.ExceptionHandler;
 
 public class PingResourceHandler : IRequestHandler<PingResource, Pong>
 {

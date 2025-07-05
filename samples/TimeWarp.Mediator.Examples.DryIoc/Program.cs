@@ -5,7 +5,7 @@ using DryIoc;
 using DryIoc.Microsoft.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Examples.DryIoc;
+namespace TimeWarp.Mediator.Examples.DryIoc;
 
 class Program
 {

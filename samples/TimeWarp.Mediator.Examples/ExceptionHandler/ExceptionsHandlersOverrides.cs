@@ -1,10 +1,10 @@
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Examples.ExceptionHandler.Overrides;
+namespace TimeWarp.Mediator.Examples.ExceptionHandler.Overrides;
 
 public class CommonExceptionHandler : IRequestExceptionHandler<PingResourceTimeout, Pong, Exception>
 {

@@ -1,11 +1,11 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 using Microsoft.Extensions.DependencyInjection;
 
 
-namespace MediatR.Examples.AspNetCore;
+namespace TimeWarp.Mediator.Examples.AspNetCore;
 
 public static class Program
 {

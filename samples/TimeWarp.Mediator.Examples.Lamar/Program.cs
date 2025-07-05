@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Lamar;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 
-namespace MediatR.Examples.Lamar;
+namespace TimeWarp.Mediator.Examples.Lamar;
 
 class Program
 {

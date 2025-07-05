@@ -1,4 +1,4 @@
-﻿namespace MediatR.Examples.Windsor;
+﻿namespace TimeWarp.Mediator.Examples.Windsor;
 
 using System;
 using System.Linq;

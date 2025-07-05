@@ -1,9 +1,9 @@
 using System.IO;
 using System.Threading.Tasks;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Examples.SimpleInjector;
+namespace TimeWarp.Mediator.Examples.SimpleInjector;
 
 using System;
 using System.Collections.Generic;

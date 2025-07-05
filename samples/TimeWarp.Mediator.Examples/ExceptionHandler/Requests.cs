@@ -1,4 +1,4 @@
-namespace MediatR.Examples.ExceptionHandler;
+namespace TimeWarp.Mediator.Examples.ExceptionHandler;
 
 public class PingResource : Ping { }
 

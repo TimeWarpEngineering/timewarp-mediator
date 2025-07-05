@@ -1,10 +1,10 @@
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Examples.Autofac;
+namespace TimeWarp.Mediator.Examples.Autofac;
 
 using global::Autofac;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 using System;
 using System.IO;
 using System.Reflection;

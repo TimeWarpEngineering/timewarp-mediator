@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Examples.Stashbox;
+namespace TimeWarp.Mediator.Examples.Stashbox;
 
 class Program
 {

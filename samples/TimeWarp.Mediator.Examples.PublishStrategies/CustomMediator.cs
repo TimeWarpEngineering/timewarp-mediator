@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Examples.PublishStrategies;
+namespace TimeWarp.Mediator.Examples.PublishStrategies;
 
 public class CustomMediator : Mediator
 {

@@ -1,10 +1,10 @@
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Examples.ExceptionHandler;
+namespace TimeWarp.Mediator.Examples.ExceptionHandler;
 
 public class LogExceptionAction : IRequestExceptionAction<Ping, Exception>
 {

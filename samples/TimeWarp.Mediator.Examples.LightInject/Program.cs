@@ -4,10 +4,10 @@ using System.Reflection;
 using System.Threading.Tasks;
 using LightInject;
 using LightInject.Microsoft.DependencyInjection;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Examples.LightInject;
+namespace TimeWarp.Mediator.Examples.LightInject;
 
 class Program
 {

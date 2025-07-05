@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Examples.PublishStrategies;
+namespace TimeWarp.Mediator.Examples.PublishStrategies;
 
 class Program
 {

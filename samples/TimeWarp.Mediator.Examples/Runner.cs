@@ -2,9 +2,9 @@ using System;
 using System.Linq;
 using System.Text;
 
-namespace MediatR.Examples;
+namespace TimeWarp.Mediator.Examples;
 
-using MediatR.Examples.ExceptionHandler;
+using TimeWarp.Mediator.Examples.ExceptionHandler;
 using System.IO;
 using System.Threading.Tasks;
 

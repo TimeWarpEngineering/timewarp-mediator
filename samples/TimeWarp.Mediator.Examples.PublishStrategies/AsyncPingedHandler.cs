@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Examples.PublishStrategies;
+namespace TimeWarp.Mediator.Examples.PublishStrategies;
 
 public class AsyncPingedHandler : INotificationHandler<Pinged>
 {

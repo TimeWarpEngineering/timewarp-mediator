@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Examples;
+namespace TimeWarp.Mediator.Examples;
 
 public class SingHandler : IStreamRequestHandler<Sing, Song>
 {

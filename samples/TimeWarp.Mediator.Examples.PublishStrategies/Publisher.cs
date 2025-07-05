@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Examples.PublishStrategies;
+namespace TimeWarp.Mediator.Examples.PublishStrategies;
 
 public class Publisher
 {

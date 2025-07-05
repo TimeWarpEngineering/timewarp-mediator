@@ -1,4 +1,4 @@
-namespace MediatR.Examples.PublishStrategies;
+namespace TimeWarp.Mediator.Examples.PublishStrategies;
 
 /// <summary>
 /// Strategy to use when publishing notifications

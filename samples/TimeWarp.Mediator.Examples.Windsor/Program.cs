@@ -1,9 +1,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Castle.MicroKernel.Resolvers.SpecializedResolvers;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 
-namespace MediatR.Examples.Windsor;
+namespace TimeWarp.Mediator.Examples.Windsor;
 
 using System;
 using System.Collections.Generic;

@@ -1,6 +1,6 @@
 using System;
 
-namespace MediatR.Examples.ExceptionHandler;
+namespace TimeWarp.Mediator.Examples.ExceptionHandler;
 
 public class ConnectionException : Exception { }
 

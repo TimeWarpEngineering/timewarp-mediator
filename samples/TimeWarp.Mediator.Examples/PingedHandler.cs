@@ -1,6 +1,6 @@
 using System.Threading;
 
-namespace MediatR.Examples;
+namespace TimeWarp.Mediator.Examples;
 
 using System.IO;
 using System.Threading.Tasks;

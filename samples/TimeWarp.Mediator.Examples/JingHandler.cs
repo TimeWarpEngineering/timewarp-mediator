@@ -2,7 +2,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Examples;
+namespace TimeWarp.Mediator.Examples;
 
 public class JingHandler : IRequestHandler<Jing>
 {
