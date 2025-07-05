@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace MediatR;
+namespace TimeWarp.Mediator;
 
 public interface INotificationPublisher
 {

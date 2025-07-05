@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Wrappers;
+namespace TimeWarp.Mediator.Wrappers;
 
 public abstract class RequestHandlerBase
 {

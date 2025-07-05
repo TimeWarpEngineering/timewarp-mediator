@@ -1,4 +1,4 @@
-﻿namespace MediatR;
+﻿namespace TimeWarp.Mediator;
 
 using System;
 using System.Threading.Tasks;

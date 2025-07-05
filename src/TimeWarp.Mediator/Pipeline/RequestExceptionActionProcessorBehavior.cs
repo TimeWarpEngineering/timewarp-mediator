@@ -1,4 +1,4 @@
-namespace MediatR.Pipeline;
+namespace TimeWarp.Mediator.Pipeline;
 
 using Internal;
 using Microsoft.Extensions.DependencyInjection;

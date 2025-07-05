@@ -1,5 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
-using MediatR;
+using TimeWarp.Mediator;
 
 [assembly: TypeForwardedTo(typeof(IBaseRequest))]
 [assembly: TypeForwardedTo(typeof(IRequest<>))]

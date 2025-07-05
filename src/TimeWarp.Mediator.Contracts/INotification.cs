@@ -1,4 +1,4 @@
-namespace MediatR;
+namespace TimeWarp.Mediator;
 
 /// <summary>
 /// Marker interface to represent a notification

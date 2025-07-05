@@ -1,4 +1,4 @@
-namespace MediatR.Wrappers;
+namespace TimeWarp.Mediator.Wrappers;
 
 using System;
 using System.Collections.Generic;

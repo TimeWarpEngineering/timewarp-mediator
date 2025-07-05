@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Wrappers;
+namespace TimeWarp.Mediator.Wrappers;
 
 using System.Collections.Generic;
 using System.Linq;

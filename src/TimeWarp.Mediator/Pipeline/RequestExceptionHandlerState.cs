@@ -1,4 +1,4 @@
-namespace MediatR.Pipeline;
+namespace TimeWarp.Mediator.Pipeline;
 
 /// <summary>
 /// Represents the result of handling an exception thrown by a request handler

@@ -1,4 +1,4 @@
-namespace MediatR.Internal;
+namespace TimeWarp.Mediator.Internal;
 
 using System;
 using System.Collections.Generic;

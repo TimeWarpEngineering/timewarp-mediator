@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
-using MediatR;
-using MediatR.Pipeline;
-using MediatR.Registration;
+using TimeWarp.Mediator;
+using TimeWarp.Mediator.Pipeline;
+using TimeWarp.Mediator.Registration;
 
 namespace Microsoft.Extensions.DependencyInjection;
 

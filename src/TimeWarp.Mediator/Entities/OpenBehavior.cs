@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 
-namespace MediatR.Entities;
+namespace TimeWarp.Mediator.Entities;
 /// <summary>
 /// Represents a registration entity for pipeline behaviors with a specified service lifetime.
 /// </summary>

@@ -1,6 +1,6 @@
-using MediatR.NotificationPublishers;
+using TimeWarp.Mediator.NotificationPublishers;
 
-namespace MediatR;
+namespace TimeWarp.Mediator;
 
 using System;
 using System.Collections.Concurrent;

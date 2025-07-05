@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using MediatR;
-using MediatR.Entities;
-using MediatR.NotificationPublishers;
-using MediatR.Pipeline;
-using MediatR.Registration;
+using TimeWarp.Mediator;
+using TimeWarp.Mediator.Entities;
+using TimeWarp.Mediator.NotificationPublishers;
+using TimeWarp.Mediator.Pipeline;
+using TimeWarp.Mediator.Registration;
 
 namespace Microsoft.Extensions.DependencyInjection;
 

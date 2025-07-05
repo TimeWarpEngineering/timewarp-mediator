@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MediatR.Internal;
+namespace TimeWarp.Mediator.Internal;
 
 internal class ObjectDetails : IComparer<ObjectDetails>
 {

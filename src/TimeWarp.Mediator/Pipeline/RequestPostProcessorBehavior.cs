@@ -1,4 +1,4 @@
-namespace MediatR.Pipeline;
+namespace TimeWarp.Mediator.Pipeline;
 
 using System.Collections.Generic;
 using System.Threading;

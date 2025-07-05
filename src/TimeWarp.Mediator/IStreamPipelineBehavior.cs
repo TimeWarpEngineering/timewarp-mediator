@@ -1,5 +1,5 @@
 ﻿
-namespace MediatR;
+namespace TimeWarp.Mediator;
 
 using System.Collections.Generic;
 using System.Threading;
