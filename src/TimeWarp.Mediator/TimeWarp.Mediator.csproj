@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Simple, unambitious mediator implementation in .NET</Description>
+    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <LangVersion>10.0</LangVersion>
+    <RootNamespace>TimeWarp.Mediator</RootNamespace>
+    <AssemblyName>TimeWarp.Mediator</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IsExternalInit" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <ProjectReference Include="..\TimeWarp.Mediator.Contracts\TimeWarp.Mediator.Contracts.csproj" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\Assets\Logo.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

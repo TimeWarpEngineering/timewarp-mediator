@@ -22,9 +22,9 @@ function Exec
     }
 }
 
-$artifacts = ".\artifacts"
+$Artifacts = ".\Artifacts"
 
-if(Test-Path $artifacts) { Remove-Item $artifacts -Force -Recurse }
+if(Test-Path $Artifacts) { Remove-Item $Artifacts -Force -Recurse }
 
 exec { & dotnet clean -c Release }
 
@@ -32,5 +32,5 @@ exec { & dotnet build -c Release }
 
 exec { & dotnet test -c Release --no-build -l trx --verbosity=normal }
 
-exec { & dotnet pack .\src\MediatR\MediatR.csproj -c Release -o $artifacts --no-build }
+exec { & dotnet pack .\src\TimeWarp.Mediator\TimeWarp.Mediator.csproj -c Release -o $Artifacts --no-build }
 
