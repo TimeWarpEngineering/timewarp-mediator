@@ -23,7 +23,7 @@ function Exec
 }
 
 $artifacts = ".\artifacts"
-$contracts = ".\src\MediatR.Contracts\MediatR.Contracts.csproj"
+$contracts = ".\src\TimeWarp.Mediator.Contracts\TimeWarp.Mediator.Contracts.csproj"
 
 if(Test-Path $artifacts) { Remove-Item $artifacts -Force -Recurse }
 
