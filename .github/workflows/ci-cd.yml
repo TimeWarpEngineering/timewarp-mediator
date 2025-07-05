@@ -34,8 +34,8 @@ jobs:
         run: ./Build.ps1
         shell: pwsh
 
-      - name: Check if version already published (PR only)
-        if: github.event_name == 'pull_request'
+      - name: Check if version already published (Releases only)
+        if: github.event_name == 'release'
         run: |
           VERSION=$(grep '<Version>' Directory.Build.props | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
           echo "Checking if TimeWarp.Mediator $VERSION is already published..."
@@ -43,7 +43,8 @@ jobs:
           # Check TimeWarp.Mediator using package search
           if dotnet package search TimeWarp.Mediator --exact-match --prerelease | grep -q "$VERSION"; then
             echo "⚠️ WARNING: TimeWarp.Mediator $VERSION is already published to NuGet.org"
-            echo "ℹ️ Consider incrementing the version in Directory.Build.props if you want to publish new changes"
+            echo "❌ This version cannot be republished. Please increment the version in Directory.Build.props"
+            exit 1
           else
             echo "✅ TimeWarp.Mediator $VERSION is not yet published"
           fi
@@ -51,7 +52,8 @@ jobs:
           # Check TimeWarp.Mediator.Contracts using package search
           if dotnet package search TimeWarp.Mediator.Contracts --exact-match --prerelease | grep -q "$VERSION"; then
             echo "⚠️ WARNING: TimeWarp.Mediator.Contracts $VERSION is already published to NuGet.org"
-            echo "ℹ️ Consider incrementing the version in Directory.Build.props if you want to publish new changes"
+            echo "❌ This version cannot be republished. Please increment the version in Directory.Build.props"
+            exit 1
           else
             echo "✅ TimeWarp.Mediator.Contracts $VERSION is not yet published"
           fi
