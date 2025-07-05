@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 
-namespace MediatR.Extensions.Microsoft.DependencyInjection.Tests;
+namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
 public class DerivingRequestsTests
 {

@@ -1,6 +1,6 @@
 using BenchmarkDotNet.Running;
 
-namespace MediatR.Benchmarks
+namespace TimeWarp.Mediator.Benchmarks
 {
     public class Program
     {

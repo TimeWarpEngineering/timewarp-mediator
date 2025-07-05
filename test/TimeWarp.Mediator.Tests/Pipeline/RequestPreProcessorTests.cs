@@ -1,9 +1,9 @@
 using System.Threading;
 
-namespace MediatR.Tests.Pipeline;
+namespace TimeWarp.Mediator.Tests.Pipeline;
 
 using System.Threading.Tasks;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 using Shouldly;
 using Lamar;
 using Xunit;

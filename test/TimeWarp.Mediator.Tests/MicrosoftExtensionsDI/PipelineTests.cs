@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using Xunit.Abstractions;
 
-namespace MediatR.Extensions.Microsoft.DependencyInjection.Tests;
+namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
 using System;
 using System.Collections.Generic;
@@ -948,9 +948,9 @@ public class PipelineTests
         });
         var logger = new Logger();
         services.AddSingleton(logger);
-        services.AddSingleton(new MediatR.Tests.PipelineTests.Logger());
-        services.AddSingleton(new MediatR.Tests.StreamPipelineTests.Logger());
-        services.AddSingleton(new MediatR.Tests.SendTests.Dependency());
+        services.AddSingleton(new TimeWarp.Mediator.Tests.PipelineTests.Logger());
+        services.AddSingleton(new TimeWarp.Mediator.Tests.StreamPipelineTests.Logger());
+        services.AddSingleton(new TimeWarp.Mediator.Tests.SendTests.Dependency());
         services.AddSingleton<System.IO.TextWriter>(new System.IO.StringWriter());
         services.AddTransient(typeof(IBlogger<>), typeof(Blogger<>));
         var provider = services.BuildServiceProvider(new ServiceProviderOptions
@@ -1039,9 +1039,9 @@ public class PipelineTests
         });
         var logger = new Logger();
         services.AddSingleton(logger);
-        services.AddSingleton(new MediatR.Tests.PipelineTests.Logger());
-        services.AddSingleton(new MediatR.Tests.StreamPipelineTests.Logger());
-        services.AddSingleton(new MediatR.Tests.SendTests.Dependency());
+        services.AddSingleton(new TimeWarp.Mediator.Tests.PipelineTests.Logger());
+        services.AddSingleton(new TimeWarp.Mediator.Tests.StreamPipelineTests.Logger());
+        services.AddSingleton(new TimeWarp.Mediator.Tests.SendTests.Dependency());
         services.AddSingleton<System.IO.TextWriter>(new System.IO.StringWriter());
         services.AddTransient(typeof(IBlogger<>), typeof(Blogger<>));
         var provider = services.BuildServiceProvider(new ServiceProviderOptions

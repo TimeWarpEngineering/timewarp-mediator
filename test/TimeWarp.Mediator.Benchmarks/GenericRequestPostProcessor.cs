@@ -1,9 +1,9 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 
-namespace MediatR.Benchmarks
+namespace TimeWarp.Mediator.Benchmarks
 {
     public class GenericRequestPostProcessor<TRequest, TResponse> : IRequestPostProcessor<TRequest, TResponse>
         where TRequest : notnull

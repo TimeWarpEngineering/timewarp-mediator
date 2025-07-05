@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace MediatR.Tests;
+namespace TimeWarp.Mediator.Tests;
 
 public class UnitTests
 {

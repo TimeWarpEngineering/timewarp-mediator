@@ -1,4 +1,4 @@
-﻿using MediatR.Extensions.Microsoft.DependencyInjection.Tests;
+﻿using TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using System;
@@ -11,9 +11,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using System.Reflection.PortableExecutable;
-using MediatR.Tests.MicrosoftExtensionsDI;
+using TimeWarp.Mediator.Tests.MicrosoftExtensionsDI;
 
-namespace MediatR.Tests
+namespace TimeWarp.Mediator.Tests
 {
     public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
     {

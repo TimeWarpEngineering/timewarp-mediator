@@ -1,13 +1,13 @@
 ﻿using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using MediatR.NotificationPublishers;
+using TimeWarp.Mediator.NotificationPublishers;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MediatR.Tests;
+namespace TimeWarp.Mediator.Tests;
 
 public class NotificationPublisherTests
 {

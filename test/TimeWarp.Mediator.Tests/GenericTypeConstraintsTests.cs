@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Threading;
 
-namespace MediatR.Tests;
+namespace TimeWarp.Mediator.Tests;
 
 using System;
 using System.Linq;

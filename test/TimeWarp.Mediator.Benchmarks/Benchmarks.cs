@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Benchmarks
+namespace TimeWarp.Mediator.Benchmarks
 {
     [DotTraceDiagnoser]
     public class Benchmarks

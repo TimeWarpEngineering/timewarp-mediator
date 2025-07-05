@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Extensions.Microsoft.DependencyInjection.Tests;
+namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
 using System;
 using System.Collections.Generic;

@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Benchmarks
+namespace TimeWarp.Mediator.Benchmarks
 {
     public class Pinged : INotification
     {

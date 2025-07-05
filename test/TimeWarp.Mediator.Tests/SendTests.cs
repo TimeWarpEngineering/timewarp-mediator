@@ -6,9 +6,9 @@ using Shouldly;
 using Xunit;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 
-namespace MediatR.Tests;
+namespace TimeWarp.Mediator.Tests;
 public class SendTests
 {
     private readonly IServiceProvider _serviceProvider;

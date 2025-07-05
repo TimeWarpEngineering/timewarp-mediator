@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Shouldly;
 using Xunit;
 
-namespace MediatR.Tests;
+namespace TimeWarp.Mediator.Tests;
 
 public class NotificationHandlerTests
 {

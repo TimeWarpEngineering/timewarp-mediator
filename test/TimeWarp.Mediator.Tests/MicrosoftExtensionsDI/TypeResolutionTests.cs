@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Extensions.Microsoft.DependencyInjection.Tests;
+namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
 using System;
 using System.Linq;
 using System.Reflection;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 using Shouldly;
 using Xunit;
 

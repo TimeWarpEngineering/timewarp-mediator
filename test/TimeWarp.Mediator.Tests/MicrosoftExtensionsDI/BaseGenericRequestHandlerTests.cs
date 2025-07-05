@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediatR.Tests.MicrosoftExtensionsDI
+namespace TimeWarp.Mediator.Tests.MicrosoftExtensionsDI
 {
     public abstract class BaseGenericRequestHandlerTests
     { 

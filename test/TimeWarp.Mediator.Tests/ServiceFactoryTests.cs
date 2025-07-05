@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace MediatR.Tests;
+namespace TimeWarp.Mediator.Tests;
 
 public class ServiceFactoryTests
 {

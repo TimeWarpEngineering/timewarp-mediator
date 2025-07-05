@@ -1,6 +1,6 @@
 using System.Threading;
 
-namespace MediatR.Tests;
+namespace TimeWarp.Mediator.Tests;
 
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

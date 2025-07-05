@@ -1,10 +1,10 @@
 ﻿using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MediatR.Extensions.Microsoft.DependencyInjection.Tests;
+namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
 using Included;
-using MediatR.Pipeline;
+using TimeWarp.Mediator.Pipeline;
 using Shouldly;
 using System;
 using Xunit;
@@ -22,7 +22,7 @@ public class TypeEvaluatorTests
         _services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblyContaining(typeof(Ping));
-            cfg.TypeEvaluator = t => t.Namespace == "MediatR.Extensions.Microsoft.DependencyInjection.Tests.Included";
+            cfg.TypeEvaluator = t => t.Namespace == "TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests.Included";
         });
         _provider = _services.BuildServiceProvider();
     }

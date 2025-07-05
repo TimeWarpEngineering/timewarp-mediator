@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MediatR.NotificationPublishers;
+using TimeWarp.Mediator.NotificationPublishers;
 using Shouldly;
 using Xunit;
 
-namespace MediatR.Extensions.Microsoft.DependencyInjection.Tests;
+namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
 public class NotificationPublisherTests
 {

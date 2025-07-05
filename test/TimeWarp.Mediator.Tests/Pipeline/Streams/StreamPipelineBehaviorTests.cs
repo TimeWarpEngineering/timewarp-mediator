@@ -1,6 +1,6 @@
 using System.Threading;
 
-namespace MediatR.Tests.Pipeline.Streams;
+namespace TimeWarp.Mediator.Tests.Pipeline.Streams;
 
 using Shouldly;
 using Lamar;
