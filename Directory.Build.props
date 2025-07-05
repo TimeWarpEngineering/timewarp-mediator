@@ -19,7 +19,7 @@
     <Deterministic>true</Deterministic>
     
     <!-- Unified versioning for all packages -->
-    <Version>13.0.0-beta.1</Version>
+    <Version>13.0.0-beta.2</Version>
   </PropertyGroup>
 
   <!-- Common items -->
