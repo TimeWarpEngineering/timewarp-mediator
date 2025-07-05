@@ -6,11 +6,13 @@ on:
       - master
     paths:
       - 'src/**'
+      - '.github/workflows/**'
   pull_request:
     branches:
       - master
     paths:
       - 'src/**'
+      - '.github/workflows/**'
   release:
     types: [published] # Triggered when a release is published via GitHub Releases UI or gh CLI
 
@@ -32,23 +34,14 @@ jobs:
         run: ./Build.ps1
         shell: pwsh
 
-      - name: Check for prerelease packages
-        id: check-prerelease
-        run: |
-          if ls ./Artifacts/*.nupkg | grep -q -E '\-alpha|\-beta'; then
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_prerelease=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Check if version already published (PR only)
-        if: github.event_name == 'pull_request'
+      - name: Check if version already published (Releases only)
+        if: github.event_name == 'release'
         run: |
           VERSION=$(grep '<Version>' Directory.Build.props | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
           echo "Checking if TimeWarp.Mediator $VERSION is already published..."
           
-          # Check TimeWarp.Mediator
-          if dotnet nuget list TimeWarp.Mediator --source https://api.nuget.org/v3/index.json --prerelease | grep -q "TimeWarp.Mediator $VERSION"; then
+          # Check TimeWarp.Mediator using package search
+          if dotnet package search TimeWarp.Mediator --exact-match --prerelease | grep -q "$VERSION"; then
             echo "⚠️ WARNING: TimeWarp.Mediator $VERSION is already published to NuGet.org"
             echo "❌ This version cannot be republished. Please increment the version in Directory.Build.props"
             exit 1
@@ -56,8 +49,8 @@ jobs:
             echo "✅ TimeWarp.Mediator $VERSION is not yet published"
           fi
           
-          # Check TimeWarp.Mediator.Contracts  
-          if dotnet nuget list TimeWarp.Mediator.Contracts --source https://api.nuget.org/v3/index.json --prerelease | grep -q "TimeWarp.Mediator.Contracts $VERSION"; then
+          # Check TimeWarp.Mediator.Contracts using package search
+          if dotnet package search TimeWarp.Mediator.Contracts --exact-match --prerelease | grep -q "$VERSION"; then
             echo "⚠️ WARNING: TimeWarp.Mediator.Contracts $VERSION is already published to NuGet.org"
             echo "❌ This version cannot be republished. Please increment the version in Directory.Build.props"
             exit 1
