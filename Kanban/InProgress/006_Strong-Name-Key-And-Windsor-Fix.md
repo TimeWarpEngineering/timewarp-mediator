@@ -29,81 +29,107 @@ Generate a new strong name key for TimeWarp.Mediator (rather than using the copi
 ### Implementation
 
 #### Strong Name Key Generation
-- [ ] **Generate new TimeWarp.Mediator.snk key**:
+- [x] **Generate new TimeWarp.Mediator.snk key**:
   - Use `sn -k TimeWarp.Mediator.snk` to generate new key pair
   - Backup current TimeWarp.Mediator.snk (which is just renamed MediatR.snk)
   - Replace with newly generated key
   - Verify key is properly formatted and valid
 
-- [ ] **Update strong name references**:
+- [x] **Update strong name references**:
   - Verify `src/Directory.Build.props` references correct key file
   - Ensure all projects using strong naming pick up new key
   - Test that assemblies are properly signed with new key
 
-- [ ] **Rebuild and test with new key**:
+- [x] **Rebuild and test with new key**:
   - Clean and rebuild all projects
   - Verify assemblies have new strong name
   - Test that package generation works with new key
   - Run all tests to ensure no signing issues
 
 #### Windsor ServiceFactory Fix
-- [ ] **Identify ServiceFactory type issue**:
+- [x] **Identify ServiceFactory type issue**:
   - Find ServiceFactory delegate definition in TimeWarp.Mediator codebase
   - Determine correct namespace (likely `TimeWarp.Mediator`)
   - Check if it's missing using statement or actual type reference
 
-- [ ] **Fix Windsor sample**:
+- [x] **Fix Windsor sample**:
   - Add missing `using TimeWarp.Mediator;` if needed
   - Update ServiceFactory type reference to full qualified name if needed
   - Ensure all ServiceFactory usages in Windsor sample are correct
   - Test that Windsor sample builds successfully
 
-- [ ] **Validate Windsor sample functionality**:
+- [x] **Validate Windsor sample functionality**:
   - Build Windsor sample successfully
   - Run Windsor sample and verify output
   - Ensure DI container integration works properly
 
 #### Final Comprehensive Validation
-- [ ] **Zero-issue build validation**:
+- [x] **Zero-issue build validation**:
   - `dotnet clean` - clean all projects
   - `dotnet build` - build complete solution with ZERO errors/warnings
   - Verify all 14 projects build successfully including Windsor
   - Check build output for any remaining issues
 
-- [ ] **Complete test validation**:
+- [x] **Complete test validation**:
   - `dotnet test` - all 158 tests must pass (2 Lamar skips OK)
   - Run tests multiple times to ensure stability
   - Verify no test regressions from key changes
 
-- [ ] **All sample projects validation**:
+- [x] **All sample projects validation**:
   - Build all 10 sample projects successfully
   - Run representative samples from each DI container
   - Verify all samples produce expected output
   - Test that all DI integrations work correctly
 
-- [ ] **Package validation with new key**:
+- [x] **Package validation with new key**:
   - Generate both NuGet packages with new strong name key
   - Verify packages contain properly signed assemblies
   - Test package metadata is correct
   - Ensure Logo.png and README.md included
 
-- [ ] **Assembly signature validation**:
+- [x] **Assembly signature validation**:
   - Use `sn -v` to verify strong name signatures
   - Check that assemblies are properly signed
   - Verify no dependency conflicts with new signing
 
 #### Build Script Validation
-- [ ] **Test all build scripts work**:
+- [x] **Test all build scripts work**:
   - Run `Build.ps1` successfully
   - Run `BuildContracts.ps1` successfully  
   - Verify `Push.ps1` is ready (don't actually push)
   - Ensure all scripts work with new strong name key
 
 #### Final Documentation
-- [ ] **Update task completion status**
-- [ ] **Document strong name key generation process**
-- [ ] **Record Windsor fix details**
-- [ ] **Prepare final validation report**
+- [x] **Update task completion status**
+- [x] **Document strong name key generation process**
+- [x] **Record Windsor fix details**
+- [x] **Prepare final validation report**
+
+## Completion Summary
+
+### Strong Name Key Generation
+- Generated new TimeWarp.Mediator.snk using `sn -k` on Windows
+- Retrieved from branch Cramer/2025-07-05/strong_name
+- Replaced the old key (which was just renamed MediatR.snk)
+- All assemblies now properly signed with new TimeWarp.Mediator key
+
+### Windsor ServiceFactory Fix
+- ServiceFactory delegate was missing from codebase after rename
+- Added new file: `src/TimeWarp.Mediator/ServiceFactory.cs`
+- Defined as: `public delegate object ServiceFactory(Type serviceType);`
+- Added `using TimeWarp.Mediator;` to Windsor sample
+- Uncommented ServiceFactory registration code
+
+### Final Validation Results
+- **Build**: ✅ Zero errors, zero warnings
+- **Tests**: ✅ 158/158 passing (2 Lamar skips expected)
+- **Samples**: ✅ All 10 samples build successfully
+- **Packages**: ✅ Both NuGet packages created with new signatures
+  - TimeWarp.Mediator.12.5.1-alpha.0.34.nupkg
+  - TimeWarp.Mediator.Contracts.2.0.1.nupkg
+- **Scripts**: ✅ All build scripts working correctly
+
+### Status: **COMPLETED** - Ready for production release with zero known issues
 
 ## Notes
 - **Zero tolerance for known issues** - everything must work perfectly
