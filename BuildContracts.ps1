@@ -22,13 +22,13 @@ function Exec
     }
 }
 
-$artifacts = ".\artifacts"
-$contracts = ".\src\MediatR.Contracts\MediatR.Contracts.csproj"
+$Artifacts = ".\Artifacts"
+$contracts = ".\src\TimeWarp.Mediator.Contracts\TimeWarp.Mediator.Contracts.csproj"
 
-if(Test-Path $artifacts) { Remove-Item $artifacts -Force -Recurse }
+if(Test-Path $Artifacts) { Remove-Item $Artifacts -Force -Recurse }
 
 exec { & dotnet clean $contracts -c Release }
 
 exec { & dotnet build $contracts -c Release -p:ContinuousIntegrationBuild=true }
 
-exec { & dotnet pack $contracts -c Release -o $artifacts --no-build }
+exec { & dotnet pack $contracts -c Release -o $Artifacts --no-build }

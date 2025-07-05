@@ -1,15 +1,15 @@
-name: Release
+name: CI
 
 on:
   push:
-    tags:
-    - '*.*.*'
+    branches:
+    - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
 jobs:
   build:
-    strategy:
-      matrix: 
-        os: [ubuntu-latest]
-      fail-fast: false
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -27,12 +27,6 @@ jobs:
       env:
         NUGET_URL: https://www.myget.org/F/timewarp-enterprises/api/v3/index.json
         NUGET_API_KEY: ${{ secrets.MYGET_TIMEWARP_MEDIATOR_CI_API_KEY }}
-      run: ./.github/scripts/Push.ps1
-      shell: pwsh
-    - name: Push to NuGet
-      env:
-        NUGET_URL: https://api.nuget.org/v3/index.json
-        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: ./.github/scripts/Push.ps1
       shell: pwsh
     - name: Artifacts
