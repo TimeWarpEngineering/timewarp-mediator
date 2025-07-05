@@ -32,6 +32,11 @@
     <LangVersion>10.0</LangVersion>
     <NoWarn>$(NoWarn);CS1701;CS1702;CS1591</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Source code specific settings for stricter compilation -->
+    <Nullable>enable</Nullable>
+    <Features>strict</Features>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)TimeWarp.Mediator.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
 </Project>
