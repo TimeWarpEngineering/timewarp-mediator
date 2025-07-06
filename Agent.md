@@ -98,6 +98,7 @@ Tests are organized by feature area and include extensive coverage of:
 - **IMPORTANT**: Only use merge commits for PRs - NO squash, NO rebase
 - Preserve commit history when merging pull requests
 - Work is done in git worktrees (separate working directories for branches)
+- Use `git mv` instead of regular `mv` when moving files to preserve git history
 
 ## Current Project Status
 
