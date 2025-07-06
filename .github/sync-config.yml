@@ -20,6 +20,19 @@ repos:
       # - source_path: 'TimeWarp.Architecture/.editorconfig'
       # - source_path: 'TimeWarp.Architecture/.gitattributes'
 
+      # Common documentation files
+      - source_path: 'TimeWarp.Architecture/Documentation/Overview.md'
+      # - source_path: 'TimeWarp.Architecture/Documentation/Claude-Commands/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Documentation/Developer/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Documentation/Developer/Conceptual/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Documentation/Developer/Conceptual/ArchitecturalDecisionRecords/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Documentation/Developer/Conceptual/ArchitecturalDecisionRecords/Approved/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Documentation/Developer/HowToGuides/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Documentation/Architecture/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Documentation/Examples/Overview.md'
+      # - source_path: 'TimeWarp.Architecture/Documentation/Examples/Claude-Commands/Overview.md'
+      - source_path: 'TimeWarp.Architecture/Documentation/Reference/Overview.md'
+
       # Assets and resources - uncomment to enable asset syncing:
       - source_path: 'TimeWarp.Architecture/Assets/Overview.md'
       - source_path: 'TimeWarp.Templates/Assets/Logo.png'
