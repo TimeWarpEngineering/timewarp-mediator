@@ -1,3 +1,4 @@
+# Modified by Steven T. Cramer
 *.doc  diff=astextplain
 *.DOC	diff=astextplain
 *.docx	diff=astextplain
