@@ -1,3 +1,4 @@
+// Modified by Steven T. Cramer
 using System.Linq;
 using System.Threading.Tasks;
 using Castle.MicroKernel.Resolvers.SpecializedResolvers;

@@ -1,3 +1,4 @@
+// Modified by Steven T. Cramer
 using TimeWarp.Mediator.Pipeline;
 using System;
 using System.IO;

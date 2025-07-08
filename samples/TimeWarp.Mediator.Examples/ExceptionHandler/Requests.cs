@@ -1,3 +1,4 @@
+// Modified by Steven T. Cramer
 namespace TimeWarp.Mediator.Examples.ExceptionHandler;
 
 public class PingResource : Ping { }

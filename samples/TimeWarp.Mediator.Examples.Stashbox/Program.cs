@@ -1,4 +1,5 @@
-﻿using Stashbox;
+// Modified by Steven T. Cramer
+using Stashbox;
 using Stashbox.Configuration;
 using System;
 using System.IO;
