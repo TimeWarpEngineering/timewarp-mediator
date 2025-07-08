@@ -1,3 +1,4 @@
+// Modified by Steven T. Cramer
 using BenchmarkDotNet.Running;
 
 namespace TimeWarp.Mediator.Benchmarks

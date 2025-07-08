@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+// Modified by Steven T. Cramer
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;

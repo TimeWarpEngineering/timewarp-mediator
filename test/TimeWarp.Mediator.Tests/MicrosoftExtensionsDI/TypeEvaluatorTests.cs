@@ -1,4 +1,5 @@
-﻿using System.Linq;
+// Modified by Steven T. Cramer
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
