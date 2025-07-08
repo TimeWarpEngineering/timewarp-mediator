@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+// Modified by Steven T. Cramer
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using Xunit.Abstractions;

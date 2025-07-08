@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+// Modified by Steven T. Cramer
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;

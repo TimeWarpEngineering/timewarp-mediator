@@ -1,3 +1,4 @@
+// Modified by Steven T. Cramer
 namespace TimeWarp.Mediator.Pipeline;
 
 /// <summary>

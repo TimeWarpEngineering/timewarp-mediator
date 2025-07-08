@@ -1,4 +1,5 @@
-﻿using System.Threading;
+// Modified by Steven T. Cramer
+using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+// Modified by Steven T. Cramer
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator.NotificationPublishers;

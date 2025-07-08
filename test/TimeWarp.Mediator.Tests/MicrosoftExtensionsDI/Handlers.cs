@@ -1,4 +1,5 @@
-﻿using System;
+// Modified by Steven T. Cramer
+using System;
 using System.Runtime.CompilerServices;
 
 namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests

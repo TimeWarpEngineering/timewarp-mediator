@@ -1,3 +1,4 @@
+// Modified by Steven T. Cramer
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;

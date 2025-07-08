@@ -1,3 +1,4 @@
+// Modified by Steven T. Cramer
 using TimeWarp.Mediator.NotificationPublishers;
 
 namespace TimeWarp.Mediator;

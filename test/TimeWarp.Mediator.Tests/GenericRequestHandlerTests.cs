@@ -1,4 +1,5 @@
-﻿using TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
+// Modified by Steven T. Cramer
+using TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using System;

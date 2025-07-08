@@ -1,4 +1,5 @@
 <Project>
+  <!-- Modified by Steven T. Cramer -->
   <!-- Set common properties regarding assembly information and nuget packages -->
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>
