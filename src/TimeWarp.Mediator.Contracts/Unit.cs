@@ -1,4 +1,5 @@
-﻿namespace TimeWarp.Mediator;
+// Modified by Steven T. Cramer
+namespace TimeWarp.Mediator;
 
 using System;
 using System.Threading.Tasks;

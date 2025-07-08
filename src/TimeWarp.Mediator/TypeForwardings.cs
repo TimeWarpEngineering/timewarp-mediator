@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+// Modified by Steven T. Cramer
+using System.Runtime.CompilerServices;
 using TimeWarp.Mediator;
 
 [assembly: TypeForwardedTo(typeof(IBaseRequest))]

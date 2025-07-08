@@ -1,4 +1,5 @@
-﻿
+// Modified by Steven T. Cramer
+
 namespace TimeWarp.Mediator;
 
 using System.Collections.Generic;

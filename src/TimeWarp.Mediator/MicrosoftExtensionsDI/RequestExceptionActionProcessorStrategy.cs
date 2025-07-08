@@ -1,4 +1,5 @@
-﻿namespace Microsoft.Extensions.DependencyInjection;
+// Modified by Steven T. Cramer
+namespace Microsoft.Extensions.DependencyInjection;
 
 public enum RequestExceptionActionProcessorStrategy
 {

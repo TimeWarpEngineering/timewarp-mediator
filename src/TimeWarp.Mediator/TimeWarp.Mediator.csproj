@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<!-- Modified by Steven T. Cramer -->
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <Description>Simple, unambitious mediator implementation in .NET</Description>

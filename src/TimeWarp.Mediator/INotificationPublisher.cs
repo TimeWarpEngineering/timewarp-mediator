@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+// Modified by Steven T. Cramer
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading;
 
