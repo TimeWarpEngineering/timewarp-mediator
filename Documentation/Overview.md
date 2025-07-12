@@ -1,100 +1,47 @@
-# NuGet Versioning and Release Process Overview
+# TimeWarp.Architecture
+TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project.
 
-This document outlines the simplified versioning and release process for the TimeWarp.Mediator and TimeWarp.Mediator.Contracts NuGet packages, using MinVer and GitHub Actions.
+## Documentation
+* Please see [TimeWarp.Architecture documentation](https://todo/your-docs) for
 
-## Repository Structure
+## Getting Started
+TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
+### Installation process
 
-- **Projects**: Located in `src/TimeWarp.Mediator` and `src/TimeWarp.Mediator.Contracts`.
-- **Primary Branch**: `master`.
-- **Workflow**: `.github/workflows/ci-cd.yml`.
-- **Version Configuration**: `Directory.Build.props`.
+### Software dependencies
 
-## Versioning Strategy
+* [dotnet core sdk] (https://dotnet.microsoft.com/download/dotnet-core/3.0)
 
-### Unified Versioning
-Both packages share the same version number, configured in a single location.
+### Latest releases
 
-### Source of Truth
-`<Version>` in `Directory.Build.props` (e.g., `12.4.0`) applies to both packages.
+### API references
 
-### MinVer Configuration
-- **Tag Prefix**: `v` (e.g., `v12.5.0`)
-- **Stable releases**: Tag `v12.5.0` → Version `12.5.0` for both packages
-- **CI prereleases**: Appends `-alpha.<commit-height>` (e.g., `12.5.0-alpha.5`) based on commits since the last tag
 
-### Version Properties
-- **`<AssemblyVersion>`**: Set to `Major.Minor.Patch.0` (e.g., `12.5.0.0`)
-- **`<FileVersion>` and `<InformationalVersion>`**: Use full MinVer version (e.g., `12.5.0-alpha.5`)
+## Run
 
-### Package References
-TimeWarp.Mediator uses `ProjectReference` to TimeWarp.Mediator.Contracts, ensuring they're always built and versioned together.
+To run your site, execute the `run.ps1` script from powershell.
 
-## CI Builds
+## Contribute
 
-### Triggers
-- Push to `master`
-- Pull requests to `master`
-- GitHub releases
+TODO: Explain how other users and developers can contribute to make your code better.
+Contributions to TimeWarp.Architecture are welcome.  Here is how you can contribute to TimeWarp.Architecture:
 
-### Process
-1. Builds both packages with MinVer-generated versions
-2. For pushes: Publishes prerelease packages to MyGet
-3. For PRs: Build and test only (no publishing)
-4. For releases: Publishes stable packages to both MyGet and NuGet.org
+* [Submit bugs](https://todo/your-repo/issues)
+* [Submit pull requests](https://todo/your-repo/pulls) for bug fixes and features and discuss existing proposals
 
-### Prerelease Detection
-Automatically detects alpha/beta versions and prevents accidental stable releases.
+Please refer to [Contribution Guidelines](CONTRIBUTING.md) for more details.
 
-## Stable Releases
+## License
 
-### Simple Process
-1. Update `<Version>` in `Directory.Build.props` (e.g., from `12.4.0` to `12.5.0`)
-2. Commit and push changes
-3. Create GitHub release with tag `v12.5.0`
-4. CI/CD automatically builds and publishes both packages
+Code licensed under the [TODO: License](Link).
 
-### GitHub Release Creation
-```bash
-# Using GitHub CLI
-gh release create v12.5.0 --generate-notes
+## Roadmap
 
-# Or use GitHub UI to create release
-```
+For details on our planned features and future direction please refer to our [Roadmap](TODO:Link to your roadmap).
 
-## Usage
+## Contact Us
 
-### Setup
-1. Configure `MYGET_TIMEWARP_MEDIATOR_CI_API_KEY` and `NUGET_API_KEY` in GitHub Secrets
-2. MyGet feed is already configured in workflow
+If you have questions about TimeWarp.Architecture, or you would like to reach out to us about an issue you're having or for development advice as you work on a TimeWarp.Architecture issue, you can reach us as follows:
 
-### CI Prereleases
-1. Push to `master`
-2. Both packages (e.g., `12.5.0-alpha.5`) published to MyGet automatically
-
-### Stable Release
-1. Edit `Directory.Build.props`:
-   ```xml
-   <Version>12.5.0</Version> <!-- Update this line -->
-   ```
-2. Commit and push:
-   ```bash
-   git add Directory.Build.props
-   git commit -m "Bump version to 12.5.0"
-   git push origin master
-   ```
-3. Create release:
-   ```bash
-   gh release create v12.5.0 --title "Release v12.5.0" --generate-notes
-   ```
-
-### Verification
-1. Check GitHub Actions logs
-2. Confirm packages on MyGet (prereleases) or MyGet/NuGet.org (stable)
-
-## Key Benefits
-
-- **Simplicity**: Single version number for both packages in one file
-- **Consistency**: Packages always version together
-- **No Scripts**: Simple enough to do manually
-- **Reliable**: ProjectReference ensures packages build together
-- **Transparent**: Anyone can understand and execute the release process
+* Open an issue and prefix the issue title with [Question]. See Question tag for already-opened questions.
+* Discuss TimeWarp.Architecture with the team and the community on Discord/Telegram/Slack/Teams <TODO: add link here>.
