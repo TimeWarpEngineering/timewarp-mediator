@@ -21,30 +21,30 @@ Complete the final renaming from MediatR to Mediator for the remaining API surfa
 ## Implementation Checklist
 
 ### Core Library Changes
-- [ ] Rename `MediatRServiceConfiguration` class to `MediatorServiceConfiguration`
+- [x] Rename `MediatRServiceConfiguration` class to `MediatorServiceConfiguration`
   - File: `src/TimeWarp.Mediator/MicrosoftExtensionsDI/MediatrServiceConfiguration.cs`
   - Update all references throughout codebase
-- [ ] Rename `AddMediatR` extension methods to `AddMediator`
+- [x] Rename `AddMediatR` extension methods to `AddMediator`
   - File: `src/TimeWarp.Mediator/MicrosoftExtensionsDI/ServiceCollectionExtensions.cs`
   - Update all overloads
-- [ ] Update `AddMediatRClassesWithTimeout` to `AddMediatorClassesWithTimeout`
+- [x] Update `AddMediatRClassesWithTimeout` to `AddMediatorClassesWithTimeout`
   - File: `src/TimeWarp.Mediator/Registration/ServiceRegistrar.cs`
 
 ### Test Updates
-- [ ] Update all test files that reference `AddMediatR`
+- [x] Update all test files that reference `AddMediatR`
   - `test/TimeWarp.Mediator.Tests/GenericRequestHandlerTests.cs`
   - `test/TimeWarp.Mediator.Tests/MicrosoftExtensionsDI/*.cs`
   - `test/TimeWarp.Mediator.Benchmarks/Benchmarks.cs`
-- [ ] Update all test files that reference `MediatRServiceConfiguration`
+- [x] Update all test files that reference `MediatRServiceConfiguration`
 
 ### Sample Project Updates
-- [ ] Update all sample projects to use `AddMediator`
+- [x] Update all sample projects to use `AddMediator`
   - `samples/TimeWarp.Mediator.Examples.AspNetCore/Program.cs`
   - `samples/TimeWarp.Mediator.Examples.Autofac/Program.cs`
   - All other sample projects
 
 ### Documentation Updates
-- [ ] Update README.md
+- [x] Update README.md
   - Change installation instructions to show `AddMediator`
   - Update code examples
   - Remove old MediatR package references
@@ -52,16 +52,16 @@ Complete the final renaming from MediatR to Mediator for the remaining API surfa
   - Preserve attribution section for original MediatR
 
 ### Additional Updates
-- [ ] Update XML documentation comments
-- [ ] Search for any remaining "MediatR" in comments (except attribution)
-- [ ] Update Directory.Build.props PackageTags if needed
+- [x] Update XML documentation comments
+- [x] Search for any remaining "MediatR" in comments (except attribution)
+- [x] Update Directory.Build.props PackageTags if needed
 
 ## Validation Criteria
-- [ ] Solution builds without errors or warnings
-- [ ] All 158 tests pass
-- [ ] All sample projects build and run correctly
-- [ ] No unintended "MediatR" references remain (grep for MediatR)
-- [ ] API documentation reflects new naming
+- [x] Solution builds without errors or warnings
+- [x] All 158 tests pass
+- [x] All sample projects build and run correctly
+- [x] No unintended "MediatR" references remain (grep for MediatR)
+- [x] API documentation reflects new naming
 
 ## Notes
 This completes the comprehensive rebranding effort. After this task, the only remaining "MediatR" references should be:

@@ -64,7 +64,7 @@ public class StreamPipelineTests
         services.AddSingleton(output);
         services.AddTransient<IStreamPipelineBehavior<StreamPing, Pong>, OuterBehavior>();
         services.AddTransient<IStreamPipelineBehavior<StreamPing, Pong>, InnerBehavior>();
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly));
+        services.AddMediator(cfg => cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly));
         var provider = services.BuildServiceProvider();
 
         var mediator = provider.GetRequiredService<IMediator>();
@@ -92,7 +92,7 @@ public class StreamPipelineTests
         var output = new Logger();
         IServiceCollection services = new ServiceCollection();
         services.AddSingleton(output);
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly);
             cfg.AddStreamBehavior<IStreamPipelineBehavior<StreamPing, Pong>, OuterBehavior>();

@@ -20,7 +20,7 @@ public class SendTests
     {
         _dependency = new Dependency();
         var services = new ServiceCollection();
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(typeof(Ping).Assembly);
             cfg.AddOpenBehavior(typeof(TimeoutBehavior<,>), ServiceLifetime.Transient);
@@ -305,7 +305,7 @@ public class SendTests
         var dependency = new Dependency();
         var services = new ServiceCollection();
         services.AddSingleton(dependency);
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly());
             cfg.RegisterGenericHandlers = true;
@@ -328,7 +328,7 @@ public class SendTests
         var dependency = new Dependency();
         var services = new ServiceCollection();
         services.AddSingleton(dependency);
-        services.AddMediatR(cfg => 
+        services.AddMediator(cfg => 
         {
             cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly());
             cfg.RegisterGenericHandlers = true;

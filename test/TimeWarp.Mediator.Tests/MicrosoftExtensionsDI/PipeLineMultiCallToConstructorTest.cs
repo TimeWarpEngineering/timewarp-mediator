@@ -82,7 +82,7 @@ public class PipelineMultiCallToConstructorTests
 
         services.AddSingleton(output);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ConstructorTestBehavior<,>));
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly);
             cfg.AddOpenBehavior(typeof(ConstructorTestBehavior<,>));

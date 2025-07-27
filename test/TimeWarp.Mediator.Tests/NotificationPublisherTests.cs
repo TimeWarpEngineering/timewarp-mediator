@@ -35,7 +35,7 @@ public class NotificationPublisherTests
     public async Task Should_handle_sequentially_by_default()
     {
         var services = new ServiceCollection();
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssemblyContaining<Notification>();
         });
@@ -53,7 +53,7 @@ public class NotificationPublisherTests
         var sequentialElapsed = timer.ElapsedMilliseconds;
 
         services = new ServiceCollection();
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssemblyContaining<Notification>();
             cfg.NotificationPublisherType = typeof(TaskWhenAllPublisher);

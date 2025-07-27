@@ -20,7 +20,7 @@ namespace TimeWarp.Mediator.Benchmarks
 
             services.AddSingleton(TextWriter.Null);
 
-            services.AddMediatR(cfg =>
+            services.AddMediator(cfg =>
             {
                 cfg.RegisterServicesFromAssemblyContaining(typeof(Ping));
                 cfg.AddOpenBehavior(typeof(GenericPipelineBehavior<,>));

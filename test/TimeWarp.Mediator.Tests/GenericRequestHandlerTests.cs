@@ -30,7 +30,7 @@ namespace TimeWarp.Mediator.Tests
 
             var dynamicAssembly = GenerateCombinationsTestAssembly(numberOfClasses, numberOfInterfaces, numberOfTypeParameters);
 
-            services.AddMediatR(cfg =>
+            services.AddMediator(cfg =>
             {
                 cfg.RegisterServicesFromAssemblies(dynamicAssembly);
                 cfg.RegisterGenericHandlers = true;
@@ -105,7 +105,7 @@ namespace TimeWarp.Mediator.Tests
 
             Should.Throw<ArgumentException>(() =>
             {
-                services.AddMediatR(cfg =>
+                services.AddMediator(cfg =>
                 {
                     cfg.RegisterServicesFromAssembly(assembly);
                     cfg.RegisterGenericHandlers = true;
@@ -124,7 +124,7 @@ namespace TimeWarp.Mediator.Tests
 
             Should.Throw<ArgumentException>(() =>
             {
-                services.AddMediatR(cfg =>
+                services.AddMediator(cfg =>
                 {
                     cfg.RegisterServicesFromAssembly(assembly);
                     cfg.RegisterGenericHandlers = true;
@@ -143,7 +143,7 @@ namespace TimeWarp.Mediator.Tests
 
             Should.Throw<ArgumentException>(() =>
             {
-                services.AddMediatR(cfg =>
+                services.AddMediator(cfg =>
                 {
                     cfg.RegisterServicesFromAssembly(assembly);
                     cfg.RegisterGenericHandlers = true;
@@ -162,7 +162,7 @@ namespace TimeWarp.Mediator.Tests
 
             Should.Throw<TimeoutException>(() =>
             {
-                services.AddMediatR(cfg =>
+                services.AddMediator(cfg =>
                 {
                     cfg.MaxGenericTypeParameters = 0;
                     cfg.MaxGenericTypeRegistrations = 0;
@@ -182,7 +182,7 @@ namespace TimeWarp.Mediator.Tests
             services.AddSingleton(new Logger());
 
             var assembly = GenerateOptOutAssembly();
-            services.AddMediatR(cfg =>
+            services.AddMediator(cfg =>
             {
                 //opt out flag set
                 cfg.RegisterGenericHandlers = false;

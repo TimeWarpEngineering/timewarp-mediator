@@ -16,7 +16,7 @@ public class AssemblyResolutionTests
     {
         IServiceCollection services = new ServiceCollection();
         services.AddSingleton(new Logger());
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly);
             cfg.RegisterGenericHandlers = true;
@@ -59,7 +59,7 @@ public class AssemblyResolutionTests
     {
         var services = new ServiceCollection();
 
-        Action registration = () => services.AddMediatR(_ => { });
+        Action registration = () => services.AddMediator(_ => { });
 
         registration.ShouldThrow<ArgumentException>();
     }

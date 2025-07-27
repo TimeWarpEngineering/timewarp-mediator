@@ -37,7 +37,7 @@ namespace TimeWarp.Mediator.Benchmarks
 
         public DotTraceDiagnoser()
         {
-            _saveLocation = $"C:\\temp\\MediatR\\{DateTimeOffset.Now.UtcDateTime:yyyy-MM-dd-HH_mm_ss}.bench.dtp";
+            _saveLocation = $"C:\\temp\\TimeWarp.Mediator\\{DateTimeOffset.Now.UtcDateTime:yyyy-MM-dd-HH_mm_ss}.bench.dtp";
         }
 
         /// <inheritdoc />

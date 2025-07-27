@@ -10,7 +10,7 @@ using TimeWarp.Mediator.Registration;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
-public class MediatRServiceConfiguration
+public class MediatorServiceConfiguration
 {
     /// <summary>
     /// Optional filter for types to register. Default value is a function returning true.
@@ -81,7 +81,7 @@ public class MediatRServiceConfiguration
     public int MaxTypesClosing { get; set; } = 100;
 
     /// <summary>
-    /// Configure the Maximum Amount of Generic RequestHandler Types MediatR will try to register.  To Disable this constraint, set the value to 0.
+    /// Configure the Maximum Amount of Generic RequestHandler Types Mediator will try to register.  To Disable this constraint, set the value to 0.
     /// </summary>
     public int MaxGenericTypeRegistrations { get; set; } = 125000;
 
@@ -91,7 +91,7 @@ public class MediatRServiceConfiguration
     public int RegistrationTimeout { get; set; } = 15000;
 
     /// <summary>
-    /// Flag that controlls whether MediatR will attempt to register handlers that containg generic type parameters.
+    /// Flag that controlls whether Mediator will attempt to register handlers that containg generic type parameters.
     /// </summary>
     public bool RegisterGenericHandlers { get; set; } = false;
 
@@ -100,7 +100,7 @@ public class MediatRServiceConfiguration
     /// </summary>
     /// <typeparam name="T">Type from assembly to scan</typeparam>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration RegisterServicesFromAssemblyContaining<T>()
+    public MediatorServiceConfiguration RegisterServicesFromAssemblyContaining<T>()
         => RegisterServicesFromAssemblyContaining(typeof(T));
 
     /// <summary>
@@ -108,7 +108,7 @@ public class MediatRServiceConfiguration
     /// </summary>
     /// <param name="type">Type from assembly to scan</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration RegisterServicesFromAssemblyContaining(Type type)
+    public MediatorServiceConfiguration RegisterServicesFromAssemblyContaining(Type type)
         => RegisterServicesFromAssembly(type.Assembly);
 
     /// <summary>
@@ -116,7 +116,7 @@ public class MediatRServiceConfiguration
     /// </summary>
     /// <param name="assembly">Assembly to scan</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration RegisterServicesFromAssembly(Assembly assembly)
+    public MediatorServiceConfiguration RegisterServicesFromAssembly(Assembly assembly)
     {
         AssembliesToRegister.Add(assembly);
 
@@ -128,7 +128,7 @@ public class MediatRServiceConfiguration
     /// </summary>
     /// <param name="assemblies">Assemblies to scan</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration RegisterServicesFromAssemblies(
+    public MediatorServiceConfiguration RegisterServicesFromAssemblies(
         params Assembly[] assemblies)
     {
         AssembliesToRegister.AddRange(assemblies);
@@ -143,7 +143,7 @@ public class MediatRServiceConfiguration
     /// <typeparam name="TImplementationType">Closed behavior implementation type</typeparam>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddBehavior<TServiceType, TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddBehavior<TServiceType, TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         => AddBehavior(typeof(TServiceType), typeof(TImplementationType), serviceLifetime);
 
     /// <summary>
@@ -152,7 +152,7 @@ public class MediatRServiceConfiguration
     /// <typeparam name="TImplementationType">Closed behavior implementation type</typeparam>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddBehavior<TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddBehavior<TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         return AddBehavior(typeof(TImplementationType), serviceLifetime);
     }
@@ -163,7 +163,7 @@ public class MediatRServiceConfiguration
     /// <param name="implementationType">Closed behavior implementation type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddBehavior(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddBehavior(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         var implementedGenericInterfaces = implementationType.FindInterfacesThatClose(typeof(IPipelineBehavior<,>)).ToList();
 
@@ -187,7 +187,7 @@ public class MediatRServiceConfiguration
     /// <param name="implementationType">Closed behavior implementation type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddBehavior(Type serviceType, Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddBehavior(Type serviceType, Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         BehaviorsToRegister.Add(new ServiceDescriptor(serviceType, implementationType, serviceLifetime));
 
@@ -200,7 +200,7 @@ public class MediatRServiceConfiguration
     /// <param name="openBehaviorType">An open generic behavior type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddOpenBehavior(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddOpenBehavior(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         if (!openBehaviorType.IsGenericType)
         {
@@ -229,7 +229,7 @@ public class MediatRServiceConfiguration
     /// <param name="openBehaviorTypes">An open generic behavior type list includes multiple open generic behavior types.</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddOpenBehaviors(IEnumerable<Type> openBehaviorTypes, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddOpenBehaviors(IEnumerable<Type> openBehaviorTypes, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         foreach (var openBehaviorType in openBehaviorTypes)
         {
@@ -244,7 +244,7 @@ public class MediatRServiceConfiguration
     /// </summary>
     /// <param name="openBehaviors">An open generic behavior list includes multiple <see cref="OpenBehavior"/> open generic behaviors.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddOpenBehaviors(IEnumerable<OpenBehavior> openBehaviors)
+    public MediatorServiceConfiguration AddOpenBehaviors(IEnumerable<OpenBehavior> openBehaviors)
     {
         foreach (var openBehavior in openBehaviors)
         {
@@ -261,7 +261,7 @@ public class MediatRServiceConfiguration
     /// <typeparam name="TImplementationType">Closed stream behavior implementation type</typeparam>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddStreamBehavior<TServiceType, TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddStreamBehavior<TServiceType, TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         => AddStreamBehavior(typeof(TServiceType), typeof(TImplementationType), serviceLifetime);
     
     /// <summary>
@@ -271,7 +271,7 @@ public class MediatRServiceConfiguration
     /// <param name="implementationType">Closed stream behavior implementation type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddStreamBehavior(Type serviceType, Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddStreamBehavior(Type serviceType, Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         StreamBehaviorsToRegister.Add(new ServiceDescriptor(serviceType, implementationType, serviceLifetime));
 
@@ -284,7 +284,7 @@ public class MediatRServiceConfiguration
     /// <typeparam name="TImplementationType">Closed stream behavior implementation type</typeparam>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddStreamBehavior<TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddStreamBehavior<TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         => AddStreamBehavior(typeof(TImplementationType), serviceLifetime);
     
     /// <summary>
@@ -293,7 +293,7 @@ public class MediatRServiceConfiguration
     /// <param name="implementationType">Closed stream behavior implementation type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddStreamBehavior(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddStreamBehavior(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         var implementedGenericInterfaces = implementationType.FindInterfacesThatClose(typeof(IStreamPipelineBehavior<,>)).ToList();
 
@@ -316,7 +316,7 @@ public class MediatRServiceConfiguration
     /// <param name="openBehaviorType">An open generic stream behavior type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddOpenStreamBehavior(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddOpenStreamBehavior(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         if (!openBehaviorType.IsGenericType)
         {
@@ -346,7 +346,7 @@ public class MediatRServiceConfiguration
     /// <typeparam name="TImplementationType">Closed request pre processor implementation type</typeparam>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddRequestPreProcessor<TServiceType, TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddRequestPreProcessor<TServiceType, TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         => AddRequestPreProcessor(typeof(TServiceType), typeof(TImplementationType), serviceLifetime);
     
     /// <summary>
@@ -356,7 +356,7 @@ public class MediatRServiceConfiguration
     /// <param name="implementationType">Closed request pre processor implementation type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddRequestPreProcessor(Type serviceType, Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddRequestPreProcessor(Type serviceType, Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         RequestPreProcessorsToRegister.Add(new ServiceDescriptor(serviceType, implementationType, serviceLifetime));
 
@@ -369,7 +369,7 @@ public class MediatRServiceConfiguration
     /// <typeparam name="TImplementationType">Closed request pre processor implementation type</typeparam>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddRequestPreProcessor<TImplementationType>(
+    public MediatorServiceConfiguration AddRequestPreProcessor<TImplementationType>(
         ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         => AddRequestPreProcessor(typeof(TImplementationType), serviceLifetime);
 
@@ -379,7 +379,7 @@ public class MediatRServiceConfiguration
     /// <param name="implementationType">Closed request pre processor implementation type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddRequestPreProcessor(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddRequestPreProcessor(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         var implementedGenericInterfaces = implementationType.FindInterfacesThatClose(typeof(IRequestPreProcessor<>)).ToList();
 
@@ -402,7 +402,7 @@ public class MediatRServiceConfiguration
     /// <param name="openBehaviorType">An open generic request pre processor type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddOpenRequestPreProcessor(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddOpenRequestPreProcessor(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         if (!openBehaviorType.IsGenericType)
         {
@@ -432,7 +432,7 @@ public class MediatRServiceConfiguration
     /// <typeparam name="TImplementationType">Closed request post processor implementation type</typeparam>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddRequestPostProcessor<TServiceType, TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddRequestPostProcessor<TServiceType, TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         => AddRequestPostProcessor(typeof(TServiceType), typeof(TImplementationType), serviceLifetime);
     
     /// <summary>
@@ -442,7 +442,7 @@ public class MediatRServiceConfiguration
     /// <param name="implementationType">Closed request post processor implementation type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddRequestPostProcessor(Type serviceType, Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddRequestPostProcessor(Type serviceType, Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         RequestPostProcessorsToRegister.Add(new ServiceDescriptor(serviceType, implementationType, serviceLifetime));
 
@@ -455,7 +455,7 @@ public class MediatRServiceConfiguration
     /// <typeparam name="TImplementationType">Closed request post processor implementation type</typeparam>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddRequestPostProcessor<TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddRequestPostProcessor<TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         => AddRequestPostProcessor(typeof(TImplementationType), serviceLifetime);
     
     /// <summary>
@@ -464,7 +464,7 @@ public class MediatRServiceConfiguration
     /// <param name="implementationType">Closed request post processor implementation type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddRequestPostProcessor(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddRequestPostProcessor(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         var implementedGenericInterfaces = implementationType.FindInterfacesThatClose(typeof(IRequestPostProcessor<,>)).ToList();
 
@@ -486,7 +486,7 @@ public class MediatRServiceConfiguration
     /// <param name="openBehaviorType">An open generic request post processor type</param>
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
-    public MediatRServiceConfiguration AddOpenRequestPostProcessor(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public MediatorServiceConfiguration AddOpenRequestPostProcessor(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         if (!openBehaviorType.IsGenericType)
         {
