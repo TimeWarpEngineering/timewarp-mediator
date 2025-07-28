@@ -211,9 +211,9 @@ public class StreamPipelineTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        await foreach(var response in mediator.CreateStream(new Ping { Message = "Ping" }))
+        await foreach(var response in med.CreateStream(new Ping { Message = "Ping" }))
         {
             response.Message.ShouldBe("Ping Pong");
         }
@@ -249,9 +249,9 @@ public class StreamPipelineTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        await foreach (var response in mediator.CreateStream(new Ping { Message = "Ping" }))
+        await foreach (var response in med.CreateStream(new Ping { Message = "Ping" }))
         {
             response.Message.ShouldBe("Ping Pong");
         }
@@ -288,9 +288,9 @@ public class StreamPipelineTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        await foreach (var response in mediator.CreateStream(new Ping { Message = "Ping" }))
+        await foreach (var response in med.CreateStream(new Ping { Message = "Ping" }))
         {
             response.Message.ShouldBe("Ping Pong");
         }
@@ -308,7 +308,7 @@ public class StreamPipelineTests
 
         output.Messages.Clear();
 
-        await foreach (var response in mediator.CreateStream(new Zing { Message = "Zing" }))
+        await foreach (var response in med.CreateStream(new Zing { Message = "Zing" }))
         {
             response.Message.ShouldBe("Zing Zong");
         }
@@ -345,9 +345,9 @@ public class StreamPipelineTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        await foreach (var response in mediator.CreateStream(new Ping { Message = "Ping" }))
+        await foreach (var response in med.CreateStream(new Ping { Message = "Ping" }))
         {
             response.Message.ShouldBe("Ping Pong");
         }
@@ -365,7 +365,7 @@ public class StreamPipelineTests
 
         output.Messages.Clear();
 
-        await foreach (var response in mediator.CreateStream(new Zing { Message = "Zing" }))
+        await foreach (var response in med.CreateStream(new Zing { Message = "Zing" }))
         {
             response.Message.ShouldBe("Zing Zong");
         }

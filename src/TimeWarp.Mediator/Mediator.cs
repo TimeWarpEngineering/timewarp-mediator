@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Wrappers;
 
 /// <summary>
-/// Default mediator implementation relying on single- and multi instance delegates for resolving handlers.
+/// Default med implementation relying on single- and multi instance delegates for resolving handlers.
 /// </summary>
 public class Mediator : IMediator
 {

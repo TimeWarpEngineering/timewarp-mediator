@@ -82,16 +82,16 @@ public class PipelineMultiCallToConstructorTests
 
         services.AddSingleton(output);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ConstructorTestBehavior<,>));
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly);
             cfg.AddOpenBehavior(typeof(ConstructorTestBehavior<,>));
         });
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
 
-        var response = await mediator.Send(new ConstructorTestRequest { Message = "ConstructorPing" });
+        var response = await med.Send(new ConstructorTestRequest { Message = "ConstructorPing" });
 
         response.Message.ShouldBe("ConstructorPing ConstructorPong");
 

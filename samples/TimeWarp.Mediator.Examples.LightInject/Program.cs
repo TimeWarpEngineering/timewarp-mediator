@@ -15,9 +15,9 @@ class Program
     static Task Main(string[] args)
     {
         var writer = new WrappingWriter(Console.Out);
-        var mediator = BuildMediator(writer);
+        var med = BuildMediator(writer);
 
-        return Runner.Run(mediator, writer, "LightInject");
+        return Runner.Run(med, writer, "LightInject");
     }
 
     private static IMediator BuildMediator(WrappingWriter writer)

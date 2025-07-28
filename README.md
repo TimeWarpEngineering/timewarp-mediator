@@ -20,45 +20,45 @@ Supports request/response, commands, queries, notifications and events, synchron
 
 Examples in the [wiki](https://github.com/jbogard/MediatR/wiki).
 
-### Installing MediatR
+### Installing TimeWarp.Mediator
 
-You should install [MediatR with NuGet](https://www.nuget.org/packages/MediatR):
+You should install [TimeWarp.Mediator with NuGet](https://www.nuget.org/packages/TimeWarp.Mediator):
 
-    Install-Package MediatR
+    Install-Package TimeWarp.Mediator
     
 Or via the .NET Core command line interface:
 
-    dotnet add package MediatR
+    dotnet add package TimeWarp.Mediator
 
-Either commands, from Package Manager Console or .NET Core CLI, will download and install MediatR and all required dependencies.
+Either commands, from Package Manager Console or .NET Core CLI, will download and install TimeWarp.Mediator and all required dependencies.
 
 ### Using Contracts-Only Package
 
-To reference only the contracts for MediatR, which includes:
+To reference only the contracts for TimeWarp.Mediator, which includes:
 
 - `IRequest` (including generic variants)
 - `INotification`
 - `IStreamRequest`
 
-Add a package reference to [MediatR.Contracts](https://www.nuget.org/packages/MediatR.Contracts)
+Add a package reference to [TimeWarp.Mediator.Contracts](https://www.nuget.org/packages/TimeWarp.Mediator.Contracts)
 
-This package is useful in scenarios where your MediatR contracts are in a separate assembly/project from handlers. Example scenarios include:
+This package is useful in scenarios where your TimeWarp.Mediator contracts are in a separate assembly/project from handlers. Example scenarios include:
 - API contracts
 - GRPC contracts
 - Blazor
 
 ### Registering with `IServiceCollection`
 
-MediatR supports `Microsoft.Extensions.DependencyInjection.Abstractions` directly. To register various MediatR services and handlers:
+TimeWarp.Mediator supports `Microsoft.Extensions.DependencyInjection.Abstractions` directly. To register various Mediator services and handlers:
 
 ```
-services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Startup>());
+services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining<Startup>());
 ```
 
 or with an assembly:
 
 ```
-services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Startup).Assembly));
+services.AddMediator(cfg => cfg.RegisterServicesFromAssembly(typeof(Startup).Assembly));
 ```
 
 This registers:
@@ -82,7 +82,7 @@ This also registers open generic implementations for:
 To register behaviors, stream behaviors, pre/post processors:
 
 ```csharp
-services.AddMediatR(cfg => {
+services.AddMediator(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(Startup).Assembly);
     cfg.AddBehavior<PingPongBehavior>();
     cfg.AddStreamBehavior<PingPongStreamBehavior>();

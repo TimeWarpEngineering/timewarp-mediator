@@ -17,9 +17,9 @@ internal static class Program
     private static Task Main(string[] args)
     {
         var writer = new WrappingWriter(Console.Out);
-        var mediator = BuildMediator(writer);
+        var med = BuildMediator(writer);
 
-        return Runner.Run(mediator, writer, "SimpleInjector", true);
+        return Runner.Run(med, writer, "SimpleInjector", true);
     }
 
     private static IMediator BuildMediator(WrappingWriter writer)
@@ -62,9 +62,9 @@ internal static class Program
 
         container.RegisterInstance<IServiceProvider>(container);
 
-        var mediator = container.GetRequiredService<IMediator>();
+        var med = container.GetRequiredService<IMediator>();
 
-        return mediator;
+        return med;
     }
 
     private static void RegisterHandlers(Container container, Type collectionType, Assembly[] assemblies)

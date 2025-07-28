@@ -56,9 +56,9 @@ public class RequestPostProcessorTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        var response = await mediator.Send(new Ping { Message = "Ping" });
+        var response = await med.Send(new Ping { Message = "Ping" });
 
         response.Message.ShouldBe("Ping Pong Ping");
     }

@@ -68,9 +68,9 @@ public class PublishTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        await mediator.Publish(new Ping { Message = "Ping" });
+        await med.Publish(new Ping { Message = "Ping" });
 
         var result = builder.ToString().Split(new [] {Environment.NewLine}, StringSplitOptions.None);
         result.ShouldContain("Ping Pong");
@@ -96,10 +96,10 @@ public class PublishTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         object message = new Ping { Message = "Ping" };
-        await mediator.Publish(message);
+        await med.Publish(message);
 
         var result = builder.ToString().Split(new [] {Environment.NewLine}, StringSplitOptions.None);
         result.ShouldContain("Ping Pong");
@@ -155,9 +155,9 @@ public class PublishTests
             cfg.For<IMediator>().Use<SequentialMediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        await mediator.Publish(new Ping { Message = "Ping" });
+        await med.Publish(new Ping { Message = "Ping" });
 
         var result = builder.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
         result.ShouldContain("Ping Pong");
@@ -185,9 +185,9 @@ public class PublishTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        await mediator.Publish(new Ping { Message = "Ping" });
+        await med.Publish(new Ping { Message = "Ping" });
 
         var result = builder.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
         result.ShouldContain("Ping Pong");
@@ -214,11 +214,11 @@ public class PublishTests
             cfg.For<IMediator>().Use<SequentialMediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         // wrap notifications in an array, so this test won't break on a 'replace with var' refactoring
         var notifications = new INotification[] { new Ping { Message = "Ping" } };
-        await mediator.Publish(notifications[0]);
+        await med.Publish(notifications[0]);
 
         var result = builder.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
         result.ShouldContain("Ping Pong");
@@ -244,9 +244,9 @@ public class PublishTests
             cfg.For<IPublisher>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IPublisher>();
+        var med = container.GetInstance<IPublisher>();
 
-        await mediator.Publish(new Ping { Message = "Ping" });
+        await med.Publish(new Ping { Message = "Ping" });
 
         var result = builder.ToString().Split(new [] {Environment.NewLine}, StringSplitOptions.None);
         result.ShouldContain("Ping Pong");

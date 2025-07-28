@@ -20,7 +20,7 @@ public class SendTests
     {
         _dependency = new Dependency();
         var services = new ServiceCollection();
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(typeof(Ping).Assembly);
             cfg.AddOpenBehavior(typeof(TimeoutBehavior<,>), ServiceLifetime.Transient);
@@ -305,7 +305,7 @@ public class SendTests
         var dependency = new Dependency();
         var services = new ServiceCollection();
         services.AddSingleton(dependency);
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly());
             cfg.RegisterGenericHandlers = true;
@@ -313,10 +313,10 @@ public class SendTests
 
         services.AddTransient<IRequestHandler<VoidGenericPing<PongExtension>>,TestClass1PingRequestHandler>();
         var serviceProvider = services.BuildServiceProvider();
-        var mediator = serviceProvider.GetService<IMediator>()!;
+        var med = serviceProvider.GetService<IMediator>()!;
 
         var request = new VoidGenericPing<PongExtension>();
-        await mediator.Send(request);
+        await med.Send(request);
 
         dependency.Called.ShouldBeFalse();
         dependency.CalledSpecific.ShouldBeTrue();
@@ -328,17 +328,17 @@ public class SendTests
         var dependency = new Dependency();
         var services = new ServiceCollection();
         services.AddSingleton(dependency);
-        services.AddMediatR(cfg => 
+        services.AddMediator(cfg => 
         {
             cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly());
             cfg.RegisterGenericHandlers = true;
         });
         services.AddTransient<IRequestHandler<VoidGenericPing<PongExtension>>, TestClass1PingRequestHandler>();
         var serviceProvider = services.BuildServiceProvider();
-        var mediator = serviceProvider.GetService<IMediator>()!;
+        var med = serviceProvider.GetService<IMediator>()!;
 
         var request = new VoidGenericPing<Pong>();
-        await mediator.Send(request);
+        await med.Send(request);
 
         dependency.Called.ShouldBeTrue();
         dependency.CalledSpecific.ShouldBeFalse();

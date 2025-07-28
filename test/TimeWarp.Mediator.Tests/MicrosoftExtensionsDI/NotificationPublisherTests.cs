@@ -32,15 +32,15 @@ public class NotificationPublisherTests
     {
         var services = new ServiceCollection();
         services.AddSingleton(new Logger());
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssemblyContaining(typeof(CustomMediatorTests));
         });
 
         var provider = services.BuildServiceProvider();
-        var mediator = provider.GetService<IMediator>();
+        var med = provider.GetService<IMediator>();
 
-        mediator.ShouldNotBeNull();
+        med.ShouldNotBeNull();
 
         var publisher = provider.GetService<INotificationPublisher>();
 
@@ -53,18 +53,18 @@ public class NotificationPublisherTests
         var publisher = new MockPublisher();
         var services = new ServiceCollection();
         services.AddSingleton(new Logger());
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssemblyContaining(typeof(CustomMediatorTests));
             cfg.NotificationPublisher = publisher;
         });
 
         var provider = services.BuildServiceProvider();
-        var mediator = provider.GetService<IMediator>();
+        var med = provider.GetService<IMediator>();
 
-        mediator.ShouldNotBeNull();
+        med.ShouldNotBeNull();
 
-        await mediator.Publish(new Pinged());
+        await med.Publish(new Pinged());
         
         publisher.CallCount.ShouldBeGreaterThan(0);
     }
@@ -74,7 +74,7 @@ public class NotificationPublisherTests
     {
         var services = new ServiceCollection();
         services.AddSingleton(new Logger());
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssemblyContaining(typeof(CustomMediatorTests));
             cfg.NotificationPublisherType = typeof(MockPublisher);
@@ -82,13 +82,13 @@ public class NotificationPublisherTests
         });
 
         var provider = services.BuildServiceProvider();
-        var mediator = provider.GetService<IMediator>();
+        var med = provider.GetService<IMediator>();
         var publisher = provider.GetService<INotificationPublisher>();
 
-        mediator.ShouldNotBeNull();
+        med.ShouldNotBeNull();
         publisher.ShouldNotBeNull();
 
-        await mediator.Publish(new Pinged());
+        await med.Publish(new Pinged());
 
         var mock = publisher.ShouldBeOfType<MockPublisher>();
 
@@ -100,7 +100,7 @@ public class NotificationPublisherTests
     {
         var services = new ServiceCollection();
         services.AddSingleton(new Logger());
-        services.AddMediatR(cfg =>
+        services.AddMediator(cfg =>
         {
             cfg.RegisterServicesFromAssemblyContaining(typeof(CustomMediatorTests));
             cfg.NotificationPublisherType = typeof(TaskWhenAllPublisher);
@@ -108,13 +108,13 @@ public class NotificationPublisherTests
         });
 
         var provider = services.BuildServiceProvider();
-        var mediator = provider.GetService<IMediator>();
+        var med = provider.GetService<IMediator>();
         var publisher = provider.GetService<INotificationPublisher>();
 
-        mediator.ShouldNotBeNull();
+        med.ShouldNotBeNull();
         publisher.ShouldNotBeNull();
 
-        await Should.NotThrowAsync(mediator.Publish(new Pinged()));
+        await Should.NotThrowAsync(med.Publish(new Pinged()));
 
         publisher.ShouldBeOfType<TaskWhenAllPublisher>();
     }

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 public static class Runner
 {
-    public static async Task Run(IMediator mediator, WrappingWriter writer, string projectName, bool testStreams = false)
+    public static async Task Run(IMediator med, WrappingWriter writer, string projectName, bool testStreams = false)
     {
         await writer.WriteLineAsync("===============");
         await writer.WriteLineAsync(projectName);
@@ -19,19 +19,19 @@ public static class Runner
         await writer.WriteLineAsync();
 
         await writer.WriteLineAsync("Sending Ping...");
-        var pong = await mediator.Send(new Ping { Message = "Ping" });
+        var pong = await med.Send(new Ping { Message = "Ping" });
         await writer.WriteLineAsync("Received: " + pong.Message);
         await writer.WriteLineAsync();
 
         await writer.WriteLineAsync("Publishing Pinged...");
-        await mediator.Publish(new Pinged());
+        await med.Publish(new Pinged());
         await writer.WriteLineAsync();
 
         await writer.WriteLineAsync("Publishing Ponged...");
         var failedPong = false;
         try
         {
-            await mediator.Publish(new Ponged());
+            await med.Publish(new Ponged());
         }
         catch (Exception e)
         {
@@ -44,7 +44,7 @@ public static class Runner
         await writer.WriteLineAsync("Sending Jing...");
         try
         {
-            await mediator.Send(new Jing { Message = "Jing" });
+            await med.Send(new Jing { Message = "Jing" });
         }
         catch (Exception e)
         {
@@ -60,7 +60,7 @@ public static class Runner
             try
             {
                 int i = 0;
-                await foreach (Song s in mediator.CreateStream(new Sing { Message = "Sing" }))
+                await foreach (Song s in med.CreateStream(new Sing { Message = "Sing" }))
                 {
                     if (i == 0) {
                         failedSing = !(s.Message.Contains("Singing do"));
@@ -105,11 +105,11 @@ public static class Runner
             await writer.WriteLineAsync();
         }
 
-        var isHandlerForSameExceptionWorks = await IsHandlerForSameExceptionWorks(mediator, writer).ConfigureAwait(false);
-        var isHandlerForBaseExceptionWorks = await IsHandlerForBaseExceptionWorks(mediator, writer).ConfigureAwait(false);
-        var isHandlerForLessSpecificExceptionWorks = await IsHandlerForLessSpecificExceptionWorks(mediator, writer).ConfigureAwait(false);
-        var isPreferredHandlerForBaseExceptionWorks = await IsPreferredHandlerForBaseExceptionWorks(mediator, writer).ConfigureAwait(false);
-        var isOverriddenHandlerForBaseExceptionWorks = await IsOverriddenHandlerForBaseExceptionWorks(mediator, writer).ConfigureAwait(false);
+        var isHandlerForSameExceptionWorks = await IsHandlerForSameExceptionWorks(med, writer).ConfigureAwait(false);
+        var isHandlerForBaseExceptionWorks = await IsHandlerForBaseExceptionWorks(med, writer).ConfigureAwait(false);
+        var isHandlerForLessSpecificExceptionWorks = await IsHandlerForLessSpecificExceptionWorks(med, writer).ConfigureAwait(false);
+        var isPreferredHandlerForBaseExceptionWorks = await IsPreferredHandlerForBaseExceptionWorks(med, writer).ConfigureAwait(false);
+        var isOverriddenHandlerForBaseExceptionWorks = await IsOverriddenHandlerForBaseExceptionWorks(med, writer).ConfigureAwait(false);
 
         await writer.WriteLineAsync("---------------");
         var contents = writer.Contents;
@@ -180,14 +180,14 @@ public static class Runner
         await writer.WriteLineAsync();
     }
 
-    private static async Task<bool> IsHandlerForSameExceptionWorks(IMediator mediator, WrappingWriter writer)
+    private static async Task<bool> IsHandlerForSameExceptionWorks(IMediator med, WrappingWriter writer)
     {
         var isHandledCorrectly = false;
 
         await writer.WriteLineAsync("Checking handler to catch exact exception...");
         try
         {
-            await mediator.Send(new PingProtectedResource { Message = "Ping to protected resource" });
+            await med.Send(new PingProtectedResource { Message = "Ping to protected resource" });
             isHandledCorrectly = IsExceptionHandledBy<ForbiddenException, AccessDeniedExceptionHandler>(writer);
         }
         catch (Exception e)
@@ -199,14 +199,14 @@ public static class Runner
         return isHandledCorrectly;
     }
 
-    private static async Task<bool> IsHandlerForBaseExceptionWorks(IMediator mediator, WrappingWriter writer)
+    private static async Task<bool> IsHandlerForBaseExceptionWorks(IMediator med, WrappingWriter writer)
     {
         var isHandledCorrectly = false;
 
         await writer.WriteLineAsync("Checking shared handler to catch exception by base type...");
         try
         {
-            await mediator.Send(new PingResource { Message = "Ping to missed resource" });
+            await med.Send(new PingResource { Message = "Ping to missed resource" });
             isHandledCorrectly = IsExceptionHandledBy<ResourceNotFoundException, ConnectionExceptionHandler>(writer);
         }
         catch (Exception e)
@@ -218,14 +218,14 @@ public static class Runner
         return isHandledCorrectly;
     }
         
-    private static async Task<bool> IsHandlerForLessSpecificExceptionWorks(IMediator mediator, WrappingWriter writer)
+    private static async Task<bool> IsHandlerForLessSpecificExceptionWorks(IMediator med, WrappingWriter writer)
     {
         var isHandledCorrectly = false;
 
         await writer.WriteLineAsync("Checking base handler to catch any exception...");
         try
         {
-            await mediator.Send(new PingResourceTimeout { Message = "Ping to ISS resource" });
+            await med.Send(new PingResourceTimeout { Message = "Ping to ISS resource" });
             isHandledCorrectly = IsExceptionHandledBy<TaskCanceledException, CommonExceptionHandler> (writer);
         }
         catch (Exception e)
@@ -237,7 +237,7 @@ public static class Runner
         return isHandledCorrectly;
     }
 
-    private static async Task<bool> IsPreferredHandlerForBaseExceptionWorks(IMediator mediator, WrappingWriter writer)
+    private static async Task<bool> IsPreferredHandlerForBaseExceptionWorks(IMediator med, WrappingWriter writer)
     {
         var isHandledCorrectly = false;
 
@@ -245,7 +245,7 @@ public static class Runner
 
         try
         {
-            await mediator.Send(new ExceptionHandler.Overrides.PingResourceTimeout { Message = "Ping to ISS resource (preferred)" });
+            await med.Send(new ExceptionHandler.Overrides.PingResourceTimeout { Message = "Ping to ISS resource (preferred)" });
             isHandledCorrectly = IsExceptionHandledBy<TaskCanceledException, ExceptionHandler.Overrides.CommonExceptionHandler> (writer);
         }
         catch (Exception e)
@@ -257,7 +257,7 @@ public static class Runner
         return isHandledCorrectly;
     }
 
-    private static async Task<bool> IsOverriddenHandlerForBaseExceptionWorks(IMediator mediator, WrappingWriter writer)
+    private static async Task<bool> IsOverriddenHandlerForBaseExceptionWorks(IMediator med, WrappingWriter writer)
     {
         var isHandledCorrectly = false;
 
@@ -265,7 +265,7 @@ public static class Runner
 
         try
         {
-            await mediator.Send(new PingNewResource { Message = "Ping to ISS resource (override)" });
+            await med.Send(new PingNewResource { Message = "Ping to ISS resource (override)" });
             isHandledCorrectly = IsExceptionHandledBy<ServerException, ExceptionHandler.Overrides.ServerExceptionHandler> (writer);
         }
         catch (Exception e)

@@ -43,12 +43,12 @@ public class Publisher
 
     public Task Publish<TNotification>(TNotification notification, PublishStrategy strategy, CancellationToken cancellationToken)
     {
-        if (!PublishStrategies.TryGetValue(strategy, out var mediator))
+        if (!PublishStrategies.TryGetValue(strategy, out var med))
         {
             throw new ArgumentException($"Unknown strategy: {strategy}");
         }
 
-        return mediator.Publish(notification, cancellationToken);
+        return med.Publish(notification, cancellationToken);
     }
 
     private Task ParallelWhenAll(IEnumerable<NotificationHandlerExecutor> handlers, INotification notification, CancellationToken cancellationToken)

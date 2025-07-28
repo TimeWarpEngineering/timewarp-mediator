@@ -6,7 +6,7 @@
     <Product>TimeWarp Mediator</Product>
     <Copyright>Copyright Jimmy Bogard (original MediatR); TimeWarp Engineering (Unlicense)</Copyright>
     <PackageProjectUrl>https://github.com/TimeWarpEngineering/timewarp-mediator</PackageProjectUrl>
-    <PackageTags>mediator;MediatR;request;response;queries;commands;notifications;opensource;free;unlicense</PackageTags>
+    <PackageTags>mediator;request;response;queries;commands;notifications;opensource;free;unlicense</PackageTags>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-mediator.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -20,7 +20,7 @@
     <Deterministic>true</Deterministic>
     
     <!-- Unified versioning for all packages -->
-    <Version>13.0.0-beta.2</Version>
+    <Version>13.0.0-beta.3</Version>
   </PropertyGroup>
 
   <!-- Common items -->

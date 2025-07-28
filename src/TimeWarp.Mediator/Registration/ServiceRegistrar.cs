@@ -17,7 +17,7 @@ public static class ServiceRegistrar
     private static int MaxGenericTypeRegistrations;
     private static int RegistrationTimeout; 
 
-    public static void SetGenericRequestHandlerRegistrationLimitations(MediatRServiceConfiguration configuration)
+    public static void SetGenericRequestHandlerRegistrationLimitations(MediatorServiceConfiguration configuration)
     {
         MaxGenericTypeParameters = configuration.MaxGenericTypeParameters;
         MaxTypesClosing = configuration.MaxTypesClosing;
@@ -25,13 +25,13 @@ public static class ServiceRegistrar
         RegistrationTimeout = configuration.RegistrationTimeout;
     }
 
-    public static void AddMediatRClassesWithTimeout(IServiceCollection services, MediatRServiceConfiguration configuration)
+    public static void AddMediatorClassesWithTimeout(IServiceCollection services, MediatorServiceConfiguration configuration)
     {
         using(var cts = new CancellationTokenSource(RegistrationTimeout))
         {
             try
             {
-                AddMediatRClasses(services, configuration, cts.Token);
+                AddMediatorClasses(services, configuration, cts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -40,7 +40,7 @@ public static class ServiceRegistrar
         }
     }
 
-    public static void AddMediatRClasses(IServiceCollection services, MediatRServiceConfiguration configuration, CancellationToken cancellationToken = default)
+    public static void AddMediatorClasses(IServiceCollection services, MediatorServiceConfiguration configuration, CancellationToken cancellationToken = default)
     {   
 
         var assembliesToScan = configuration.AssembliesToRegister.Distinct().ToArray();
@@ -94,7 +94,7 @@ public static class ServiceRegistrar
         IServiceCollection services,
         IEnumerable<Assembly> assembliesToScan,
         bool addIfAlreadyExists,
-        MediatRServiceConfiguration configuration,
+        MediatorServiceConfiguration configuration,
         CancellationToken cancellationToken = default)
     {
         var concretions = new List<Type>();
@@ -385,7 +385,7 @@ public static class ServiceRegistrar
         list.Add(value);
     }
 
-    public static void AddRequiredServices(IServiceCollection services, MediatRServiceConfiguration serviceConfiguration)
+    public static void AddRequiredServices(IServiceCollection services, MediatorServiceConfiguration serviceConfiguration)
     {
         // Use TryAdd, so any existing ServiceFactory/IMediator registration doesn't get overridden
         services.TryAdd(new ServiceDescriptor(typeof(IMediator), serviceConfiguration.MediatorImplementationType, serviceConfiguration.Lifetime));

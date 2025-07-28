@@ -26,10 +26,10 @@ public class ServiceFactoryTests
         var serviceCollection = new ServiceCollection();
         var serviceProvider = serviceCollection.BuildServiceProvider();
 
-        var mediator = new Mediator(serviceProvider);
+        var med = new Mediator(serviceProvider);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => mediator.Send(new Ping())
+            () => med.Send(new Ping())
         );
     }
 }

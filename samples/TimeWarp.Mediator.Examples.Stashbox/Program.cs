@@ -13,8 +13,8 @@ class Program
     static Task Main()
     {
         var writer = new WrappingWriter(Console.Out);
-        var mediator = BuildMediator(writer);
-        return Runner.Run(mediator, writer, "Stashbox", testStreams: true);
+        var med = BuildMediator(writer);
+        return Runner.Run(med, writer, "Stashbox", testStreams: true);
     }
 
     private static IMediator BuildMediator(WrappingWriter writer)
