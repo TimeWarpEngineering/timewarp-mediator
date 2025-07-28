@@ -2,7 +2,7 @@
 namespace TimeWarp.Mediator;
 
 /// <summary>
-/// Defines a mediator to encapsulate request/response and publishing interaction patterns
+/// Defines a med to encapsulate request/response and publishing interaction patterns
 /// </summary>
 public interface IMediator : ISender, IPublisher
 {

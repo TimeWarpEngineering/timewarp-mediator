@@ -64,9 +64,9 @@ public class StreamPipelineBehaviorTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        var responses = mediator.CreateStream(new Sing { Message = "Sing" });
+        var responses = med.CreateStream(new Sing { Message = "Sing" });
 
         int i = 0;
         await foreach (var response in responses)

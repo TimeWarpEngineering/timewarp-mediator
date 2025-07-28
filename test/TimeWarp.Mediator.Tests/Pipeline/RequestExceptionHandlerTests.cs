@@ -97,9 +97,9 @@ public class RequestExceptionHandlerTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        var response = await mediator.Send(new Ping { Message = "Ping" });
+        var response = await med.Send(new Ping { Message = "Ping" });
 
         response.Message.ShouldBe("Ping Thrown Handled by Type");
     }
@@ -115,12 +115,12 @@ public class RequestExceptionHandlerTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         var request = new Ping { Message = "Ping" };
         await Should.ThrowAsync<PingException>(async () =>
         {
-            await mediator.Send(request);
+            await med.Send(request);
         });
 
         request.Message.ShouldBe("Ping Thrown Not Handled");
@@ -137,12 +137,12 @@ public class RequestExceptionHandlerTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         var request = new Ping { Message = "Ping" };
         await Should.ThrowAsync<ApplicationException>(async () =>
         {
-            await mediator.Send(request);
+            await med.Send(request);
         });
     }
 
@@ -158,12 +158,12 @@ public class RequestExceptionHandlerTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         var request = new Ping { Message = "Ping" };
         await Should.ThrowAsync<PingException>(async () =>
         {
-            await mediator.Send(request);
+            await med.Send(request);
         });
 
         genericPingExceptionHandler.ExecutionCount.ShouldBe(1);

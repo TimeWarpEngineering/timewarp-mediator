@@ -408,9 +408,9 @@ public class PipelineTests
         });
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
 
-        var response = await mediator.Send(new Ping { Message = "Ping" });
+        var response = await med.Send(new Ping { Message = "Ping" });
 
         response.Message.ShouldBe("Ping Pong");
 
@@ -442,9 +442,9 @@ public class PipelineTests
         });
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
             
-        var response = await mediator.Send(new Ping { Message = "Ping" });
+        var response = await med.Send(new Ping { Message = "Ping" });
 
         response.Message.ShouldBe("Ping Pong");
 
@@ -478,9 +478,9 @@ public class PipelineTests
         });
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
 
-        var response = await mediator.Send(new Ping { Message = "Ping" });
+        var response = await med.Send(new Ping { Message = "Ping" });
 
         response.Message.ShouldBe("Ping Pong");
 
@@ -507,9 +507,9 @@ public class PipelineTests
         services.AddMediator(cfg => cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly));
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
 
-        var response = await mediator.Send(new Ping {Message = "Ping", ThrowAction = msg => throw new ApplicationException(msg.Message + " Thrown")});
+        var response = await med.Send(new Ping {Message = "Ping", ThrowAction = msg => throw new ApplicationException(msg.Message + " Thrown")});
 
         response.Message.ShouldBe("Ping Thrown Handled by Specific Type");
         output.Messages.ShouldNotContain("Logging ApplicationException exception");
@@ -524,9 +524,9 @@ public class PipelineTests
         services.AddMediator(cfg => cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly));
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
 
-        Should.Throw<Exception>(async () => await mediator.Send(new Ping {Message = "Ping", ThrowAction = msg => throw new Exception(msg.Message + " Thrown")}));
+        Should.Throw<Exception>(async () => await med.Send(new Ping {Message = "Ping", ThrowAction = msg => throw new Exception(msg.Message + " Thrown")}));
 
         output.Messages.ShouldContain("Ping Thrown Logged by Generic Type");
         output.Messages.ShouldContain("Logging generic exception");
@@ -545,9 +545,9 @@ public class PipelineTests
         });
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
 
-        Should.Throw<Exception>(async () => await mediator.Send(new Ping {Message = "Ping"}));
+        Should.Throw<Exception>(async () => await med.Send(new Ping {Message = "Ping"}));
 
         output.Messages.ShouldContain("Ping Logged by Generic Type");
         output.Messages.ShouldContain("Logging generic exception");
@@ -562,9 +562,9 @@ public class PipelineTests
         services.AddMediator(cfg => cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly));
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
 
-        Should.Throw<SystemException>(async () => await mediator.Send(new Ping {Message = "Ping", ThrowAction = msg => throw new SystemException(msg.Message + " Thrown")}));
+        Should.Throw<SystemException>(async () => await med.Send(new Ping {Message = "Ping", ThrowAction = msg => throw new SystemException(msg.Message + " Thrown")}));
 
         output.Messages.ShouldContain("Logging exception 1");
         output.Messages.ShouldContain("Logging exception 2");
@@ -593,9 +593,9 @@ public class PipelineTests
         });
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
 
-        var response = await mediator.Send(new Ping { Message = "Ping" });
+        var response = await med.Send(new Ping { Message = "Ping" });
 
         response.Message.ShouldBe("Ping Pong");
 
@@ -620,7 +620,7 @@ public class PipelineTests
 
         output.Messages.Clear();
 
-        var zingResponse = await mediator.Send(new Zing { Message = "Zing" });
+        var zingResponse = await med.Send(new Zing { Message = "Zing" });
 
         zingResponse.Message.ShouldBe("Zing Zong");
 
@@ -959,9 +959,9 @@ public class PipelineTests
             ValidateOnBuild = true
         });
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
         var request = new FooRequest();
-        await mediator.Send(request);
+        await med.Send(request);
         
         logger.Messages.ShouldBe(new []
         {
@@ -1050,9 +1050,9 @@ public class PipelineTests
             ValidateOnBuild = true
         });
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
         var request = new FooRequest();
-        await mediator.Send(request);
+        await med.Send(request);
 
         logger.Messages.ShouldBe(new[]
         {

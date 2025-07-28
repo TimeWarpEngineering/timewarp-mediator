@@ -16,9 +16,9 @@ internal static class Program
     public static Task Main(string[] args)
     {
         var writer = new WrappingWriter(Console.Out);
-        var mediator = BuildMediator(writer);
+        var med = BuildMediator(writer);
 
-        return Runner.Run(mediator, writer, "Autofac", testStreams: true);
+        return Runner.Run(med, writer, "Autofac", testStreams: true);
     }
 
     private static IMediator BuildMediator(WrappingWriter writer)
@@ -28,7 +28,7 @@ internal static class Program
 
         builder.RegisterAssemblyTypes(typeof(IMediator).GetTypeInfo().Assembly).AsImplementedInterfaces();
 
-        var mediatrOpenTypes = new[]
+        var mediatorOpenTypes = new[]
         {
                 typeof(IRequestHandler<,>),
                 typeof(IRequestExceptionHandler<,,>),
@@ -37,11 +37,11 @@ internal static class Program
                 typeof(IStreamRequestHandler<,>)
             };
 
-        foreach (var mediatrOpenType in mediatrOpenTypes)
+        foreach (var mediatorOpenType in mediatorOpenTypes)
         {
             builder
                 .RegisterAssemblyTypes(typeof(Ping).GetTypeInfo().Assembly)
-                .AsClosedTypesOf(mediatrOpenType)
+                .AsClosedTypesOf(mediatorOpenType)
                 // when having a single class implementing several handler types
                 // this call will cause a handler to be called twice
                 // in general you should try to avoid having a class implementing for instance `IRequestHandler<,>` and `INotificationHandler<>`
@@ -85,8 +85,8 @@ internal static class Program
 
         var container = builder.Build();
         var serviceProvider = new AutofacServiceProvider(container);
-        var mediator = serviceProvider.GetRequiredService<IMediator>();
+        var med = serviceProvider.GetRequiredService<IMediator>();
 
-        return mediator;
+        return med;
     }
 }

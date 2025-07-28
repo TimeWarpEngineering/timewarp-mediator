@@ -12,9 +12,9 @@ class Program
     static Task Main(string[] args)
     {
         var writer = new WrappingWriter(Console.Out);
-        var mediator = BuildMediator(writer);
+        var med = BuildMediator(writer);
 
-        return Runner.Run(mediator, writer, "Lamar");
+        return Runner.Run(med, writer, "Lamar");
     }
 
     private static IMediator BuildMediator(WrappingWriter writer)
@@ -50,8 +50,8 @@ class Program
         });
 
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        return mediator;
+        return med;
     }
 }

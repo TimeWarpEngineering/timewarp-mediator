@@ -13,8 +13,8 @@ public static class Program
     public static Task Main(string[] args)
     {
         var writer = new WrappingWriter(Console.Out);
-        var mediator = BuildMediator(writer);
-        return Runner.Run(mediator, writer, "ASP.NET Core DI", testStreams: true);
+        var med = BuildMediator(writer);
+        return Runner.Run(med, writer, "ASP.NET Core DI", testStreams: true);
     }
 
     private static IMediator BuildMediator(WrappingWriter writer)

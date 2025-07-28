@@ -88,8 +88,8 @@ public class TypeResolutionTests
         services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining(typeof(Ping)));
         var serviceProvider = services.BuildServiceProvider();
 
-        var mediator = serviceProvider.GetRequiredService<IMediator>();
+        var med = serviceProvider.GetRequiredService<IMediator>();
         
-        mediator.ShouldNotBeNull();
+        med.ShouldNotBeNull();
     }
 }

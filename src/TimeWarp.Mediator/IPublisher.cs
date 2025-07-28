@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace TimeWarp.Mediator;
 
 /// <summary>
-/// Publish a notification or event through the mediator pipeline to be handled by multiple handlers.
+/// Publish a notification or event through the med pipeline to be handled by multiple handlers.
 /// </summary>
 public interface IPublisher
 {

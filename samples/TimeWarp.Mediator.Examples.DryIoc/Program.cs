@@ -13,9 +13,9 @@ class Program
     static Task Main()
     {
         var writer = new WrappingWriter(Console.Out);
-        var mediator = BuildMediator(writer);
+        var med = BuildMediator(writer);
 
-        return Runner.Run(mediator, writer, "DryIoc");
+        return Runner.Run(med, writer, "DryIoc");
     }
 
     private static IMediator BuildMediator(WrappingWriter writer)

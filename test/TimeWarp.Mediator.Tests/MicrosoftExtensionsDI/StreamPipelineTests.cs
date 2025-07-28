@@ -67,9 +67,9 @@ public class StreamPipelineTests
         services.AddMediator(cfg => cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly));
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
 
-        var stream = mediator.CreateStream(new StreamPing { Message = "Ping" });
+        var stream = med.CreateStream(new StreamPing { Message = "Ping" });
 
         await foreach (var response in stream)
         {
@@ -100,9 +100,9 @@ public class StreamPipelineTests
         });
         var provider = services.BuildServiceProvider();
 
-        var mediator = provider.GetRequiredService<IMediator>();
+        var med = provider.GetRequiredService<IMediator>();
 
-        var stream = mediator.CreateStream(new StreamPing { Message = "Ping" });
+        var stream = med.CreateStream(new StreamPing { Message = "Ping" });
 
         await foreach (var response in stream)
         {

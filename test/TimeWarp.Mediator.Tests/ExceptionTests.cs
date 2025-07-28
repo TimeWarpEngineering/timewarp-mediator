@@ -147,11 +147,11 @@ public class ExceptionTests
             });
             cfg.For<IMediator>().Use<Mediator>();
         });
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         NullPing request = null!;
 
-        await Should.ThrowAsync<ArgumentNullException>(async () => await mediator.Send(request));
+        await Should.ThrowAsync<ArgumentNullException>(async () => await med.Send(request));
     }
 
     [Fact]
@@ -168,11 +168,11 @@ public class ExceptionTests
             });
             cfg.For<IMediator>().Use<Mediator>();
         });
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         VoidNullPing request = null!;
 
-        await Should.ThrowAsync<ArgumentNullException>(async () => await mediator.Send(request));
+        await Should.ThrowAsync<ArgumentNullException>(async () => await med.Send(request));
     }
 
     [Fact]
@@ -189,11 +189,11 @@ public class ExceptionTests
             });
             cfg.For<IMediator>().Use<Mediator>();
         });
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         NullPinged notification = null!;
 
-        await Should.ThrowAsync<ArgumentNullException>(async () => await mediator.Publish(notification));
+        await Should.ThrowAsync<ArgumentNullException>(async () => await med.Publish(notification));
     }
 
     [Fact]
@@ -210,11 +210,11 @@ public class ExceptionTests
             });
             cfg.For<IMediator>().Use<Mediator>();
         });
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         object notification = null!;
 
-        await Should.ThrowAsync<ArgumentNullException>(async () => await mediator.Publish(notification));
+        await Should.ThrowAsync<ArgumentNullException>(async () => await med.Publish(notification));
     }
 
     [Fact]
@@ -231,11 +231,11 @@ public class ExceptionTests
             });
             cfg.For<IMediator>().Use<Mediator>();
         });
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         object notification = "totally not notification";
 
-        await Should.ThrowAsync<ArgumentException>(async () => await mediator.Publish(notification));
+        await Should.ThrowAsync<ArgumentException>(async () => await med.Publish(notification));
     }
 
     public class PingException : IRequest
@@ -266,11 +266,11 @@ public class ExceptionTests
             });
             cfg.For<IMediator>().Use<Mediator>();
         });
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         object pingException = new PingException();
 
-        await Should.ThrowAsync<NotImplementedException>(async () => await mediator.Send(pingException));
+        await Should.ThrowAsync<NotImplementedException>(async () => await med.Send(pingException));
     }
 
     [Fact]
@@ -287,11 +287,11 @@ public class ExceptionTests
             });
             cfg.For<IMediator>().Use<Mediator>();
         });
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         object nonRequest = new NonRequest();
 
-        var argumentException = await Should.ThrowAsync<ArgumentException>(async () => await mediator.Send(nonRequest));
+        var argumentException = await Should.ThrowAsync<ArgumentException>(async () => await med.Send(nonRequest));
         Assert.StartsWith("NonRequest does not implement IRequest", argumentException.Message);
     }
 
@@ -315,10 +315,10 @@ public class ExceptionTests
             });
             cfg.For<IMediator>().Use<Mediator>();
         });
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         PingException pingException = new PingException();
 
-        await Should.ThrowAsync<NotImplementedException>(async () => await mediator.Send(pingException));
+        await Should.ThrowAsync<NotImplementedException>(async () => await med.Send(pingException));
     }
 }

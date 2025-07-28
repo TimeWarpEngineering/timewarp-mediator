@@ -20,9 +20,9 @@ internal class Program
     private static Task Main(string[] args)
     {
         var writer = new WrappingWriter(Console.Out);
-        var mediator = BuildMediator(writer);
+        var med = BuildMediator(writer);
 
-        return Runner.Run(mediator, writer, "Castle.Windsor", true);
+        return Runner.Run(med, writer, "Castle.Windsor", true);
     }
 
     private static IMediator BuildMediator(WrappingWriter writer)
@@ -83,9 +83,9 @@ internal class Program
         container.Register(Component.For(typeof(IRequestPostProcessor<,>), typeof(ConstrainedRequestPostProcessor<,>)).NamedAutomatically("ConstrainedRequestPostProcessor"));
         container.Register(Component.For(typeof(INotificationHandler<>), typeof(ConstrainedPingedHandler<>)).NamedAutomatically("ConstrainedPingedHandler"));
 
-        var mediator = container.Resolve<IMediator>();
+        var med = container.Resolve<IMediator>();
 
-        return mediator;
+        return med;
     }
 
     private static object ResolveRequestExceptionHandler(IKernel k, Type type, Type service, object resolvedType, Type[] genericArguments)

@@ -41,12 +41,12 @@ public class NotificationPublisherTests
         });
         var serviceProvider = services.BuildServiceProvider();
 
-        var mediator = serviceProvider.GetRequiredService<IMediator>();
+        var med = serviceProvider.GetRequiredService<IMediator>();
 
         var timer = new Stopwatch();
         timer.Start();
 
-        await mediator.Publish(new Notification());
+        await med.Publish(new Notification());
 
         timer.Stop();
         
@@ -60,11 +60,11 @@ public class NotificationPublisherTests
         });
         serviceProvider = services.BuildServiceProvider();
 
-        mediator = serviceProvider.GetRequiredService<IMediator>();
+        med = serviceProvider.GetRequiredService<IMediator>();
 
         timer.Restart();
 
-        await mediator.Publish(new Notification());
+        await med.Publish(new Notification());
 
         timer.Stop();
         

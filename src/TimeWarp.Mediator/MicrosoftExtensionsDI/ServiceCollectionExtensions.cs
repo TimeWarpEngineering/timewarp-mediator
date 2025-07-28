@@ -19,7 +19,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers handlers and mediator types from the specified assemblies
+    /// Registers handlers and med types from the specified assemblies
     /// </summary>
     /// <param name="services">Service collection</param>
     /// <param name="configuration">The action used to configure the options</param>
@@ -35,7 +35,7 @@ public static class ServiceCollectionExtensions
     }
     
     /// <summary>
-    /// Registers handlers and mediator types from the specified assemblies
+    /// Registers handlers and med types from the specified assemblies
     /// </summary>
     /// <param name="services">Service collection</param>
     /// <param name="configuration">Configuration options</param>

@@ -44,7 +44,7 @@ public class CustomMediatorTests
     }
 
     [Fact]
-    public void Can_Call_AddMediatr_multiple_times()
+    public void Can_Call_AddMediator_multiple_times()
     {
         IServiceCollection services = new ServiceCollection();
         services.AddSingleton(new Logger());
@@ -54,11 +54,11 @@ public class CustomMediatorTests
             cfg.RegisterServicesFromAssemblyContaining(typeof(CustomMediatorTests));
         });
             
-        // Call AddMediatr again, this should NOT override our custom mediatr (With MS DI, last registration wins)
+        // Call AddMediator again, this should NOT override our custom mediator (With MS DI, last registration wins)
         services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining(typeof(CustomMediatorTests)));
 
         var provider = services.BuildServiceProvider();
-        var mediator = provider.GetRequiredService<IMediator>();
-        mediator.GetType().ShouldBe(typeof(MyCustomMediator));
+        var med = provider.GetRequiredService<IMediator>();
+        med.GetType().ShouldBe(typeof(MyCustomMediator));
     }
 }

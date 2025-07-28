@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace TimeWarp.Mediator;
 
 /// <summary>
-/// Send a request through the mediator pipeline to be handled by a single handler.
+/// Send a request through the med pipeline to be handled by a single handler.
 /// </summary>
 public interface ISender
 {

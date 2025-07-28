@@ -47,9 +47,9 @@ public class CreateStreamTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        var response = mediator.CreateStream(new Ping { Message = "Ping" });
+        var response = med.CreateStream(new Ping { Message = "Ping" });
         int i = 0;
         await foreach (Pong result in response)
         {
@@ -79,10 +79,10 @@ public class CreateStreamTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
         object request = new Ping { Message = "Ping" };
-        var response = mediator.CreateStream(request);
+        var response = med.CreateStream(request);
         int i = 0;
         await foreach (Pong? result in response)
         {
@@ -112,8 +112,8 @@ public class CreateStreamTests
             cfg.For<ISender>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<ISender>();
-        var response = mediator.CreateStream(new Ping { Message = "Ping" });
+        var med = container.GetInstance<ISender>();
+        var response = med.CreateStream(new Ping { Message = "Ping" });
         int i = 0;
         await foreach (Pong result in response)
         {
@@ -136,9 +136,9 @@ public class CreateStreamTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        Should.Throw<ArgumentNullException>(() => mediator.CreateStream((Ping) null!));
+        Should.Throw<ArgumentNullException>(() => med.CreateStream((Ping) null!));
     }
 
     [Fact]
@@ -149,8 +149,8 @@ public class CreateStreamTests
             cfg.For<IMediator>().Use<Mediator>();
         });
 
-        var mediator = container.GetInstance<IMediator>();
+        var med = container.GetInstance<IMediator>();
 
-        Should.Throw<ArgumentNullException>(() => mediator.CreateStream((object) null!));
+        Should.Throw<ArgumentNullException>(() => med.CreateStream((object) null!));
     }
 }
