@@ -1,6 +1,8 @@
 // Modified by Steven T. Cramer
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using TimeWarp.Mediator;
 using TimeWarp.Mediator.Pipeline;
 using TimeWarp.Mediator.Registration;
@@ -55,5 +57,54 @@ public static class ServiceCollectionExtensions
         ServiceRegistrar.AddRequiredServices(services, configuration);
 
         return services;
+    }
+
+    /// <summary>
+    /// Gets information about the registered Mediator pipeline components (preprocessors, behaviors, and postprocessors).
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <returns>A string containing the formatted pipeline information</returns>
+    public static string GetPipelineInfo(this IServiceCollection services)
+    {
+        List<string> preprocessors = GetComponentOrder(services, typeof(IRequestPreProcessor<>));
+        List<string> behaviors = GetComponentOrder(services, typeof(IPipelineBehavior<,>));
+        List<string> postprocessors = GetComponentOrder(services, typeof(IRequestPostProcessor<,>));
+
+        var message = new StringBuilder("TimeWarp Mediator Pipeline Registrations:");
+        message.AppendLine();
+        message.AppendLine();
+        
+        AppendComponentOrder(message, "Preprocessors", preprocessors);
+        AppendComponentOrder(message, "Behaviors", behaviors);
+        AppendComponentOrder(message, "Postprocessors", postprocessors);
+
+        return message.ToString();
+    }
+
+    private static List<string> GetComponentOrder(IServiceCollection services, Type componentType)
+    {
+        return services
+            .Where(sd => sd.ServiceType.IsGenericType && 
+                sd.ServiceType.GetGenericTypeDefinition() == componentType)
+            .Select(sd => sd.ImplementationType?.Name ?? "Unknown")
+            .Select(name => name.Split('`')[0])
+            .ToList();
+    }
+
+    private static void AppendComponentOrder(StringBuilder message, string componentType, IReadOnlyList<string> order)
+    {
+        message.AppendLine($"{componentType}:");
+        if (order.Count == 0)
+        {
+            message.AppendLine("  (none)");
+        }
+        else
+        {
+            for (int i = 0; i < order.Count; i++)
+            {
+                message.AppendLine($"  {i + 1}. {order[i]}");
+            }
+        }
+        message.AppendLine();
     }
 }

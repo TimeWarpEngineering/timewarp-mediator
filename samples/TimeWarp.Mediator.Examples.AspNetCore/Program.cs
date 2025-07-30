@@ -35,6 +35,10 @@ public static class Program
         services.AddScoped(typeof(IRequestPostProcessor<,>), typeof(GenericRequestPostProcessor<,>));
         services.AddScoped(typeof(IStreamPipelineBehavior<,>), typeof(GenericStreamPipelineBehavior<,>));
 
+        // Demonstrate GetPipelineInfo extension
+        var pipelineInfo = services.GetPipelineInfo();
+        writer.WriteLine(pipelineInfo);
+
         var provider = services.BuildServiceProvider();
 
         return provider.GetRequiredService<IMediator>();
