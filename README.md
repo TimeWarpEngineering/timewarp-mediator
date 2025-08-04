@@ -1,7 +1,28 @@
 TimeWarp Mediator
 =================
 
-TODO:  New Readme content.
+[![CI](https://github.com/TimeWarpEngineering/timewarp-mediator/workflows/CI/badge.svg)](https://github.com/TimeWarpEngineering/timewarp-mediator/actions)
+[![NuGet](https://img.shields.io/nuget/v/TimeWarp.Mediator.svg)](https://www.nuget.org/packages/TimeWarp.Mediator)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/TimeWarp.Mediator.svg)](https://www.nuget.org/packages/TimeWarp.Mediator)
+
+Simple, unambitious mediator implementation in .NET
+
+In-process messaging with no dependencies.
+
+Supports request/response, commands, queries, notifications and events, synchronous and async with intelligent dispatching via C# generic variance.
+
+## About This Fork
+
+TimeWarp.Mediator is a fork of the excellent [MediatR](https://github.com/jbogard/MediatR) library by Jimmy Bogard. We created this fork to:
+
+- ✅ Correct the spelling from "MediatR" to "Mediator"
+- ✅ Release under The Unlicense for maximum freedom
+- ✅ Maintain full API compatibility with MediatR
+- ✅ Add helpful diagnostic tools like `GetPipelineInfo()`
+
+### Migration from MediatR
+
+Migrating from MediatR is straightforward - see our [migration guide](./migration.md) for step-by-step instructions.
 
 ---
 
