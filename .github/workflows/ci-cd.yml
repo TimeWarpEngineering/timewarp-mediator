@@ -41,7 +41,7 @@ jobs:
           echo "Checking if TimeWarp.Mediator $VERSION is already published..."
           
           # Check TimeWarp.Mediator using package search
-          if dotnet package search TimeWarp.Mediator --exact-match --prerelease | grep -q "$VERSION"; then
+          if dotnet package search TimeWarp.Mediator --exact-match --prerelease | grep -E "\| $VERSION \s*\|" | grep -q .; then
             echo "⚠️ WARNING: TimeWarp.Mediator $VERSION is already published to NuGet.org"
             echo "❌ This version cannot be republished. Please increment the version in Directory.Build.props"
             exit 1
@@ -50,7 +50,7 @@ jobs:
           fi
           
           # Check TimeWarp.Mediator.Contracts using package search
-          if dotnet package search TimeWarp.Mediator.Contracts --exact-match --prerelease | grep -q "$VERSION"; then
+          if dotnet package search TimeWarp.Mediator.Contracts --exact-match --prerelease | grep -E "\| $VERSION \s*\|" | grep -q .; then
             echo "⚠️ WARNING: TimeWarp.Mediator.Contracts $VERSION is already published to NuGet.org"
             echo "❌ This version cannot be republished. Please increment the version in Directory.Build.props"
             exit 1
