@@ -1,5 +1,7 @@
 # Source-Generated AOT Rewrite — Analysis
 
+> **⚠ Superseded** by [`2026-06-17-source-gen-aot-rewrite-spec.md`](./2026-06-17-source-gen-aot-rewrite-spec.md) (consolidated single source of truth). Kept for history — this was the initial option survey.
+
 **Date:** 2026-06-17  
 **Context:** Brainstorm for rewriting TimeWarp.Mediator with source generators and Native AOT compatibility, using [martinothamar/Mediator](https://github.com/martinothamar/Mediator) as a baseline and [TimeWarp.Nuru](https://github.com/TimeWarpEngineering/timewarp-nuru) as the bar for how far to push compile-time code generation.
 

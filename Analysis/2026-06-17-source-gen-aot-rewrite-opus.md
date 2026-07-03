@@ -1,5 +1,7 @@
 # The Vanishing Mediator — A Bold Source-Gen / AOT Design
 
+> **⚠ Superseded** by [`2026-06-17-source-gen-aot-rewrite-spec.md`](./2026-06-17-source-gen-aot-rewrite-spec.md) (consolidated single source of truth). Kept for history — the linker metaphor, MessageGraph IR, and profile model are carried forward into the spec.
+
 **Date:** 2026-06-17
 **Author:** Opus 4.8 brainstorm
 **Status:** Revised 2026-06-17 after Composer review — see [`composer-feedback-for-opus.md`](../.agents/collaboration/2026-06-17-source-gen-aot-rewrite/composer-feedback-for-opus.md) and [`opus-response-for-composer.md`](../.agents/collaboration/2026-06-17-source-gen-aot-rewrite/opus-response-for-composer.md). Interceptors and "vanishing" demoted from default to the **Link profile**; the **MessageGraph** is the architectural center; DI defaults to **scope-resolved**.

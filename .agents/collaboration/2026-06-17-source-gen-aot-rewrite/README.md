@@ -7,8 +7,10 @@
 
 | File | Author | Role |
 |------|--------|------|
-| [`Analysis/2026-06-17-source-gen-aot-rewrite.md`](../../../Analysis/2026-06-17-source-gen-aot-rewrite.md) | Composer (initial) | Broad survey of ideas |
-| [`Analysis/2026-06-17-source-gen-aot-rewrite-opus.md`](../../../Analysis/2026-06-17-source-gen-aot-rewrite-opus.md) | Opus | Vanishing mediator / linker thesis |
+| [`Analysis/…-rewrite-spec.md`](../../../Analysis/2026-06-17-source-gen-aot-rewrite-spec.md) | **Fable (consolidation)** | **★ Single source of truth — read this to act** |
+| [`Analysis/2026-06-17-source-gen-aot-rewrite.md`](../../../Analysis/2026-06-17-source-gen-aot-rewrite.md) | Composer (initial) | Broad survey of ideas (superseded) |
+| [`Analysis/2026-06-17-source-gen-aot-rewrite-opus.md`](../../../Analysis/2026-06-17-source-gen-aot-rewrite-opus.md) | Opus | Vanishing mediator / linker thesis (superseded) |
+| [`Analysis/2026-06-17-source-gen-aot-rewrite-grok.md`](../../../Analysis/2026-06-17-source-gen-aot-rewrite-grok.md) | Grok | Consumer requirements: State + Architecture (superseded) |
 
 ## Feedback in this thread
 
@@ -25,10 +27,15 @@
 | 4 | Call-graph pruning | **Off by default**; opt-in, manifest-logged, strict-mode-checked |
 | 5 | M1 scope | Composer's revised M1 table — adopted (see opus response) |
 
-Architectural center agreed: **the MessageGraph IR**, with `Mediator` + manifest as the always-on emitters and interceptors as an optional second emitter from the same graph. The opus analysis doc has been revised to match.
+Architectural center agreed: **the MessageGraph IR**, with `Mediator` + manifest as the always-on emitters and interceptors as an optional second emitter from the same graph.
 
-## Open / next
+**Consolidated (Fable, 2026-07-03):** the Composer/Opus/Grok docs + this thread are merged into [`Analysis/…-rewrite-spec.md`](../../../Analysis/2026-06-17-source-gen-aot-rewrite-spec.md). It folds in the Grok consumer requirements (which independently confirm the "keep a real `ISender` object" decision — State's re-entrancy demands it) and promotes four hard problems to explicit design work.
 
-- Concrete M1 spec (generator stages, discovery + membership model, exact generated output, diagnostics catalog, test/benchmark harness).
+## Open / next (tracked in spec §12)
+
+- **OQ-A** Interception across generators — protocol between State's generator, the mediator generator, and Nuru's (in `dev-cli`).
+- **OQ-B** Scoped-behavior composition — golden-file parity with State's `Reverse().Aggregate` stack.
+- **OQ-C** Exception cascade + attribute-driven behaviors (`[TrackAction]`).
+- **OQ-D** AOT-cleanliness as a build gate (no `NoWarn` on IL2026/IL3050), not an aspiration.
 - Scoped-sender (`ISender<TScope>`) emission design.
 - Whether `TimeWarp.ServiceGen` leads or follows Mediator (Nuru tasks 443/444 sequencing).
