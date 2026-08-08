@@ -20,9 +20,9 @@ includes this migration for free.
 
 ## Checklist
 
-- [ ] Add `id-token: write` (with `contents: read`) permissions to the publish job
-- [ ] Add `nuget/login@v1` gated on the publish condition
-- [ ] Replace the stored-secret `--api-key` with the login step output
+- [x] Add `id-token: write` (with `contents: read`) permissions to the publish job
+- [x] Add `nuget/login@v1` gated on the publish condition
+- [x] Replace the stored-secret `--api-key` with the login step output
 - [ ] Verify the publish path end-to-end on the next release
 - [ ] AFTER verified: operator revokes the long-lived NuGet key and deletes the GitHub secret (org-wide revocation tracked in nuru 458-009)
 
@@ -67,3 +67,15 @@ Reference: timewarp-nuru `.github/workflows/workflow.yml`
 ## Session
 
 Orchestration: grok session (2026-08-08)
+
+### Progress (2026-08-08) — implementer
+
+Implemented minimal OIDC migration in `.github/workflows/ci-cd.yml` job `build-and-publish`:
+- Job `permissions: contents: read` + `id-token: write`
+- Gated `nuget/login@v1` (`user: TimeWarp.Enterprises`, `id: nuget-login`) before publish
+- Publish uses `steps.nuget-login.outputs.NUGET_API_KEY` (no `secrets.NUGET_API_KEY`)
+- Docs: `Documentation/Overview.md` Setup updated for trusted publishing
+
+Static verify: no `secrets.NUGET_API_KEY` in active workflow; login + id-token + steps.nuget-login present; both login and publish gated on `github.event_name == 'release'`.
+
+Left unchecked: live release verification; secret/key revocation after success.

@@ -19,6 +19,9 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for NuGet Trusted Publishing (OIDC)
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -58,11 +61,18 @@ jobs:
             echo "✅ TimeWarp.Mediator.Contracts $VERSION is not yet published"
           fi
 
+      - name: NuGet login (OIDC Trusted Publishing)
+        if: github.event_name == 'release'
+        id: nuget-login
+        uses: nuget/login@v1
+        with:
+          user: TimeWarp.Enterprises
+
       - name: Publish to NuGet.org (Releases only)
         if: github.event_name == 'release'
         run: |
           dotnet nuget push ./Artifacts/*.nupkg \
-            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
         env:

@@ -64,8 +64,8 @@ gh release create v12.5.0 --generate-notes
 ## Usage
 
 ### Setup
-1. Configure `MYGET_TIMEWARP_MEDIATOR_CI_API_KEY` and `NUGET_API_KEY` in GitHub Secrets
-2. MyGet feed is already configured in workflow
+1. Configure `MYGET_TIMEWARP_MEDIATOR_CI_API_KEY` in GitHub Secrets (MyGet CI feed)
+2. NuGet.org releases use **Trusted Publishing (OIDC)** — no long-lived `NUGET_API_KEY` secret. The `build-and-publish` job in `ci-cd.yml` exchanges a GitHub OIDC token via `nuget/login@v1` (owner `TimeWarp.Enterprises`) when a GitHub Release is published. Ensure the NuGet.org trusted-publishing policy for this repo targets workflow `ci-cd.yml`.
 
 ### CI Prereleases
 1. Push to `master`
