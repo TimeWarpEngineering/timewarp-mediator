@@ -29,3 +29,41 @@ includes this migration for free.
 ## Notes
 
 Created from the timewarp-nuru 458-009 rollout session (2026-08-08).
+
+### Implementation plan (2026-08-08)
+
+**Decision:** minimal migration of existing publish job — full 458 reusable-workflow conversion is NOT imminent for this repo (mediator is a nonconformer in wave 4 of 458; no reusable workflow host ready).
+
+#### Target end state
+On `release: published`:
+1. Job has `contents: read` + `id-token: write`
+2. `nuget/login@v1` with `user: TimeWarp.Enterprises` (OIDC → short-lived key)
+3. `dotnet nuget push` uses `${{ steps.nuget-login.outputs.NUGET_API_KEY }}`
+4. No `secrets.NUGET_API_KEY` in the active workflow
+
+#### Files
+- **Required:** `.github/workflows/ci-cd.yml` job `build-and-publish`:
+  - A. Add job `permissions: contents: read` + `id-token: write`
+  - B. Insert gated `nuget/login@v1` (id: nuget-login, user: TimeWarp.Enterprises) before publish step, `if: github.event_name == 'release'`
+  - C. Replace `--api-key ${{ secrets.NUGET_API_KEY }}` with `steps.nuget-login.outputs.NUGET_API_KEY`
+- **Optional:** `Documentation/Overview.md` if it still documents configuring NUGET_API_KEY secret
+- **Out of scope:** *.disabled workflows, Push.ps1, MyGet, full 458 conversion, secret/key revocation (operator after verify / nuru 458-009)
+
+#### Order
+1. Preflight: confirm NuGet.org trusted-publishing policy for this repo binds to workflow `ci-cd.yml` / owner TimeWarp.Enterprises
+2. Implement YAML edits (+ optional docs)
+3. Static verify: no secrets.NUGET_API_KEY in active workflow; login+permissions present; both steps gated on release
+4. Merge to master
+5. Live verify on next real release (new version past 13.0.0)
+6. AFTER success: operator revokes long-lived key + deletes GitHub secret (org-wide 458-009)
+
+#### Verify now vs later
+- Now: YAML static checks; policy filename match
+- Only on release: OIDC login success + actual package push
+- After OIDC success: revoke secret
+
+Reference: timewarp-nuru `.github/workflows/workflow.yml`
+
+## Session
+
+Orchestration: grok session (2026-08-08)
