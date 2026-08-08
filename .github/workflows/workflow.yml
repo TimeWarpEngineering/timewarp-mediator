@@ -1,4 +1,4 @@
-name: NuGet Publish
+name: CI/CD
 
 on:
   push:
@@ -14,7 +14,20 @@ on:
       - 'src/**'
       - '.github/workflows/**'
   release:
-    types: [published] # Triggered when a release is published via GitHub Releases UI or gh CLI
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Pipeline mode. merge = build and test only (default). release = break-glass publish; also requires confirm.'
+        type: choice
+        options:
+          - merge
+          - release
+        default: merge
+      confirm:
+        description: 'Break-glass guard: type the word release to confirm publishing when mode is release. Ignored otherwise.'
+        type: string
+        default: ''
 
 jobs:
   build-and-publish:
@@ -33,12 +46,18 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Validate break-glass confirmation
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm != 'release'
+        run: |
+          echo "::error::mode=release requires confirm=release. Refusing to run a break-glass release."
+          exit 1
+
       - name: Build and Test Both Packages
         run: ./Build.ps1
         shell: pwsh
 
       - name: Check if version already published (Releases only)
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
         run: |
           VERSION=$(grep '<Version>' Directory.Build.props | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
           echo "Checking if TimeWarp.Mediator $VERSION is already published..."
@@ -62,14 +81,14 @@ jobs:
           fi
 
       - name: NuGet login (OIDC Trusted Publishing)
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
         id: nuget-login
         uses: nuget/login@v1
         with:
           user: TimeWarp.Enterprises
 
       - name: Publish to NuGet.org (Releases only)
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
         run: |
           dotnet nuget push ./Artifacts/*.nupkg \
             --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} \
@@ -79,6 +98,7 @@ jobs:
           DOTNET_NUGET_SIGNATURE_VERIFICATION: false
 
       - name: Upload Artifacts
+        if: always() && github.event_name != 'release' && !(github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
         uses: actions/upload-artifact@v4
         with:
           name: Packages-${{ github.run_number }}
