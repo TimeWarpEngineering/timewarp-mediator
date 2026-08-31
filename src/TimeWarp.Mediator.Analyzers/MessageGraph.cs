@@ -41,13 +41,15 @@ public sealed class RequestBinding
         INamedTypeSymbol responseType,
         INamedTypeSymbol handlerType,
         bool isUnitResponse,
-        ImmutableArray<INamedTypeSymbol> closedBehaviors)
+        ImmutableArray<INamedTypeSymbol> closedBehaviors,
+        INamedTypeSymbol? scopeType)
     {
         RequestType = requestType;
         ResponseType = responseType;
         HandlerType = handlerType;
         IsUnitResponse = isUnitResponse;
         ClosedBehaviors = closedBehaviors;
+        ScopeType = scopeType;
     }
 
     public INamedTypeSymbol RequestType { get; }
@@ -59,30 +61,43 @@ public sealed class RequestBinding
     public bool IsUnitResponse { get; }
 
     public ImmutableArray<INamedTypeSymbol> ClosedBehaviors { get; }
+
+    /// <summary>
+    /// Pipeline marker type, or null for the unscoped default pipeline.
+    /// </summary>
+    public INamedTypeSymbol? ScopeType { get; }
 }
 
 public sealed class NotificationBinding
 {
     public NotificationBinding(
         INamedTypeSymbol notificationType,
-        ImmutableArray<INamedTypeSymbol> handlerTypes)
+        ImmutableArray<INamedTypeSymbol> handlerTypes,
+        INamedTypeSymbol? scopeType)
     {
         NotificationType = notificationType;
         HandlerTypes = handlerTypes;
+        ScopeType = scopeType;
     }
 
     public INamedTypeSymbol NotificationType { get; }
 
     public ImmutableArray<INamedTypeSymbol> HandlerTypes { get; }
+
+    /// <summary>
+    /// Pipeline marker type, or null for the unscoped default pipeline.
+    /// </summary>
+    public INamedTypeSymbol? ScopeType { get; }
 }
 
 public sealed class BehaviorRegistration
 {
-    public BehaviorRegistration(INamedTypeSymbol behaviorType, int order, int sourceIndex)
+    public BehaviorRegistration(INamedTypeSymbol behaviorType, int order, int sourceIndex, INamedTypeSymbol? scopeType)
     {
         BehaviorType = behaviorType;
         Order = order;
         SourceIndex = sourceIndex;
+        ScopeType = scopeType;
     }
 
     public INamedTypeSymbol BehaviorType { get; }
@@ -90,4 +105,9 @@ public sealed class BehaviorRegistration
     public int Order { get; }
 
     public int SourceIndex { get; }
+
+    /// <summary>
+    /// Pipeline marker type, or null for the unscoped default pipeline.
+    /// </summary>
+    public INamedTypeSymbol? ScopeType { get; }
 }

@@ -7,6 +7,7 @@
 // on a type, MediatorAssemblies listing, or MSBuild TimeWarpMediatorAssembly=true (set by the
 // generator package for hosts). Referenced assemblies join only with [assembly: MediatorAssembly]
 // or by being listed via MediatorAssembliesAttribute marker types. No marker → not linked.
+// Pipeline assignment is MediatorScopeAttribute (marker type), not MediatorModule's string name.
 #endregion
 
 using System;
@@ -23,6 +24,7 @@ public sealed class Membership
     public const string AssembliesAttributeMetadataName = "TimeWarp.Mediator.MediatorAssembliesAttribute";
     public const string ModuleAttributeMetadataName = "TimeWarp.Mediator.MediatorModuleAttribute";
     public const string BehaviorAttributeMetadataName = "TimeWarp.Mediator.MediatorBehaviorAttribute";
+    public const string ScopeAttributeMetadataName = "TimeWarp.Mediator.MediatorScopeAttribute";
     public const string MsBuildPropertyName = "build_property.TimeWarpMediatorAssembly";
     public const string ProfilePropertyName = "build_property.TimeWarpMediatorProfile";
     public const string NamespacePropertyName = "build_property.TimeWarpMediatorNamespace";

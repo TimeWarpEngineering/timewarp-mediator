@@ -8,6 +8,9 @@
 // referenced projects. Order matches MediatR GetServices().Reverse().Aggregate: first listed is outermost.
 // Member assemblies are ordered by name before SourceIndex so tie-breaking is deterministic.
 // TryCloseBehavior returns null when the constructed type is not IPipelineBehavior<TRequest, TResponse>.
+// Pipeline membership is [MediatorScope(typeof(TScope))] on handler, request, containing type, or
+// assembly. Unscoped (no attribute) is the default ISender/IPublisher pipeline. Behaviors with a
+// Scope named argument weave only that pipeline; unscoped behaviors never run on scoped requests.
 #endregion
 
 using System.Collections.Generic;
@@ -139,11 +142,30 @@ public static class MessageGraphBuilder
             bool isUnit = unitType is not null
                 && SymbolEqualityComparer.Default.Equals(responseType, unitType);
 
+            INamedTypeSymbol? handlerScope = ResolveScope(handlerType);
+            INamedTypeSymbol? requestScope = ResolveScope(requestType);
+            if (handlerScope is not null
+                && requestScope is not null
+                && !SymbolEqualityComparer.Default.Equals(handlerScope, requestScope))
+            {
+                diagnostics.Add(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.ScopeMismatch,
+                        GetSourceLocation(handlerType),
+                        handlerType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        handlerScope.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        requestType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        requestScope.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+            }
+
+            INamedTypeSymbol? scopeType = handlerScope ?? requestScope;
+
             ImmutableArray<INamedTypeSymbol> closedBehaviors = CloseBehaviors(
                 behaviors,
                 requestType,
                 responseType,
-                pipelineBehavior2);
+                pipelineBehavior2,
+                scopeType);
 
             requestBindings.Add(
                 new RequestBinding(
@@ -151,16 +173,47 @@ public static class MessageGraphBuilder
                     responseType,
                     handlerType,
                     isUnit,
-                    closedBehaviors));
+                    closedBehaviors,
+                    scopeType));
         }
 
         ImmutableArray<NotificationBinding>.Builder notificationBindings = ImmutableArray.CreateBuilder<NotificationBinding>();
-        foreach (KeyValuePair<INamedTypeSymbol, List<INamedTypeSymbol>> pair in handlersByNotification.OrderBy(p => p.Key.ToDisplayString(), System.StringComparer.Ordinal))
+        List<NotificationGroup> groupedNotifications = new();
+        foreach (KeyValuePair<INamedTypeSymbol, List<INamedTypeSymbol>> pair in handlersByNotification)
+        {
+            foreach (INamedTypeSymbol handler in pair.Value)
+            {
+                INamedTypeSymbol? scopeType = ResolveScope(handler) ?? ResolveScope(pair.Key);
+                NotificationGroup? bucket = null;
+                foreach (NotificationGroup candidate in groupedNotifications)
+                {
+                    if (SymbolEqualityComparer.Default.Equals(candidate.Notification, pair.Key)
+                        && SymbolEqualityComparer.Default.Equals(candidate.Scope, scopeType))
+                    {
+                        bucket = candidate;
+                        break;
+                    }
+                }
+
+                if (bucket is null)
+                {
+                    bucket = new NotificationGroup(pair.Key, scopeType);
+                    groupedNotifications.Add(bucket);
+                }
+
+                bucket.Handlers.Add(handler);
+            }
+        }
+
+        foreach (NotificationGroup grouped in groupedNotifications
+            .OrderBy(g => g.Notification.ToDisplayString(), System.StringComparer.Ordinal)
+            .ThenBy(g => g.Scope?.ToDisplayString() ?? string.Empty, System.StringComparer.Ordinal))
         {
             notificationBindings.Add(
                 new NotificationBinding(
-                    pair.Key,
-                    pair.Value.ToImmutableArray()));
+                    grouped.Notification,
+                    grouped.Handlers.ToImmutableArray(),
+                    grouped.Scope));
         }
 
         return new MessageGraph(
@@ -289,13 +342,22 @@ public static class MessageGraphBuilder
                     order = orderValue;
                 }
 
+                INamedTypeSymbol? scopeType = null;
+                foreach (KeyValuePair<string, TypedConstant> named in attribute.NamedArguments)
+                {
+                    if (named.Key == "Scope" && named.Value.Value is INamedTypeSymbol namedScope)
+                    {
+                        scopeType = namedScope;
+                    }
+                }
+
                 if (pipelineBehavior2 is not null && !ImplementsGeneric(behaviorType, pipelineBehavior2)
                     && !ImplementsGeneric(behaviorType.OriginalDefinition, pipelineBehavior2))
                 {
                     continue;
                 }
 
-                list.Add(new BehaviorRegistration(behaviorType, order, sourceIndex));
+                list.Add(new BehaviorRegistration(behaviorType, order, sourceIndex, scopeType));
                 sourceIndex++;
             }
         }
@@ -310,11 +372,17 @@ public static class MessageGraphBuilder
         ImmutableArray<BehaviorRegistration> behaviors,
         INamedTypeSymbol requestType,
         INamedTypeSymbol responseType,
-        INamedTypeSymbol? pipelineBehavior2)
+        INamedTypeSymbol? pipelineBehavior2,
+        INamedTypeSymbol? requestScope)
     {
         ImmutableArray<INamedTypeSymbol>.Builder builder = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
         foreach (BehaviorRegistration registration in behaviors)
         {
+            if (!SymbolEqualityComparer.Default.Equals(registration.ScopeType, requestScope))
+            {
+                continue;
+            }
+
             INamedTypeSymbol? closed = TryCloseBehavior(registration.BehaviorType, requestType, responseType, pipelineBehavior2);
             if (closed is not null)
             {
@@ -323,6 +391,41 @@ public static class MessageGraphBuilder
         }
 
         return builder.ToImmutable();
+    }
+
+    internal static INamedTypeSymbol? ResolveScope(INamedTypeSymbol type)
+    {
+        for (INamedTypeSymbol? current = type; current is not null; current = current.ContainingType)
+        {
+            INamedTypeSymbol? typeScope = GetScopeFromAttributes(current.GetAttributes());
+            if (typeScope is not null)
+            {
+                return typeScope;
+            }
+        }
+
+        return type.ContainingAssembly is null
+            ? null
+            : GetScopeFromAttributes(type.ContainingAssembly.GetAttributes());
+    }
+
+    private static INamedTypeSymbol? GetScopeFromAttributes(System.Collections.Immutable.ImmutableArray<AttributeData> attributes)
+    {
+        foreach (AttributeData attribute in attributes)
+        {
+            if (attribute.AttributeClass?.ToDisplayString() != Membership.ScopeAttributeMetadataName)
+            {
+                continue;
+            }
+
+            if (attribute.ConstructorArguments.Length > 0
+                && attribute.ConstructorArguments[0].Value is INamedTypeSymbol scopeType)
+            {
+                return scopeType;
+            }
+        }
+
+        return null;
     }
 
     private static INamedTypeSymbol? TryCloseBehavior(
@@ -572,5 +675,21 @@ public static class MessageGraphBuilder
         }
 
         return builder.ToString().Trim('_');
+    }
+
+    private sealed class NotificationGroup
+    {
+        public NotificationGroup(INamedTypeSymbol notification, INamedTypeSymbol? scope)
+        {
+            Notification = notification;
+            Scope = scope;
+            Handlers = new List<INamedTypeSymbol>();
+        }
+
+        public INamedTypeSymbol Notification { get; }
+
+        public INamedTypeSymbol? Scope { get; }
+
+        public List<INamedTypeSymbol> Handlers { get; }
     }
 }

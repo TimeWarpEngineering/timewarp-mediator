@@ -73,7 +73,7 @@ Hosts get `[assembly: MediatorAssembly]` for free via the generator props. Domai
 
     dotnet add package TimeWarp.Mediator.Analyzers
 
-See [Documentation/m1-generated-mediator.md](./Documentation/m1-generated-mediator.md) and GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52) (epic **004**, task **004-001**). `ISender<TScope>` named pipelines are **004-002**.
+See [Documentation/m1-generated-mediator.md](./Documentation/m1-generated-mediator.md), [Documentation/m2-named-pipelines.md](./Documentation/m2-named-pipelines.md), and GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52) (epic **004**). Named pipelines: `ISender<TScope>` / `IPublisher<TScope>` with `[MediatorScope(typeof(TScope))]`.
 
 This package is useful in scenarios where your TimeWarp.Mediator contracts are in a separate assembly/project from handlers. Example scenarios include:
 - API contracts

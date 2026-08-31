@@ -26,3 +26,13 @@ public interface IPublisher
     Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
         where TNotification : INotification;
 }
+
+/// <summary>
+/// Publish through the named pipeline identified by <typeparamref name="TScope"/>.
+/// Unscoped <see cref="IPublisher"/> is the default pipeline (handlers with no
+/// <see cref="MediatorScopeAttribute"/>).
+/// </summary>
+/// <typeparam name="TScope">Marker type that names the pipeline (for example <c>ClientPipeline</c>).</typeparam>
+public interface IPublisher<TScope> : IPublisher
+{
+}

@@ -3,8 +3,8 @@
 **Date:** 2026-06-17
 **Status:** Consolidated single source of truth. **Supersedes** the three brainstorm docs (see [Provenance](#provenance)); read this one to act.
 **Epic:** 004 — Source-gen rewrite with `ISender<TScope>` named pipelines
-**Task (this milestone):** 004-001 — M1 generated Mediator, analyzer, and State golden-file
-**Next:** 004-002 — `ISender<TScope>` / `IPublisher<TScope>` named pipelines
+**Task (this milestone):** 004-002 — M2 `ISender<TScope>` / `IPublisher<TScope>` named pipelines
+**Shipped:** 004-001 — M1 generated Mediator, analyzer, and State golden-file
 **Consolidated by:** Fable, from the Composer / Opus / Grok analyses + the Composer↔Opus collaboration thread.
 **Decision context:** Clean break, major version. No obligation to preserve MediatR's runtime open-generic combinatorics, `MaxTypesClosing`, or assembly scanning. Edge cases become compile-time diagnostics.
 
@@ -204,12 +204,29 @@ Discovery is **membership-filtered** (a linker exports symbols explicitly), or m
 
 - `[assembly: MediatorAssemblies(typeof(OrdersMarker))]` (compile-time equivalent of `MediatorOptions.Assemblies = [typeof(OrdersMarker)]`), or
 - `[assembly: MediatorAssembly]`, or
-- `[MediatorModule("Orders")]` on a handler/message (also names a scope for scoped senders), or
+- `[MediatorModule("Orders")]` on a handler/message (graph membership for the declaring assembly; **not** a pipeline name), or
 - MSBuild `TimeWarpMediatorAssembly=true` (the generator package sets this for the host so apps do not need the attribute).
 
 **Confirmed membership rule (004-001):** a compilation is a graph member only when it opts in through one of the markers above. Referenced assemblies are **never** linked just because they appear in `ProjectReference` / `PackageReference`. They join only with `[assembly: MediatorAssembly]` or by being listed as a `MediatorAssemblies` marker type. No marker → not linked.
 
 Behaviors are listed explicitly with `[assembly: MediatorBehavior(typeof(MyBehavior<,>))]` on a member assembly. Attribute order (then optional `order:`) is the compile-time pipeline: first listed is outermost, matching MediatR `GetServices().Reverse().Aggregate`.
+
+### 9.1 Scoped senders (`ISender<TScope>`)
+
+Named pipelines are **marker types**, not strings. `TScope` is an empty class/struct (`ClientPipeline`, `ServerPipeline`). The generator emits a concrete `Sender_{TScope}` implementing `ISender<TScope>` and a `Publisher_{TScope}` implementing `IPublisher<TScope>`, each with its own type-switched dispatch table and behavior chain. Unscoped `ISender` / `IPublisher` / generated `Mediator` is the **default pipeline**.
+
+**Membership (how a handler or behavior is assigned to a scope):**
+
+1. `[MediatorScope(typeof(ClientPipeline))]` on the handler, request, or a containing type. Closest type wins.
+2. Else `[assembly: MediatorScope(typeof(ClientPipeline))]` as the default for types in that assembly that do not set their own.
+3. Else the type belongs to the unscoped default pipeline.
+4. Behaviors: `[assembly: MediatorBehavior(typeof(ClientOnly<,>), Scope = typeof(ClientPipeline))]`. Omitted `Scope` means the unscoped pipeline only. Unscoped behaviors never run on scoped requests; client behaviors never run on server requests.
+
+If a handler and its request both specify a scope and they differ, that is **TWM003** (build error). Binding scope is handler scope if present, otherwise request scope.
+
+**Unscoped vs scoped coexistence:** `AddGeneratedMediator()` registers only the unscoped sender/publisher/mediator and unscoped handlers. `AddGeneratedMediator<TScope>()` registers that pipeline independently. A host that only calls `AddGeneratedMediator()` cannot dispatch scoped requests (`NoHandlerException` on `Send(object)`; **TWM004** on a typed `ISender<TScope>.Send` of a request from another pipeline). Re-entrant `Send` stays in the same scope when the handler injects `ISender<TScope>`; injecting unscoped `ISender` is a different pipeline.
+
+**TimeWarp.State switch (later task, not this repo):** inject `ISender<ClientPipeline>` on the Blazor client and `ISender<ServerPipeline>` on the server. Do not share one `IMediator` and filter inside behaviors.
 
 ---
 
@@ -219,6 +236,8 @@ Ship **two packages**: an **analyzer-only** package for domain/library projects 
 
 - **TWM001** request with no handler — build error (kills MediatR's #1 support burden; red squiggle in the *domain* project).
 - **TWM002** duplicate handler for one command/request.
+- **TWM003** handler and request assigned to different `TScope` markers.
+- **TWM004** `ISender<TScope>.Send` of a request that is not a member of that pipeline.
 - **TWM-DI** scoped service emitted into a static field (profile safety).
 - Orphan behavior / orphan exception-handler (registered, matches nothing).
 - Cycle in the handler dependency graph.
@@ -296,7 +315,7 @@ The Nuru reference `NoWarn`s IL2026/IL3050 ("AOT warnings not yet implemented") 
 3. The `IncrementActionSet` + `StateTransactionBehavior` golden file matches today's `Reverse().Aggregate` semantics ([OQ-B](#oq-b-scoped-behavior-composition)).
 4. Benchmark reports **both** the generated-`Mediator` default *and* a `CallSiteInlining` prototype number, vs. the current `MakeGenericType` fork **and** martinothamar — gap documented honestly, not asserted.
 
-**Then:** streams + exception cascade; full scoped-sender (`ISender<TScope>`) emit; the interceptor and pruning profiles; the cross-generator protocol ([OQ-A](#oq-a-interception-across-generators)).
+**Then:** streams + exception cascade; the interceptor and pruning profiles; the cross-generator protocol ([OQ-A](#oq-a-interception-across-generators)). Scoped senders shipped in **004-002**.
 
 ---
 
