@@ -27,6 +27,7 @@ Design SSOT: `Analysis/2026-06-17-source-gen-aot-rewrite-spec.md` §14 (M1 table
 
 ### Implementation
 - [x] Analyzer package (TWM001, TWM002) usable on a library that does not run the generator
+- [ ] CI pack: `TimeWarp.Mediator.Analyzers` nupkg must have content (NU5017)
 - [x] Generator emits `Mediator` + `Send(object)` switch
 - [x] State golden-file: IncrementActionSet + StateTransactionBehavior
 - [x] AOT sample: EnableTrimAnalyzer + EnableAotAnalyzer + IsAotCompatible, warning-clean
@@ -50,11 +51,25 @@ Design SSOT: `Analysis/2026-06-17-source-gen-aot-rewrite-spec.md` §14 (M1 table
 - Pipeline default: compile-time-fixed order, scope-resolved instances at send (OQ-B in the spec).
 - Consumers of this package: TimeWarp.State (primary), then Nuru 443. Do not wait on 444.
 
+### Reopened 2026-09-01 — CI red on PR #53 (inbound)
+
+`ganda pr merge 53 --task-id 004-001` refused: **build-and-publish** failed.
+
+```
+error NU5017: Cannot create a package that has no dependencies nor content.
+[/home/runner/work/timewarp-mediator/timewarp-mediator/src/TimeWarp.Mediator.Analyzers/TimeWarp.Mediator.Analyzers.csproj]
+```
+
+Log also printed `Successfully created package '.../TimeWarp.Mediator.Analyzers.13.0.0.nupkg'` then NU5017 on the same csproj (likely a second pack / snupkg / empty pack). Tests passed (Analyzers 4, Mediator.Tests 163/2 skipped). Mediator + Contracts nupkgs built.
+
+**This slice:** make `Build.ps1` / CI pack produce a non-empty Analyzers nupkg (analyzer DLL in `analyzers/dotnet/cs` or equivalent). Push to the existing PR branch. Do not start 004-002. Do not merge.
+
 ## Session
 
 - Created: 2438044 (2026-08-31)
 - Implementer: grok session 2438044 (2026-08-31)
 - Review oracle: grok (2026-08-31); round-1 general 01a057c6-4895-7580-b307-f322776c2ca7; round-2 general 01a057cf-1c3e-7973-a604-b04431292981
+- Reopened: cockpit 2026-09-01 — PR #53 NU5017; dispatched back onto this id
 
 ## Results
 
