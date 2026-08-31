@@ -71,6 +71,7 @@ Log also printed `Successfully created package '.../TimeWarp.Mediator.Analyzers.
 - Review oracle: grok (2026-08-31); round-1 general 01a057c6-4895-7580-b307-f322776c2ca7; round-2 general 01a057cf-1c3e-7973-a604-b04431292981
 - Reopened: cockpit 2026-09-01 — PR #53 NU5017; dispatched back onto this id
 - Implementer: grok (2026-09-01) — NU5017 analyzer pack fix; session 01a058f1-1b82-76d3-aef4-e895f0b2e2e2
+- Review oracle: grok (2026-09-01) round-3 general 01a058fc-c569-7ee3-a5b5-7c7929ecd0ce; disposition clean
 
 ## Results
 
@@ -171,9 +172,10 @@ Expect: `Build.ps1` packs all four nupkgs; existing suite 163 passed / 2 skipped
 
 ### Review
 
-- **Effort:** 1 (general only). **Rounds:** 2.
-- **Roster:** general (round 1: 01a057c6-4895-7580-b307-f322776c2ca7; round 2: 01a057cf-1c3e-7973-a604-b04431292981).
+- **Effort:** 1 (general only). **Rounds:** 3.
+- **Roster:** general (round 1: 01a057c6-4895-7580-b307-f322776c2ca7; round 2: 01a057cf-1c3e-7973-a604-b04431292981; round 3: 01a058fc-c569-7ee3-a5b5-7c7929ecd0ce).
 - **Final counts:** bug 0 open / 1 fixed; suggestion 0 open / 3 fixed; nit 0. Open = 0.
 - **Disposition:** **clean** (`review/disposition.md`).
-- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
-- Round-1 findings fixed on this id: M1 `TryCloseBehavior` null on failed `ImplementsPipeline` + `UnitOnlyBehavior` regression; M2 embedded `MediatorManifest` v1 (no loose file / unused path props); M3 deterministic assembly-name `SourceIndex`; M4 document Aot skipping behaviors. No wontfix, no escalation.
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
+- Round-1 findings fixed on this id: M1 `TryCloseBehavior` null on failed `ImplementsPipeline` + `UnitOnlyBehavior` regression; M2 embedded `MediatorManifest` v1 (no loose file / unused path props); M3 deterministic assembly-name `SourceIndex`; M4 document Aot skipping behaviors.
+- Round 3 (pack-fix reopen): no new findings. `IncludeSymbols=false` on Analyzers/Generators closes NU5017; `Build.ps1` asserts analyzer DLLs; Mediator/Contracts still snupkg. M1–M4 still fixed. No wontfix, no escalation.
