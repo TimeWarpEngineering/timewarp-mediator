@@ -26,23 +26,17 @@ public sealed class Membership
     public const string MsBuildPropertyName = "build_property.TimeWarpMediatorAssembly";
     public const string ProfilePropertyName = "build_property.TimeWarpMediatorProfile";
     public const string NamespacePropertyName = "build_property.TimeWarpMediatorNamespace";
-    public const string ProjectDirPropertyName = "build_property.ProjectDir";
-    public const string IntermediateOutputPathPropertyName = "build_property.IntermediateOutputPath";
 
     private Membership(
         IAssemblySymbol compilationAssembly,
         ImmutableHashSet<IAssemblySymbol> memberAssemblies,
         string profile,
-        string generatedNamespace,
-        string? projectDir,
-        string? intermediateOutputPath)
+        string generatedNamespace)
     {
         CompilationAssembly = compilationAssembly;
         MemberAssemblies = memberAssemblies;
         Profile = profile;
         GeneratedNamespace = generatedNamespace;
-        ProjectDir = projectDir;
-        IntermediateOutputPath = intermediateOutputPath;
     }
 
     public IAssemblySymbol CompilationAssembly { get; }
@@ -52,10 +46,6 @@ public sealed class Membership
     public string Profile { get; }
 
     public string GeneratedNamespace { get; }
-
-    public string? ProjectDir { get; }
-
-    public string? IntermediateOutputPath { get; }
 
     public bool Includes(ISymbol symbol)
     {
@@ -85,8 +75,6 @@ public sealed class Membership
         string profile = ReadProperty(optionsProvider, compilation, ProfilePropertyName) ?? "Host";
         string generatedNamespace = ReadProperty(optionsProvider, compilation, NamespacePropertyName)
             ?? "TimeWarp.Mediator.Generated";
-        string? projectDir = ReadProperty(optionsProvider, compilation, ProjectDirPropertyName);
-        string? intermediateOutputPath = ReadProperty(optionsProvider, compilation, IntermediateOutputPathPropertyName);
 
         bool msBuildMember = IsTrue(ReadProperty(optionsProvider, compilation, MsBuildPropertyName));
         bool attributeMember = HasAssemblyAttribute(compilation.Assembly, AssemblyAttributeMetadataName)
@@ -130,9 +118,7 @@ public sealed class Membership
             compilation.Assembly,
             memberBuilder.ToImmutable(),
             profile,
-            generatedNamespace,
-            projectDir,
-            intermediateOutputPath);
+            generatedNamespace);
         return true;
     }
 

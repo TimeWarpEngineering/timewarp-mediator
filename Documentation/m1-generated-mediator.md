@@ -5,7 +5,7 @@ Source-generated dispatcher, analyzer, and State-shaped golden file for epic **0
 ## What shipped
 
 - `TimeWarp.Mediator.Analyzers` — TWM001 (request with no handler), TWM002 (duplicate handler). Safe on a library that does **not** run the generator. The library must opt in with `[assembly: MediatorAssembly]`.
-- `TimeWarp.Mediator.Generators` — emits `sealed TimeWarp.Mediator.Generated.Mediator : IMediator`, monomorphic `Send`, `Send(object)` switch, `mediator.manifest.json` v1, and `AddGeneratedMediator()` (Host profile).
+- `TimeWarp.Mediator.Generators` — emits `sealed TimeWarp.Mediator.Generated.Mediator : IMediator`, monomorphic `Send`, `Send(object)` switch, `MediatorManifest` v1 (embedded JSON const; source generators cannot write a loose `mediator.manifest.json`), and `AddGeneratedMediator()` (Host profile). Profile `Aot` uses ServiceGen static fields and does **not** weave `[assembly: MediatorBehavior]` into `Dispatch_*` (Host/State is the scoped pipeline path).
 - Contracts: `IAction` / `IActionHandler` / `ActionHandler` (`ValueTask`), `ICommand` / `IQuery` + handlers, membership attributes, `NoHandlerException`.
 - `ISender`, `IPublisher`, `IMediator`, handler and pipeline interfaces live in `TimeWarp.Mediator.Contracts` (type-forwarded from `TimeWarp.Mediator`) so the AOT sample does not reference the reflection assembly.
 - State golden file: `IncrementActionSet` + `StateTransactionBehavior` (scoped) matching `Reverse().Aggregate` (short-circuit, clone/restore, `ExceptionNotification`).

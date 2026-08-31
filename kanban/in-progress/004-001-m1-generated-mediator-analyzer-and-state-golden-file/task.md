@@ -54,6 +54,7 @@ Design SSOT: `Analysis/2026-06-17-source-gen-aot-rewrite-spec.md` §14 (M1 table
 
 - Created: 2438044 (2026-08-31)
 - Implementer: grok session 2438044 (2026-08-31)
+- Review oracle: grok (2026-08-31); round-1 general 01a057c6-4895-7580-b307-f322776c2ca7; round-2 general 01a057cf-1c3e-7973-a604-b04431292981
 
 ## Results
 
@@ -89,7 +90,7 @@ M1 rewrite core: analyzer + generator + State golden-file + AOT sample. Reflecti
 ### Test outcomes
 
 - Analyzers.Tests: 4 passed
-- Generators.Tests (golden file): 9 passed
+- Generators.Tests (golden file): 10 passed
 - TimeWarp.Mediator.Tests: 163 passed, 2 skipped
 - AOT sample build: 0 warnings, 0 errors; run prints `aot-pong`
 
@@ -104,7 +105,7 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet test test/TimeWarp.Mediator.Analyzers.Tes
 
 # State golden-file + generated Mediator
 DOTNET_ROLL_FORWARD=LatestMajor dotnet test test/TimeWarp.Mediator.Generators.Tests -c Release
-# expect: 9 passed including PipelineOrder_MatchesReverseAggregate, Increment_OnHandlerException_RestoresStateAndPublishes, Increment_ShortCircuit_SkipsHandler
+# expect: 10 passed including PipelineOrder_MatchesReverseAggregate, Increment_OnHandlerException_RestoresStateAndPublishes, Increment_ShortCircuit_SkipsHandler, UnitOnlyBehavior_ClosesOntoUnitRequestsOnly
 
 # AOT/trim analyzers, no IL2026/IL3050 NoWarn
 dotnet build samples/TimeWarp.Mediator.Examples.Aot -c Release
@@ -138,3 +139,12 @@ Expect: existing suite 163 passed / 2 skipped; new suites all passed; AOT sample
 **Not in scope**
 
 - Live TimeWarp.State NuGet switch, `ISender<TScope>`, interceptors as default dispatch, native AOT link on machines without libz.
+
+### Review
+
+- **Effort:** 1 (general only). **Rounds:** 2.
+- **Roster:** general (round 1: 01a057c6-4895-7580-b307-f322776c2ca7; round 2: 01a057cf-1c3e-7973-a604-b04431292981).
+- **Final counts:** bug 0 open / 1 fixed; suggestion 0 open / 3 fixed; nit 0. Open = 0.
+- **Disposition:** **clean** (`review/disposition.md`).
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- Round-1 findings fixed on this id: M1 `TryCloseBehavior` null on failed `ImplementsPipeline` + `UnitOnlyBehavior` regression; M2 embedded `MediatorManifest` v1 (no loose file / unused path props); M3 deterministic assembly-name `SourceIndex`; M4 document Aot skipping behaviors. No wontfix, no escalation.

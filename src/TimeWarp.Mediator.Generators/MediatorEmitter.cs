@@ -4,8 +4,9 @@
 
 #region Design
 // Host profile resolves handlers/behaviors from IServiceProvider in compile-time order.
-// Aot profile uses ServiceGen static fields (parameterless handlers only). CallSiteInlining
-// prototype is the public static Dispatch_* method the interceptors would target.
+// Aot profile uses ServiceGen static fields (parameterless handlers only) and does not weave
+// [assembly: MediatorBehavior] into Dispatch_*. CallSiteInlining prototype is the public
+// static Dispatch_* method the interceptors would target.
 #endregion
 
 using System.Collections.Generic;

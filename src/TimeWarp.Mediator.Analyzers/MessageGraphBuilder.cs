@@ -6,6 +6,8 @@
 // Closed concrete handlers only (no MaxTypesClosing combinatorics). Behaviors come exclusively from
 // [assembly: MediatorBehavior] so pipelines do not pick up unrelated IPipelineBehavior types from
 // referenced projects. Order matches MediatR GetServices().Reverse().Aggregate: first listed is outermost.
+// Member assemblies are ordered by name before SourceIndex so tie-breaking is deterministic.
+// TryCloseBehavior returns null when the constructed type is not IPipelineBehavior<TRequest, TResponse>.
 #endregion
 
 using System.Collections.Generic;
@@ -263,7 +265,9 @@ public static class MessageGraphBuilder
         List<BehaviorRegistration> list = new();
         int sourceIndex = 0;
 
-        foreach (IAssemblySymbol assembly in membership.MemberAssemblies)
+        IEnumerable<IAssemblySymbol> assemblies = membership.MemberAssemblies
+            .OrderBy(a => a.Name, System.StringComparer.Ordinal);
+        foreach (IAssemblySymbol assembly in assemblies)
         {
             foreach (AttributeData attribute in assembly.GetAttributes())
             {
@@ -358,7 +362,7 @@ public static class MessageGraphBuilder
         }
 
         INamedTypeSymbol constructed = definition.Construct(arguments);
-        return ImplementsPipeline(constructed, requestType, responseType, pipelineBehavior2) ? constructed : constructed;
+        return ImplementsPipeline(constructed, requestType, responseType, pipelineBehavior2) ? constructed : null;
     }
 
     private static bool ImplementsPipeline(

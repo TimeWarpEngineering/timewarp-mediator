@@ -6,3 +6,4 @@ using TimeWarp.Mediator.Generators.Tests.State;
 [assembly: MediatorBehavior(typeof(InnerTrackingBehavior<,>), 1)]
 [assembly: MediatorBehavior(typeof(StateTransactionBehavior<,>), 2)]
 [assembly: MediatorBehavior(typeof(ShortCircuitBehavior<,>), 3)]
+[assembly: MediatorBehavior(typeof(UnitOnlyBehavior<>), 4)]

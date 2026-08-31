@@ -29,8 +29,6 @@ public class IncrementActionSetTests
         MediatorManifest.Json.ShouldContain("\"version\":1");
         MediatorManifest.Json.ShouldContain("IncrementActionSet");
         MediatorManifest.Json.ShouldContain("StateTransactionBehavior");
-        string manifestPath = System.IO.Path.Combine(AppContext.BaseDirectory, "mediator.manifest.json");
-        System.IO.File.WriteAllText(manifestPath, MediatorManifest.Json);
     }
 
     [Fact]
@@ -121,6 +119,14 @@ public class IncrementActionSetTests
     {
         Fixture fixture = Fixture.Create();
         await Should.ThrowAsync<NoHandlerException>(() => fixture.Generated.Send(new object()));
+    }
+
+    [Fact]
+    public void UnitOnlyBehavior_ClosesOntoUnitRequestsOnly()
+    {
+        MediatorManifest.Json.ShouldContain("UnitOnlyBehavior");
+        MediatorManifest.Json.ShouldNotContain("UnitOnlyBehavior<TimeWarp.Mediator.Generators.Tests.State.Ping");
+        MediatorManifest.Json.ShouldContain("UnitOnlyBehavior<TimeWarp.Mediator.Generators.Tests.State.CounterState.IncrementActionSet.Action");
     }
 
     private sealed class Fixture

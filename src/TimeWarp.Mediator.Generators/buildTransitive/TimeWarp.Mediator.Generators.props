@@ -9,7 +9,5 @@
     <CompilerVisibleProperty Include="TimeWarpMediatorAssembly" />
     <CompilerVisibleProperty Include="TimeWarpMediatorProfile" />
     <CompilerVisibleProperty Include="TimeWarpMediatorNamespace" />
-    <CompilerVisibleProperty Include="ProjectDir" />
-    <CompilerVisibleProperty Include="IntermediateOutputPath" />
   </ItemGroup>
 </Project>

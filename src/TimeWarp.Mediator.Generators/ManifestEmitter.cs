@@ -1,5 +1,5 @@
 #region Purpose
-// Emits mediator.manifest.json v1 as generated C# plus a file under IntermediateOutputPath.
+// Emits mediator.manifest.json v1 as the MediatorManifest.Json const (source generators cannot write loose files).
 #endregion
 
 using System;

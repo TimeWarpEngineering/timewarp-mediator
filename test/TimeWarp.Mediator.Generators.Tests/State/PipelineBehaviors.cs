@@ -69,6 +69,18 @@ public sealed class ShortCircuitBehavior<TRequest, TResponse> : IPipelineBehavio
     }
 }
 
+public sealed class UnitOnlyBehavior<TRequest> : IPipelineBehavior<TRequest, Unit>
+    where TRequest : notnull
+{
+    public Task<Unit> Handle(
+        TRequest request,
+        RequestHandlerDelegate<Unit> next,
+        CancellationToken cancellationToken)
+    {
+        return next(cancellationToken);
+    }
+}
+
 public sealed class Ping : IRequest<string>
 {
     public string Message { get; set; } = string.Empty;
