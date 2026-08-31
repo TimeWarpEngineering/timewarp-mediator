@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Generators": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\..\\test\\TimeWarp.Mediator.Generators.Tests\\TimeWarp.Mediator.Generators.Tests.csproj"
+    }
+  }
+}

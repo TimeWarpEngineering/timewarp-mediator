@@ -37,3 +37,7 @@ exec { & dotnet pack .\src\TimeWarp.Mediator\TimeWarp.Mediator.csproj -c Release
 
 exec { & dotnet pack .\src\TimeWarp.Mediator.Contracts\TimeWarp.Mediator.Contracts.csproj -c Release -o $Artifacts --no-build }
 
+exec { & dotnet pack .\src\TimeWarp.Mediator.Analyzers\TimeWarp.Mediator.Analyzers.csproj -c Release -o $Artifacts --no-build }
+
+exec { & dotnet pack .\src\TimeWarp.Mediator.Generators\TimeWarp.Mediator.Generators.csproj -c Release -o $Artifacts --no-build }
+
