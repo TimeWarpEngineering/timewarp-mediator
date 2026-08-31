@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <!-- Hosts that reference the generator are graph members even without [assembly: MediatorAssembly]. -->
+    <TimeWarpMediatorAssembly Condition="'$(TimeWarpMediatorAssembly)' == ''">true</TimeWarpMediatorAssembly>
+    <TimeWarpMediatorProfile Condition="'$(TimeWarpMediatorProfile)' == ''">Host</TimeWarpMediatorProfile>
+    <TimeWarpMediatorNamespace Condition="'$(TimeWarpMediatorNamespace)' == ''">TimeWarp.Mediator.Generated</TimeWarpMediatorNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="TimeWarpMediatorAssembly" />
+    <CompilerVisibleProperty Include="TimeWarpMediatorProfile" />
+    <CompilerVisibleProperty Include="TimeWarpMediatorNamespace" />
+  </ItemGroup>
+</Project>

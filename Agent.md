@@ -29,9 +29,11 @@ dotnet test -c Release --no-build
 # Run tests with detailed output
 dotnet test -c Release --no-build -l trx --verbosity=normal
 
-# Create packages (both built together via ProjectReference)
+# Create packages (Analyzer/Generator packages disable snupkg; IncludeBuildOutput is false)
 dotnet pack .\src\TimeWarp.Mediator\TimeWarp.Mediator.csproj -c Release -o .\Artifacts --no-build
 dotnet pack .\src\TimeWarp.Mediator.Contracts\TimeWarp.Mediator.Contracts.csproj -c Release -o .\Artifacts --no-build
+dotnet pack .\src\TimeWarp.Mediator.Analyzers\TimeWarp.Mediator.Analyzers.csproj -c Release -o .\Artifacts --no-build
+dotnet pack .\src\TimeWarp.Mediator.Generators\TimeWarp.Mediator.Generators.csproj -c Release -o .\Artifacts --no-build
 
 # Run single test class (example)
 dotnet test test/TimeWarp.Mediator.Tests/TimeWarp.Mediator.Tests.csproj --filter "ClassName~SendTests"

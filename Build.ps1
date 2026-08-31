@@ -37,3 +37,43 @@ exec { & dotnet pack .\src\TimeWarp.Mediator\TimeWarp.Mediator.csproj -c Release
 
 exec { & dotnet pack .\src\TimeWarp.Mediator.Contracts\TimeWarp.Mediator.Contracts.csproj -c Release -o $Artifacts --no-build }
 
+exec { & dotnet pack .\src\TimeWarp.Mediator.Analyzers\TimeWarp.Mediator.Analyzers.csproj -c Release -o $Artifacts --no-build }
+
+exec { & dotnet pack .\src\TimeWarp.Mediator.Generators\TimeWarp.Mediator.Generators.csproj -c Release -o $Artifacts --no-build }
+
+function Assert-NupkgContains
+{
+    param(
+        [Parameter(Mandatory = $true)][string]$PackageId,
+        [Parameter(Mandatory = $true)][string]$Entry
+    )
+
+    $nupkg = Get-ChildItem -Path $Artifacts -Filter "$PackageId.*.nupkg" |
+        Where-Object { $_.Name -notlike "*.symbols.nupkg" } |
+        Select-Object -First 1
+    if (-not $nupkg)
+    {
+        throw "No nupkg for $PackageId under $Artifacts"
+    }
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($nupkg.FullName)
+    try
+    {
+        $found = $zip.Entries | Where-Object { $_.FullName -eq $Entry }
+        if (-not $found)
+        {
+            $names = ($zip.Entries | ForEach-Object { $_.FullName }) -join "`n  "
+            throw "$($nupkg.Name) is missing '$Entry'. Entries:`n  $names"
+        }
+    }
+    finally
+    {
+        $zip.Dispose()
+    }
+}
+
+Assert-NupkgContains "TimeWarp.Mediator.Analyzers" "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll"
+Assert-NupkgContains "TimeWarp.Mediator.Generators" "analyzers/dotnet/cs/TimeWarp.Mediator.Generators.dll"
+Assert-NupkgContains "TimeWarp.Mediator.Generators" "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll"
+

@@ -2,6 +2,9 @@
 
 **Date:** 2026-06-17
 **Status:** Consolidated single source of truth. **Supersedes** the three brainstorm docs (see [Provenance](#provenance)); read this one to act.
+**Epic:** 004 — Source-gen rewrite with `ISender<TScope>` named pipelines
+**Task (this milestone):** 004-001 — M1 generated Mediator, analyzer, and State golden-file
+**Next:** 004-002 — `ISender<TScope>` / `IPublisher<TScope>` named pipelines
 **Consolidated by:** Fable, from the Composer / Opus / Grok analyses + the Composer↔Opus collaboration thread.
 **Decision context:** Clean break, major version. No obligation to preserve MediatR's runtime open-generic combinatorics, `MaxTypesClosing`, or assembly scanning. Edge cases become compile-time diagnostics.
 
@@ -199,11 +202,14 @@ Zero reflection; the combinatorial closure is resolved at build time. Handlers w
 
 Discovery is **membership-filtered** (a linker exports symbols explicitly), or multi-project solutions cross-link by accident:
 
-- `MediatorOptions.Assemblies = [typeof(OrdersMarker)]`, or
+- `[assembly: MediatorAssemblies(typeof(OrdersMarker))]` (compile-time equivalent of `MediatorOptions.Assemblies = [typeof(OrdersMarker)]`), or
 - `[assembly: MediatorAssembly]`, or
-- `[MediatorModule("Orders")]` on a handler/message (also names a scope for scoped senders).
+- `[MediatorModule("Orders")]` on a handler/message (also names a scope for scoped senders), or
+- MSBuild `TimeWarpMediatorAssembly=true` (the generator package sets this for the host so apps do not need the attribute).
 
-No marker → not linked.
+**Confirmed membership rule (004-001):** a compilation is a graph member only when it opts in through one of the markers above. Referenced assemblies are **never** linked just because they appear in `ProjectReference` / `PackageReference`. They join only with `[assembly: MediatorAssembly]` or by being listed as a `MediatorAssemblies` marker type. No marker → not linked.
+
+Behaviors are listed explicitly with `[assembly: MediatorBehavior(typeof(MyBehavior<,>))]` on a member assembly. Attribute order (then optional `order:`) is the compile-time pipeline: first listed is outermost, matching MediatR `GetServices().Reverse().Aggregate`.
 
 ---
 

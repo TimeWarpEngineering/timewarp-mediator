@@ -12,7 +12,8 @@ using System.Threading.Tasks;
 using Wrappers;
 
 /// <summary>
-/// Default med implementation relying on single- and multi instance delegates for resolving handlers.
+/// Legacy reflection dispatcher (MakeGenericType + wrapper caches). Prefer the source-generated
+/// <c>TimeWarp.Mediator.Generated.Mediator</c> from TimeWarp.Mediator.Generators when present.
 /// </summary>
 public class Mediator : IMediator
 {

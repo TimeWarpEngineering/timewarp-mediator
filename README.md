@@ -63,6 +63,18 @@ To reference only the contracts for TimeWarp.Mediator, which includes:
 
 Add a package reference to [TimeWarp.Mediator.Contracts](https://www.nuget.org/packages/TimeWarp.Mediator.Contracts)
 
+### Source-generated Mediator (M1)
+
+The reflection dispatcher remains the default `AddMediator()` implementation. To use the compile-time graph (TWM001/TWM002, generated `sealed Mediator`, AOT-clean `Send(object)` switch):
+
+    dotnet add package TimeWarp.Mediator.Generators
+
+Hosts get `[assembly: MediatorAssembly]` for free via the generator props. Domain libraries that should fail the build on a missing handler without emitting code:
+
+    dotnet add package TimeWarp.Mediator.Analyzers
+
+See [Documentation/m1-generated-mediator.md](./Documentation/m1-generated-mediator.md) and GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52) (epic **004**, task **004-001**). `ISender<TScope>` named pipelines are **004-002**.
+
 This package is useful in scenarios where your TimeWarp.Mediator contracts are in a separate assembly/project from handlers. Example scenarios include:
 - API contracts
 - GRPC contracts
