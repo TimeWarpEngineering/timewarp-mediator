@@ -27,7 +27,7 @@ Design SSOT: `Analysis/2026-06-17-source-gen-aot-rewrite-spec.md` §14 (M1 table
 
 ### Implementation
 - [x] Analyzer package (TWM001, TWM002) usable on a library that does not run the generator
-- [ ] CI pack: `TimeWarp.Mediator.Analyzers` nupkg must have content (NU5017)
+- [x] CI pack: `TimeWarp.Mediator.Analyzers` nupkg must have content (NU5017)
 - [x] Generator emits `Mediator` + `Send(object)` switch
 - [x] State golden-file: IncrementActionSet + StateTransactionBehavior
 - [x] AOT sample: EnableTrimAnalyzer + EnableAotAnalyzer + IsAotCompatible, warning-clean
@@ -70,6 +70,7 @@ Log also printed `Successfully created package '.../TimeWarp.Mediator.Analyzers.
 - Implementer: grok session 2438044 (2026-08-31)
 - Review oracle: grok (2026-08-31); round-1 general 01a057c6-4895-7580-b307-f322776c2ca7; round-2 general 01a057cf-1c3e-7973-a604-b04431292981
 - Reopened: cockpit 2026-09-01 — PR #53 NU5017; dispatched back onto this id
+- Implementer: grok (2026-09-01) — NU5017 analyzer pack fix; session 01a058f1-1b82-76d3-aef4-e895f0b2e2e2
 
 ## Results
 
@@ -109,51 +110,64 @@ M1 rewrite core: analyzer + generator + State golden-file + AOT sample. Reflecti
 - TimeWarp.Mediator.Tests: 163 passed, 2 skipped
 - AOT sample build: 0 warnings, 0 errors; run prints `aot-pong`
 
+### Reopen 2026-09-01 — NU5017 pack
+
+PR #53 `build-and-publish` failed because repo-wide `IncludeSymbols`/`snupkg` plus `IncludeBuildOutput=false` packed a good Analyzers nupkg (README + Logo + `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll`) then NU5017 on the empty snupkg. Generators would have failed the same way next.
+
+Fix: `IncludeSymbols=false` on Analyzers and Generators. `Build.ps1` asserts the analyzer DLLs are in the nupkgs. Mediator and Contracts still emit snupkg.
+
+Local `pwsh -File ./Build.ps1` (2026-09-01): tests 4 + 10 + 163/2 skipped; Analyzers and Generators nupkgs created with no snupkg and no NU5017.
+
+Files this slice: `src/TimeWarp.Mediator.Analyzers/TimeWarp.Mediator.Analyzers.csproj`, `src/TimeWarp.Mediator.Generators/TimeWarp.Mediator.Generators.csproj`, `Build.ps1`.
+
 ### How to validate
 
 **Smoke**
 
 ```bash
-# Analyzer-only TWM001/TWM002 (no generator)
-DOTNET_ROLL_FORWARD=LatestMajor dotnet test test/TimeWarp.Mediator.Analyzers.Tests -c Release
-# expect: 4 passed; Twm001_RequestWithNoHandler_IsError is the library-without-generator proof
-
-# State golden-file + generated Mediator
-DOTNET_ROLL_FORWARD=LatestMajor dotnet test test/TimeWarp.Mediator.Generators.Tests -c Release
-# expect: 10 passed including PipelineOrder_MatchesReverseAggregate, Increment_OnHandlerException_RestoresStateAndPublishes, Increment_ShortCircuit_SkipsHandler, UnitOnlyBehavior_ClosesOntoUnitRequestsOnly
-
-# AOT/trim analyzers, no IL2026/IL3050 NoWarn
-dotnet build samples/TimeWarp.Mediator.Examples.Aot -c Release
-DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project samples/TimeWarp.Mediator.Examples.Aot -c Release --no-build
-# expect: Build succeeded, 0 Warning(s); stdout aot-pong
+DOTNET_ROLL_FORWARD=LatestMajor pwsh -File ./Build.ps1
+python3 - <<'PY'
+import glob, zipfile
+nupkg = glob.glob("Artifacts/TimeWarp.Mediator.Analyzers.*.nupkg")[0]
+assert glob.glob("Artifacts/TimeWarp.Mediator.Analyzers.*.snupkg") == []
+with zipfile.ZipFile(nupkg) as z:
+    names = z.namelist()
+assert "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll" in names
+print("ok", nupkg)
+PY
 ```
 
 **Expect**
 
+- `Build.ps1` exits 0. No NU5017.
+- `Artifacts/TimeWarp.Mediator.Analyzers.13.0.0.nupkg` exists and contains `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll`.
+- No `TimeWarp.Mediator.Analyzers.*.snupkg` or `TimeWarp.Mediator.Generators.*.snupkg`.
+- Generators nupkg contains both analyzer DLLs plus `buildTransitive/TimeWarp.Mediator.Generators.props`.
+- Mediator and Contracts still produce `.snupkg`.
 - TWM001 is an error on a member assembly request with no handler; a compilation without `[assembly: MediatorAssembly]` (and without generator props) reports nothing.
 - Generated `TimeWarp.Mediator.Generated.Mediator` is sealed, implements `IMediator`, and `MediatorManifest.Version == 1`.
-- Increment by 2 on Count=8 yields 10 with a new state Guid; negative amount restores Count=8 and publishes `ExceptionNotification`.
-- Ping pipeline log equals `outer-before, inner-before, handler, inner-after, outer-after` on both generated and legacy `Mediator`.
 
 **Automated gate**
 
 ```bash
+DOTNET_ROLL_FORWARD=LatestMajor pwsh -File ./Build.ps1
 DOTNET_ROLL_FORWARD=LatestMajor dotnet test test/TimeWarp.Mediator.Tests -c Release
 DOTNET_ROLL_FORWARD=LatestMajor dotnet test test/TimeWarp.Mediator.Analyzers.Tests -c Release
 DOTNET_ROLL_FORWARD=LatestMajor dotnet test test/TimeWarp.Mediator.Generators.Tests -c Release
 dotnet build samples/TimeWarp.Mediator.Examples.Aot -c Release
 ```
 
-Expect: existing suite 163 passed / 2 skipped; new suites all passed; AOT sample 0 warnings.
+Expect: `Build.ps1` packs all four nupkgs; existing suite 163 passed / 2 skipped; analyzer 4 passed; generators 10 passed; AOT sample 0 warnings.
 
 **Depends on**
 
 - `DOTNET_ROLL_FORWARD=LatestMajor` when the host SDK is newer than net8.0 and the net8 runtime is not installed.
+- `pwsh` for `Build.ps1` (CI uses `shell: pwsh`).
 - Native `dotnet publish -p:PublishAot=true` needs zlib (`-lz`) on the linker path; analyzer-clean is the M1 gate.
 
 **Not in scope**
 
-- Live TimeWarp.State NuGet switch, `ISender<TScope>`, interceptors as default dispatch, native AOT link on machines without libz.
+- Live TimeWarp.State NuGet switch, `ISender<TScope>`, interceptors as default dispatch, native AOT link on machines without libz, merge of PR #53.
 
 ### Review
 
