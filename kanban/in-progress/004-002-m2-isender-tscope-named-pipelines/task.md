@@ -37,6 +37,10 @@ Parent: **004**. This is the TimeWarp.State client vs server split.
 - [x] Spec § scoped-sender fold-in
 - [x] Note for the future TimeWarp.State switch task: inject `ISender<ClientPipeline>` on the Blazor client, `ISender<ServerPipeline>` on the server
 
+### Review
+- [x] Effort-1 general round 1 under `review/`
+- [x] Disposition clean (0 open) on this task id
+
 ## Out of scope
 
 - TimeWarp.State package switch (file after 004-001, implement after this task)
@@ -48,11 +52,13 @@ Parent: **004**. This is the TimeWarp.State client vs server split.
 - This is **not** string-named pipelines. `TScope` is a marker type.
 - Impossible to retrofit onto martinothamar; this is the product reason to own Mediator.
 - Nuru 443 may use scoped senders after this ships; it must not implement them.
+- Review kitchen: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Session
 
 - Created: 2438044 (2026-08-31)
 - Implementer: grok session 01a0591d-acec-71b0-9b3e-30fcebf1e991 (2026-09-01)
+- Review oracle: grok (2026-09-01) round-1 general 01a0593a-45e7-7de2-8dad-6f08314b5d28; disposition clean
 
 ## Results
 
@@ -100,3 +106,12 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet test test/TimeWarp.Mediator.Tests/TimeWar
 Expect: generator 19 passed; analyzer 6 passed; reflection 163 passed, 2 skipped. M1 `IncrementActionSetTests` (re-entrancy, `Reverse().Aggregate` order) stay in the generator suite.
 
 **Not in scope:** TimeWarp.State NuGet switch, call-site interceptors, streams.
+
+### Review
+
+- **Effort:** 1 (general only). **Rounds:** 1.
+- **Roster:** general (round 1: 01a0593a-45e7-7de2-8dad-6f08314b5d28).
+- **Final counts:** bug 0; suggestion 0; nit 0. Open = 0.
+- **Disposition:** **clean** (`review/disposition.md`).
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- No findings, no wontfix, no escalation. Re-check: generator 19 passed; analyzer 6 passed; NamedPipelines sample printed `client:hello` / `server:hello` and exited 0.
