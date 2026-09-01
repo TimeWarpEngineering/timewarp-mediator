@@ -43,6 +43,7 @@ Today’s errors this slice should kill or shrink: envrc, routine-journals-gitig
 - Review round 2: grok, effort 1, roster general (2026-09-01)
 - Reopened: cockpit 2026-09-02 — PR #55 still red; one test fail after MSB1011 fix
 - Implementer (timeout test): grok (2026-09-02)
+- Review round 3: grok, effort 1, roster general (2026-09-02)
 
 ## Results
 
@@ -181,8 +182,8 @@ DOTNET_ROLL_FORWARD=Major dotnet test timewarp-mediator.slnx -c Release --no-bui
 ### Review disposition
 
 - **Outcome:** clean
-- **Rounds:** 2
-- **Effort / roster:** 1, general (both rounds)
-- **Counts (final, round 2):** bug 0 / suggestion 0 / nit 0 — all statuses 0 (no issues raised in either round)
+- **Rounds:** 3
+- **Effort / roster:** 1, general (all rounds)
+- **Counts (final, round 3):** bug 0 / suggestion 0 / nit 0 — all statuses 0 (no issues raised in any round)
 - **Wontfix / escalations:** none
-- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`
