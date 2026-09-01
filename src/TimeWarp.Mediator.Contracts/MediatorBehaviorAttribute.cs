@@ -5,7 +5,8 @@
 #region Design
 // First attribute is outermost, matching MediatR registration order. Optional Order is a
 // tie-breaker applied before source order. Open generic behaviors are closed per request
-// when constraints match (e.g. where TRequest : IAction).
+// when constraints match (e.g. where TRequest : IAction). Optional Scope named argument
+// assigns the behavior to ISender<TScope>; omitted Scope is the unscoped default pipeline.
 #endregion
 
 using System;
@@ -40,4 +41,10 @@ public sealed class MediatorBehaviorAttribute : Attribute
     /// Sort key. Lower values wrap the rest of the chain (run first).
     /// </summary>
     public int Order { get; }
+
+    /// <summary>
+    /// Pipeline marker type this behavior belongs to. When null, the behavior runs only on the
+    /// unscoped default pipeline. Scoped pipelines never run unscoped behaviors.
+    /// </summary>
+    public Type? Scope { get; set; }
 }

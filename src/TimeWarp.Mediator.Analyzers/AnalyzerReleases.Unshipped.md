@@ -6,3 +6,5 @@ Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
 TWM001  | TimeWarp.Mediator | Error | RequestHasNoHandler
 TWM002  | TimeWarp.Mediator | Error | DuplicateHandler
+TWM003  | TimeWarp.Mediator | Error | ScopeMismatch
+TWM004  | TimeWarp.Mediator | Error | WrongScopeSend

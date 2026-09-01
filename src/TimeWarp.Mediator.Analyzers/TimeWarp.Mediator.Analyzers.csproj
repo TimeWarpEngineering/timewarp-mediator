@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>TimeWarp.Mediator.Analyzers</RootNamespace>
     <AssemblyName>TimeWarp.Mediator.Analyzers</AssemblyName>
-    <Description>Roslyn analyzers for TimeWarp.Mediator. TWM001 (request with no handler) and TWM002 (duplicate handler). Safe to reference from libraries that do not run the generator.</Description>
+    <Description>Roslyn analyzers for TimeWarp.Mediator. TWM001 (request with no handler), TWM002 (duplicate handler), TWM003 (scope mismatch), TWM004 (wrong-scope send). Safe to reference from libraries that do not run the generator.</Description>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
     <IncludeBuildOutput>false</IncludeBuildOutput>

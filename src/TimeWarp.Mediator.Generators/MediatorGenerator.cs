@@ -1,5 +1,5 @@
 #region Purpose
-// Incremental generator: build MessageGraph once per compilation and emit Mediator + manifest.
+// Incremental generator: build MessageGraph once per compilation and emit Mediator, scoped Sender/Publisher, and manifest.
 #endregion
 
 using Microsoft.CodeAnalysis;

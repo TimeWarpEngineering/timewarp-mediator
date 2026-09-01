@@ -1,5 +1,5 @@
 #region Purpose
-// Names a handler/message module for membership and future ISender TScope grouping (004-002).
+// Names a handler/message module so the declaring assembly joins the compile-time graph.
 #endregion
 
 using System;
@@ -8,7 +8,8 @@ namespace TimeWarp.Mediator;
 
 /// <summary>
 /// Names a module for a handler or message. The declaring assembly is treated as a graph member.
-/// Scoped senders (<c>ISender&lt;TScope&gt;</c>) consume this in 004-002.
+/// Pipeline assignment for <c>ISender&lt;TScope&gt;</c> is <see cref="MediatorScopeAttribute"/>,
+/// not this string name.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public sealed class MediatorModuleAttribute : Attribute

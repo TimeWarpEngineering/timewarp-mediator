@@ -22,7 +22,7 @@ See spec §9. Hosts that reference the generator package get `TimeWarpMediatorAs
 
 | Item | Where |
 |------|--------|
-| `ISender<TScope>` / `IPublisher<TScope>` named pipelines | **004-002** |
+| `ISender<TScope>` / `IPublisher<TScope>` named pipelines | **004-002** — see [m2-named-pipelines.md](./m2-named-pipelines.md) |
 | Call-site interceptors as default dispatch | after M2; CallSiteInlining is measured only |
 | Call-graph pruning / WASM-mini `Send(object)` strip | later profile |
 | Streams (`CreateStream`) | later; generated Mediator throws `NotSupportedException` |

@@ -53,3 +53,13 @@ public interface ISender
     /// <returns></returns>
     IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Send through the named pipeline identified by <typeparamref name="TScope"/>.
+/// Unscoped <see cref="ISender"/> is the default pipeline (handlers with no
+/// <see cref="MediatorScopeAttribute"/>).
+/// </summary>
+/// <typeparam name="TScope">Marker type that names the pipeline (for example <c>ClientPipeline</c>).</typeparam>
+public interface ISender<TScope> : ISender
+{
+}

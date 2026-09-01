@@ -53,6 +53,10 @@ internal static class ManifestEmitter
             builder.Append("\"request\":\"").Append(Escape(request.RequestType.ToDisplayString())).Append("\",");
             builder.Append("\"response\":\"").Append(Escape(request.ResponseType.ToDisplayString())).Append("\",");
             builder.Append("\"handler\":\"").Append(Escape(request.HandlerType.ToDisplayString())).Append("\",");
+            if (request.ScopeType is not null)
+            {
+                builder.Append("\"scope\":\"").Append(Escape(request.ScopeType.ToDisplayString())).Append("\",");
+            }
             builder.Append("\"behaviors\":[");
             for (int b = 0; b < request.ClosedBehaviors.Length; b++)
             {
@@ -78,6 +82,10 @@ internal static class ManifestEmitter
             NotificationBinding notification = graph.Notifications[i];
             builder.Append('{');
             builder.Append("\"notification\":\"").Append(Escape(notification.NotificationType.ToDisplayString())).Append("\",");
+            if (notification.ScopeType is not null)
+            {
+                builder.Append("\"scope\":\"").Append(Escape(notification.ScopeType.ToDisplayString())).Append("\",");
+            }
             builder.Append("\"handlers\":[");
             for (int h = 0; h < notification.HandlerTypes.Length; h++)
             {

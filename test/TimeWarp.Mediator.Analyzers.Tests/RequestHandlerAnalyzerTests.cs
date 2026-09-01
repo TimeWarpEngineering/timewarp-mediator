@@ -85,4 +85,66 @@ public class RequestHandlerAnalyzerTests
         ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
         diagnostics.ShouldBeEmpty();
     }
+
+    [Fact]
+    public async Task Twm003_HandlerAndRequestDifferentScopes_IsError()
+    {
+        const string Source =
+            """
+            using System.Threading;
+            using System.Threading.Tasks;
+            using TimeWarp.Mediator;
+            [assembly: MediatorAssembly]
+            public sealed class ClientPipeline { }
+            public sealed class ServerPipeline { }
+            [MediatorScope(typeof(ClientPipeline))]
+            public sealed class Ping : IRequest<int> { }
+            [MediatorScope(typeof(ServerPipeline))]
+            public sealed class PingHandler : IRequestHandler<Ping, int>
+            {
+                public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(1);
+            }
+            """;
+
+        ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+        diagnostics.Any(d => d.Id == "TWM003").ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Twm004_WrongScopeSend_IsError()
+    {
+        const string Source =
+            """
+            using System.Threading;
+            using System.Threading.Tasks;
+            using TimeWarp.Mediator;
+            [assembly: MediatorAssembly]
+            public sealed class ClientPipeline { }
+            public sealed class ServerPipeline { }
+            [MediatorScope(typeof(ClientPipeline))]
+            public sealed class ClientPing : IRequest<int> { }
+            [MediatorScope(typeof(ClientPipeline))]
+            public sealed class ClientPingHandler : IRequestHandler<ClientPing, int>
+            {
+                public Task<int> Handle(ClientPing request, CancellationToken cancellationToken) => Task.FromResult(1);
+            }
+            [MediatorScope(typeof(ServerPipeline))]
+            public sealed class ServerPing : IRequest<int> { }
+            [MediatorScope(typeof(ServerPipeline))]
+            public sealed class ServerPingHandler : IRequestHandler<ServerPing, int>
+            {
+                public Task<int> Handle(ServerPing request, CancellationToken cancellationToken) => Task.FromResult(2);
+            }
+            public static class Use
+            {
+                public static Task<int> Go(ISender<ClientPipeline> sender)
+                {
+                    return sender.Send(new ServerPing());
+                }
+            }
+            """;
+
+        ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+        diagnostics.Any(d => d.Id == "TWM004").ShouldBeTrue();
+    }
 }

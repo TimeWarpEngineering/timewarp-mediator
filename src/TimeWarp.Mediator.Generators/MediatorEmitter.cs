@@ -1,5 +1,5 @@
 #region Purpose
-// Emits sealed Mediator, monomorphic Send, Send(object) switch, and Host MS.DI registration.
+// Emits sealed Mediator (unscoped), per-TScope Sender/Publisher, and Host MS.DI registration.
 #endregion
 
 #region Design
@@ -7,6 +7,8 @@
 // Aot profile uses ServiceGen static fields (parameterless handlers only) and does not weave
 // [assembly: MediatorBehavior] into Dispatch_*. CallSiteInlining prototype is the public
 // static Dispatch_* method the interceptors would target.
+// Unscoped Mediator is the default pipeline (no [MediatorScope]). Each TScope gets its own
+// Sender and Publisher with a disjoint type switch — no runtime "is this my message?" filter.
 #endregion
 
 using System.Collections.Generic;
@@ -25,6 +27,18 @@ internal static class MediatorEmitter
     internal static void Emit(SourceProductionContext context, MessageGraph graph)
     {
         context.AddSource("Mediator.g.cs", SourceText.From(EmitMediator(graph), Encoding.UTF8));
+
+        foreach (INamedTypeSymbol scope in DistinctScopes(graph))
+        {
+            string suffix = ScopeSuffix(scope, graph);
+            context.AddSource(
+                "Sender_" + suffix + ".g.cs",
+                SourceText.From(EmitScopedSender(graph, scope, suffix), Encoding.UTF8));
+            context.AddSource(
+                "Publisher_" + suffix + ".g.cs",
+                SourceText.From(EmitScopedPublisher(graph, scope, suffix), Encoding.UTF8));
+        }
+
         if (!graph.IsAotProfile)
         {
             context.AddSource("MediatorServiceCollectionExtensions.g.cs", SourceText.From(EmitRegistration(graph), Encoding.UTF8));
@@ -32,6 +46,57 @@ internal static class MediatorEmitter
     }
 
     private static string EmitMediator(MessageGraph graph)
+    {
+        List<RequestBinding> requests = RequestsFor(graph, scope: null);
+        List<NotificationBinding> notifications = NotificationsFor(graph, scope: null);
+        return EmitDispatcher(
+            graph,
+            className: "Mediator",
+            interfaceList: "global::TimeWarp.Mediator.IMediator",
+            requests,
+            notifications,
+            includeSend: true,
+            includePublish: true,
+            includeServiceGen: graph.IsAotProfile);
+    }
+
+    private static string EmitScopedSender(MessageGraph graph, INamedTypeSymbol scope, string suffix)
+    {
+        List<RequestBinding> requests = RequestsFor(graph, scope);
+        return EmitDispatcher(
+            graph,
+            className: "Sender_" + suffix,
+            interfaceList: "global::TimeWarp.Mediator.ISender<" + Fq(scope) + ">",
+            requests,
+            notifications: new List<NotificationBinding>(),
+            includeSend: true,
+            includePublish: false,
+            includeServiceGen: false);
+    }
+
+    private static string EmitScopedPublisher(MessageGraph graph, INamedTypeSymbol scope, string suffix)
+    {
+        List<NotificationBinding> notifications = NotificationsFor(graph, scope);
+        return EmitDispatcher(
+            graph,
+            className: "Publisher_" + suffix,
+            interfaceList: "global::TimeWarp.Mediator.IPublisher<" + Fq(scope) + ">",
+            requests: new List<RequestBinding>(),
+            notifications,
+            includeSend: false,
+            includePublish: true,
+            includeServiceGen: false);
+    }
+
+    private static string EmitDispatcher(
+        MessageGraph graph,
+        string className,
+        string interfaceList,
+        List<RequestBinding> requests,
+        List<NotificationBinding> notifications,
+        bool includeSend,
+        bool includePublish,
+        bool includeServiceGen)
     {
         string ns = graph.Membership.GeneratedNamespace;
         bool aot = graph.IsAotProfile;
@@ -42,18 +107,18 @@ internal static class MediatorEmitter
         builder.Append("namespace ").Append(ns).AppendLine(";");
         builder.AppendLine();
 
-        if (aot)
+        if (includeServiceGen)
         {
             EmitServiceGen(builder, graph);
         }
 
-        builder.AppendLine("public sealed class Mediator : global::TimeWarp.Mediator.IMediator");
+        builder.Append("public sealed class ").Append(className).Append(" : ").AppendLine(interfaceList);
         builder.AppendLine("{");
         if (!aot)
         {
             builder.AppendLine("    private readonly global::System.IServiceProvider ServiceProvider;");
             builder.AppendLine();
-            builder.AppendLine("    public Mediator(global::System.IServiceProvider serviceProvider)");
+            builder.Append("    public ").Append(className).AppendLine("(global::System.IServiceProvider serviceProvider)");
             builder.AppendLine("    {");
             builder.AppendLine("        if (serviceProvider is null)");
             builder.AppendLine("        {");
@@ -65,24 +130,36 @@ internal static class MediatorEmitter
         }
         else
         {
-            builder.AppendLine("    public Mediator()");
+            builder.Append("    public ").Append(className).AppendLine("()");
             builder.AppendLine("    {");
             builder.AppendLine("    }");
         }
 
         builder.AppendLine();
-        EmitInterfaceSend(builder, graph, aot);
-        EmitMonomorphicSend(builder, graph, aot);
-        EmitObjectSend(builder, graph, aot);
-        EmitPublish(builder, graph, aot);
-        EmitStreams(builder);
-        EmitDispatchMethods(builder, graph, aot);
-        builder.AppendLine();
-        builder.AppendLine("    private static async global::System.Threading.Tasks.Task<object?> Box<T>(global::System.Threading.Tasks.ValueTask<T> valueTask)");
-        builder.AppendLine("    {");
-        builder.AppendLine("        T result = await valueTask.ConfigureAwait(false);");
-        builder.AppendLine("        return result;");
-        builder.AppendLine("    }");
+        if (includeSend)
+        {
+            EmitInterfaceSend(builder);
+            EmitMonomorphicSend(builder, requests, aot);
+            EmitObjectSend(builder, requests, aot);
+            EmitStreams(builder);
+            EmitDispatchMethods(builder, requests, aot);
+        }
+
+        if (includePublish)
+        {
+            EmitPublish(builder, notifications, aot);
+        }
+
+        if (includeSend)
+        {
+            builder.AppendLine();
+            builder.AppendLine("    private static async global::System.Threading.Tasks.Task<object?> Box<T>(global::System.Threading.Tasks.ValueTask<T> valueTask)");
+            builder.AppendLine("    {");
+            builder.AppendLine("        T result = await valueTask.ConfigureAwait(false);");
+            builder.AppendLine("        return result;");
+            builder.AppendLine("    }");
+        }
+
         builder.AppendLine("}");
         return builder.ToString();
     }
@@ -125,7 +202,7 @@ internal static class MediatorEmitter
         builder.AppendLine();
     }
 
-    private static void EmitInterfaceSend(StringBuilder builder, MessageGraph graph, bool aot)
+    private static void EmitInterfaceSend(StringBuilder builder)
     {
         builder.AppendLine("    public global::System.Threading.Tasks.Task<TResponse> Send<TResponse>(global::TimeWarp.Mediator.IRequest<TResponse> request, global::System.Threading.CancellationToken cancellationToken = default)");
         builder.AppendLine("    {");
@@ -156,9 +233,9 @@ internal static class MediatorEmitter
         builder.AppendLine();
     }
 
-    private static void EmitMonomorphicSend(StringBuilder builder, MessageGraph graph, bool aot)
+    private static void EmitMonomorphicSend(StringBuilder builder, List<RequestBinding> requests, bool aot)
     {
-        foreach (RequestBinding request in graph.Requests)
+        foreach (RequestBinding request in requests)
         {
             string requestType = Fq(request.RequestType);
             string responseType = Fq(request.ResponseType);
@@ -183,7 +260,7 @@ internal static class MediatorEmitter
         }
     }
 
-    private static void EmitObjectSend(StringBuilder builder, MessageGraph graph, bool aot)
+    private static void EmitObjectSend(StringBuilder builder, List<RequestBinding> requests, bool aot)
     {
         builder.AppendLine("    public global::System.Threading.Tasks.Task<object?> Send(object request, global::System.Threading.CancellationToken cancellationToken = default)");
         builder.AppendLine("    {");
@@ -195,7 +272,7 @@ internal static class MediatorEmitter
         builder.AppendLine("        switch (request)");
         builder.AppendLine("        {");
         HashSet<string> seen = new();
-        foreach (RequestBinding request in graph.Requests)
+        foreach (RequestBinding request in requests)
         {
             string requestType = Fq(request.RequestType);
             if (!seen.Add(requestType))
@@ -222,7 +299,7 @@ internal static class MediatorEmitter
         builder.AppendLine();
     }
 
-    private static void EmitPublish(StringBuilder builder, MessageGraph graph, bool aot)
+    private static void EmitPublish(StringBuilder builder, List<NotificationBinding> notifications, bool aot)
     {
         builder.AppendLine("    public global::System.Threading.Tasks.Task Publish<TNotification>(TNotification notification, global::System.Threading.CancellationToken cancellationToken = default)");
         builder.AppendLine("        where TNotification : global::TimeWarp.Mediator.INotification");
@@ -245,7 +322,7 @@ internal static class MediatorEmitter
         builder.AppendLine("        switch (notification)");
         builder.AppendLine("        {");
         HashSet<string> seen = new();
-        foreach (NotificationBinding notification in graph.Notifications)
+        foreach (NotificationBinding notification in notifications)
         {
             string typeName = Fq(notification.NotificationType);
             if (!seen.Add(typeName))
@@ -265,7 +342,7 @@ internal static class MediatorEmitter
         builder.AppendLine("    }");
         builder.AppendLine();
 
-        foreach (NotificationBinding notification in graph.Notifications)
+        foreach (NotificationBinding notification in notifications)
         {
             string typeName = Fq(notification.NotificationType);
             string method = "Publish_" + MessageGraphBuilder.Sanitize(notification.NotificationType);
@@ -308,19 +385,19 @@ internal static class MediatorEmitter
     {
         builder.AppendLine("    public global::System.Collections.Generic.IAsyncEnumerable<TResponse> CreateStream<TResponse>(global::TimeWarp.Mediator.IStreamRequest<TResponse> request, global::System.Threading.CancellationToken cancellationToken = default)");
         builder.AppendLine("    {");
-        builder.AppendLine("        throw new global::System.NotSupportedException(\"Stream dispatch is deferred past M1 (004-001).\");");
+        builder.AppendLine("        throw new global::System.NotSupportedException(\"Stream dispatch is deferred past M1 (004-001). Named pipelines (004-002) do not add streams.\");");
         builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    public global::System.Collections.Generic.IAsyncEnumerable<object?> CreateStream(object request, global::System.Threading.CancellationToken cancellationToken = default)");
         builder.AppendLine("    {");
-        builder.AppendLine("        throw new global::System.NotSupportedException(\"Stream dispatch is deferred past M1 (004-001).\");");
+        builder.AppendLine("        throw new global::System.NotSupportedException(\"Stream dispatch is deferred past M1 (004-001). Named pipelines (004-002) do not add streams.\");");
         builder.AppendLine("    }");
         builder.AppendLine();
     }
 
-    private static void EmitDispatchMethods(StringBuilder builder, MessageGraph graph, bool aot)
+    private static void EmitDispatchMethods(StringBuilder builder, List<RequestBinding> requests, bool aot)
     {
-        foreach (RequestBinding request in graph.Requests)
+        foreach (RequestBinding request in requests)
         {
             string requestType = Fq(request.RequestType);
             string responseType = Fq(request.ResponseType);
@@ -440,8 +517,63 @@ internal static class MediatorEmitter
         builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<global::TimeWarp.Mediator.ISender>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(ns).AppendLine(".Mediator>(sp));");
         builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<global::TimeWarp.Mediator.IPublisher>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(ns).AppendLine(".Mediator>(sp));");
 
+        EmitHandlerRegistrations(builder, RequestsFor(graph, scope: null), NotificationsFor(graph, scope: null));
+
+        builder.AppendLine("        return services;");
+        builder.AppendLine("    }");
+
+        List<INamedTypeSymbol> scopes = DistinctScopes(graph);
+        if (scopes.Count > 0)
+        {
+            builder.AppendLine();
+            builder.AppendLine("    public static global::Microsoft.Extensions.DependencyInjection.IServiceCollection AddGeneratedMediator<TScope>(this global::Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
+            builder.AppendLine("    {");
+            builder.AppendLine("        if (services is null)");
+            builder.AppendLine("        {");
+            builder.AppendLine("            throw new global::System.ArgumentNullException(nameof(services));");
+            builder.AppendLine("        }");
+            builder.AppendLine();
+            foreach (INamedTypeSymbol scope in scopes)
+            {
+                string suffix = ScopeSuffix(scope, graph);
+                builder.Append("        if (typeof(TScope) == typeof(").Append(Fq(scope)).AppendLine("))");
+                builder.AppendLine("        {");
+                builder.Append("            AddGeneratedMediator_").Append(suffix).AppendLine("(services);");
+                builder.AppendLine("            return services;");
+                builder.AppendLine("        }");
+            }
+
+            builder.AppendLine("        throw new global::System.ArgumentException(\"No generated pipeline for scope '\" + typeof(TScope).FullName + \"'.\", nameof(TScope));");
+            builder.AppendLine("    }");
+
+            foreach (INamedTypeSymbol scope in scopes)
+            {
+                string suffix = ScopeSuffix(scope, graph);
+                string senderType = ns + ".Sender_" + suffix;
+                string publisherType = ns + ".Publisher_" + suffix;
+                builder.AppendLine();
+                builder.Append("    private static void AddGeneratedMediator_").Append(suffix).AppendLine("(global::Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
+                builder.AppendLine("    {");
+                builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<").Append(senderType).AppendLine(">(services);");
+                builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<global::TimeWarp.Mediator.ISender<").Append(Fq(scope)).Append(">>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(senderType).AppendLine(">(sp));");
+                builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<").Append(publisherType).AppendLine(">(services);");
+                builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<global::TimeWarp.Mediator.IPublisher<").Append(Fq(scope)).Append(">>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(publisherType).AppendLine(">(sp));");
+                EmitHandlerRegistrations(builder, RequestsFor(graph, scope), NotificationsFor(graph, scope));
+                builder.AppendLine("    }");
+            }
+        }
+
+        builder.AppendLine("}");
+        return builder.ToString();
+    }
+
+    private static void EmitHandlerRegistrations(
+        StringBuilder builder,
+        List<RequestBinding> requests,
+        List<NotificationBinding> notifications)
+    {
         HashSet<string> registered = new();
-        foreach (RequestBinding request in graph.Requests)
+        foreach (RequestBinding request in requests)
         {
             string handlerType = Fq(request.HandlerType);
             if (registered.Add(handlerType))
@@ -470,7 +602,7 @@ internal static class MediatorEmitter
             }
         }
 
-        foreach (NotificationBinding notification in graph.Notifications)
+        foreach (NotificationBinding notification in notifications)
         {
             foreach (INamedTypeSymbol handler in notification.HandlerTypes)
             {
@@ -484,11 +616,6 @@ internal static class MediatorEmitter
                 builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::TimeWarp.Mediator.INotificationHandler<").Append(Fq(notification.NotificationType)).Append(">>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(handlerType).AppendLine(">(sp));");
             }
         }
-
-        builder.AppendLine("        return services;");
-        builder.AppendLine("    }");
-        builder.AppendLine("}");
-        return builder.ToString();
     }
 
     private static string Fq(INamedTypeSymbol type)
@@ -521,5 +648,82 @@ internal static class MediatorEmitter
         }
 
         return first + name.Substring(1);
+    }
+
+    private static List<INamedTypeSymbol> DistinctScopes(MessageGraph graph)
+    {
+        List<INamedTypeSymbol> scopes = new();
+        foreach (RequestBinding request in graph.Requests)
+        {
+            AddScope(scopes, request.ScopeType);
+        }
+
+        foreach (NotificationBinding notification in graph.Notifications)
+        {
+            AddScope(scopes, notification.ScopeType);
+        }
+
+        scopes.Sort((left, right) => string.CompareOrdinal(left.ToDisplayString(), right.ToDisplayString()));
+        return scopes;
+    }
+
+    private static void AddScope(List<INamedTypeSymbol> scopes, INamedTypeSymbol? scope)
+    {
+        if (scope is null)
+        {
+            return;
+        }
+
+        foreach (INamedTypeSymbol existing in scopes)
+        {
+            if (SymbolEqualityComparer.Default.Equals(existing, scope))
+            {
+                return;
+            }
+        }
+
+        scopes.Add(scope);
+    }
+
+    private static string ScopeSuffix(INamedTypeSymbol scope, MessageGraph graph)
+    {
+        int sameName = 0;
+        foreach (INamedTypeSymbol candidate in DistinctScopes(graph))
+        {
+            if (candidate.Name == scope.Name)
+            {
+                sameName++;
+            }
+        }
+
+        return sameName <= 1 ? scope.Name : MessageGraphBuilder.Sanitize(scope);
+    }
+
+    private static List<RequestBinding> RequestsFor(MessageGraph graph, INamedTypeSymbol? scope)
+    {
+        List<RequestBinding> list = new();
+        foreach (RequestBinding request in graph.Requests)
+        {
+            if (SymbolEqualityComparer.Default.Equals(request.ScopeType, scope))
+            {
+                list.Add(request);
+            }
+        }
+
+        return list;
+    }
+
+    private static List<NotificationBinding> NotificationsFor(MessageGraph graph, INamedTypeSymbol? scope)
+    {
+        List<NotificationBinding> list = new();
+        foreach (NotificationBinding notification in graph.Notifications)
+        {
+            if (SymbolEqualityComparer.Default.Equals(notification.ScopeType, scope))
+            {
+                list.Add(notification);
+            }
+        }
+
+        return list;
     }
 }
