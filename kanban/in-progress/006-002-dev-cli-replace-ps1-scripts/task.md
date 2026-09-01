@@ -38,12 +38,15 @@ Parent: **006**. Add TimeWarp `tools/dev-cli` + `bin/dev`. Replace PowerShell as
 - [x] `.githooks` memsearch path; `core.hooksPath=.githooks`; retired `Tools/GitHooks/*.ps1`
 - [x] `./bin/dev --capabilities` description + required commands
 - [x] Deleted leftover `.ps1` (Build, Push, GitHooks, FileSync, one-shots)
+- [x] Implementation review (effort 1, general) — disposition clean
 
 ## Session
 
 - Created: 162284 (2026-09-01)
 - Implementer: grok (2026-09-02)
+- Review: grok, effort 1, roster general (2026-09-02)
 - Review round-1 fixes (M1 Version SSOT assert; M2 wipe artifacts/packages): grok (2026-09-02)
+- Review round 2: grok, effort 1, roster general (2026-09-02)
 
 ## Results
 
@@ -90,6 +93,7 @@ test ! -e Build.ps1 && test ! -e .github/scripts/Push.ps1
 - `./bin/dev build` prints `Building …/timewarp-mediator.slnx` and `Build completed successfully!` (exit 0, no MSB1011).
 - `./bin/dev pack --no-build` creates `artifacts/packages/TimeWarp.Mediator{,.Contracts,.Analyzers,.Generators}.13.0.0.nupkg` and prints `Package layout verified` for Analyzers and Generators (exit 0).
 - `core.hooksPath` is `.githooks`. `Build.ps1` and `.github/scripts/Push.ps1` are absent.
+- Root and `source/Directory.Build.props` `<Version>` both `13.0.0` (release `AssertVersionSsot`). `dev pack` leaves only this run's nupkgs under `artifacts/packages`.
 
 **Automated gate**
 
@@ -106,3 +110,12 @@ ganda repo audit
 **Depends on:** .NET 10 SDK for the runfile/AOT CLI. Tests target net8.0 (GitHub `setup-dotnet` `8.0.x` + `10.0.x`). Fresh clone needs `self-install` before `./bin/dev`.
 
 **Not in scope:** kebab-path-names (006-003); full audit green (006-005); live NuGet push (needs OIDC on a GitHub Release).
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 2
+- **Effort / roster:** 1, general (both rounds)
+- **Counts (final, round 2):** bug 0 open / 1 fixed; suggestion 0 open / 1 fixed; nit 0 — final open count 0
+- **Wontfix / escalations:** none
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`
