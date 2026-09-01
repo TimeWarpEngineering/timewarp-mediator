@@ -12,7 +12,7 @@ Coexistence stays: `AddMediator()` = legacy reflection; `AddGeneratedMediator()`
 
 - **005-001** Version + pack `14.0.0-beta.1` (Contracts, Mediator, Analyzers, Generators)
 - **005-002** Consumer docs (generated vs legacy)
-- **005-003** Publish NuGet **prerelease** (depends on 005-001)
+- **005-003** Publish NuGet **prerelease** (depends on 005-001 **and 006-005**)
 
 ## Requirements
 
@@ -31,8 +31,10 @@ Coexistence stays: `AddMediator()` = legacy reflection; `AddGeneratedMediator()`
 ## Notes
 
 - Spec said major version / clean break. Beta is the test vehicle; stable waits for consumers.
-- Cross-repo: State switch epic; Nuru 443.
+- Cross-repo: State **080**; Nuru **443**.
+- **006** (TimeWarp repo conformance) is the missing piece: this tree is still a MediatR fork. Do **not** run **005-003** until **006-005** (`ganda repo audit` error-green). Add `## Depends on 006-005` on 005-003 when 005-001 is merged (claim currently blocked on 005-001). 005-001 pack may land on the current layout; NuGet beta does not.
 
 ## Session
 
 - Created: 150754 (2026-09-01)
+- Updated: 162284 (2026-09-01) — 005-003 gated on 006-005
