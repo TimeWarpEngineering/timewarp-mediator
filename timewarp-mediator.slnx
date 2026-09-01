@@ -21,12 +21,8 @@
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
-    <File Path=".github/workflows/ci.yml" />
-    <File Path=".github/workflows/release.yml" />
-    <File Path="Build.ps1" />
-    <File Path="BuildContracts.ps1" />
+    <File Path=".github/workflows/workflow.yml" />
     <File Path="Directory.Build.props" />
-    <File Path="Push.ps1" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/src/">

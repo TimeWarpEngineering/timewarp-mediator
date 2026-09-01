@@ -1,0 +1,7 @@
+{
+  // Product still lives under src/ until 006-003, so check-version cannot derive
+  // packable projects from source/. Explicit package list matches Build.ps1 pack.
+  "checkVersionConfig": {
+    "packages": "TimeWarp.Mediator,TimeWarp.Mediator.Contracts,TimeWarp.Mediator.Analyzers,TimeWarp.Mediator.Generators"
+  }
+}
