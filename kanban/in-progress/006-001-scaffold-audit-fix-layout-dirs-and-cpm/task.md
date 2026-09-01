@@ -30,12 +30,14 @@ Today’s errors this slice should kill or shrink: envrc, routine-journals-gitig
 - [x] Wrap existing `.sln` projects in root `.slnx`
 - [x] Restore + Release build of `timewarp-mediator.slnx`
 - [x] Implementation review (effort 1, general) — disposition clean
+- [ ] CI: `Build.ps1` must not hit MSB1011 (both `.sln` and `.slnx` at repo root)
 
 ## Session
 
 - Created: 162284 (2026-09-01)
 - Implementer: grok (2026-09-01)
 - Review: grok, effort 1, roster general (2026-09-01)
+- Reopened: cockpit 2026-09-01 — PR #55 MSB1011; dispatched back onto this id
 
 ## Results
 
@@ -58,6 +60,19 @@ Scaffolded the TimeWarp repo baseline on this fork without kebab-renaming `src/`
 - Kept existing package versions (no upgrade). Pinned `Microsoft.CodeAnalysis.BannedApiAnalyzers` 5.6.0 and `TimeWarp.Build.Tasks` 1.0.0 from `--fix`.
 - Replaced the empty `--fix` slnx with `dotnet sln TimeWarp.Mediator.sln migrate`, then named the file `timewarp-mediator.slnx` so kebab-path-names did not grow.
 - `source/Directory.Build.props` is a placeholder (no csproj under `source/` yet); nuget-package-icon/urls stay SKIP until 006-003.
+
+### Reopened 2026-09-01 — CI red on PR #55 (inbound)
+
+`ganda pr merge 55 --task-id 006-001` refused: **build-and-publish** failed in 10s.
+
+```
+MSBUILD : error MSB1011: Specify which project or solution file to use because this folder contains more than one project or solution file.
+Build.ps1:22 throw ("Exec: " + $errorMessage)
+```
+
+Root now has **both** `TimeWarp.Mediator.sln` and `timewarp-mediator.slnx`. `Build.ps1` (and any CI `dotnet` with no `-sln`) is ambiguous.
+
+**This slice:** make CI/`Build.ps1` pass by pointing at **one** solution (prefer `timewarp-mediator.slnx`). Do not start 006-002/006-003. Push to the existing PR branch. Do not merge.
 
 ### How to validate
 
