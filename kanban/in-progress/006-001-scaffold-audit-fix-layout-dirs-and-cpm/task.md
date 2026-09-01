@@ -30,7 +30,7 @@ Today’s errors this slice should kill or shrink: envrc, routine-journals-gitig
 - [x] Wrap existing `.sln` projects in root `.slnx`
 - [x] Restore + Release build of `timewarp-mediator.slnx`
 - [x] Implementation review (effort 1, general) — disposition clean
-- [ ] CI: `Build.ps1` must not hit MSB1011 (both `.sln` and `.slnx` at repo root)
+- [x] CI: `Build.ps1` must not hit MSB1011 (both `.sln` and `.slnx` at repo root)
 
 ## Session
 
@@ -38,6 +38,7 @@ Today’s errors this slice should kill or shrink: envrc, routine-journals-gitig
 - Implementer: grok (2026-09-01)
 - Review: grok, effort 1, roster general (2026-09-01)
 - Reopened: cockpit 2026-09-01 — PR #55 MSB1011; dispatched back onto this id
+- Implementer (MSB1011): grok (2026-09-01)
 
 ## Results
 
@@ -74,28 +75,32 @@ Root now has **both** `TimeWarp.Mediator.sln` and `timewarp-mediator.slnx`. `Bui
 
 **This slice:** make CI/`Build.ps1` pass by pointing at **one** solution (prefer `timewarp-mediator.slnx`). Do not start 006-002/006-003. Push to the existing PR branch. Do not merge.
 
+**Fix landed:** `Build.ps1` now uses `$Solution = "timewarp-mediator.slnx"` for `clean` / `build` / `test`. `Agent.md` unadorned `dotnet` commands were updated the same way. `TimeWarp.Mediator.sln` is kept (006-003 kebab-renames the tree; this slice only disambiguates CI). Pack steps already named csproj files.
+
+Local proof (2026-09-01): `dotnet build -c Release` (no sln) → MSB1011 exit 1. `dotnet restore` + `dotnet build timewarp-mediator.slnx -c Release` exit 0. `pwsh` simulation of `Build.ps1` clean+build against the slnx exit 0. Full `Build.ps1` still needs net8 testhost (CI `setup-dotnet` 8.0.x has it; this agent image does not).
+
 ### How to validate
 
 **Smoke**
 
 ```bash
 cd /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-mediator/task-006-001-scaffold-audit-fix-layout-dirs-and-cpm
-ganda repo audit
-test -f Directory.Packages.props && test -f msbuild/repository.props && test -f source/Directory.Build.props && test -f timewarp-mediator.slnx && test -f .envrc
-test -d kanban/backlog && test -d kanban/in-progress && test -d kanban/archived
-rg -n 'root = true|csharp_style_prefer_top_level_statements|csharp_style_unused_value_expression_statement_preference|csharp_style_namespace_declarations' .editorconfig
-rg -n 'task-work.journal.json|stacked-task-set.journal.json|planning.journal.json|rfc.journal.json|debate.journal.json|advisor.journal.json' .gitignore
+# Unadorned build still ambiguous (both .sln and .slnx remain):
+dotnet build -c Release; echo "expect MSB1011 exit 1"
+# CI path:
+rg -n 'timewarp-mediator.slnx' Build.ps1
 dotnet restore timewarp-mediator.slnx
-dotnet sln timewarp-mediator.slnx list
+dotnet build timewarp-mediator.slnx -c Release --no-restore
+pwsh -NoProfile -Command '& ./Build.ps1'   # CI has net8; local testhost may fail after build
 ```
 
 **Expect**
 
-- Audit **PASS** for: `envrc`, `routine-journals-gitignore`, `directory-packages-props`, `cpm-consistency`, `banned-symbols`, `banned-api-analyzers`, `assembly-metadata`, `msbuild-repository-props`, `source-directory-build-props`, `slnx`, `editorconfig`, `directory-structure`
-- Audit still **FAIL** (this slice): `bin-dev`, `dev-cli-capabilities`, `nuru`, `region-annotations`, `kebab-path-names`
+- Unadorned `dotnet build -c Release` prints `MSB1011` and exits 1 (root still has both solutions)
+- `Build.ps1` contains `timewarp-mediator.slnx` on `dotnet clean` / `build` / `test`
 - `dotnet restore timewarp-mediator.slnx` exit 0
-- `dotnet sln timewarp-mediator.slnx list` includes the existing `src/`, `test/`, and `samples/` projects
-- `.envrc` contains `PATH_add bin`
+- `dotnet build timewarp-mediator.slnx -c Release --no-restore` exit 0 (RS0030 warnings on samples/tests are OK)
+- On a machine with net8.0 testhost (GitHub `setup-dotnet: 8.0.x`): `pwsh -File ./Build.ps1` exit 0, no MSB1011
 
 **Automated gate**
 
@@ -105,7 +110,7 @@ dotnet build timewarp-mediator.slnx -c Release --no-restore
 # expect: exit 0; RS0030 warnings on samples/tests are OK
 ```
 
-**Not in scope:** `bin/dev` / `tools/dev-cli` (006-002); kebab rename of `src/` → `source/` (006-003); C# file-scoped namespaces / Console replacement (006-004). Core xunit run needs a net8.0 runtime this agent image does not have.
+**Not in scope:** `bin/dev` / `tools/dev-cli` (006-002); kebab rename of `src/` → `source/` (006-003); C# file-scoped namespaces / Console replacement (006-004). Core xunit run needs a net8.0 runtime this agent image does not have. Deleting `TimeWarp.Mediator.sln` is not this slice.
 
 ### Review disposition
 
