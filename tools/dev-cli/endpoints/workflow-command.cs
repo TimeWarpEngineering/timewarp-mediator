@@ -3,9 +3,12 @@
 #endregion
 #region Design
 // PR/merge: clean -> build -> test -> pack (analyzer layout gate; artifacts upload).
-// Release:  clean -> build -> pack -> check-version -> push (no test gate).
-// Handlers are invoked directly so CI does not need a pre-installed ./bin/dev.
-// Push is skipped when no API key is supplied (local pack-only).
+// Release:  clean -> build -> pack -> assert Version SSOT -> check-version -> push
+// (no test gate). Until 006-003, pack reads root Directory.Build.props Version
+// while shared check-version reads source/; AssertVersionSsot fails the pipeline
+// if they drift. Handlers are invoked directly so CI does not need a
+// pre-installed ./bin/dev. Push is skipped when no API key is supplied
+// (local pack-only).
 #endregion
 
 namespace DevCli.Commands;
@@ -120,7 +123,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
     private async Task RunReleaseAsync(string? apiKey)
     {
-      Terminal.WriteLine("Pipeline: clean -> build -> pack -> check-version -> push\n");
+      Terminal.WriteLine("Pipeline: clean -> build -> pack -> assert-version-ssot -> check-version -> push\n");
       Environment.ExitCode = 0;
 
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct)))
@@ -135,6 +138,12 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
       if (!await RunStepAsync("Pack", new PackCommand.Handler(Terminal).Handle(new PackCommand { NoBuild = true }, Ct)))
       {
+        return;
+      }
+
+      if (!AssertVersionSsot())
+      {
+        Terminal.WriteErrorLine("\nPipeline FAILED — Assert Version SSOT failed".Red());
         return;
       }
 
@@ -154,6 +163,29 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       }
 
       Terminal.WriteLine("\nPipeline SUCCEEDED".Green());
+    }
+
+    private bool AssertVersionSsot()
+    {
+      string rootPropsPath = Path.Combine(RepoRoot, "Directory.Build.props");
+      string sourcePropsPath = Path.Combine(RepoRoot, "source", "Directory.Build.props");
+      string? rootVersion = RepoLayout.TryReadVersion(rootPropsPath);
+      string? sourceVersion = RepoLayout.TryReadVersion(sourcePropsPath);
+
+      if (rootVersion is not null
+          && sourceVersion is not null
+          && string.Equals(rootVersion, sourceVersion, StringComparison.Ordinal))
+      {
+        Terminal.WriteLine($"Version SSOT aligned: {rootVersion} (Directory.Build.props == source/Directory.Build.props)");
+        return true;
+      }
+
+      string rootDisplay = rootVersion ?? "(missing)";
+      string sourceDisplay = sourceVersion ?? "(missing)";
+      Terminal.WriteErrorLine(
+        $"Version SSOT mismatch: Directory.Build.props Version='{rootDisplay}', source/Directory.Build.props Version='{sourceDisplay}'. Align both until 006-003.".Red());
+      Environment.ExitCode = 1;
+      return false;
     }
 
     private async Task<bool> PushAsync(string? apiKey)

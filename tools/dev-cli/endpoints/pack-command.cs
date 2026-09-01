@@ -3,9 +3,10 @@
 #endregion
 #region Design
 // Maps Build.ps1 pack + Assert-NupkgContains. Output is artifacts/packages
-// (repository.props), not the former Artifacts/. Layout gate uses NupkgLayoutCheck
-// so a hollow Analyzers/Generators nupkg fails the command the same way the
-// PowerShell zip asserts did.
+// (repository.props), not the former Artifacts/. PackAsync deletes that folder
+// first so FindNupkg / push only see this run's nupkgs. Layout gate uses
+// NupkgLayoutCheck so a hollow Analyzers/Generators nupkg fails the command
+// the same way the PowerShell zip asserts did.
 #endregion
 
 namespace DevCli.Commands;
@@ -69,6 +70,11 @@ internal sealed class PackCommand : ICommand<Unit>
     private async Task<bool> PackAsync()
     {
       string outputDir = Path.Combine(RepoRoot, "artifacts", "packages");
+      if (Directory.Exists(outputDir))
+      {
+        Directory.Delete(outputDir, true);
+      }
+
       Directory.CreateDirectory(outputDir);
 
       foreach (string relativeProject in RepoLayout.PackableProjects)

@@ -43,12 +43,13 @@ Parent: **006**. Add TimeWarp `tools/dev-cli` + `bin/dev`. Replace PowerShell as
 
 - Created: 162284 (2026-09-01)
 - Implementer: grok (2026-09-02)
+- Review round-1 fixes (M1 Version SSOT assert; M2 wipe artifacts/packages): grok (2026-09-02)
 
 ## Results
 
 Replaced PowerShell as the build/test/pack/push/hooks path with TimeWarp `tools/dev-cli` (Nuru) and `bin/dev`.
 
-`ganda repo audit --fix --checks nuru,region-annotations,memsearch-scaffold` scaffolded the baseline. Local endpoints then map the former `Build.ps1`: `dev build` / `dev test` name `timewarp-mediator.slnx` (MSB1011), `dev pack` packs the four product projects to `artifacts/packages` and asserts analyzer DLL entries via `NupkgLayoutCheck`. `dev workflow` is mode-aware (PR/merge: clean → build → test → pack; release: clean → build → pack → check-version → push, no test gate). CI no longer shells `pwsh` or ad-hoc `dotnet nuget push`.
+`ganda repo audit --fix --checks nuru,region-annotations,memsearch-scaffold` scaffolded the baseline. Local endpoints then map the former `Build.ps1`: `dev build` / `dev test` name `timewarp-mediator.slnx` (MSB1011), `dev pack` packs the four product projects to `artifacts/packages` and asserts analyzer DLL entries via `NupkgLayoutCheck`. `dev workflow` is mode-aware (PR/merge: clean → build → test → pack; release: clean → build → pack → assert Version SSOT → check-version → push, no test gate). Until 006-003, release asserts root and `source/` `Directory.Build.props` `<Version>` match before shared check-version. `dev pack` wipes `artifacts/packages` before writing nupkgs. CI no longer shells `pwsh` or ad-hoc `dotnet nuget push`.
 
 Git hooks are TimeWarp `.githooks` (memsearch + master/main refuse on pre-commit/pre-push). Live `Tools/GitHooks/*.ps1` is gone. One-shots were already spent; they were deleted, not converted.
 
