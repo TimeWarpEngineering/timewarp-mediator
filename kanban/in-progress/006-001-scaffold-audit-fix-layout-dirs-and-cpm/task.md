@@ -29,11 +29,13 @@ Today’s errors this slice should kill or shrink: envrc, routine-journals-gitig
 - [x] Pin discovered package versions in `Directory.Packages.props` and strip csproj `Version` attributes
 - [x] Wrap existing `.sln` projects in root `.slnx`
 - [x] Restore + Release build of `timewarp-mediator.slnx`
+- [x] Implementation review (effort 1, general) — disposition clean
 
 ## Session
 
 - Created: 162284 (2026-09-01)
 - Implementer: grok (2026-09-01)
+- Review: grok, effort 1, roster general (2026-09-01)
 
 ## Results
 
@@ -89,3 +91,12 @@ dotnet build timewarp-mediator.slnx -c Release --no-restore
 ```
 
 **Not in scope:** `bin/dev` / `tools/dev-cli` (006-002); kebab rename of `src/` → `source/` (006-003); C# file-scoped namespaces / Console replacement (006-004). Core xunit run needs a net8.0 runtime this agent image does not have.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 1
+- **Effort / roster:** 1, general
+- **Counts (final):** bug 0 / suggestion 0 / nit 0 — all statuses 0 (no issues raised)
+- **Wontfix / escalations:** none
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
