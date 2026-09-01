@@ -31,6 +31,7 @@ Today’s errors this slice should kill or shrink: envrc, routine-journals-gitig
 - [x] Restore + Release build of `timewarp-mediator.slnx`
 - [x] Implementation review (effort 1, general) — disposition clean
 - [x] CI: `Build.ps1` must not hit MSB1011 (both `.sln` and `.slnx` at repo root)
+- [ ] CI: `GenericRequestHandlerTests.ShouldThrowExceptionWhenTimeoutOccurs` (expects TimeoutException, got ArgumentException MaxTypesClosing 100)
 
 ## Session
 
@@ -40,6 +41,7 @@ Today’s errors this slice should kill or shrink: envrc, routine-journals-gitig
 - Reopened: cockpit 2026-09-01 — PR #55 MSB1011; dispatched back onto this id
 - Implementer (MSB1011): grok (2026-09-01)
 - Review round 2: grok, effort 1, roster general (2026-09-01)
+- Reopened: cockpit 2026-09-02 — PR #55 still red; one test fail after MSB1011 fix
 
 ## Results
 
@@ -112,6 +114,20 @@ dotnet build timewarp-mediator.slnx -c Release --no-restore
 ```
 
 **Not in scope:** `bin/dev` / `tools/dev-cli` (006-002); kebab rename of `src/` → `source/` (006-003); C# file-scoped namespaces / Console replacement (006-004). Core xunit run needs a net8.0 runtime this agent image does not have. Deleting `TimeWarp.Mediator.sln` is not this slice.
+
+### Reopened 2026-09-02 — CI still red on PR #55 (inbound)
+
+MSB1011 is **fixed**. Latest `build-and-publish` (run 33535250975, 52s) fails **1 test**:
+
+`TimeWarp.Mediator.Tests.GenericRequestHandlerTests.ShouldThrowExceptionWhenTimeoutOccurs`
+
+- Expects `TimeoutException`
+- Throws `ArgumentException`: `Error registering the generic type: . One of the generic type parameter's count of types that can close exceeds the maximum length allowed (100).`
+- Totals: 165 tests, 162 passed, 1 failed, 2 skipped
+
+004-001 CI had 163 passed / 2 skipped. This agent could not run net8 testhost locally, so this test was never proven on the scaffold branch.
+
+**This slice:** make `Build.ps1` / CI test run green. Prefer a **test-only** fix (timeout vs ArgumentException, or skip with reason) unless the 0→100 MaxTypesClosing behavior is a real scaffold regression. Push to PR #55. Do not merge. Do not start 006-002/006-003.
 
 ### Review disposition
 
