@@ -31,7 +31,7 @@ Today’s errors this slice should kill or shrink: envrc, routine-journals-gitig
 - [x] Restore + Release build of `timewarp-mediator.slnx`
 - [x] Implementation review (effort 1, general) — disposition clean
 - [x] CI: `Build.ps1` must not hit MSB1011 (both `.sln` and `.slnx` at repo root)
-- [ ] CI: `GenericRequestHandlerTests.ShouldThrowExceptionWhenTimeoutOccurs` (expects TimeoutException, got ArgumentException MaxTypesClosing 100)
+- [x] CI: `GenericRequestHandlerTests.ShouldThrowExceptionWhenTimeoutOccurs` (expects TimeoutException, got ArgumentException MaxTypesClosing 100)
 
 ## Session
 
@@ -42,6 +42,7 @@ Today’s errors this slice should kill or shrink: envrc, routine-journals-gitig
 - Implementer (MSB1011): grok (2026-09-01)
 - Review round 2: grok, effort 1, roster general (2026-09-01)
 - Reopened: cockpit 2026-09-02 — PR #55 still red; one test fail after MSB1011 fix
+- Implementer (timeout test): grok (2026-09-02)
 
 ## Results
 
@@ -128,6 +129,54 @@ MSB1011 is **fixed**. Latest `build-and-publish` (run 33535250975, 52s) fails **
 004-001 CI had 163 passed / 2 skipped. This agent could not run net8 testhost locally, so this test was never proven on the scaffold branch.
 
 **This slice:** make `Build.ps1` / CI test run green. Prefer a **test-only** fix (timeout vs ArgumentException, or skip with reason) unless the 0→100 MaxTypesClosing behavior is a real scaffold regression. Push to PR #55. Do not merge. Do not start 006-002/006-003.
+
+**Fix landed:** test-only. `ServiceRegistrar` still copies `MaxTypesClosing` / `MaxGenericTypeParameters` / `MaxGenericTypeRegistrations` / `RegistrationTimeout` into process-wide statics (unchanged vs master — not a scaffold regression of the 100 default). xUnit parallelizes collections, so a concurrent `AddMediator` overwrites `MaxTypesClosing=0` and the timeout fixture (400 closing types) hits the default 100 with `ArgumentException`. Isolated, the test already throws `TimeoutException` as designed.
+
+Added `test/TimeWarp.Mediator.Tests/AssemblyInfo.cs` with `[assembly: CollectionBehavior(DisableTestParallelization = true, MaxParallelThreads = 1)]` so the timeout test keeps exclusive access to those statics. Did not skip the test and did not widen the assertion to `ArgumentException`.
+
+Local proof (2026-09-02, `DOTNET_ROLL_FORWARD=Major` — this image has no net8 runtime; CI `setup-dotnet: 8.0.x` does):
+
+- Filter `ShouldThrowExceptionWhenTimeoutOccurs`: 1 passed
+- `dotnet test test/TimeWarp.Mediator.Tests/TimeWarp.Mediator.Tests.csproj -c Release`: 163 passed / 2 skipped / 0 failed
+- `dotnet test timewarp-mediator.slnx -c Release`: Generators 19 passed, Analyzers 6 passed, Mediator.Tests 163 passed / 2 skipped; exit 0
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-mediator/task-006-001-scaffold-audit-fix-layout-dirs-and-cpm
+rg -n 'DisableTestParallelization' test/TimeWarp.Mediator.Tests/AssemblyInfo.cs
+rg -n 'timewarp-mediator.slnx' Build.ps1
+dotnet restore timewarp-mediator.slnx
+dotnet build timewarp-mediator.slnx -c Release --no-restore
+# testhost is net8.0; roll-forward if this machine has only net10/net11:
+export DOTNET_ROLL_FORWARD=Major
+dotnet test timewarp-mediator.slnx -c Release --no-build --verbosity minimal
+dotnet test test/TimeWarp.Mediator.Tests/TimeWarp.Mediator.Tests.csproj -c Release --no-build \
+  --filter 'FullyQualifiedName~ShouldThrowExceptionWhenTimeoutOccurs'
+```
+
+**Expect**
+
+- `AssemblyInfo.cs` sets `DisableTestParallelization = true` and `MaxParallelThreads = 1`
+- `Build.ps1` still names `timewarp-mediator.slnx` (MSB1011 fix from the prior reopen)
+- Restore + Release build of `timewarp-mediator.slnx` exit 0 (RS0030 warnings on samples/tests are OK)
+- `dotnet test timewarp-mediator.slnx -c Release --no-build` exit 0
+- `TimeWarp.Mediator.Tests`: 163 passed, 2 skipped, 0 failed (the two skips are the pre-existing concrete/open-generic pipeline facts)
+- `ShouldThrowExceptionWhenTimeoutOccurs` throws `TimeoutException`, not `ArgumentException` MaxTypesClosing 100
+- On GitHub `setup-dotnet: 8.0.x`, `pwsh -File ./Build.ps1` exit 0 (no MSB1011, no test fail)
+
+**Automated gate**
+
+```bash
+dotnet restore timewarp-mediator.slnx
+dotnet build timewarp-mediator.slnx -c Release --no-restore
+DOTNET_ROLL_FORWARD=Major dotnet test timewarp-mediator.slnx -c Release --no-build
+# expect: exit 0; Mediator.Tests 163 passed / 2 skipped; Analyzers 6; Generators 19
+```
+
+**Not in scope:** `bin/dev` / `tools/dev-cli` (006-002); kebab rename of `src/` → `source/` (006-003); C# file-scoped namespaces / Console replacement (006-004). Product `ServiceRegistrar` static limits are unchanged (pre-existing MediatR-fork behavior). Deleting `TimeWarp.Mediator.sln` is not this slice.
 
 ### Review disposition
 
