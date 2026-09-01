@@ -20,14 +20,14 @@ Both packages are now built together via ProjectReference dependency.
 ### Manual Development Commands
 ```bash
 # Clean and build
-dotnet clean -c Release
-dotnet build -c Release
+dotnet clean timewarp-mediator.slnx -c Release
+dotnet build timewarp-mediator.slnx -c Release
 
 # Run all tests
-dotnet test -c Release --no-build
+dotnet test timewarp-mediator.slnx -c Release --no-build
 
 # Run tests with detailed output
-dotnet test -c Release --no-build -l trx --verbosity=normal
+dotnet test timewarp-mediator.slnx -c Release --no-build -l trx --verbosity=normal
 
 # Create packages (Analyzer/Generator packages disable snupkg; IncludeBuildOutput is false)
 dotnet pack .\src\TimeWarp.Mediator\TimeWarp.Mediator.csproj -c Release -o .\Artifacts --no-build
@@ -89,8 +89,8 @@ Tests are organized by feature area and include extensive coverage of:
 ## Development Workflow
 
 1. Make changes to source code
-2. Run `dotnet build -c Release` to verify compilation
-3. Run `dotnet test -c Release --no-build` to ensure all tests pass
+2. Run `dotnet build timewarp-mediator.slnx -c Release` to verify compilation
+3. Run `dotnet test timewarp-mediator.slnx -c Release --no-build` to ensure all tests pass
 4. Use `.\Build.ps1` for full validation including packaging
 5. Sample projects in `samples/` directory demonstrate usage patterns
 

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!-- Central Package Management - package versions are pinned from discovered references -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Build and analyzers">
+    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageVersion>
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+    <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Product">
+    <PackageVersion Include="IsExternalInit" Version="1.0.3" />
+    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageVersion Include="Shouldly" Version="4.2.1" />
+    <PackageVersion Include="System.Reflection.TypeExtensions" Version="4.7.0" />
+    <PackageVersion Include="xunit" Version="2.6.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Benchmarks">
+    <PackageVersion Include="BenchmarkDotNet" Version="0.13.10" />
+    <PackageVersion Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.10" />
+    <PackageVersion Include="Mediator.Abstractions" Version="2.1.7" />
+    <PackageVersion Include="Mediator.SourceGenerator" Version="2.1.7" />
+  </ItemGroup>
+
+  <ItemGroup Label="Samples">
+    <PackageVersion Include="Autofac" Version="7.1.0" />
+    <PackageVersion Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageVersion Include="Castle.Windsor" Version="5.1.2" />
+    <PackageVersion Include="Castle.Windsor.Extensions.DependencyInjection" Version="5.1.2" />
+    <PackageVersion Include="DryIoc.Microsoft.DependencyInjection" Version="6.2.0" />
+    <PackageVersion Include="Lamar" Version="12.1.0" />
+    <PackageVersion Include="LightInject" Version="6.6.4" />
+    <PackageVersion Include="LightInject.Microsoft.DependencyInjection" Version="3.7.1" />
+    <PackageVersion Include="SimpleInjector" Version="5.4.2" />
+    <PackageVersion Include="SimpleInjector.Integration.ServiceCollection" Version="5.5.0" />
+    <PackageVersion Include="Stashbox" Version="5.12.2" />
+  </ItemGroup>
+</Project>

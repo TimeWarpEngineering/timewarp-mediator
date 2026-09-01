@@ -23,15 +23,16 @@ function Exec
     }
 }
 
+$Solution = "timewarp-mediator.slnx"
 $Artifacts = ".\Artifacts"
 
 if(Test-Path $Artifacts) { Remove-Item $Artifacts -Force -Recurse }
 
-exec { & dotnet clean -c Release }
+exec { & dotnet clean $Solution -c Release }
 
-exec { & dotnet build -c Release }
+exec { & dotnet build $Solution -c Release }
 
-exec { & dotnet test -c Release --no-build -l trx --verbosity=normal }
+exec { & dotnet test $Solution -c Release --no-build -l trx --verbosity=normal }
 
 exec { & dotnet pack .\src\TimeWarp.Mediator\TimeWarp.Mediator.csproj -c Release -o $Artifacts --no-build }
 

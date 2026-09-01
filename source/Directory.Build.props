@@ -1,0 +1,20 @@
+<Project>
+  <!-- Import root Directory.Build.props -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- Package metadata for NuGet publishing -->
+  <PropertyGroup Label="Package Metadata">
+    <Version>13.0.0</Version>
+    <Authors>TimeWarpEngineering</Authors>
+    <PackageProjectUrl>https://timewarp.software/projects/timewarp-mediator/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-mediator</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
+    <PackageIcon>logo.png</PackageIcon>
+  </PropertyGroup>
+
+  <!-- Include common package files -->
+  <ItemGroup Label="Package Content">
+    <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>
