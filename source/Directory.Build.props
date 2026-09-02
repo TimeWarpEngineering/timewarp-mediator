@@ -4,7 +4,7 @@
 
   <!-- Package metadata for NuGet publishing -->
   <PropertyGroup Label="Package Metadata">
-    <Version>13.0.0</Version>
+    <Version>14.0.0-beta.1</Version>
     <Authors>TimeWarpEngineering</Authors>
     <PackageProjectUrl>https://timewarp.software/projects/timewarp-mediator/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-mediator</RepositoryUrl>
