@@ -9,9 +9,15 @@ TimeWarp Mediator is a fork of the MediatR library that implements the mediator 
 ## Build Commands
 
 ### Primary Build Process
-```powershell
-# Full build with tests and packaging
-.\Build.ps1
+```bash
+# Full CI pipeline: clean, build, test, pack (analyzer nupkg layout asserts)
+./bin/dev workflow
+```
+
+Bootstrap the AOT CLI once per clone:
+
+```bash
+dotnet run --file tools/dev-cli/dev.cs -- self-install
 ```
 
 ### Unified Build Process
@@ -30,10 +36,7 @@ dotnet test timewarp-mediator.slnx -c Release --no-build
 dotnet test timewarp-mediator.slnx -c Release --no-build -l trx --verbosity=normal
 
 # Create packages (Analyzer/Generator packages disable snupkg; IncludeBuildOutput is false)
-dotnet pack .\src\TimeWarp.Mediator\TimeWarp.Mediator.csproj -c Release -o .\Artifacts --no-build
-dotnet pack .\src\TimeWarp.Mediator.Contracts\TimeWarp.Mediator.Contracts.csproj -c Release -o .\Artifacts --no-build
-dotnet pack .\src\TimeWarp.Mediator.Analyzers\TimeWarp.Mediator.Analyzers.csproj -c Release -o .\Artifacts --no-build
-dotnet pack .\src\TimeWarp.Mediator.Generators\TimeWarp.Mediator.Generators.csproj -c Release -o .\Artifacts --no-build
+./bin/dev pack
 
 # Run single test class (example)
 dotnet test test/TimeWarp.Mediator.Tests/TimeWarp.Mediator.Tests.csproj --filter "ClassName~SendTests"
@@ -89,9 +92,9 @@ Tests are organized by feature area and include extensive coverage of:
 ## Development Workflow
 
 1. Make changes to source code
-2. Run `dotnet build timewarp-mediator.slnx -c Release` to verify compilation
-3. Run `dotnet test timewarp-mediator.slnx -c Release --no-build` to ensure all tests pass
-4. Use `.\Build.ps1` for full validation including packaging
+2. Run `./bin/dev build` to verify compilation
+3. Run `./bin/dev test` to ensure all tests pass
+4. Run `./bin/dev pack` (or `./bin/dev workflow`) for packaging including analyzer nupkg layout asserts
 5. Sample projects in `samples/` directory demonstrate usage patterns
 
 ## Git Workflow

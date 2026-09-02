@@ -1,0 +1,14 @@
+<Project>
+  <!-- Shebang git hooks are single-file apps with no project global-usings.cs.
+       Disable style analyzers for this tree only; hooks stay tiny FQ-call scripts. -->
+  <PropertyGroup>
+    <RunAnalyzers>false</RunAnalyzers>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <AnalysisLevel>none</AnalysisLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <SignAssembly>false</SignAssembly>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+</Project>
