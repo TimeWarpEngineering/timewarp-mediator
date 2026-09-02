@@ -17,6 +17,7 @@ Parent: **005**. Document the two stacks so State/Nuru do not call `AddMediator(
 - [x] README
 - [x] Keep/extend `Documentation/m1-generated-mediator.md` and `m2-named-pipelines.md`
 - [x] Issue #52 stays **open** until a stable 14.0.0 (not this epic)
+- [x] Implementation review (effort 1, general) — disposition clean
 
 ## Out of scope
 
@@ -27,6 +28,7 @@ Parent: **005**. Document the two stacks so State/Nuru do not call `AddMediator(
 
 - Created: 150754 (2026-09-01)
 - Implementer: grok session (2026-09-02)
+- Review: grok, effort 1, roster general (2026-09-02)
 
 ## Results
 
@@ -74,3 +76,12 @@ gh issue view 52 --json state,title,url
 None beyond the greps above (docs-only; no runtime surface).
 
 **Not in scope:** version bump (005-001, already merged); NuGet push (005-003); closing #52; `AddMediator()` auto-preferring generated types.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 1
+- **Effort / roster:** 1, general
+- **Counts (final, round 1):** bug 0; suggestion 0; nit 0 — final open count 0
+- **Wontfix / escalations:** none
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
