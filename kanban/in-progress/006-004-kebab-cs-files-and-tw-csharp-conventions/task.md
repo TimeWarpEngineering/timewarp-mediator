@@ -32,11 +32,13 @@ Public **type** names stay PascalCase. This is the large rewrite-of-the-tree sli
 - [x] Explicit types; target-typed `new()` where the constructed type matches the target
 - [x] Analyzers/generators/tests compile and pass; pack ids stay PascalCase
 - [x] Public type names unchanged; no mediator behavior change
+- [x] Implementation review (effort 1, general) — disposition clean
 
 ## Session
 
 - Created: 162284 (2026-09-01)
 - Implementer: grok (2026-09-02)
+- Review: grok, effort 1, roster general (2026-09-02)
 
 ## Results
 
@@ -101,3 +103,12 @@ ls artifacts/packages/TimeWarp.Mediator*.nupkg
 ```
 
 **Not in scope:** enabling the TW0001 analyzer package (006-005); deleting reflection Mediator; 2-space indent (editorconfig is 4).
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 1
+- **Effort / roster:** 1, general
+- **Counts (final, round 1):** bug 0; suggestion 0; nit 0 — final open count 0
+- **Wontfix / escalations:** none
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
