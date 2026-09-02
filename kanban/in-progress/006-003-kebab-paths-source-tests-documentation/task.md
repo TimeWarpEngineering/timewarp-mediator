@@ -34,11 +34,15 @@ Audit today: **112** non-kebab path names. `src/` → `source/`, `test/` → `te
 - [x] Delete `TimeWarp.Mediator.sln`; keep `timewarp-mediator.slnx`; CI path filters `source/**` `tests/**`
 - [x] `kebab-path-names` PASS; `.snk` bytes unchanged (`timewarp-mediator.snk`)
 - [x] Restore + Release build + tests + pack (Pascal package ids)
+- [x] Implementation review (effort 1, general) — disposition clean
 
 ## Session
 
 - Created: 162284 (2026-09-01)
 - Implementer: grok (2026-09-02)
+- Review: grok, effort 1, roster general (2026-09-02)
+- Review round-1 fix (M1 live doc kebab paths): grok (2026-09-02)
+- Review round 2: grok, effort 1, roster general (2026-09-02)
 
 ## Results
 
@@ -100,3 +104,12 @@ ls artifacts/packages/TimeWarp.Mediator*.nupkg
 ```
 
 **Not in scope:** `.cs` kebab + file-scoped namespaces / global-usings (**006-004**); `vscode-window-icon` (**006-005**); `./bin/dev` present without `self-install` (gitignored; 006-002).
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 2
+- **Effort / roster:** 1, general (both rounds)
+- **Counts (final, round 2):** bug 0; suggestion 0 open / 1 fixed; nit 0 — final open count 0
+- **Wontfix / escalations:** none
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`
