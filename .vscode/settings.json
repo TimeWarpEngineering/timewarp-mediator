@@ -1,0 +1,4 @@
+{
+  "window.title": "timewarp-mediator · ${rootName}${separator}${activeEditorShort}",
+  "timewarp.blurImagePath": "assets/timewarp-mediator-avatar.svg"
+}
