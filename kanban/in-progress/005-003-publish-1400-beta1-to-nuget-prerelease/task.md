@@ -20,6 +20,7 @@ Parent: **005**. After **005-001** is merged and master CI is green, cut the **p
 - [x] 005-001 merged; master CI green; Packages artifact exists
 - [x] `dev release --dry-run` then `dev release` (or this repo’s equivalent)
 - [x] Confirm nuget.org versions include `14.0.0-beta.1` for all four ids
+- [x] Implementation review (effort 1, general) — disposition clean
 
 ## Out of scope
 
@@ -35,6 +36,7 @@ Parent: **005**. After **005-001** is merged and master CI is green, cut the **p
 
 - Created: 150754 (2026-09-01)
 - Implementer: grok (2026-09-02)
+- Review: grok, effort 1, roster general (2026-09-02)
 
 ## Results
 
@@ -81,7 +83,7 @@ gh release edit v14.0.0-beta.1 --prerelease
 
 ### nuget.org
 
-Gallery HTTP 200 for all four, each marked **prerelease**, still indexing at cut time:
+Gallery **GET** HTTP 200 for all four, each marked **prerelease**, still indexing at cut time. nuget.org gallery **HEAD** 404s even for live pages — do not use `curl -sSI` as the smoke.
 
 | Id | Gallery |
 |----|---------|
@@ -90,7 +92,7 @@ Gallery HTTP 200 for all four, each marked **prerelease**, still indexing at cut
 | TimeWarp.Mediator.Analyzers | https://www.nuget.org/packages/TimeWarp.Mediator.Analyzers/14.0.0-beta.1 |
 | TimeWarp.Mediator.Generators | https://www.nuget.org/packages/TimeWarp.Mediator.Generators/14.0.0-beta.1 |
 
-**13.0.0** still listed (gallery 200; version table still shows 13.0.0). `HEAD` of `/packages/TimeWarp.Mediator/14.0.0` is **404**. No `v14.0.0` tag.
+**13.0.0** still listed (gallery GET 200; version table still shows 13.0.0). No stable 14.0.0 nupkg: flatcontainer/nupkg GET for `timewarp.mediator/14.0.0` is **404**. Gallery GET of `/packages/TimeWarp.Mediator/14.0.0` is HTTP 200 with fallback title `TimeWarp.Mediator 13.0.0` (not a 14.0.0 package). No `v14.0.0` tag.
 
 ### Docs on this branch
 
@@ -124,13 +126,16 @@ git ls-remote --tags origin 'refs/tags/v14.0.0-beta.1' 'refs/tags/v14.0.0'
 gh release list --limit 3
 gh release view v14.0.0-beta.1 --json isPrerelease,tagName,url
 
-# Gallery (prerelease pages; 13.0.0 still there; no stable 14.0.0)
-curl -sSI https://www.nuget.org/packages/TimeWarp.Mediator/14.0.0-beta.1 | head -1
-curl -sSI https://www.nuget.org/packages/TimeWarp.Mediator.Contracts/14.0.0-beta.1 | head -1
-curl -sSI https://www.nuget.org/packages/TimeWarp.Mediator.Analyzers/14.0.0-beta.1 | head -1
-curl -sSI https://www.nuget.org/packages/TimeWarp.Mediator.Generators/14.0.0-beta.1 | head -1
-curl -sSI https://www.nuget.org/packages/TimeWarp.Mediator/13.0.0 | head -1
-curl -sSI https://www.nuget.org/packages/TimeWarp.Mediator/14.0.0 | head -1
+# Gallery GET (nuget.org HEAD 404s even for live pages)
+curl -sS -o /dev/null -w '%{http_code}\n' https://www.nuget.org/packages/TimeWarp.Mediator/14.0.0-beta.1
+curl -sS -o /dev/null -w '%{http_code}\n' https://www.nuget.org/packages/TimeWarp.Mediator.Contracts/14.0.0-beta.1
+curl -sS -o /dev/null -w '%{http_code}\n' https://www.nuget.org/packages/TimeWarp.Mediator.Analyzers/14.0.0-beta.1
+curl -sS -o /dev/null -w '%{http_code}\n' https://www.nuget.org/packages/TimeWarp.Mediator.Generators/14.0.0-beta.1
+curl -sS -o /dev/null -w '%{http_code}\n' https://www.nuget.org/packages/TimeWarp.Mediator/13.0.0
+curl -sS https://www.nuget.org/packages/TimeWarp.Mediator/14.0.0-beta.1 | grep -F 'This is a prerelease version'
+
+# No stable 14 nupkg (gallery /14.0.0 GET is 200 fallback to 13.0.0 — not a 14.0.0 package)
+curl -sS -o /dev/null -w '%{http_code}\n' https://api.nuget.org/v3-flatcontainer/timewarp.mediator/14.0.0/timewarp.mediator.14.0.0.nupkg
 
 # Flatcontainer (may lag the gallery by minutes)
 curl -sS https://api.nuget.org/v3-flatcontainer/timewarp.mediator/index.json
@@ -144,10 +149,10 @@ curl -sS https://api.nuget.org/v3-flatcontainer/timewarp.mediator.generators/ind
 - Remote tag `v14.0.0-beta.1` present; **no** `v14.0.0`
 - `gh release list`: `v14.0.0-beta.1` is **Pre-release**; `v13.0.0` is **Latest**
 - `isPrerelease: true` for `v14.0.0-beta.1`
-- Gallery HTTP **200** for all four `/14.0.0-beta.1` URLs; page copy includes “This is a prerelease version”
-- Gallery HTTP **200** for TimeWarp.Mediator **13.0.0**
-- Gallery HTTP **404** for TimeWarp.Mediator **14.0.0** (no stable 14)
-- Flatcontainer `versions` arrays include `14.0.0-beta.1` for all four ids; Mediator/Contracts still include `13.0.0`
+- Gallery **GET** HTTP **200** for all four `/14.0.0-beta.1` URLs; page copy includes “This is a prerelease version”
+- Gallery **GET** HTTP **200** for TimeWarp.Mediator **13.0.0**
+- Nupkg GET **404** for `timewarp.mediator/14.0.0/timewarp.mediator.14.0.0.nupkg` (no stable 14). Gallery GET of `/packages/TimeWarp.Mediator/14.0.0` is 200 fallback to 13.0.0 — not a 14.0.0 package.
+- Flatcontainer `versions` arrays include `14.0.0-beta.1` for all four ids; Mediator/Contracts still include `13.0.0`; none list `14.0.0`
 - Restore (after index): `dotnet add package TimeWarp.Mediator --version 14.0.0-beta.1` and the other three ids at the same version
 
 **Automated gate**
@@ -160,3 +165,13 @@ dotnet run --file tools/dev-cli/dev.cs -- pack
 ```
 
 **Not in scope:** stable 14.0.0; State/Nuru consume; unlisting 13.0.0; NuGet search index (lags gallery/flatcontainer).
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 2
+- **Effort / roster:** 1, general
+- **Counts (final, round 2):** bug 0; suggestion 0; nit 2 fixed — final open count 0
+- **Wontfix / escalations:** none
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`
+- **Notes:** Round 1 nits were kitchen smoke (gallery HEAD vs GET; gallery `/14.0.0` fallback vs nupkg 404). Fixed on this task id. Publish itself was already correct.
