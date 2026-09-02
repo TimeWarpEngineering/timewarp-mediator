@@ -29,7 +29,8 @@ this repo:
 It is **not** an API-compatible upgrade of NuGet **13.0.0** (the last published reflection
 line). Do not bump a 13.0.0 host to 14.0.0-beta and keep `AddMediator(...)` expecting
 source-gen, AOT-clean dispatch, or named pipelines. `<Version>` in this tree is
-`14.0.0-beta.1`; nuget.org still serves 13.0.0 until the 005-003 prerelease publish.
+`14.0.0-beta.1`. nuget.org serves that as a **prerelease**; **13.0.0** remains the last
+stable reflection line.
 
 GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52)
 stays **open** until a **stable 14.0.0**. This beta does not close that issue.

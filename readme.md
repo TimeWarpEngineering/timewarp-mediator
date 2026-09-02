@@ -40,8 +40,8 @@ register the source-generated mediator.
 proven only against the M1/M2 golden files in this repo. Do not bump a 13.0.0 host to
 14.0.0-beta and keep `AddMediator(...)` expecting source-gen, AOT-clean dispatch, or named
 pipelines. TimeWarp.State and TimeWarp.Nuru must call `AddGeneratedMediator()` /
-`AddGeneratedMediator<TScope>()`. This tree's `<Version>` is `14.0.0-beta.1`; nuget.org
-still serves 13.0.0 until the 005-003 prerelease publish.
+`AddGeneratedMediator<TScope>()`. This tree's `<Version>` is `14.0.0-beta.1`. nuget.org
+serves that as a **prerelease**; **13.0.0** remains the last stable reflection line.
 
 GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52)
 stays **open** until a **stable 14.0.0**.
