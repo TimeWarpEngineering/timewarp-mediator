@@ -1,6 +1,13 @@
 # Migration Guide: MediatR to TimeWarp.Mediator
 
-This guide helps you migrate from MediatR to TimeWarp.Mediator. The migration is straightforward as TimeWarp.Mediator is a fork of MediatR with minimal breaking changes.
+This guide is the **13.x reflection rename** (`AddMediatR` → `AddMediator`). It is **not**
+the source-generated stack.
+
+`AddMediator()` is the MediatR-fork runtime. `AddGeneratedMediator()` /
+`AddGeneratedMediator<TScope>()` are generated. **14.0.0-beta is not a drop-in for 13.0.0.**
+See [documentation/generated-vs-legacy.md](./documentation/generated-vs-legacy.md).
+
+This guide helps you migrate from MediatR to TimeWarp.Mediator 13.x. The migration is straightforward as TimeWarp.Mediator is a fork of MediatR with minimal breaking changes.
 
 ## Quick Migration Steps
 

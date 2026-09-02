@@ -22,7 +22,33 @@ TimeWarp.Mediator is a fork of the excellent [MediatR](https://github.com/jbogar
 
 ### Migration from MediatR
 
-Migrating from MediatR is straightforward - see our [migration guide](./migration.md) for step-by-step instructions.
+Migrating from MediatR is the 13.x reflection rename — see our [migration guide](./migration.md).
+That path is `AddMediator()`, not source generation.
+
+## Two stacks (read this before `AddMediator`)
+
+This repository ships **two independent dispatchers**. Calling `AddMediator()` does **not**
+register the source-generated mediator.
+
+| Registration | Dispatcher |
+|--------------|------------|
+| `services.AddMediator(...)` | Reflection MediatR fork (13.x runtime, still in this repo) |
+| `services.AddGeneratedMediator()` | Source-generated unscoped `IMediator` / `ISender` / `IPublisher` |
+| `services.AddGeneratedMediator<TScope>()` | Source-generated named pipeline (`ISender<TScope>` / `IPublisher<TScope>`) |
+
+**14.0.0-beta is not a drop-in for 13.0.0.** As of `14.0.0-beta.1`, the generated stack is
+proven only against the M1/M2 golden files in this repo. Do not bump a 13.0.0 host to
+14.0.0-beta and keep `AddMediator(...)` expecting source-gen, AOT-clean dispatch, or named
+pipelines. TimeWarp.State and TimeWarp.Nuru must call `AddGeneratedMediator()` /
+`AddGeneratedMediator<TScope>()`. This tree's `<Version>` is `14.0.0-beta.1`; nuget.org
+still serves 13.0.0 until the 005-003 prerelease publish.
+
+GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52)
+stays **open** until a **stable 14.0.0**.
+
+Comparison: [documentation/generated-vs-legacy.md](./documentation/generated-vs-legacy.md).
+Milestones: [m1-generated-mediator.md](./documentation/m1-generated-mediator.md),
+[m2-named-pipelines.md](./documentation/m2-named-pipelines.md).
 
 ---
 
@@ -41,56 +67,103 @@ Supports request/response, commands, queries, notifications and events, synchron
 
 Examples in the [wiki](https://github.com/jbogard/MediatR/wiki).
 
-### Installing TimeWarp.Mediator
+## Installing the reflection stack (`AddMediator`)
 
-You should install [TimeWarp.Mediator with NuGet](https://www.nuget.org/packages/TimeWarp.Mediator):
+NuGet **13.0.0** is the last published reflection line. Install
+[TimeWarp.Mediator](https://www.nuget.org/packages/TimeWarp.Mediator):
 
-    Install-Package TimeWarp.Mediator
-    
-Or via the .NET Core command line interface:
+```bash
+dotnet add package TimeWarp.Mediator --version 13.0.0
+```
 
-    dotnet add package TimeWarp.Mediator
+This is the MediatR-fork runtime: assembly scan, wrappers, `MakeGenericType`.
+`14.0.0-beta` still contains this runtime, but that prerelease is **not** a drop-in for 13.0.0
+(see [Two stacks](#two-stacks-read-this-before-addmediator)).
 
-Either commands, from Package Manager Console or .NET Core CLI, will download and install TimeWarp.Mediator and all required dependencies.
+## Installing the generated stack (`AddGeneratedMediator`)
 
-### Using Contracts-Only Package
+A generated host needs **Contracts + Generators**. Analyzers ride inside the Generators nupkg;
+add `TimeWarp.Mediator.Analyzers` only when the generator is not referenced.
+
+```xml
+<ItemGroup>
+  <PackageReference Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.1" />
+  <PackageReference Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.1" />
+</ItemGroup>
+```
+
+```bash
+dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0-beta.1
+dotnet add package TimeWarp.Mediator.Generators --version 14.0.0-beta.1
+# library-only (no generator):
+dotnet add package TimeWarp.Mediator.Analyzers --version 14.0.0-beta.1
+```
+
+Do **not** add only `TimeWarp.Mediator` and call `AddMediator()` expecting this stack.
+
+## Using Contracts-Only Package
 
 To reference only the contracts for TimeWarp.Mediator, which includes:
 
 - `IRequest` (including generic variants)
 - `INotification`
 - `IStreamRequest`
+- `ISender` / `ISender<TScope>`, `IPublisher` / `IPublisher<TScope>`
+- Membership attributes (`MediatorAssembly`, `MediatorScope`, `MediatorBehavior`)
 
-Add a package reference to [TimeWarp.Mediator.Contracts](https://www.nuget.org/packages/TimeWarp.Mediator.Contracts)
+Add a package reference to [TimeWarp.Mediator.Contracts](https://www.nuget.org/packages/TimeWarp.Mediator.Contracts).
 
-### Source-generated Mediator (M1)
+This package is useful when contracts live in a separate assembly from handlers (API / gRPC /
+Blazor). A generated host still needs Generators on the compilation that emits the mediator.
 
-The reflection dispatcher remains the default `AddMediator()` implementation. To use the compile-time graph (TWM001/TWM002, generated `sealed Mediator`, AOT-clean `Send(object)` switch):
+## Generated membership and named pipelines
 
-    dotnet add package TimeWarp.Mediator.Generators
+Hosts that reference Generators get `TimeWarpMediatorAssembly=true` from the package
+`buildTransitive` props. Domain libraries that only reference Analyzers must opt in:
 
-Hosts get `[assembly: MediatorAssembly]` for free via the generator props. Domain libraries that should fail the build on a missing handler without emitting code:
-
-    dotnet add package TimeWarp.Mediator.Analyzers
-
-See [documentation/m1-generated-mediator.md](./documentation/m1-generated-mediator.md), [documentation/m2-named-pipelines.md](./documentation/m2-named-pipelines.md), and GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52) (epic **004**). Named pipelines: `ISender<TScope>` / `IPublisher<TScope>` with `[MediatorScope(typeof(TScope))]`.
-
-This package is useful in scenarios where your TimeWarp.Mediator contracts are in a separate assembly/project from handlers. Example scenarios include:
-- API contracts
-- GRPC contracts
-- Blazor
-
-### Registering with `IServiceCollection`
-
-TimeWarp.Mediator supports `Microsoft.Extensions.DependencyInjection.Abstractions` directly. To register various Mediator services and handlers:
-
+```csharp
+[assembly: MediatorAssembly]
+[assembly: MediatorBehavior(typeof(LoggingBehavior<,>))]
+[assembly: MediatorBehavior(typeof(ClientStampBehavior<,>), Scope = typeof(ClientPipeline))]
 ```
+
+Named pipelines use **marker types**, not strings (`ClientPipeline` / `ServerPipeline`):
+
+```csharp
+public sealed class ClientPipeline
+{
+}
+
+[MediatorScope(typeof(ClientPipeline))]
+public sealed class ClientPing : IRequest<string>
+{
+}
+```
+
+`[MediatorModule("Orders")]` joins the graph. It does not name a pipeline.
+
+```csharp
+services.AddGeneratedMediator();
+services.AddGeneratedMediator<ClientPipeline>();
+services.AddGeneratedMediator<ServerPipeline>();
+```
+
+Details: [documentation/generated-vs-legacy.md](./documentation/generated-vs-legacy.md),
+[documentation/m1-generated-mediator.md](./documentation/m1-generated-mediator.md),
+[documentation/m2-named-pipelines.md](./documentation/m2-named-pipelines.md).
+
+## Registering reflection `AddMediator` with `IServiceCollection`
+
+The reflection package supports `Microsoft.Extensions.DependencyInjection.Abstractions` directly.
+This is **not** the generated dispatcher. To scan and register the fork runtime:
+
+```csharp
 services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining<Startup>());
 ```
 
 or with an assembly:
 
-```
+```csharp
 services.AddMediator(cfg => cfg.RegisterServicesFromAssembly(typeof(Startup).Assembly));
 ```
 
