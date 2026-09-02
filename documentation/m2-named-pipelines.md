@@ -1,6 +1,6 @@
 # M2 named pipelines (`ISender<TScope>`)
 
-Source-generated per-scope senders and publishers for epic **004**. Design SSOT: `Analysis/2026-06-17-source-gen-aot-rewrite-spec.md` §9.1.
+Source-generated per-scope senders and publishers for epic **004**. Design SSOT: `analysis/2026-06-17-source-gen-aot-rewrite-spec.md` §9.1.
 
 ## What shipped
 
@@ -9,7 +9,7 @@ Source-generated per-scope senders and publishers for epic **004**. Design SSOT:
 - Generator emits `Sender_{TScope}` and `Publisher_{TScope}` with type-switched dispatch disjoint from each other and from unscoped `Mediator`.
 - Host registration: `AddGeneratedMediator()` (unscoped) and `AddGeneratedMediator<TScope>()` (one named pipeline). MS.DI resolves each independently.
 - Analyzer: **TWM003** handler/request scope mismatch; **TWM004** typed `ISender<TScope>.Send` of a request from another pipeline (compile error). `Send(object)` of a wrong-scope request throws `NoHandlerException`.
-- Sample: `samples/TimeWarp.Mediator.Examples.NamedPipelines` — `ClientPipeline` + `ServerPipeline` in one host.
+- Sample: `samples/timewarp-mediator-examples-named-pipelines` — `ClientPipeline` + `ServerPipeline` in one host.
 
 `[MediatorModule("Orders")]` remains graph membership (the declaring assembly joins the linker). It does **not** name a pipeline.
 

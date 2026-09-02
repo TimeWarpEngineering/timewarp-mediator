@@ -1,6 +1,6 @@
 # M1 generated Mediator (004-001)
 
-Source-generated dispatcher, analyzer, and State-shaped golden file for epic **004**. Design SSOT: `Analysis/2026-06-17-source-gen-aot-rewrite-spec.md` §14.
+Source-generated dispatcher, analyzer, and State-shaped golden file for epic **004**. Design SSOT: `analysis/2026-06-17-source-gen-aot-rewrite-spec.md` §14.
 
 ## What shipped
 
@@ -9,7 +9,7 @@ Source-generated dispatcher, analyzer, and State-shaped golden file for epic **0
 - Contracts: `IAction` / `IActionHandler` / `ActionHandler` (`ValueTask`), `ICommand` / `IQuery` + handlers, membership attributes, `NoHandlerException`.
 - `ISender`, `IPublisher`, `IMediator`, handler and pipeline interfaces live in `TimeWarp.Mediator.Contracts` (type-forwarded from `TimeWarp.Mediator`) so the AOT sample does not reference the reflection assembly.
 - State golden file: `IncrementActionSet` + `StateTransactionBehavior` (scoped) matching `Reverse().Aggregate` (short-circuit, clone/restore, `ExceptionNotification`).
-- AOT sample: `samples/TimeWarp.Mediator.Examples.Aot` with `EnableTrimAnalyzer`, `EnableAotAnalyzer`, `IsAotCompatible`, **no** `NoWarn` on IL2026/IL3050. Profile `Aot` uses ServiceGen static fields.
+- AOT sample: `samples/timewarp-mediator-examples-aot` with `EnableTrimAnalyzer`, `EnableAotAnalyzer`, `IsAotCompatible`, **no** `NoWarn` on IL2026/IL3050. Profile `Aot` uses ServiceGen static fields.
 - Benchmarks: `tests/timewarp-mediator-benchmarks-comparison` vs legacy MakeGenericType, generated `IMediator.Send`, CallSiteInlining `Dispatch_*`, and martinothamar.
 
 The reflection `TimeWarp.Mediator.Mediator` remains the default `AddMediator()` implementation (Phase A coexistence).
