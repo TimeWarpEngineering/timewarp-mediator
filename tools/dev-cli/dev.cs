@@ -22,7 +22,7 @@
 // Thin Nuru wrapper. Shared endpoints (clean, self-install, check-version) come
 // from TimeWarp.Nuru.DevCli. Local endpoints map the former Build.ps1 / Push.ps1
 // path: build and test the root slnx, pack the four product projects, push via
-// workflow --api-key. Product still lives under src/ until 006-003.
+// workflow --api-key. Product lives under source/.
 #endregion
 
 NuruApp app = NuruApp.CreateBuilder()

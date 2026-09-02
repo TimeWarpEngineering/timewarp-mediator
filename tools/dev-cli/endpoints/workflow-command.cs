@@ -183,7 +183,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       string rootDisplay = rootVersion ?? "(missing)";
       string sourceDisplay = sourceVersion ?? "(missing)";
       Terminal.WriteErrorLine(
-        $"Version SSOT mismatch: Directory.Build.props Version='{rootDisplay}', source/Directory.Build.props Version='{sourceDisplay}'. Align both until 006-003.".Red());
+        $"Version SSOT mismatch: Directory.Build.props Version='{rootDisplay}', source/Directory.Build.props Version='{sourceDisplay}'. Align both.".Red());
       Environment.ExitCode = 1;
       return false;
     }

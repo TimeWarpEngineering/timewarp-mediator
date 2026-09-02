@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TimeWarp.Mediator.Analyzers</RootNamespace>
+    <AssemblyName>TimeWarp.Mediator.Analyzers</AssemblyName>
+    <PackageId>TimeWarp.Mediator.Analyzers</PackageId>
+    <Description>Roslyn analyzers for TimeWarp.Mediator. TWM001 (request with no handler), TWM002 (duplicate handler), TWM003 (scope mismatch), TWM004 (wrong-scope send). Safe to reference from libraries that do not run the generator.</Description>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <!-- Repo-wide snupkg + no lib/ output yields an empty symbol package (NU5017). -->
+    <IncludeSymbols>false</IncludeSymbols>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+  </ItemGroup>
+
+</Project>

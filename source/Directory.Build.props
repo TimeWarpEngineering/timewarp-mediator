@@ -11,10 +11,12 @@
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
   </PropertyGroup>
 
   <!-- Include common package files -->
   <ItemGroup Label="Package Content">
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="\" />
+    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

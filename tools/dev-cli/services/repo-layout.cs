@@ -2,12 +2,12 @@
 // Shared paths and packable project list for the TimeWarp.Mediator dev CLI
 #endregion
 #region Design
-// Root has both TimeWarp.Mediator.sln and timewarp-mediator.slnx. Unadorned
-// `dotnet build` hits MSB1011, so every clean/build/test names the slnx.
-// Packable projects stay under src/ until 006-003 kebab-renames the tree.
+// Every clean/build/test names timewarp-mediator.slnx explicitly.
+// Packable product projects live under source/ with kebab path basenames;
+// PackageId/AssemblyName stay PascalCase (TimeWarp.Mediator*).
 // TryReadVersion mirrors CheckVersionCommand.GetVersionFromSource (xmlns then
 // bare Version) so release can assert root vs source/ Directory.Build.props
-// stay aligned while pack still evaluates the root Version.
+// stay aligned.
 #endregion
 
 namespace DevCli;
@@ -18,10 +18,10 @@ internal static class RepoLayout
 
   internal static readonly string[] PackableProjects =
   [
-    "src/TimeWarp.Mediator/TimeWarp.Mediator.csproj",
-    "src/TimeWarp.Mediator.Contracts/TimeWarp.Mediator.Contracts.csproj",
-    "src/TimeWarp.Mediator.Analyzers/TimeWarp.Mediator.Analyzers.csproj",
-    "src/TimeWarp.Mediator.Generators/TimeWarp.Mediator.Generators.csproj"
+    "source/timewarp-mediator/timewarp-mediator.csproj",
+    "source/timewarp-mediator-contracts/timewarp-mediator-contracts.csproj",
+    "source/timewarp-mediator-analyzers/timewarp-mediator-analyzers.csproj",
+    "source/timewarp-mediator-generators/timewarp-mediator-generators.csproj"
   ];
 
   internal static readonly (string PackageId, string[] RequiredEntries)[] PackageLayout =

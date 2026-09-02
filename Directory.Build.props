@@ -13,8 +13,8 @@
     <RepositoryType>git</RepositoryType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageIcon>Logo.png</PackageIcon>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageIcon>logo.png</PackageIcon>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -37,7 +37,7 @@
     <Nullable>enable</Nullable>
     <Features>strict</Features>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)TimeWarp.Mediator.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)timewarp-mediator.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
