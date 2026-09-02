@@ -1,0 +1,1 @@
+BenchmarkRunner.Run<DispatchBenchmarks>();
