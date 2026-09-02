@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RollForward>LatestMajor</RollForward>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>TimeWarp.Mediator.Examples.NamedPipelines</RootNamespace>
+  </PropertyGroup>
+
+  <Import Project="..\..\source\timewarp-mediator-generators\build-transitive\timewarp-mediator-generators.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\source\timewarp-mediator-contracts\timewarp-mediator-contracts.csproj" />
+    <ProjectReference Include="..\..\source\timewarp-mediator-generators\timewarp-mediator-generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\source\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+</Project>

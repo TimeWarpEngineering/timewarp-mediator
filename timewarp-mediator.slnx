@@ -1,40 +1,29 @@
 <Solution>
-  <Configurations>
-    <Platform Name="Any CPU" />
-    <Platform Name="x64" />
-    <Platform Name="x86" />
-  </Configurations>
   <Folder Name="/samples/">
-    <Project Path="samples/TimeWarp.Mediator.Examples.Aot/TimeWarp.Mediator.Examples.Aot.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples.AspNetCore/TimeWarp.Mediator.Examples.AspNetCore.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples.Autofac/TimeWarp.Mediator.Examples.Autofac.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples.DryIoc/TimeWarp.Mediator.Examples.DryIoc.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples.Lamar/TimeWarp.Mediator.Examples.Lamar.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples.LightInject/TimeWarp.Mediator.Examples.LightInject.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples.NamedPipelines/TimeWarp.Mediator.Examples.NamedPipelines.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples.PublishStrategies/TimeWarp.Mediator.Examples.PublishStrategies.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples.SimpleInjector/TimeWarp.Mediator.Examples.SimpleInjector.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples.Stashbox/TimeWarp.Mediator.Examples.Stashbox.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples.Windsor/TimeWarp.Mediator.Examples.Windsor.csproj" />
-    <Project Path="samples/TimeWarp.Mediator.Examples/TimeWarp.Mediator.Examples.csproj" />
-    <Project Path="src/TimeWarp.Mediator.Generators/TimeWarp.Mediator.Generators.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-aot/timewarp-mediator-examples-aot.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-asp-net-core/timewarp-mediator-examples-asp-net-core.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-autofac/timewarp-mediator-examples-autofac.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-dry-ioc/timewarp-mediator-examples-dry-ioc.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-lamar/timewarp-mediator-examples-lamar.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-light-inject/timewarp-mediator-examples-light-inject.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-named-pipelines/timewarp-mediator-examples-named-pipelines.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-publish-strategies/timewarp-mediator-examples-publish-strategies.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-simple-injector/timewarp-mediator-examples-simple-injector.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-stashbox/timewarp-mediator-examples-stashbox.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-windsor/timewarp-mediator-examples-windsor.csproj" />
+    <Project Path="samples/timewarp-mediator-examples/timewarp-mediator-examples.csproj" />
   </Folder>
-  <Folder Name="/Solution Items/">
-    <File Path=".editorconfig" />
-    <File Path=".github/workflows/workflow.yml" />
-    <File Path="Directory.Build.props" />
-    <File Path="README.md" />
+  <Folder Name="/source/">
+    <Project Path="source/timewarp-mediator-analyzers/timewarp-mediator-analyzers.csproj" />
+    <Project Path="source/timewarp-mediator-contracts/timewarp-mediator-contracts.csproj" />
+    <Project Path="source/timewarp-mediator-generators/timewarp-mediator-generators.csproj" />
+    <Project Path="source/timewarp-mediator/timewarp-mediator.csproj" />
   </Folder>
-  <Folder Name="/src/">
-    <Project Path="src/TimeWarp.Mediator.Contracts/TimeWarp.Mediator.Contracts.csproj" />
-    <Project Path="src/TimeWarp.Mediator/TimeWarp.Mediator.csproj" />
-  </Folder>
-  <Folder Name="/test/">
-    <Project Path="src/TimeWarp.Mediator.Analyzers/TimeWarp.Mediator.Analyzers.csproj" />
-    <Project Path="test/TimeWarp.Mediator.Analyzers.Tests/TimeWarp.Mediator.Analyzers.Tests.csproj" />
-    <Project Path="test/TimeWarp.Mediator.Benchmarks.Comparison/TimeWarp.Mediator.Benchmarks.Comparison.csproj" />
-    <Project Path="test/TimeWarp.Mediator.Benchmarks/TimeWarp.Mediator.Benchmarks.csproj" />
-    <Project Path="test/TimeWarp.Mediator.Generators.Tests/TimeWarp.Mediator.Generators.Tests.csproj" />
-    <Project Path="test/TimeWarp.Mediator.Tests/TimeWarp.Mediator.Tests.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/timewarp-mediator-analyzers-tests/timewarp-mediator-analyzers-tests.csproj" />
+    <Project Path="tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj" />
+    <Project Path="tests/timewarp-mediator-benchmarks/timewarp-mediator-benchmarks.csproj" />
+    <Project Path="tests/timewarp-mediator-generators-tests/timewarp-mediator-generators-tests.csproj" />
+    <Project Path="tests/timewarp-mediator-tests/timewarp-mediator-tests.csproj" />
   </Folder>
 </Solution>

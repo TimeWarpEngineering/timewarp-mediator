@@ -8,9 +8,7 @@ on:
   push:
     branches: [ master, main ]
     paths:
-      - 'src/**'
       - 'source/**'
-      - 'test/**'
       - 'tests/**'
       - 'samples/**'
       - 'tools/**'
@@ -22,9 +20,7 @@ on:
   pull_request:
     branches: [ master, main ]
     paths:
-      - 'src/**'
       - 'source/**'
-      - 'test/**'
       - 'tests/**'
       - 'samples/**'
       - 'tools/**'
