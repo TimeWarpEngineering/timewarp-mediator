@@ -9,7 +9,7 @@ Pipelines are **marker types**, not strings. Use empty types such as `ClientPipe
 dispatcher: `AddGeneratedMediator()` (unscoped) and `AddGeneratedMediator<TScope>()` (one
 named pipeline). Comparison: [generated-vs-legacy.md](./generated-vs-legacy.md).
 
-**14.0.0-beta is not a drop-in for 13.0.0.** As of `14.0.0-beta.1`, named pipelines are
+**14.0.0-beta is not a drop-in for 13.0.0.** As of `14.0.0-beta.2`, named pipelines are
 proven only against the M2 golden files (`tests/timewarp-mediator-generators-tests` scoped
 pipeline tests and `samples/timewarp-mediator-examples-named-pipelines`). GitHub issue
 [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52) stays **open**

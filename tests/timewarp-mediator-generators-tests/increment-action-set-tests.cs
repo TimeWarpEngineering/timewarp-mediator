@@ -4,6 +4,7 @@
 
 using GeneratedMediator = TimeWarp.Mediator.Generated.Mediator;
 
+[Collection(PipelineLogCollection.Name)]
 public class IncrementActionSetTests
 {
     [Fact]

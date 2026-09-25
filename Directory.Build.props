@@ -22,7 +22,7 @@
     <Deterministic>true</Deterministic>
 
     <!-- Unified versioning for all packages -->
-    <Version>14.0.0-beta.1</Version>
+    <Version>14.0.0-beta.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -49,5 +49,9 @@
 
   <ItemGroup>
     <PackageReference Include="TimeWarp.Build.Tasks" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TimeWarp.SourceGenerators" PrivateAssets="all" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,6 @@
 {
   "window.title": "timewarp-mediator · ${rootName}${separator}${activeEditorShort}",
-  "timewarp.blurImagePath": "assets/timewarp-mediator-avatar.svg"
+  "timewarp.blurImagePath": "assets/timewarp-mediator-avatar.svg",
+  "peacock.color": "#B04D80",
+  "peacock.remoteColor": "#B04D80"
 }

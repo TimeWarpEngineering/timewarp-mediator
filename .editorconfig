@@ -78,3 +78,7 @@ dotnet_style_qualification_for_field=false:hint
 dotnet_style_qualification_for_method=false:hint
 dotnet_style_qualification_for_property=false:hint
 dotnet_style_require_accessibility_modifiers=for_non_interface_members:hint
+
+[*.cs]
+# TW0007 file-level usings (TimeWarp.SourceGenerators)
+dotnet_diagnostic.TW0007.filename = global-usings.cs

@@ -17,7 +17,7 @@ deferred (see [m1-generated-mediator.md](./m1-generated-mediator.md) deferred ta
 
 ## 14.0.0-beta is not a drop-in for 13.0.0
 
-As of `14.0.0-beta.1`, the generated stack is proven only against the M1/M2 golden files in
+As of `14.0.0-beta.2`, the generated stack is proven only against the M1/M2 golden files in
 this repo:
 
 - Generator tests (`tests/timewarp-mediator-generators-tests`), including State-shaped
@@ -29,18 +29,25 @@ this repo:
 It is **not** an API-compatible upgrade of NuGet **13.0.0** (the last published reflection
 line). Do not bump a 13.0.0 host to 14.0.0-beta and keep `AddMediator(...)` expecting
 source-gen, AOT-clean dispatch, or named pipelines. `<Version>` in this tree is
-`14.0.0-beta.1`. nuget.org serves that as a **prerelease**; **13.0.0** remains the last
+`14.0.0-beta.2`. nuget.org serves that as a **prerelease**; **13.0.0** remains the last
 stable reflection line.
 
 GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52)
 stays **open** until a **stable 14.0.0**. This beta does not close that issue.
 
+### Changes in 14.0.0-beta.2
+
+- Contracts add `IIdempotent`, `IIdempotentCommand` / `IIdempotentCommand<T>`, and
+  `IIdempotentCommandHandler<>` / `IIdempotentCommandHandler<,>`. `IQuery<T>` now implements
+  `IIdempotent` (additive). Both dispatchers treat idempotent commands exactly like `ICommand`.
+  Types only: no idempotency-key enforcement or dedup store.
+
 ## Packages for a generated host
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.1" />
-  <PackageReference Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.1" />
+  <PackageReference Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.2" />
+  <PackageReference Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.2" />
 </ItemGroup>
 ```
 
