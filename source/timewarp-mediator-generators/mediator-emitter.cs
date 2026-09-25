@@ -611,7 +611,7 @@ internal static class MediatorEmitter
         }
     }
 
-    private static string Fq(INamedTypeSymbol type)
+    private static string Fq(ITypeSymbol type)
     {
         return type.ToDisplayString(FullyQualified);
     }

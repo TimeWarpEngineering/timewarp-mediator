@@ -32,9 +32,9 @@ The #68 patch was validated locally as 14.0.0-beta.3-local against Nuru (Release
 
 ## Checklist
 
-- [ ] Unit-response handler fix + tests
-- [ ] Array/non-named response fix + tests
-- [ ] Version 14.0.0-beta.3, changelog
+- [x] Unit-response handler fix + tests
+- [x] Array/non-named response fix + tests
+- [x] Version 14.0.0-beta.3, changelog
 - [ ] Released (cockpit, after merge)
 
 ## Notes
@@ -42,3 +42,51 @@ The #68 patch was validated locally as 14.0.0-beta.3-local against Nuru (Release
 - Consumer: TimeWarp.Nuru 443-002 on `feature/443-mediator` (commit 20c368fd) waits on this release, then bumps its pin.
 - Implementer: **commit and push your changes before reporting done.**
 - Run the build and test gate in the foreground.
+
+## Results
+
+Applied the #68 patch after review; it matched the current `MessageGraphBuilder` shape exactly.
+
+- `message-graph-builder.cs`: `TryGetRequestHandler` now reports `isVoid` only when
+  `IRequestHandler<T>` matched; bindings take `IsUnitResponse` from a `voidRequests` set instead of
+  `responseType == Unit`. Response type is `ITypeSymbol` through discovery, `CloseBehaviors`,
+  `TryCloseBehavior`, and `ImplementsPipeline`. Design region notes both constraints.
+- `message-graph.cs`: `RequestBinding.ResponseType` is `ITypeSymbol`.
+- `mediator-emitter.cs`: `Fq(ITypeSymbol)`. `manifest-emitter.cs` needed no change.
+- Reviewed but unchanged: `request-handler-analyzer.cs` only inspects request type arguments
+  (`TypeArguments[0]`), so it has neither bug.
+- New generator tests (`tests/timewarp-mediator-generators-tests/response-shape-tests.cs`, messages in
+  `responses/response-shape-messages.cs`, closed `SearchWidgetsAuditBehavior` registered at order 5):
+  explicit `ICommand<Unit>` + `IRequestHandler<T, Unit>` registers the two-arity interface and dispatches
+  via monomorphic `Send`, `ISender.Send<T>`, and `Send(object)`; `ICommand` + `IRequestHandler<T>` stays
+  void; `IQuery<string[]>` and `IQuery<List<string>>` are discovered and dispatch; generic tracking
+  behaviors and the closed `IPipelineBehavior<SearchWidgets, string[]>` wrap the array query in order;
+  `UnitOnlyBehavior<>` still closes over the explicit-Unit command; manifest records the response shapes.
+- Negative check: with `source/` reverted, the test project fails to build with exactly the #68 errors
+  (CS0311 on `CreateWidget`, TWM001 on `SearchWidgets`).
+- `<Version>` 14.0.0-beta.3 in `Directory.Build.props` and `source/Directory.Build.props`; readme and
+  documentation version references bumped; changelog section "Changes in 14.0.0-beta.3" in
+  `documentation/generated-vs-legacy.md` and a bullet in `documentation/m1-generated-mediator.md`, both
+  linking #68. Commit body carries `Fixes #68`.
+- Gates: `./bin/dev workflow` succeeded (generators 34/34, analyzers 6/6, runtime 165 passed / 2 skipped
+  pre-existing; beta.3 nupkgs packed and analyzer/generator layout verified). `ganda repo audit`: 28 passed,
+  0 failed. The `System.IO.Hashing` net6.0 NuGet warning is pre-existing and not an error.
+- Not done here (by design): release to NuGet.org after merge + green master CI (cockpit, `dev release`).
+
+### How to validate
+
+Smoke:
+
+```bash
+./bin/dev workflow
+dotnet test tests/timewarp-mediator-generators-tests -c Release --no-build --filter "FullyQualifiedName~ResponseShapeTests"
+ganda repo audit
+```
+
+Expect:
+
+- Workflow ends with `Pipeline SUCCEEDED`; packages are `*.14.0.0-beta.3.nupkg`.
+- `ResponseShapeTests`: 8 passed, 0 failed (generator project 34/34 total).
+- `ganda repo audit`: `Failed: 0`.
+- Reverting the `source/` changes (`git stash push -- source/`) makes the generator test
+  project fail to build with CS0311 (`CreateWidget`) and TWM001 (`SearchWidgets`).
