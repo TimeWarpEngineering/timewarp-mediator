@@ -51,6 +51,8 @@ interface's short name, so Mediator must provide `IIdempotentCommand` for Nuru t
 - Consumer: TimeWarp.Nuru 443 / 443-001 / 443-002 will target 14.0.0-beta.2.
 - Implementer: **commit and push your changes before reporting done.**
 - Run the build and test gate in the foreground. You are one-shot and never receive background notifications.
+- Review (2026-09-25): implementation review under `review/`, effort 1, reviewer `general`, 1 round,
+  disposition `accepted-exceptions` (see Results).
 
 ## Results
 
@@ -116,3 +118,18 @@ Expect:
   mediator tests 165 passed / 2 skipped; `artifacts/packages/*.14.0.0-beta.2.nupkg` for all four packages.
 - `IdempotentCommandTests`: 7 passed. `SendIdempotentCommandTests`: 2 passed.
 - `ganda repo audit`: "Repository passes all audit checks."
+
+### Review disposition
+
+- **Outcome:** `accepted-exceptions`, 0 open. 1 round, effort 1, roster `general`
+  (ganda task-work review oracle, cursor).
+- **Final counts:** bug 0; suggestion 0; nit 1 wontfix (0 open, 0 fixed).
+- **M1 (nit, wontfix):** SourceLink 10.0.401 pulls in `System.IO.Hashing` 10.0.12 as a build-time dependency,
+  which warns "doesn't support net6.0" when packing `source/timewarp-mediator`. The warning is not fatal,
+  and the published nuspec dependency groups are unchanged. The bump is required for NU1902, and dropping
+  `net6.0` is out of scope.
+- **Reviewer re-verification:** `./bin/dev workflow` Pipeline SUCCEEDED (26 / 6 / 165 passed, 2 skipped;
+  four beta.2 nupkgs). `ganda repo audit` passes. The generator and analyzer do not classify messages by
+  interface name.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
