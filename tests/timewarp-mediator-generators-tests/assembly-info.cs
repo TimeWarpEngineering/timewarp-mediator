@@ -4,5 +4,6 @@
 [assembly: MediatorBehavior(typeof(StateTransactionBehavior<,>), 2)]
 [assembly: MediatorBehavior(typeof(ShortCircuitBehavior<,>), 3)]
 [assembly: MediatorBehavior(typeof(UnitOnlyBehavior<>), 4)]
+[assembly: MediatorBehavior(typeof(SearchWidgetsAuditBehavior), 5)]
 [assembly: MediatorBehavior(typeof(ClientStampBehavior<,>), Scope = typeof(ClientPipeline))]
 [assembly: MediatorBehavior(typeof(ServerStampBehavior<,>), Scope = typeof(ServerPipeline))]

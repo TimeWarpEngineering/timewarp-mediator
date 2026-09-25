@@ -11,6 +11,9 @@
 // Pipeline membership is [MediatorScope(typeof(TScope))] on handler, request, containing type, or
 // assembly. Unscoped (no attribute) is the default ISender/IPublisher pipeline. Behaviors with a
 // Scope named argument weave only that pipeline; unscoped behaviors never run on scoped requests.
+// Void dispatch comes from matching IRequestHandler<T>, never from TResponse == Unit: an explicit
+// IRequestHandler<T, Unit> returns Task<Unit> and must be registered as the two-arity interface.
+// Responses are ITypeSymbol so arrays and other non-named types (T[]) bind like named ones.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
@@ -40,8 +43,9 @@ public static class MessageGraphBuilder
         List<Diagnostic> diagnostics = new();
         Dictionary<INamedTypeSymbol, List<INamedTypeSymbol>> handlersByRequest =
             new(SymbolEqualityComparer.Default);
-        Dictionary<INamedTypeSymbol, INamedTypeSymbol> responseByRequest =
+        Dictionary<INamedTypeSymbol, ITypeSymbol> responseByRequest =
             new(SymbolEqualityComparer.Default);
+        HashSet<INamedTypeSymbol> voidRequests = new(SymbolEqualityComparer.Default);
         Dictionary<INamedTypeSymbol, List<INamedTypeSymbol>> handlersByNotification =
             new(SymbolEqualityComparer.Default);
         HashSet<INamedTypeSymbol> requests = new(SymbolEqualityComparer.Default);
@@ -57,7 +61,7 @@ public static class MessageGraphBuilder
 
                 CollectRequest(type, request0, request1, requests);
 
-                if (TryGetRequestHandler(type, requestHandler1, requestHandler2, unitType, out INamedTypeSymbol requestType, out INamedTypeSymbol responseType))
+                if (TryGetRequestHandler(type, requestHandler1, requestHandler2, unitType, out INamedTypeSymbol requestType, out ITypeSymbol responseType, out bool isVoid))
                 {
                     if (!handlersByRequest.TryGetValue(requestType, out List<INamedTypeSymbol>? list))
                     {
@@ -67,6 +71,11 @@ public static class MessageGraphBuilder
 
                     list.Add(type);
                     responseByRequest[requestType] = responseType;
+                    if (isVoid)
+                    {
+                        voidRequests.Add(requestType);
+                    }
+
                     requests.Add(requestType);
                 }
 
@@ -132,9 +141,8 @@ public static class MessageGraphBuilder
 
             INamedTypeSymbol requestType = pair.Key;
             INamedTypeSymbol handlerType = pair.Value[0];
-            INamedTypeSymbol responseType = responseByRequest[requestType];
-            bool isUnit = unitType is not null
-                && SymbolEqualityComparer.Default.Equals(responseType, unitType);
+            ITypeSymbol responseType = responseByRequest[requestType];
+            bool isUnit = voidRequests.Contains(requestType);
 
             INamedTypeSymbol? handlerScope = ResolveScope(handlerType);
             INamedTypeSymbol? requestScope = ResolveScope(requestType);
@@ -240,10 +248,12 @@ public static class MessageGraphBuilder
         INamedTypeSymbol? handler2,
         INamedTypeSymbol? unitType,
         out INamedTypeSymbol requestType,
-        out INamedTypeSymbol responseType)
+        out ITypeSymbol responseType,
+        out bool isVoid)
     {
         requestType = null!;
         responseType = null!;
+        isVoid = false;
 
         if (type.TypeKind != TypeKind.Class || type.IsAbstract || type.Arity > 0)
         {
@@ -256,7 +266,7 @@ public static class MessageGraphBuilder
                 && SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, handler2)
                 && iface.TypeArguments.Length == 2
                 && iface.TypeArguments[0] is INamedTypeSymbol request2
-                && iface.TypeArguments[1] is INamedTypeSymbol response2)
+                && iface.TypeArguments[1] is ITypeSymbol response2)
             {
                 requestType = request2;
                 responseType = response2;
@@ -273,6 +283,7 @@ public static class MessageGraphBuilder
             {
                 requestType = request1;
                 responseType = unitType ?? request1;
+                isVoid = true;
                 return true;
             }
         }
@@ -365,7 +376,7 @@ public static class MessageGraphBuilder
     private static ImmutableArray<INamedTypeSymbol> CloseBehaviors(
         ImmutableArray<BehaviorRegistration> behaviors,
         INamedTypeSymbol requestType,
-        INamedTypeSymbol responseType,
+        ITypeSymbol responseType,
         INamedTypeSymbol? pipelineBehavior2,
         INamedTypeSymbol? requestScope)
     {
@@ -425,7 +436,7 @@ public static class MessageGraphBuilder
     private static INamedTypeSymbol? TryCloseBehavior(
         INamedTypeSymbol behaviorType,
         INamedTypeSymbol requestType,
-        INamedTypeSymbol responseType,
+        ITypeSymbol responseType,
         INamedTypeSymbol? pipelineBehavior2)
     {
         if (behaviorType.IsUnboundGenericType)
@@ -465,7 +476,7 @@ public static class MessageGraphBuilder
     private static bool ImplementsPipeline(
         INamedTypeSymbol behaviorType,
         INamedTypeSymbol requestType,
-        INamedTypeSymbol responseType,
+        ITypeSymbol responseType,
         INamedTypeSymbol? pipelineBehavior2)
     {
         if (pipelineBehavior2 is null)

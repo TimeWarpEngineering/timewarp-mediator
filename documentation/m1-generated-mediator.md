@@ -6,7 +6,7 @@ Source-generated dispatcher, analyzer, and State-shaped golden file for epic **0
 Generated registration is `AddGeneratedMediator()` (and `AddGeneratedMediator<TScope>()` in M2).
 Comparison: [generated-vs-legacy.md](./generated-vs-legacy.md).
 
-**14.0.0-beta is not a drop-in for 13.0.0.** As of `14.0.0-beta.2`, this stack is proven only
+**14.0.0-beta is not a drop-in for 13.0.0.** As of `14.0.0-beta.3`, this stack is proven only
 against the M1/M2 golden files in this repo (generator tests, State-shaped `IncrementActionSet`,
 AOT sample, named-pipelines sample). GitHub issue
 [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52) stays **open** until
@@ -27,6 +27,7 @@ a **stable 14.0.0**.
 - `TimeWarp.Mediator.Generators` — emits `sealed TimeWarp.Mediator.Generated.Mediator : IMediator`, monomorphic `Send`, `Send(object)` switch, `MediatorManifest` v1 (embedded JSON const; source generators cannot write a loose `mediator.manifest.json`), and `AddGeneratedMediator()` (Host profile). Profile `Aot` uses ServiceGen static fields and does **not** weave `[assembly: MediatorBehavior]` into `Dispatch_*` (Host/State is the scoped pipeline path).
 - Contracts: `IAction` / `IActionHandler` / `ActionHandler` (`ValueTask`), `ICommand` / `IQuery` + handlers, membership attributes, `NoHandlerException`.
 - Contracts (14.0.0-beta.2): `IIdempotent` marker, `IIdempotentCommand` / `IIdempotentCommand<T>` (`: ICommand…, IIdempotent`) + `IIdempotentCommandHandler<>` / `IIdempotentCommandHandler<,>`. `IQuery<T>` now implements `IIdempotent`. Dispatch is identical to `ICommand`; idempotency-key enforcement and a dedup store are out of scope.
+- Generator (14.0.0-beta.3, [#68](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/68)): `IRequestHandler<T, Unit>` dispatches as a response-returning request (only `IRequestHandler<T>` is void), and array / other non-named responses (`IQuery<T[]>`) are discovered and close pipeline behaviors.
 - `ISender`, `IPublisher`, `IMediator`, handler and pipeline interfaces live in `TimeWarp.Mediator.Contracts` (type-forwarded from `TimeWarp.Mediator`) so the AOT sample does not reference the reflection assembly.
 - State golden file: `IncrementActionSet` + `StateTransactionBehavior` (scoped) matching `Reverse().Aggregate` (short-circuit, clone/restore, `ExceptionNotification`).
 - AOT sample: `samples/timewarp-mediator-examples-aot` with `EnableTrimAnalyzer`, `EnableAotAnalyzer`, `IsAotCompatible`, **no** `NoWarn` on IL2026/IL3050. Profile `Aot` uses ServiceGen static fields.

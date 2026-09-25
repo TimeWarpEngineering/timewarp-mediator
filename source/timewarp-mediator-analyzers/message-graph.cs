@@ -35,7 +35,7 @@ public sealed class RequestBinding
 {
     public RequestBinding(
         INamedTypeSymbol requestType,
-        INamedTypeSymbol responseType,
+        ITypeSymbol responseType,
         INamedTypeSymbol handlerType,
         bool isUnitResponse,
         ImmutableArray<INamedTypeSymbol> closedBehaviors,
@@ -51,7 +51,7 @@ public sealed class RequestBinding
 
     public INamedTypeSymbol RequestType { get; }
 
-    public INamedTypeSymbol ResponseType { get; }
+    public ITypeSymbol ResponseType { get; }
 
     public INamedTypeSymbol HandlerType { get; }
 
