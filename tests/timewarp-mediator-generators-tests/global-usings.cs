@@ -10,6 +10,7 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Shouldly;
 global using TimeWarp.Mediator;
 global using TimeWarp.Mediator.Generated;
+global using TimeWarp.Mediator.Generators.Tests.Idempotency;
 global using TimeWarp.Mediator.Generators.Tests.Pipelines;
 global using TimeWarp.Mediator.Generators.Tests.State;
 global using Xunit;

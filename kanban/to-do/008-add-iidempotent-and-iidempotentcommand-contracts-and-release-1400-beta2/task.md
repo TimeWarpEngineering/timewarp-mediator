@@ -40,10 +40,10 @@ interface's short name, so Mediator must provide `IIdempotentCommand` for Nuru t
 
 ## Checklist
 
-- [ ] IIdempotent, IIdempotentCommand (void + generic), handlers
-- [ ] IQuery implements IIdempotent
-- [ ] Generator + runtime dispatch tests
-- [ ] Version 14.0.0-beta.2, docs
+- [x] IIdempotent, IIdempotentCommand (void + generic), handlers
+- [x] IQuery implements IIdempotent
+- [x] Generator + runtime dispatch tests
+- [x] Version 14.0.0-beta.2, docs
 - [ ] Released to NuGet.org (cockpit, after merge)
 
 ## Notes
@@ -51,3 +51,68 @@ interface's short name, so Mediator must provide `IIdempotentCommand` for Nuru t
 - Consumer: TimeWarp.Nuru 443 / 443-001 / 443-002 will target 14.0.0-beta.2.
 - Implementer: **commit and push your changes before reporting done.**
 - Run the build and test gate in the foreground. You are one-shot and never receive background notifications.
+
+## Results
+
+### Contracts (`source/timewarp-mediator-contracts/`)
+
+- `i-idempotent.cs`: `IIdempotent` marker (safe to retry, no additional side effects).
+- `i-idempotent-command.cs`: `IIdempotentCommand : ICommand, IIdempotent`,
+  `IIdempotentCommand<out TResponse> : ICommand<TResponse>, IIdempotent`,
+  `IIdempotentCommandHandler<in TCommand>` and `IIdempotentCommandHandler<in TCommand, TResponse>`
+  (constrained to the idempotent command types, deriving from `ICommandHandler`).
+- `i-query.cs`: `IQuery<out TResponse> : IRequest<TResponse>, IIdempotent` (additive; full test suite
+  and samples unchanged and green).
+- `source/timewarp-mediator/type-forwardings.cs`: forwards the five new types like the other contracts.
+- No generator or analyzer change was needed: both discover handlers through `IRequestHandler<>` /
+  `IRequestHandler<,>` in `AllInterfaces`, so idempotent commands dispatch exactly like commands.
+  Idempotency-key enforcement and a dedup store remain out of scope.
+
+### Tests
+
+- `tests/timewarp-mediator-generators-tests/idempotent-command-tests.cs` (+ `idempotency/idempotent-messages.cs`):
+  `AddGeneratedMediator()` registers `IRequestHandler<UpsertSetting, string>` and
+  `IRequestHandler<ResetSetting>`; `ISender.Send` reaches the generic and void idempotent handlers;
+  `Send(object)` switch covers both; `IQuery` still dispatches; manifest records both commands.
+- `tests/timewarp-mediator-generators-tests/pipeline-log-collection.cs`: xunit collection shared with
+  `IncrementActionSetTests`, because unscoped sends run the global tracking behaviors that write to the
+  static `PipelineLog`.
+- `tests/timewarp-mediator-tests/send-idempotent-command-tests.cs`: reflection `Mediator` resolves
+  generic and void idempotent command handlers.
+
+### Version and docs
+
+- `<Version>` `14.0.0-beta.2` in `Directory.Build.props` and `source/Directory.Build.props`.
+- `readme.md` (install snippets, contracts list), `documentation/generated-vs-legacy.md`
+  ("Changes in 14.0.0-beta.2"), `documentation/m1-generated-mediator.md`, `documentation/m2-named-pipelines.md`.
+- Release workflow: `.github/workflows/workflow.yml` still pushes to NuGet.org via `nuget/login`
+  trusted publishing (`workflow --mode release`). Release itself is the cockpit's `dev release` after merge.
+
+### Gate fixes (pre-existing, needed for a green build and audit)
+
+- `Microsoft.SourceLink.GitHub` 8.0.0 -> 10.0.401: 8.0.0 pulls `Microsoft.Build.Tasks.Git` 8.0.0
+  (GHSA-23fw-v26w-5fgq, NU1902), fatal under `TreatWarningsAsErrors`.
+- `tests/timewarp-mediator-tests` gets `RollForward=LatestMajor` like the other test projects
+  (testhost aborted without a .NET 8 runtime).
+- `ganda repo audit --fix`: `kanban/in-progress/.gitkeep`, TimeWarp.SourceGenerators pin + reference +
+  `.editorconfig` TW0007 entry, refreshed memsearch git hooks, peacock colors. The analyzer, generator,
+  and analyzer-test projects `Remove` TimeWarp.SourceGenerators because it depends on Roslyn 4.11 and
+  they pin Roslyn 4.8 (NU1605/NU1107).
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet run --file tools/dev-cli/dev.cs -- workflow
+dotnet test tests/timewarp-mediator-generators-tests -c Release --no-build --filter "FullyQualifiedName~IdempotentCommandTests"
+dotnet test tests/timewarp-mediator-tests -c Release --no-build --filter "FullyQualifiedName~SendIdempotentCommandTests"
+ganda repo audit
+```
+
+Expect:
+
+- Workflow prints `Pipeline SUCCEEDED`; generators tests 26 passed, analyzers tests 6 passed,
+  mediator tests 165 passed / 2 skipped; `artifacts/packages/*.14.0.0-beta.2.nupkg` for all four packages.
+- `IdempotentCommandTests`: 7 passed. `SendIdempotentCommandTests`: 2 passed.
+- `ganda repo audit`: "Repository passes all audit checks."

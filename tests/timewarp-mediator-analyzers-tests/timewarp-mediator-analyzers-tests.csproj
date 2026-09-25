@@ -15,6 +15,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <!-- TimeWarp.SourceGenerators depends on Microsoft.CodeAnalysis 4.11; Workspaces is pinned to 4.8 with the analyzers (NU1107). -->
+    <PackageReference Remove="TimeWarp.SourceGenerators" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit" />

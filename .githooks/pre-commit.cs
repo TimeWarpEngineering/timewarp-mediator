@@ -2,6 +2,7 @@
 #:package TimeWarp.Amuru
 #:package TimeWarp.Amuru.Tools
 #:property NoWarn=CA2007;CA1849;RS0030
+#:property RunAnalyzers=false
 
 // Refuse commits while HEAD is master or main.
 // Escape hatch: git commit --no-verify

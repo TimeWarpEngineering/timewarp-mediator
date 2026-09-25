@@ -5,10 +5,10 @@
 namespace TimeWarp.Mediator;
 
 /// <summary>
-/// A query request with a response.
+/// A read-only query request with a response. Queries are idempotent by definition.
 /// </summary>
 /// <typeparam name="TResponse">Response type.</typeparam>
-public interface IQuery<out TResponse> : IRequest<TResponse>
+public interface IQuery<out TResponse> : IRequest<TResponse>, IIdempotent
 {
 }
 

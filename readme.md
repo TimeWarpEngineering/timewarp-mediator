@@ -36,11 +36,11 @@ register the source-generated mediator.
 | `services.AddGeneratedMediator()` | Source-generated unscoped `IMediator` / `ISender` / `IPublisher` |
 | `services.AddGeneratedMediator<TScope>()` | Source-generated named pipeline (`ISender<TScope>` / `IPublisher<TScope>`) |
 
-**14.0.0-beta is not a drop-in for 13.0.0.** As of `14.0.0-beta.1`, the generated stack is
+**14.0.0-beta is not a drop-in for 13.0.0.** As of `14.0.0-beta.2`, the generated stack is
 proven only against the M1/M2 golden files in this repo. Do not bump a 13.0.0 host to
 14.0.0-beta and keep `AddMediator(...)` expecting source-gen, AOT-clean dispatch, or named
 pipelines. TimeWarp.State and TimeWarp.Nuru must call `AddGeneratedMediator()` /
-`AddGeneratedMediator<TScope>()`. This tree's `<Version>` is `14.0.0-beta.1`. nuget.org
+`AddGeneratedMediator<TScope>()`. This tree's `<Version>` is `14.0.0-beta.2`. nuget.org
 serves that as a **prerelease**; **13.0.0** remains the last stable reflection line.
 
 GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52)
@@ -87,16 +87,16 @@ add `TimeWarp.Mediator.Analyzers` only when the generator is not referenced.
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.1" />
-  <PackageReference Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.1" />
+  <PackageReference Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.2" />
+  <PackageReference Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.2" />
 </ItemGroup>
 ```
 
 ```bash
-dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0-beta.1
-dotnet add package TimeWarp.Mediator.Generators --version 14.0.0-beta.1
+dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0-beta.2
+dotnet add package TimeWarp.Mediator.Generators --version 14.0.0-beta.2
 # library-only (no generator):
-dotnet add package TimeWarp.Mediator.Analyzers --version 14.0.0-beta.1
+dotnet add package TimeWarp.Mediator.Analyzers --version 14.0.0-beta.2
 ```
 
 Do **not** add only `TimeWarp.Mediator` and call `AddMediator()` expecting this stack.
@@ -106,6 +106,10 @@ Do **not** add only `TimeWarp.Mediator` and call `AddMediator()` expecting this 
 To reference only the contracts for TimeWarp.Mediator, which includes:
 
 - `IRequest` (including generic variants)
+- CQRS markers and handlers: `ICommand` / `ICommand<T>`, `IQuery<T>`, `IAction`
+- Idempotency markers: `IIdempotent`, `IIdempotentCommand` / `IIdempotentCommand<T>` (+ handlers).
+  `IQuery<T>` implements `IIdempotent`. Idempotent commands dispatch exactly like commands;
+  these are types only (no idempotency-key enforcement or dedup store)
 - `INotification`
 - `IStreamRequest`
 - `ISender` / `ISender<TScope>`, `IPublisher` / `IPublisher<TScope>`
