@@ -73,6 +73,17 @@ Applied the #68 patch after review; it matched the current `MessageGraphBuilder`
   0 failed. The `System.IO.Hashing` net6.0 NuGet warning is pre-existing and not an error.
 - Not done here (by design): release to NuGet.org after merge + green master CI (cockpit, `dev release`).
 
+### Implementation review
+
+- Rounds: 1. Effort 1, roster: `general` (cursor implementer-cursor review oracle, ganda task work, headless).
+- Final counts: bug 0, suggestion 0, nit 1 (0 open, 0 fixed, 1 wontfix).
+- Disposition: **accepted-exceptions**. M1 (nit): `TypeArguments[1] is ITypeSymbol response2` is always true.
+  Kept because it has no behavioral effect and mirrors the `request2` binding and the validated #68 patch.
+- Review re-ran the gates: `./bin/dev workflow` shows `Pipeline SUCCEEDED` (generators 34/34, analyzers 6/6,
+  runtime 165 passed / 2 skipped), and `ganda repo audit` passes all checks.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
 ### How to validate
 
 Smoke:
