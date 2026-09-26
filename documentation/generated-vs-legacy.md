@@ -17,7 +17,7 @@ deferred (see [m1-generated-mediator.md](./m1-generated-mediator.md) deferred ta
 
 ## 14.0.0-beta is not a drop-in for 13.0.0
 
-As of `14.0.0-beta.3`, the generated stack is proven only against the M1/M2 golden files in
+As of `14.0.0-beta.4`, the generated stack is proven only against the M1/M2 golden files in
 this repo:
 
 - Generator tests (`tests/timewarp-mediator-generators-tests`), including State-shaped
@@ -29,11 +29,22 @@ this repo:
 It is **not** an API-compatible upgrade of NuGet **13.0.0** (the last published reflection
 line). Do not bump a 13.0.0 host to 14.0.0-beta and keep `AddMediator(...)` expecting
 source-gen, AOT-clean dispatch, or named pipelines. `<Version>` in this tree is
-`14.0.0-beta.3`. nuget.org serves that as a **prerelease**; **13.0.0** remains the last
+`14.0.0-beta.4`. nuget.org serves that as a **prerelease**; **13.0.0** remains the last
 stable reflection line.
 
 GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52)
 stays **open** until a **stable 14.0.0**. This beta does not close that issue.
+
+### Changes in 14.0.0-beta.4
+
+- Generated types are now `internal` in every profile (Host, Aot, Link): `Mediator`,
+  `Sender_*` / `Publisher_*`, `MediatorManifest`, and `GeneratedMediatorServiceCollectionExtensions`.
+  Every host emits the same type names, so public types produced CS0436 warnings (and ambiguous
+  `AddGeneratedMediator()` calls, CS0121) in any compilation that referenced two hosts, for
+  example a test project that references two apps. `AddGeneratedMediator()` stays callable from
+  the host's own code; it is no longer visible to assemblies that reference the host.
+- Consumers: a build step that strips the generator from a library compile only to avoid an
+  ambiguous public `AddGeneratedMediator()` is no longer needed.
 
 ### Changes in 14.0.0-beta.3
 
@@ -56,8 +67,8 @@ stays **open** until a **stable 14.0.0**. This beta does not close that issue.
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.3" />
-  <PackageReference Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.3" />
+  <PackageReference Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.4" />
+  <PackageReference Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.4" />
 </ItemGroup>
 ```
 

@@ -36,11 +36,11 @@ register the source-generated mediator.
 | `services.AddGeneratedMediator()` | Source-generated unscoped `IMediator` / `ISender` / `IPublisher` |
 | `services.AddGeneratedMediator<TScope>()` | Source-generated named pipeline (`ISender<TScope>` / `IPublisher<TScope>`) |
 
-**14.0.0-beta is not a drop-in for 13.0.0.** As of `14.0.0-beta.3`, the generated stack is
+**14.0.0-beta is not a drop-in for 13.0.0.** As of `14.0.0-beta.4`, the generated stack is
 proven only against the M1/M2 golden files in this repo. Do not bump a 13.0.0 host to
 14.0.0-beta and keep `AddMediator(...)` expecting source-gen, AOT-clean dispatch, or named
 pipelines. TimeWarp.State and TimeWarp.Nuru must call `AddGeneratedMediator()` /
-`AddGeneratedMediator<TScope>()`. This tree's `<Version>` is `14.0.0-beta.3`. nuget.org
+`AddGeneratedMediator<TScope>()`. This tree's `<Version>` is `14.0.0-beta.4`. nuget.org
 serves that as a **prerelease**; **13.0.0** remains the last stable reflection line.
 
 GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52)
@@ -87,16 +87,16 @@ add `TimeWarp.Mediator.Analyzers` only when the generator is not referenced.
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.3" />
-  <PackageReference Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.3" />
+  <PackageReference Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.4" />
+  <PackageReference Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.4" />
 </ItemGroup>
 ```
 
 ```bash
-dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0-beta.3
-dotnet add package TimeWarp.Mediator.Generators --version 14.0.0-beta.3
+dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0-beta.4
+dotnet add package TimeWarp.Mediator.Generators --version 14.0.0-beta.4
 # library-only (no generator):
-dotnet add package TimeWarp.Mediator.Analyzers --version 14.0.0-beta.3
+dotnet add package TimeWarp.Mediator.Analyzers --version 14.0.0-beta.4
 ```
 
 Do **not** add only `TimeWarp.Mediator` and call `AddMediator()` expecting this stack.
@@ -151,6 +151,12 @@ services.AddGeneratedMediator();
 services.AddGeneratedMediator<ClientPipeline>();
 services.AddGeneratedMediator<ServerPipeline>();
 ```
+
+Generated types (`TimeWarp.Mediator.Generated.Mediator`, `Sender_*` / `Publisher_*`,
+`MediatorManifest`, and the `AddGeneratedMediator` extensions) are `internal` to the host that
+emits them. Call `AddGeneratedMediator()` from the host's own code; other assemblies resolve
+`IMediator` / `ISender` / `IPublisher`. A test project that references two hosts sees no
+duplicate generated types.
 
 Details: [documentation/generated-vs-legacy.md](./documentation/generated-vs-legacy.md),
 [documentation/m1-generated-mediator.md](./documentation/m1-generated-mediator.md),
