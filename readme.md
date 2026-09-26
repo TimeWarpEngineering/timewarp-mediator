@@ -156,7 +156,7 @@ Generated types (`TimeWarp.Mediator.Generated.Mediator`, `Sender_*` / `Publisher
 `MediatorManifest`, and the `AddGeneratedMediator` extensions) are `internal` to the host that
 emits them. Call `AddGeneratedMediator()` from the host's own code; other assemblies resolve
 `IMediator` / `ISender` / `IPublisher`. A test project that references two hosts sees no
-duplicate generated types.
+duplicate generated types, unless both hosts grant it `InternalsVisibleTo`.
 
 Details: [documentation/generated-vs-legacy.md](./documentation/generated-vs-legacy.md),
 [documentation/m1-generated-mediator.md](./documentation/m1-generated-mediator.md),

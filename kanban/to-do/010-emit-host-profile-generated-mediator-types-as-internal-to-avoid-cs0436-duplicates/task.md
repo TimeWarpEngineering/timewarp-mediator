@@ -72,6 +72,18 @@ Every generated top-level type is now `internal` in every profile.
   verified). `ganda repo audit`: 28 passed, 0 failed, 1 skipped.
 - Not done here (by design): release to NuGet.org after merge + green master CI (cockpit, `dev release`).
 
+### Implementation review
+
+- Rounds: 2. Effort 1, roster: `general` (cursor implementer-cursor review oracle, ganda task work, headless).
+- Final counts: bug 0, suggestion 0, nit 1 (0 open, 1 fixed, 0 wontfix).
+- Disposition: **clean**. M1 (nit): the docs claimed no duplicate types for a project referencing two
+  hosts, but `InternalsVisibleTo` from both hosts re-exposes them. Fixed with a caveat in the readme
+  visibility paragraph and the beta.4 changelog; verified in round 2.
+- Review re-ran the gates after the fix: `./bin/dev workflow` shows `Pipeline SUCCEEDED` (generators 34/34,
+  analyzers 6/6, compilation 7/7, runtime 165 passed / 2 skipped), and `ganda repo audit` passes.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke:

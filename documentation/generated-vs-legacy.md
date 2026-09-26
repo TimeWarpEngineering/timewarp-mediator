@@ -43,6 +43,8 @@ stays **open** until a **stable 14.0.0**. This beta does not close that issue.
   `AddGeneratedMediator()` calls, CS0121) in any compilation that referenced two hosts, for
   example a test project that references two apps. `AddGeneratedMediator()` stays callable from
   the host's own code; it is no longer visible to assemblies that reference the host.
+  `InternalsVisibleTo` re-exposes them: a project that is a friend of two hosts still sees
+  duplicate generated types.
 - Consumers: a build step that strips the generator from a library compile only to avoid an
   ambiguous public `AddGeneratedMediator()` is no longer needed.
 
