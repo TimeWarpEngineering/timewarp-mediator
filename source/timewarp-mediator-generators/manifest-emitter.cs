@@ -16,7 +16,7 @@ internal static class ManifestEmitter
         builder.AppendLine();
         builder.Append("namespace ").Append(ns).AppendLine(";");
         builder.AppendLine();
-        builder.AppendLine("public static class MediatorManifest");
+        builder.AppendLine("internal static class MediatorManifest");
         builder.AppendLine("{");
         builder.AppendLine("    public const int Version = 1;");
         builder.AppendLine("    public const string Json =");
