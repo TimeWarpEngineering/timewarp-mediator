@@ -9,6 +9,8 @@
 // static Dispatch_* method the interceptors would target.
 // Unscoped Mediator is the default pipeline (no [MediatorScope]). Each TScope gets its own
 // Sender and Publisher with a disjoint type switch — no runtime "is this my message?" filter.
+// Every emitted type is internal in every profile: each host emits the same type names, so
+// public types collide (CS0436) in any compilation that references two hosts.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -105,7 +107,7 @@ internal static class MediatorEmitter
             EmitServiceGen(builder, graph);
         }
 
-        builder.Append("public sealed class ").Append(className).Append(" : ").AppendLine(interfaceList);
+        builder.Append("internal sealed class ").Append(className).Append(" : ").AppendLine(interfaceList);
         builder.AppendLine("{");
         if (!aot)
         {
@@ -496,7 +498,7 @@ internal static class MediatorEmitter
         builder.AppendLine();
         builder.AppendLine("namespace Microsoft.Extensions.DependencyInjection;");
         builder.AppendLine();
-        builder.AppendLine("public static class GeneratedMediatorServiceCollectionExtensions");
+        builder.AppendLine("internal static class GeneratedMediatorServiceCollectionExtensions");
         builder.AppendLine("{");
         builder.AppendLine("    public static global::Microsoft.Extensions.DependencyInjection.IServiceCollection AddGeneratedMediator(this global::Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
         builder.AppendLine("    {");
