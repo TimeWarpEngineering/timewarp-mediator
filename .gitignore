@@ -244,3 +244,7 @@ task-work.progress.log
 # Memsearch memory auto-writes (plugin daily notes; local until promoted).
 # Deliberate promote of distilled memory: git add -f .memsearch/memory/<file>.md
 .memsearch/memory/
+.memsearch/.index.pid
+
+# Per-user tool state (XDG .local/, e.g. gh device-id; local; not product)
+.local/
