@@ -29,10 +29,10 @@ lacks the guard.
 
 ## Checklist
 
-- [ ] `.githooks/pre-push.cs` refreshed via `ganda repo audit --fix --checks memsearch-scaffold`
-- [ ] Audit clean (no `memsearch-scaffold` warning)
-- [ ] Hook smoke test: task→home refused, raw sha→home allowed (stdin simulation only)
-- [ ] Gates per this repo's `tw-pr` (a hook-only change needs no full build unless the skill's
+- [x] `.githooks/pre-push.cs` refreshed via `ganda repo audit --fix --checks memsearch-scaffold`
+- [x] Audit clean (no `memsearch-scaffold` warning)
+- [x] Hook smoke test: task→home refused, raw sha→home allowed (stdin simulation only)
+- [x] Gates per this repo's `tw-pr` (a hook-only change needs no full build unless the skill's
       scope table says otherwise)
 - [ ] Implementation review; host `open-pr`
 
@@ -45,15 +45,47 @@ lacks the guard.
 
 ## Results
 
-*(fill when done)*
+- `ganda repo audit --fix --checks memsearch-scaffold` refreshed `.githooks/pre-push.cs` to the
+  baseline. The diff is additive only: the task→home guard and its comment were added, and no
+  local customization was dropped. `.githooks/pre-push` is a symlink to `pre-push.cs`, so it
+  needs no separate change.
+- Boyscout: the audit also failed `required-gitignore-entries`, because `.local/` was missing.
+  `--fix` added it to the root `.gitignore`. The audit also failed `bin-dev` and
+  `dev-cli-capabilities`, because `bin/dev` was not installed in this fresh worktree. `bin/dev`
+  is gitignored and installed per clone, and `--fix` installed it, so there is no tracked change.
+- `ganda repo audit` now reports "Repository passes all audit checks." with no
+  `memsearch-scaffold` warning.
+- This is a hook-only and `.gitignore`-only change, so no product build or test is needed.
+
+Smoke test (stdin simulation, run from the worktree, with `S=$(git rev-parse HEAD)`):
+
+```
+$ echo "refs/heads/task/x $S refs/heads/master $S" | dotnet .githooks/pre-push.cs; echo exit=$?
+Refusing push of task branch to home: task/x -> master.
+Task branches publish to origin/<task branch> and land on home via PR.
+Fix tracking: ganda repo audit --fix --checks task-branch-upstream, then git push.
+Escape hatch (intentional only): git push --no-verify
+exit=1
+$ echo "$S $S refs/heads/master $S" | dotnet .githooks/pre-push.cs; echo exit=$?
+exit=0
+```
 
 ### How to validate
 
-*(required before done)*
+**Smoke:**
 
-`ganda repo audit` shows no `memsearch-scaffold` warning, and the stdin smoke test output is
-recorded.
+```bash
+ganda repo audit
+S=$(git rev-parse HEAD)
+echo "refs/heads/task/x $S refs/heads/master $S" | dotnet .githooks/pre-push.cs; echo exit=$?
+echo "$S $S refs/heads/master $S" | dotnet .githooks/pre-push.cs; echo exit=$?
+```
+
+**Expect:** The audit prints "Repository passes all audit checks." with no `memsearch-scaffold`
+warning. The first hook run prints `Refusing push of task branch to home: task/x -> master.`
+and exits 1. The second hook run prints nothing and exits 0. Do not push to master to test.
 
 ## Session
 
 - Created: 2026-10-01
+- 2026-10-01: implement oracle refreshed the hook via audit --fix, added .local/ to .gitignore, and ran the stdin smoke test (pass).
