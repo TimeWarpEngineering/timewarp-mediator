@@ -34,7 +34,7 @@ lacks the guard.
 - [x] Hook smoke test: task→home refused, raw sha→home allowed (stdin simulation only)
 - [x] Gates per this repo's `tw-pr` (a hook-only change needs no full build unless the skill's
       scope table says otherwise)
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (clean); host `open-pr`
 
 ## Notes
 
@@ -70,6 +70,13 @@ $ echo "$S $S refs/heads/master $S" | dotnet .githooks/pre-push.cs; echo exit=$?
 exit=0
 ```
 
+### Review
+
+- Implementation review: 1 round, effort 1, roster `general`.
+- Final counts: 0 bug, 0 suggestion, 0 nit (0 open, 0 fixed, 0 wontfix).
+- Disposition: **clean**.
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke:**
@@ -89,3 +96,4 @@ and exits 1. The second hook run prints nothing and exits 0. Do not push to mast
 
 - Created: 2026-10-01
 - 2026-10-01: implement oracle refreshed the hook via audit --fix, added .local/ to .gitignore, and ran the stdin smoke test (pass).
+- 2026-10-01: review oracle (claude, effort 1, general) — round 1 found no issues; disposition clean.
