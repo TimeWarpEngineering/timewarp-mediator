@@ -9,7 +9,7 @@
 namespace DevCli.Commands;
 
 [NuruRoute("test", Description = "Run the test suite")]
-internal sealed class TestCommand : ICommand<Unit>
+public sealed class TestCommand : ICommand<Unit>
 {
   [Option("quiet", "q", Description = "Hide test output unless the command fails")]
   public bool Quiet { get; set; }
@@ -17,7 +17,7 @@ internal sealed class TestCommand : ICommand<Unit>
   [Option("no-build", Description = "Do not build before testing")]
   public bool NoBuild { get; set; }
 
-  internal sealed class Handler : ICommandHandler<TestCommand, Unit>
+  public sealed class Handler : ICommandHandler<TestCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private TestCommand Command = null!;
@@ -29,23 +29,23 @@ internal sealed class TestCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(TestCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(TestCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;
 
       if (!FindRepoRoot())
       {
-        return Value;
+        return Unit.Value;
       }
 
       if (!await TestAsync())
       {
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("\nTests completed successfully!".Green());
-      return Value;
+      return Unit.Value;
     }
 
     private bool FindRepoRoot()

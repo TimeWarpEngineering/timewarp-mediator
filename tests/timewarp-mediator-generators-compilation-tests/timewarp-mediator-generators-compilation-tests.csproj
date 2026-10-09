@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
-    <!-- TimeWarp.SourceGenerators depends on Microsoft.CodeAnalysis 4.11; the generator is pinned to 4.8 (NU1605). -->
+    <!-- TimeWarp.SourceGenerators is removed so it does not run inside this test host. Microsoft.CodeAnalysis.CSharp is pinned to 5.9.0. -->
     <PackageReference Remove="TimeWarp.SourceGenerators" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Shouldly" />

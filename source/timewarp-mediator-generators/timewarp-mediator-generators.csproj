@@ -23,7 +23,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
-    <!-- TimeWarp.SourceGenerators depends on Microsoft.CodeAnalysis.CSharp 4.11; Roslyn components pin 4.8 for older hosts (NU1605). -->
+    <!-- TimeWarp.SourceGenerators is removed so it does not run inside this Roslyn component. Microsoft.CodeAnalysis.CSharp is pinned to 5.9.0. -->
     <PackageReference Remove="TimeWarp.SourceGenerators" />
   </ItemGroup>
 

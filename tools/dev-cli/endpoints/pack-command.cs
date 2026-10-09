@@ -12,12 +12,12 @@
 namespace DevCli.Commands;
 
 [NuruRoute("pack", Description = "Pack NuGet packages and assert analyzer payload")]
-internal sealed class PackCommand : ICommand<Unit>
+public sealed class PackCommand : ICommand<Unit>
 {
   [Option("no-build", Description = "Do not build before packing")]
   public bool NoBuild { get; set; }
 
-  internal sealed class Handler : ICommandHandler<PackCommand, Unit>
+  public sealed class Handler : ICommandHandler<PackCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private PackCommand Command = null!;
@@ -29,28 +29,28 @@ internal sealed class PackCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(PackCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(PackCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;
 
       if (!FindRepoRoot())
       {
-        return Value;
+        return Unit.Value;
       }
 
       if (!await PackAsync())
       {
-        return Value;
+        return Unit.Value;
       }
 
       if (!AssertPackageLayout())
       {
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("\nPack completed successfully!".Green());
-      return Value;
+      return Unit.Value;
     }
 
     private bool FindRepoRoot()

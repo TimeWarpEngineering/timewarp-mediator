@@ -14,7 +14,7 @@
 namespace DevCli.Commands;
 
 [NuruRoute("workflow", Description = "Execute full CI/CD pipeline (mode-aware)")]
-internal sealed class WorkflowCommand : ICommand<Unit>
+public sealed class WorkflowCommand : ICommand<Unit>
 {
   [Option("mode", "m", Description = "CI mode: pr, merge, or release (auto-detected from GITHUB_EVENT_NAME)")]
   public string? Mode { get; set; }
@@ -22,7 +22,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
   [Option("api-key", "k", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
   public string? ApiKey { get; set; }
 
-  internal sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
+  public sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly IRepoCleanService RepoCleanService;
@@ -48,13 +48,13 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       PackableProjectService = packableProjectService;
     }
 
-    public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(WorkflowCommand command, CancellationToken ct)
     {
       Ct = ct;
 
       if (!FindRepoRoot())
       {
-        return Value;
+        return Unit.Value;
       }
 
       string? eventName = Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME");
@@ -76,7 +76,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         await RunPrAsync();
       }
 
-      return Value;
+      return Unit.Value;
     }
 
     private bool FindRepoRoot()
@@ -217,7 +217,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       return true;
     }
 
-    private async Task<bool> RunStepAsync(string stepName, ValueTask<Unit> step)
+    private async Task<bool> RunStepAsync(string stepName, Task<Unit> step)
     {
       await step;
 
