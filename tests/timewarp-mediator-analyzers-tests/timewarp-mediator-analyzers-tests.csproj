@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
-    <!-- TimeWarp.SourceGenerators is removed so it does not run inside this test host. Microsoft.CodeAnalysis.CSharp.Workspaces is pinned to 5.9.0. -->
+    <!-- TimeWarp.SourceGenerators is removed so it does not run inside this test host. -->
     <PackageReference Remove="TimeWarp.SourceGenerators" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Shouldly" />

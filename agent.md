@@ -80,8 +80,9 @@ Tests are organized by feature area and include extensive coverage of:
 - .NET 6.0 (modern features)
 
 ### Key Dependencies
-- Microsoft.Extensions.DependencyInjection.Abstractions 8.0.0
-- Microsoft.Bcl.AsyncInterfaces 8.0.0 (for .NET Standard 2.0)
+- Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12
+- Microsoft.Bcl.AsyncInterfaces 10.0.12 (for .NET Standard 2.0)
+- Microsoft.CodeAnalysis.CSharp 4.8.0 floor for the shipped analyzers/generators (`VersionOverride`)
 
 ### Build Properties (Directory.Build.props)
 - Treats warnings as errors

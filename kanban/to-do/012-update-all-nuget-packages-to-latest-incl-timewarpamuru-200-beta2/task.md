@@ -30,10 +30,11 @@ Holdouts and overrides after `ganda nuget outdated --update --force` (2026-10-09
 
 - Created: 821248 (2026-10-09)
 - Implementation: 01a120a3 (2026-10-09)
+- Review: claude review oracle with general reviewer subagent a694c81243998a97e, effort 2 (2026-10-09)
 
 ## Results
 
-`Directory.Packages.props` is on the updater's newest stable (or, for pins that were already prerelease, newest prerelease), with two deliberate exceptions: TimeWarp.Amuru and TimeWarp.Amuru.Tools are `2.0.0-beta.2`, and Lamar is `15.0.1`.
+`Directory.Packages.props` is on the updater's newest stable (or, for pins that were already prerelease, newest prerelease), with two deliberate exceptions: TimeWarp.Amuru and TimeWarp.Amuru.Tools are `2.0.0-beta.2`, and Lamar is `15.0.1`. In addition, the shipped analyzers and generators keep Microsoft.CodeAnalysis.CSharp at `4.8.0` via `VersionOverride` (review M1).
 
 This repo does not call the removed Amuru 2.0 Git.*Master* helpers, bool-returning Git methods, or removed dotnet builder options. `Git.FindRoot` and the `DotNet.Build` / `Clean` / `Test` / `Pack` / `NuGet.Push` builders still compile against Tools `2.0.0-beta.2`.
 
@@ -44,6 +45,16 @@ Nuru `3.0.0-beta.79` moved `ICommand<>`, `ICommandHandler<,>`, and `Unit` to Tim
 The `net6.0` builds emit an uncoded support warning from Microsoft.Extensions.DependencyInjection.Abstractions `10.0.12` and a pre-existing one from System.IO.Hashing `10.0.12` (Microsoft.SourceLink.GitHub `10.0.401`, version unchanged). Samples and benchmarks still emit pre-existing RS0030 banned-API warnings (`TreatWarningsAsErrors` is false there) and NETSDK1138 for the Windsor sample's `net6.0`.
 
 PR open and `ganda pr merge` are later host nodes. The checklist item stays open.
+
+### Review disposition
+
+- Rounds: 2. Roster: general. Effort: 2 (Budget.ByDiff, 268 lines).
+- Final counts: bug 1 fixed, suggestion 1 wontfix, nit 1 fixed, 0 open.
+- Disposition: **accepted-exceptions**.
+  - M1 (bug) is fixed. The shipped analyzers and generators had moved to Microsoft.CodeAnalysis.CSharp 5.9.0, which older SDK/VS hosts reject with CS9057. They now use `VersionOverride="4.8.0"`, and the test projects stay on 5.9.0.
+  - M3 (nit) is fixed. The csproj comments no longer hard-code versions.
+  - M2 (suggestion) is wontfix. The library's DI and Bcl dependency floor of 10.0.12 is accepted per the latest-packages directive, and agent.md Key Dependencies is updated. Dropping `net6.0` and the release-note wording are left to the release work.
+- Artifacts: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
