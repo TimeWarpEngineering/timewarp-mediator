@@ -10,9 +10,9 @@
 namespace DevCli.Commands;
 
 [NuruRoute("verify-samples", Description = "Verify code samples compile")]
-internal sealed class VerifySamplesCommand : ICommand<Unit>
+public sealed class VerifySamplesCommand : ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<VerifySamplesCommand, Unit>
+  public sealed class Handler : ICommandHandler<VerifySamplesCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -21,21 +21,21 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
     {
       string? repoRoot = Git.FindRoot();
       if (repoRoot is null)
       {
         Terminal.WriteErrorLine("Error: could not find repository root.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       string samplesDirectory = Path.Combine(repoRoot, "samples");
       if (!Directory.Exists(samplesDirectory))
       {
         Terminal.WriteLine("No samples/ directory — nothing to verify.");
-        return Value;
+        return Unit.Value;
       }
 
       string[] projects = Directory
@@ -49,7 +49,7 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
       if (projects.Length == 0)
       {
         Terminal.WriteLine("No sample projects found.");
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"Verifying {projects.Length} sample project(s)...");
@@ -68,12 +68,12 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
         {
           Terminal.WriteErrorLine($"Sample failed: {relativePath}".Red());
           Environment.ExitCode = exitCode;
-          return Value;
+          return Unit.Value;
         }
       }
 
       Terminal.WriteLine("\nSamples verified successfully!".Green());
-      return Value;
+      return Unit.Value;
     }
   }
 }

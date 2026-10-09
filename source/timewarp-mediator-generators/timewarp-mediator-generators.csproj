@@ -22,8 +22,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
-    <!-- TimeWarp.SourceGenerators depends on Microsoft.CodeAnalysis.CSharp 4.11; Roslyn components pin 4.8 for older hosts (NU1605). -->
+    <!-- Shipped Roslyn component: VersionOverride keeps the compiler floor low so older SDK/VS hosts load it (CS9057 otherwise). -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" VersionOverride="4.8.0" PrivateAssets="all" />
+    <!-- TimeWarp.SourceGenerators is removed so it does not run inside this Roslyn component. -->
     <PackageReference Remove="TimeWarp.SourceGenerators" />
   </ItemGroup>
 
