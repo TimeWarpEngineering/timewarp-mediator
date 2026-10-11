@@ -4,28 +4,15 @@ namespace TimeWarp.Mediator.Registration;
 
 public static class ServiceRegistrar
 {
-    private static int MaxGenericTypeParameters;
-    private static int MaxTypesClosing;
-    private static int MaxGenericTypeRegistrations;
-    private static int RegistrationTimeout; 
-
-    public static void SetGenericRequestHandlerRegistrationLimitations(MediatorServiceConfiguration configuration)
-    {
-        MaxGenericTypeParameters = configuration.MaxGenericTypeParameters;
-        MaxTypesClosing = configuration.MaxTypesClosing;
-        MaxGenericTypeRegistrations = configuration.MaxGenericTypeRegistrations;
-        RegistrationTimeout = configuration.RegistrationTimeout;
-    }
-
     public static void AddMediatorClassesWithTimeout(IServiceCollection services, MediatorServiceConfiguration configuration)
     {
-        if (RegistrationTimeout <= 0)
+        if (configuration.RegistrationTimeout <= 0)
         {
             AddMediatorClasses(services, configuration);
             return;
         }
 
-        using CancellationTokenSource cts = new(RegistrationTimeout);
+        using CancellationTokenSource cts = new(configuration.RegistrationTimeout);
         try
         {
             AddMediatorClasses(services, configuration, cts.Token);
@@ -166,7 +153,7 @@ public static class ServiceRegistrar
             cancellationToken.ThrowIfCancellationRequested();
 
             List<Type> exactMatches = genericConcretions.Where(x => x.CanBeCastTo(@interface)).ToList();
-            AddAllConcretionsThatClose(@interface, exactMatches, services, assembliesToScan, cancellationToken);
+            AddAllConcretionsThatClose(@interface, exactMatches, services, assembliesToScan, configuration, cancellationToken);
         }
     }
 
@@ -177,19 +164,19 @@ public static class ServiceRegistrar
             return false;
         }
 
-        if (handlerType.IsInterface)
+        if (!handlerInterface.IsGenericType)
         {
-            if (handlerType.GenericTypeArguments.SequenceEqual(handlerInterface.GenericTypeArguments))
-            {
-                return true;
-            }
-        }
-        else
-        {
-            return IsMatchingWithInterface(handlerType.GetInterface(handlerInterface.Name), handlerInterface);
+            return false;
         }
 
-        return false;
+        // Match on generic definition and arguments; a name lookup is ambiguous when the handler
+        // implements the same interface for several requests.
+        Type handlerInterfaceDefinition = handlerInterface.GetGenericTypeDefinition();
+
+        return handlerType.GetInterfaces()
+            .Any(type => type.IsGenericType
+                && type.GetGenericTypeDefinition() == handlerInterfaceDefinition
+                && type.GenericTypeArguments.SequenceEqual(handlerInterface.GenericTypeArguments));
     }
 
     private static void AddConcretionsThatCouldBeClosed(Type @interface, List<Type> concretions, IServiceCollection services)
@@ -201,8 +188,10 @@ public static class ServiceRegistrar
             {
                 services.TryAddTransient(@interface, type.MakeGenericType(@interface.GenericTypeArguments));
             }
-            catch (Exception)
+            catch (ArgumentException)
             {
+                // MakeGenericType throws when the arguments violate the concretion's generic constraints;
+                // such a concretion cannot close this interface, so skip it.
             }
         }
     }
@@ -225,49 +214,52 @@ public static class ServiceRegistrar
         return (serviceType, openRequestHandlerImplementation.MakeGenericType(closingTypes));
     }
 
-    private static List<Type>? GetConcreteRequestTypes(Type openRequestHandlerInterface, Type openRequestHandlerImplementation, IEnumerable<Assembly> assembliesToScan, CancellationToken cancellationToken)
+    private static List<Type>? GetConcreteRequestTypes(Type openRequestHandlerInterface, Type openRequestHandlerImplementation, List<Type> candidateClosingTypes, MediatorServiceConfiguration configuration, CancellationToken cancellationToken)
     {
-        //request generic type constraints       
-        List<Type[]> constraintsForEachParameter = openRequestHandlerImplementation
-            .GetGenericArguments()
-            .Select(x => x.GetGenericParameterConstraints())
-            .ToList();
-
-        List<List<Type>> typesThatCanCloseForEachParameter = constraintsForEachParameter
-            .Select(constraints => assembliesToScan
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(type => type.IsClass && !type.IsAbstract && constraints.All(constraint => constraint.IsAssignableFrom(type))).ToList()
-            ).ToList();
-
         Type requestType = openRequestHandlerInterface.GenericTypeArguments.First();
 
-        if (requestType.IsGenericParameter)
+        // Only an open generic request (e.g. Request<T>) can be closed from the handler's parameters;
+        // a bare generic parameter or a closed request (e.g. Ping) has no definition to close.
+        if (requestType.IsGenericParameter || !requestType.IsGenericType || !requestType.ContainsGenericParameters)
             return null;
 
         Type requestGenericTypeDefinition = requestType.GetGenericTypeDefinition();
 
-        List<List<Type>> combinations = GenerateCombinations(requestType, typesThatCanCloseForEachParameter, 0, cancellationToken);
+        //request generic type constraints
+        List<List<Type>> typesThatCanCloseForEachParameter = openRequestHandlerImplementation
+            .GetGenericArguments()
+            .Select(x => x.GetGenericParameterConstraints())
+            .Select(constraints => candidateClosingTypes
+                .Where(type => constraints.All(constraint => constraint.IsAssignableFrom(type)))
+                .ToList())
+            .ToList();
+
+        List<List<Type>> combinations = GenerateCombinations(requestType, typesThatCanCloseForEachParameter, configuration, 0, cancellationToken);
 
         return combinations.Select(types => requestGenericTypeDefinition.MakeGenericType(types.ToArray())).ToList();
     }
 
     // Method to generate combinations recursively
-    public static List<List<Type>> GenerateCombinations(Type requestType, List<List<Type>> lists, int depth = 0, CancellationToken cancellationToken = default)
+    public static List<List<Type>> GenerateCombinations(Type requestType, List<List<Type>> lists, MediatorServiceConfiguration configuration, int depth = 0, CancellationToken cancellationToken = default)
     {
         if (depth == 0)
         {
+            int maxGenericTypeParameters = configuration.MaxGenericTypeParameters;
+            int maxTypesClosing = configuration.MaxTypesClosing;
+            int maxGenericTypeRegistrations = configuration.MaxGenericTypeRegistrations;
+
             // Initial checks
-            if (MaxGenericTypeParameters > 0 && lists.Count > MaxGenericTypeParameters)
-                throw new ArgumentException($"Error registering the generic type: {requestType.FullName}. The number of generic type parameters exceeds the maximum allowed ({MaxGenericTypeParameters}).");
+            if (maxGenericTypeParameters > 0 && lists.Count > maxGenericTypeParameters)
+                throw new ArgumentException($"Error registering the generic type: {requestType.FullName}. The number of generic type parameters exceeds the maximum allowed ({maxGenericTypeParameters}).");
 
             foreach (List<Type> list in lists)
             {
-                if (MaxTypesClosing > 0 && list.Count > MaxTypesClosing)
-                    throw new ArgumentException($"Error registering the generic type: {requestType.FullName}. One of the generic type parameter's count of types that can close exceeds the maximum length allowed ({MaxTypesClosing}).");
+                if (maxTypesClosing > 0 && list.Count > maxTypesClosing)
+                    throw new ArgumentException($"Error registering the generic type: {requestType.FullName}. One of the generic type parameter's count of types that can close exceeds the maximum length allowed ({maxTypesClosing}).");
             }
 
             // Calculate the total number of combinations
-            if (MaxGenericTypeRegistrations > 0)
+            if (maxGenericTypeRegistrations > 0)
             {
                 long totalCombinations = 1;
                 foreach (List<Type> list in lists)
@@ -276,8 +268,8 @@ public static class ServiceRegistrar
                     totalCombinations = list.Count == 0 || totalCombinations <= long.MaxValue / list.Count
                         ? totalCombinations * list.Count
                         : long.MaxValue;
-                    if (totalCombinations > MaxGenericTypeRegistrations)
-                        throw new ArgumentException($"Error registering the generic type: {requestType.FullName}. The total number of generic type registrations exceeds the maximum allowed ({MaxGenericTypeRegistrations}).");
+                    if (totalCombinations > maxGenericTypeRegistrations)
+                        throw new ArgumentException($"Error registering the generic type: {requestType.FullName}. The total number of generic type registrations exceeds the maximum allowed ({maxGenericTypeRegistrations}).");
                 }
             }
         }
@@ -288,7 +280,7 @@ public static class ServiceRegistrar
         cancellationToken.ThrowIfCancellationRequested();
 
         List<Type> currentList = lists[depth];
-        List<List<Type>> childCombinations = GenerateCombinations(requestType, lists, depth + 1, cancellationToken);
+        List<List<Type>> childCombinations = GenerateCombinations(requestType, lists, configuration, depth + 1, cancellationToken);
         List<List<Type>> combinations = new();
 
         foreach (Type item in currentList)
@@ -305,11 +297,20 @@ public static class ServiceRegistrar
         return combinations;
     }
 
-    private static void AddAllConcretionsThatClose(Type openRequestInterface, List<Type> concretions, IServiceCollection services, IEnumerable<Assembly> assembliesToScan, CancellationToken cancellationToken)
+    private static void AddAllConcretionsThatClose(Type openRequestInterface, List<Type> concretions, IServiceCollection services, IEnumerable<Assembly> assembliesToScan, MediatorServiceConfiguration configuration, CancellationToken cancellationToken)
     {
+        // Scan the assemblies once; each generic parameter filters this list by its constraints.
+        List<Type>? candidateClosingTypes = null;
+
         foreach (Type concretion in concretions)
         {
-            List<Type>? concreteRequests = GetConcreteRequestTypes(openRequestInterface, concretion, assembliesToScan, cancellationToken);
+            candidateClosingTypes ??= assembliesToScan
+                .SelectMany(assembly => assembly.DefinedTypes)
+                .Where(type => type.IsClass && !type.IsAbstract)
+                .Select(type => type.AsType())
+                .ToList();
+
+            List<Type>? concreteRequests = GetConcreteRequestTypes(openRequestInterface, concretion, candidateClosingTypes, configuration, cancellationToken);
 
             if (concreteRequests is null)
                 continue;
@@ -359,20 +360,12 @@ public static class ServiceRegistrar
 
         if (!pluggedType.IsConcrete()) yield break;
 
-        if (templateType.IsInterface)
+        foreach (
+            Type? interfaceType in
+            pluggedType.GetInterfaces()
+                .Where(type => type.IsGenericType && (type.GetGenericTypeDefinition() == templateType)))
         {
-            foreach (
-                Type? interfaceType in
-                pluggedType.GetInterfaces()
-                    .Where(type => type.IsGenericType && (type.GetGenericTypeDefinition() == templateType)))
-            {
-                yield return interfaceType;
-            }
-        }
-        else if (pluggedType.BaseType!.IsGenericType &&
-                 (pluggedType.BaseType!.GetGenericTypeDefinition() == templateType))
-        {
-            yield return pluggedType.BaseType!;
+            yield return interfaceType;
         }
 
         if (pluggedType.BaseType == typeof(object)) yield break;
