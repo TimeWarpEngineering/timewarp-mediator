@@ -24,15 +24,19 @@
 - [x] Fix ambiguous interface lookup (C-6) with test
 - [x] Clean swallowed exception and dead branch (C-7)
 - [x] `./bin/dev workflow` green (PR with merge commit is a host step)
+- [x] Implementation review disposition (`review/disposition.md`, clean)
 
 ## Notes
 
 Parent: 013. Making `ServiceRegistrar` internal is tracked with the public-surface task; keep this one behavior-only unless both land in the same beta.
 
+Review trail: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Effort 2, roster general, one round, disposition clean (0 open).
+
 ## Session
 
 - Created: 686431 (2026-10-11)
 - Implemented: 2026-10-12 (implement oracle)
+- Review: opencode session ses_ed3cf5905ffeg80qfPyIfj4epL (2026-10-12). Effort 2, general only.
 
 ## Results
 
@@ -53,4 +57,12 @@ grep -n "private static int" source/timewarp-mediator/registration/service-regis
 ```
 
 **Expect:** the workflow ends with `Pipeline SUCCEEDED` (173 passed, 2 skipped). The filtered run passes, including the three new tests. The grep prints nothing because no static limit fields remain.
+
+### Review
+
+- Rounds: 1. Roster: general. Effort: 2.
+- Counts (final, `review/round-1/merged.md`): bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix).
+- Disposition: clean (`review/disposition.md`). No wontfix, no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Re-verified during review: `dotnet test tests/timewarp-mediator-tests/timewarp-mediator-tests.csproj -c Release --filter "FullyQualifiedName~GenericRequestHandlerTests"` — Passed 25, Failed 0, Skipped 0. Roslynk reports no errors or warnings on the changed files.
 
