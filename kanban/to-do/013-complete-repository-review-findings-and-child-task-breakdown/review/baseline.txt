@@ -1,0 +1,14 @@
+Baseline captured 2026-10-11 on origin-home 0c4d846 (task worktree 013), Release configuration.
+
+ganda repo audit        passed 30, failed 0, skipped 1 (runfile-project: no #:project directives)
+ganda nuget outdated    Lamar 15.0.1 -> 16.0.0 (major, deliberate hold: 16.x is net9.0/net10.0 only)
+                        xunit.runner.visualstudio 4.0.0 -> 4.0.1 (patch)
+dotnet build (slnx)     exit 0, 41 warnings, 0 errors
+  - RS0030 banned-API (Console, ProcessStartInfo) in samples/* and tests/timewarp-mediator-benchmarks (TreatWarningsAsErrors is off there)
+  - Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12 and System.IO.Hashing 10.0.12 "doesn't support net6.0" for source/timewarp-mediator (net6.0 leg) and the Windsor sample
+dotnet test (slnx)      exit 0
+  - timewarp-mediator-tests                     165 passed, 2 skipped (Lamar open-generic skips in PipelineTests and StreamPipelineTests)
+  - timewarp-mediator-generators-tests           34 passed
+  - timewarp-mediator-generators-compilation-tests 7 passed
+  - timewarp-mediator-analyzers-tests             6 passed
+  Total 212 passed, 2 skipped, 0 failed
