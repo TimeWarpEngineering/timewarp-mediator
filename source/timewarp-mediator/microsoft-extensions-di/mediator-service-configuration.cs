@@ -191,27 +191,7 @@ public class MediatorServiceConfiguration
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
     public MediatorServiceConfiguration AddOpenBehavior(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
-    {
-        if (!openBehaviorType.IsGenericType)
-        {
-            throw new InvalidOperationException($"{openBehaviorType.Name} must be generic");
-        }
-
-        IEnumerable<Type> implementedGenericInterfaces = openBehaviorType.GetInterfaces().Where(i => i.IsGenericType).Select(i => i.GetGenericTypeDefinition());
-        HashSet<Type> implementedOpenBehaviorInterfaces = new(implementedGenericInterfaces.Where(i => i == typeof(IPipelineBehavior<,>)));
-
-        if (implementedOpenBehaviorInterfaces.Count == 0)
-        {
-            throw new InvalidOperationException($"{openBehaviorType.Name} must implement {typeof(IPipelineBehavior<,>).FullName}");
-        }
-
-        foreach (Type openBehaviorInterface in implementedOpenBehaviorInterfaces)
-        {
-            BehaviorsToRegister.Add(new ServiceDescriptor(openBehaviorInterface, openBehaviorType, serviceLifetime));
-        }
-
-        return this;
-    }
+        => AddOpenGeneric(openBehaviorType, typeof(IPipelineBehavior<,>), BehaviorsToRegister, serviceLifetime);
 
     /// <summary>
     /// Registers multiple open behavior types against the <see cref="IPipelineBehavior{TRequest,TResponse}"/> open generic interface type
@@ -307,27 +287,7 @@ public class MediatorServiceConfiguration
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
     public MediatorServiceConfiguration AddOpenStreamBehavior(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
-    {
-        if (!openBehaviorType.IsGenericType)
-        {
-            throw new InvalidOperationException($"{openBehaviorType.Name} must be generic");
-        }
-
-        IEnumerable<Type> implementedGenericInterfaces = openBehaviorType.GetInterfaces().Where(i => i.IsGenericType).Select(i => i.GetGenericTypeDefinition());
-        HashSet<Type> implementedOpenBehaviorInterfaces = new(implementedGenericInterfaces.Where(i => i == typeof(IStreamPipelineBehavior<,>)));
-
-        if (implementedOpenBehaviorInterfaces.Count == 0)
-        {
-            throw new InvalidOperationException($"{openBehaviorType.Name} must implement {typeof(IStreamPipelineBehavior<,>).FullName}");
-        }
-
-        foreach (Type openBehaviorInterface in implementedOpenBehaviorInterfaces)
-        {
-            StreamBehaviorsToRegister.Add(new ServiceDescriptor(openBehaviorInterface, openBehaviorType, serviceLifetime));
-        }
-
-        return this;
-    }
+        => AddOpenGeneric(openBehaviorType, typeof(IStreamPipelineBehavior<,>), StreamBehaviorsToRegister, serviceLifetime);
 
     /// <summary>
     /// Register a closed request pre processor type
@@ -393,27 +353,7 @@ public class MediatorServiceConfiguration
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
     public MediatorServiceConfiguration AddOpenRequestPreProcessor(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
-    {
-        if (!openBehaviorType.IsGenericType)
-        {
-            throw new InvalidOperationException($"{openBehaviorType.Name} must be generic");
-        }
-
-        IEnumerable<Type> implementedGenericInterfaces = openBehaviorType.GetInterfaces().Where(i => i.IsGenericType).Select(i => i.GetGenericTypeDefinition());
-        HashSet<Type> implementedOpenBehaviorInterfaces = new(implementedGenericInterfaces.Where(i => i == typeof(IRequestPreProcessor<>)));
-
-        if (implementedOpenBehaviorInterfaces.Count == 0)
-        {
-            throw new InvalidOperationException($"{openBehaviorType.Name} must implement {typeof(IRequestPreProcessor<>).FullName}");
-        }
-
-        foreach (Type openBehaviorInterface in implementedOpenBehaviorInterfaces)
-        {
-            RequestPreProcessorsToRegister.Add(new ServiceDescriptor(openBehaviorInterface, openBehaviorType, serviceLifetime));
-        }
-
-        return this;
-    }
+        => AddOpenGeneric(openBehaviorType, typeof(IRequestPreProcessor<>), RequestPreProcessorsToRegister, serviceLifetime);
     
     /// <summary>
     /// Register a closed request post processor type
@@ -477,27 +417,30 @@ public class MediatorServiceConfiguration
     /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
     /// <returns>This</returns>
     public MediatorServiceConfiguration AddOpenRequestPostProcessor(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+        => AddOpenGeneric(openBehaviorType, typeof(IRequestPostProcessor<,>), RequestPostProcessorsToRegister, serviceLifetime);
+
+    private MediatorServiceConfiguration AddOpenGeneric(Type openBehaviorType, Type openInterfaceType, List<ServiceDescriptor> registrations, ServiceLifetime serviceLifetime)
     {
-        if (!openBehaviorType.IsGenericType)
+        if (openBehaviorType is null)
         {
-            throw new InvalidOperationException($"{openBehaviorType.Name} must be generic");
+            throw new ArgumentNullException(nameof(openBehaviorType));
         }
 
-        IEnumerable<Type> implementedGenericInterfaces = openBehaviorType.GetInterfaces().Where(i => i.IsGenericType).Select(i => i.GetGenericTypeDefinition());
-        HashSet<Type> implementedOpenBehaviorInterfaces = new(implementedGenericInterfaces.Where(i => i == typeof(IRequestPostProcessor<,>)));
-
-        if (implementedOpenBehaviorInterfaces.Count == 0)
+        if (!openBehaviorType.IsGenericTypeDefinition)
         {
-            throw new InvalidOperationException($"{openBehaviorType.Name} must implement {typeof(IRequestPostProcessor<,>).FullName}");
+            throw new InvalidOperationException($"{openBehaviorType.Name} must be an open generic type definition");
         }
 
-        foreach (Type openBehaviorInterface in implementedOpenBehaviorInterfaces)
+        bool implementsOpenInterface = openBehaviorType.GetInterfaces()
+            .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == openInterfaceType);
+
+        if (!implementsOpenInterface)
         {
-            RequestPostProcessorsToRegister.Add(new ServiceDescriptor(openBehaviorInterface, openBehaviorType, serviceLifetime));
+            throw new InvalidOperationException($"{openBehaviorType.Name} must implement {openInterfaceType.FullName}");
         }
+
+        registrations.Add(new ServiceDescriptor(openInterfaceType, openBehaviorType, serviceLifetime));
 
         return this;
     }
-
-
 }
