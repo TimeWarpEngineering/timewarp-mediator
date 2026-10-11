@@ -16,6 +16,7 @@
 [assembly: TypeForwardedTo(typeof(NotificationHandler<>))]
 [assembly: TypeForwardedTo(typeof(IPipelineBehavior<,>))]
 [assembly: TypeForwardedTo(typeof(RequestHandlerDelegate<>))]
+[assembly: TypeForwardedTo(typeof(IStreamRequest<>))]
 [assembly: TypeForwardedTo(typeof(IStreamRequestHandler<,>))]
 [assembly: TypeForwardedTo(typeof(IStreamPipelineBehavior<,>))]
 [assembly: TypeForwardedTo(typeof(StreamHandlerDelegate<>))]
