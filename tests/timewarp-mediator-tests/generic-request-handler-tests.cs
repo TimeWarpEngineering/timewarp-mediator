@@ -162,6 +162,104 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
     }
 
     [Fact]
+    public void ShouldNotTimeOutWhenRegistrationTimeoutIsZero()
+    {
+        IServiceCollection services = new ServiceCollection();
+
+        AssemblyBuilder dynamicAssembly = GenerateCombinationsTestAssembly(3, 2, 2);
+
+        Should.NotThrow(() =>
+        {
+            services.AddMediator(cfg =>
+            {
+                cfg.RegistrationTimeout = 0;
+                cfg.RegisterGenericHandlers = true;
+                cfg.RegisterServicesFromAssembly(dynamicAssembly);
+            });
+        });
+    }
+
+    [Fact]
+    public void ShouldNotCapGenericRegistrationsWhenMaxGenericTypeRegistrationsIsZero()
+    {
+        List<List<Type>> lists = CreateTypeLists(3, 3);
+
+        try
+        {
+            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration
+            {
+                MaxGenericTypeRegistrations = 0
+            });
+
+            ServiceRegistrar.GenerateCombinations(typeof(object), lists).Count.ShouldBe(27);
+        }
+        finally
+        {
+            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration());
+        }
+    }
+
+    [Theory]
+    [InlineData(10)]
+    [InlineData(0)]
+    public void ShouldThrowWhenGenericRegistrationsExceedConfiguredCap(int maxGenericTypeParameters)
+    {
+        // 3 x 3 x 3 = 27 combinations.
+        List<List<Type>> lists = CreateTypeLists(3, 3);
+
+        try
+        {
+            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration
+            {
+                MaxGenericTypeParameters = maxGenericTypeParameters,
+                MaxGenericTypeRegistrations = 27
+            });
+            ServiceRegistrar.GenerateCombinations(typeof(object), lists).Count.ShouldBe(27);
+
+            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration
+            {
+                MaxGenericTypeParameters = maxGenericTypeParameters,
+                MaxGenericTypeRegistrations = 26
+            });
+            Should.Throw<ArgumentException>(() => ServiceRegistrar.GenerateCombinations(typeof(object), lists))
+                .Message.ShouldContain("The total number of generic type registrations exceeds the maximum allowed (26)");
+        }
+        finally
+        {
+            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration());
+        }
+    }
+
+    [Fact]
+    public void ShouldNotOverflowWhenCountingGenericRegistrations()
+    {
+        List<List<Type>> lists = CreateTypeLists(100, 10);
+
+        try
+        {
+            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration
+            {
+                MaxGenericTypeParameters = 0,
+                MaxTypesClosing = 0,
+                MaxGenericTypeRegistrations = int.MaxValue
+            });
+
+            Should.Throw<ArgumentException>(() => ServiceRegistrar.GenerateCombinations(typeof(object), lists))
+                .Message.ShouldContain("The total number of generic type registrations exceeds the maximum allowed");
+        }
+        finally
+        {
+            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration());
+        }
+    }
+
+    private static List<List<Type>> CreateTypeLists(int typesPerList, int listCount)
+    {
+        Type[] types = typeof(string).Assembly.GetExportedTypes().Take(typesPerList).ToArray();
+        return Enumerable.Range(0, listCount).Select(_ => types.ToList()).ToList();
+    }
+
+    [Fact]
     public void ShouldNotRegisterGenericHandlersWhenOptingOut()
     {
         IServiceCollection services = new ServiceCollection();

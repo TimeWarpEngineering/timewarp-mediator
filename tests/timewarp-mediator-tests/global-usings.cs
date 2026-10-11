@@ -21,6 +21,7 @@ global using TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 global using TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests.Included;
 global using TimeWarp.Mediator.NotificationPublishers;
 global using TimeWarp.Mediator.Pipeline;
+global using TimeWarp.Mediator.Registration;
 global using TimeWarp.Mediator.Tests.MicrosoftExtensionsDI;
 global using Xunit;
 global using Xunit.Abstractions;
