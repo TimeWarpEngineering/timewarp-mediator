@@ -37,6 +37,7 @@ Review trail: `review/review-framework.md`, `review/round-1/merged.md`, `review/
 - Created: 686431 (2026-10-11)
 - 2026-10-12: implementer (ganda task work) landed C-1/C-2/C-3 fixes and regression tests; `./bin/dev workflow` and `ganda repo audit` green.
 - Review: opencode session ses_ed3da47abffeSdWFr7Ixl4aJro (2026-10-12). Effort 1, general only.
+- Review oracle: review by implementer-opencode (opencode, model opencode-go/grok-4.7), session ses_ed3d6881bffeA7WsE6WutUH4Pd, max-turns uncapped (no --max-turns flag; bound 80) — 2026-10-11T18:14:01Z
 
 ## Results
 
