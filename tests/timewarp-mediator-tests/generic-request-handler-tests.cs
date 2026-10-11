@@ -183,20 +183,9 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
     public void ShouldNotCapGenericRegistrationsWhenMaxGenericTypeRegistrationsIsZero()
     {
         List<List<Type>> lists = CreateTypeLists(3, 3);
+        MediatorServiceConfiguration configuration = new() { MaxGenericTypeRegistrations = 0 };
 
-        try
-        {
-            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration
-            {
-                MaxGenericTypeRegistrations = 0
-            });
-
-            ServiceRegistrar.GenerateCombinations(typeof(object), lists).Count.ShouldBe(27);
-        }
-        finally
-        {
-            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration());
-        }
+        ServiceRegistrar.GenerateCombinations(typeof(object), lists, configuration).Count.ShouldBe(27);
     }
 
     [Theory]
@@ -207,50 +196,111 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
         // 3 x 3 x 3 = 27 combinations.
         List<List<Type>> lists = CreateTypeLists(3, 3);
 
-        try
+        MediatorServiceConfiguration atCap = new()
         {
-            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration
-            {
-                MaxGenericTypeParameters = maxGenericTypeParameters,
-                MaxGenericTypeRegistrations = 27
-            });
-            ServiceRegistrar.GenerateCombinations(typeof(object), lists).Count.ShouldBe(27);
+            MaxGenericTypeParameters = maxGenericTypeParameters,
+            MaxGenericTypeRegistrations = 27
+        };
+        ServiceRegistrar.GenerateCombinations(typeof(object), lists, atCap).Count.ShouldBe(27);
 
-            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration
-            {
-                MaxGenericTypeParameters = maxGenericTypeParameters,
-                MaxGenericTypeRegistrations = 26
-            });
-            Should.Throw<ArgumentException>(() => ServiceRegistrar.GenerateCombinations(typeof(object), lists))
-                .Message.ShouldContain("The total number of generic type registrations exceeds the maximum allowed (26)");
-        }
-        finally
+        MediatorServiceConfiguration belowCap = new()
         {
-            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration());
-        }
+            MaxGenericTypeParameters = maxGenericTypeParameters,
+            MaxGenericTypeRegistrations = 26
+        };
+        Should.Throw<ArgumentException>(() => ServiceRegistrar.GenerateCombinations(typeof(object), lists, belowCap))
+            .Message.ShouldContain("The total number of generic type registrations exceeds the maximum allowed (26)");
     }
 
     [Fact]
     public void ShouldNotOverflowWhenCountingGenericRegistrations()
     {
         List<List<Type>> lists = CreateTypeLists(100, 10);
-
-        try
+        MediatorServiceConfiguration configuration = new()
         {
-            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration
+            MaxGenericTypeParameters = 0,
+            MaxTypesClosing = 0,
+            MaxGenericTypeRegistrations = int.MaxValue
+        };
+
+        Should.Throw<ArgumentException>(() => ServiceRegistrar.GenerateCombinations(typeof(object), lists, configuration))
+            .Message.ShouldContain("The total number of generic type registrations exceeds the maximum allowed");
+    }
+
+    [Fact]
+    public void ShouldApplyEachConfigurationIndependently()
+    {
+        // 3 x 3 = 9 combinations; limits come from the passed configuration, not shared state.
+        List<List<Type>> lists = CreateTypeLists(3, 2);
+        MediatorServiceConfiguration strict = new() { MaxGenericTypeRegistrations = 8 };
+        MediatorServiceConfiguration lenient = new() { MaxGenericTypeRegistrations = 9 };
+
+        Should.Throw<ArgumentException>(() => ServiceRegistrar.GenerateCombinations(typeof(object), lists, strict));
+        ServiceRegistrar.GenerateCombinations(typeof(object), lists, lenient).Count.ShouldBe(9);
+        Should.Throw<ArgumentException>(() => ServiceRegistrar.GenerateCombinations(typeof(object), lists, strict));
+    }
+
+    [Fact]
+    public void ShouldSkipGenericHandlerOfClosedNonGenericRequest()
+    {
+        IServiceCollection services = new ServiceCollection();
+
+        Should.NotThrow(() =>
+        {
+            services.AddMediator(cfg =>
             {
-                MaxGenericTypeParameters = 0,
-                MaxTypesClosing = 0,
-                MaxGenericTypeRegistrations = int.MaxValue
+                cfg.RegisterGenericHandlers = true;
+                cfg.RegisterServicesFromAssemblyContaining<ClosedRequestGenericHandler<object>>();
+                cfg.TypeEvaluator = type => type == typeof(ClosedRequestGenericHandler<>);
             });
+        });
 
-            Should.Throw<ArgumentException>(() => ServiceRegistrar.GenerateCombinations(typeof(object), lists))
-                .Message.ShouldContain("The total number of generic type registrations exceeds the maximum allowed");
-        }
-        finally
+        services.ShouldNotContain(descriptor => descriptor.ServiceType == typeof(IRequestHandler<ClosedRequest, string>));
+    }
+
+    [Fact]
+    public void ShouldRegisterHandlerImplementingSameInterfaceForSeveralRequests()
+    {
+        IServiceCollection services = new ServiceCollection();
+
+        Should.NotThrow(() =>
         {
-            ServiceRegistrar.SetGenericRequestHandlerRegistrationLimitations(new MediatorServiceConfiguration());
-        }
+            services.AddMediator(cfg =>
+            {
+                cfg.RegisterServicesFromAssemblyContaining<MultiRequestHandler>();
+                cfg.TypeEvaluator = type => type == typeof(MultiRequestHandler) || type == typeof(FirstMultiRequestHandler);
+            });
+        });
+
+        services.ShouldContain(descriptor =>
+            descriptor.ServiceType == typeof(IRequestHandler<FirstMultiRequest, string>)
+            && descriptor.ImplementationType == typeof(MultiRequestHandler));
+        services.ShouldContain(descriptor =>
+            descriptor.ServiceType == typeof(IRequestHandler<SecondMultiRequest, string>)
+            && descriptor.ImplementationType == typeof(MultiRequestHandler));
+    }
+
+    public class ClosedRequest : IRequest<string> { }
+
+    public class ClosedRequestGenericHandler<T> : IRequestHandler<ClosedRequest, string>
+    {
+        public Task<string> Handle(ClosedRequest request, CancellationToken cancellationToken) => Task.FromResult(typeof(T).Name);
+    }
+
+    public class FirstMultiRequest : IRequest<string> { }
+
+    public class SecondMultiRequest : IRequest<string> { }
+
+    public class MultiRequestHandler : IRequestHandler<FirstMultiRequest, string>, IRequestHandler<SecondMultiRequest, string>
+    {
+        public Task<string> Handle(FirstMultiRequest request, CancellationToken cancellationToken) => Task.FromResult("first");
+
+        public Task<string> Handle(SecondMultiRequest request, CancellationToken cancellationToken) => Task.FromResult("second");
+    }
+
+    public class FirstMultiRequestHandler : IRequestHandler<FirstMultiRequest, string>
+    {
+        public Task<string> Handle(FirstMultiRequest request, CancellationToken cancellationToken) => Task.FromResult("first-only");
     }
 
     private static List<List<Type>> CreateTypeLists(int typesPerList, int listCount)
