@@ -293,6 +293,18 @@ public class ExceptionTests
     }
 
     [Fact]
+    public async Task Should_throw_argument_exception_with_param_name_for_publish_of_non_notification()
+    {
+        Mediator med = new(new ServiceCollection().BuildServiceProvider());
+
+        object nonNotification = new NonRequest();
+
+        ArgumentException argumentException = await Should.ThrowAsync<ArgumentException>(async () => await med.Publish(nonNotification));
+        argumentException.ParamName.ShouldBe("notification");
+        argumentException.Message.ShouldStartWith("NonRequest does not implement INotification");
+    }
+
+    [Fact]
     public async Task Should_throw_exception_for_generic_send_when_exception_occurs()
     {
         Container container = new(cfg =>
