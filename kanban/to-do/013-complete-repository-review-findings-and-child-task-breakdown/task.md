@@ -94,7 +94,7 @@ Audit clean (30 pass, 1 skip). Build exits 0 with 41 warnings (RS0030 in samples
 
 No-action findings: G-12 (behavior token fallback, matches the reflection runtime; document only if it comes up), G-22 (dead-code nits, fold into whichever generator task touches the file), G-25 and D-15 (no-finding checks). D-21 is split between 013-021 (file names) and 013-022 (indentation).
 
-Suggested order: 013-012 (test safety net) before 013-011; 013-001, 013-003 early (user-facing bugs); 013-015 before 013-020 TFM bumps; 013-022 last among runtime tasks to avoid formatting conflicts. 013-015 still needs a maintainer decision (framework floor). Decided 2026-10-11: 013-004 minimizes the public surface as far as the three consumers (State, Architecture, Nuru) allow; 013-016 keeps the Apache attribution, no renames to shed it; the MediatR-named base contracts stay as they are for now.
+Suggested order: 013-012 (test safety net) before 013-011; 013-001, 013-003 early (user-facing bugs); 013-015 before 013-020 TFM bumps; 013-022 last among runtime tasks to avoid formatting conflicts. All maintainer decisions are recorded. Decided 2026-10-11: 013-015 targets net10.0 or newer for runtime, contracts, tests, and samples (Generators and Analyzers stay netstandard2.0 because Roslyn requires it); 013-004 minimizes the public surface as far as the three consumers (State, Architecture, Nuru) allow; 013-016 keeps the Apache attribution, no renames to shed it; the MediatR-named base contracts stay as they are for now.
 
 ## Notes
 
@@ -104,4 +104,4 @@ Reviewers were four read-only sub-agents, one per area, instructed to verify eve
 
 - Created: 686431 (2026-10-11)
 - Review: 686431 (2026-10-11), four sonnet reviewer sub-agents (core, generators, build, docs)
-- Decisions folded into 013-004 and 013-016: 686431 (2026-10-11)
+- Decisions folded into 013-004, 013-015, and 013-016: 686431 (2026-10-11)
