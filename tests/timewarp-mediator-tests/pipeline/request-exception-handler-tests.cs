@@ -162,4 +162,29 @@ public class RequestExceptionHandlerTests
         genericPingExceptionHandler.ExecutionCount.ShouldBe(1);
     }
 
+    public class NullPongExceptionHandler : IRequestExceptionHandler<Ping, Pong?, Exception>
+    {
+        public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong?> state, CancellationToken cancellationToken)
+        {
+            state.SetHandled(null);
+
+            return Task.CompletedTask;
+        }
+    }
+
+    [Fact]
+    public async Task Should_return_null_response_when_exception_handled_with_null()
+    {
+        RequestExceptionProcessorBehavior<Ping, Pong?> behavior = new(
+            new ServiceCollection()
+                .AddTransient<IRequestExceptionHandler<Ping, Pong?, Exception>, NullPongExceptionHandler>()
+                .BuildServiceProvider());
+
+        Pong? response = await behavior.Handle(
+            new Ping { Message = "Ping" },
+            _ => throw new PingException("Ping"),
+            CancellationToken.None);
+
+        response.ShouldBeNull();
+    }
 }

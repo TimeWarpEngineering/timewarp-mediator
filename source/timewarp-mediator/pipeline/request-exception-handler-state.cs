@@ -14,6 +14,7 @@ public class RequestExceptionHandlerState<TResponse>
 
     /// <summary>
     /// The response that is returned if <see cref="Handled"/> is <code>true</code>.
+    /// A <c>null</c> response is returned as-is; the exception is not rethrown.
     /// </summary>
     public TResponse? Response { get; private set; }
 
