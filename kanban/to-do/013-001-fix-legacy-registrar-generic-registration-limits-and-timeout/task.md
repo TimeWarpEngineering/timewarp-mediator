@@ -18,11 +18,12 @@ The reflection registrar (`source/timewarp-mediator/registration/service-registr
 
 ## Checklist
 
-- [ ] Fix timeout-zero handling
-- [ ] Fix registration-count guard and overflow
-- [ ] Thread cancellation token to all scan passes
-- [ ] Add regression tests
-- [ ] `./bin/dev workflow` green; PR with merge commit
+- [x] Fix timeout-zero handling
+- [x] Fix registration-count guard and overflow
+- [x] Thread cancellation token to all scan passes
+- [x] Add regression tests
+- [x] `./bin/dev workflow` green
+- [ ] PR with merge commit (host open-pr node)
 
 ## Notes
 
@@ -31,3 +32,31 @@ Parent: 013. Legacy `AddMediator` path only; the generated mediator is unaffecte
 ## Session
 
 - Created: 686431 (2026-10-11)
+- 2026-10-12: implementer (ganda task work) landed C-1/C-2/C-3 fixes and regression tests; `./bin/dev workflow` and `ganda repo audit` green.
+
+## Results
+
+`ServiceRegistrar` (`source/timewarp-mediator/registration/service-registrar.cs`) now honors its documented limits:
+
+- **C-1:** `RegistrationTimeout <= 0` skips the `CancellationTokenSource` entirely, so a zero timeout no longer cancels at once. A timeout wraps the inner `OperationCanceledException` as the `TimeoutException` inner exception, and only when the registrar's own CTS fired.
+- **C-3:** The combination cap guards on `MaxGenericTypeRegistrations > 0` (it used to read `MaxGenericTypeParameters`). The running product saturates at `long.MaxValue` instead of overflowing.
+- **C-2:** The cancellation token now reaches all eight `ConnectImplementationsToTypesClosing` passes (notification, stream, exception handler/action, pre/post processors). Each scan loop calls `ThrowIfCancellationRequested`, so the timeout covers the whole scan and not only combination generation.
+
+New tests in `tests/timewarp-mediator-tests/generic-request-handler-tests.cs`:
+
+- `ShouldNotTimeOutWhenRegistrationTimeoutIsZero`
+- `ShouldNotCapGenericRegistrationsWhenMaxGenericTypeRegistrationsIsZero` (fails on the old guard: default `MaxGenericTypeParameters = 10` plus cap 0 threw)
+- `ShouldThrowWhenGenericRegistrationsExceedConfiguredCap` (theory over `MaxGenericTypeParameters` 10 and 0; a cap of 27 allows 27 and a cap of 26 throws)
+- `ShouldNotOverflowWhenCountingGenericRegistrations` (10 lists of 100 types; 10^20 would overflow `long`)
+
+### How to validate
+
+**Smoke:**
+
+```bash
+dotnet test tests/timewarp-mediator-tests -c Release --filter "FullyQualifiedName~GenericRequestHandlerTests"
+./bin/dev workflow
+```
+
+**Expect:** All 22 `GenericRequestHandlerTests` pass, including the four new ones. `./bin/dev workflow` ends with `Pipeline SUCCEEDED` (timewarp-mediator-tests: 170 passed, 2 skipped). The existing `ShouldThrowExceptionWhenTimeoutOccurs` still throws `TimeoutException` with the same message.
+
