@@ -144,4 +144,13 @@ public class CreateStreamTests
 
         Should.Throw<ArgumentNullException>(() => med.CreateStream((object) null!));
     }
+
+    [Fact]
+    public void Should_resolve_stream_handler_when_stream_is_created()
+    {
+        Mediator med = new(new ServiceCollection().BuildServiceProvider());
+
+        Should.Throw<InvalidOperationException>(() => med.CreateStream(new Ping()));
+        Should.Throw<InvalidOperationException>(() => med.CreateStream((object) new Ping()));
+    }
 }
