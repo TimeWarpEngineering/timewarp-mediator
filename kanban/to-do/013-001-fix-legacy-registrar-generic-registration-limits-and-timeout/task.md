@@ -23,16 +23,20 @@ The reflection registrar (`source/timewarp-mediator/registration/service-registr
 - [x] Thread cancellation token to all scan passes
 - [x] Add regression tests
 - [x] `./bin/dev workflow` green
+- [x] Implementation review disposition (`review/disposition.md`, clean)
 - [ ] PR with merge commit (host open-pr node)
 
 ## Notes
 
 Parent: 013. Legacy `AddMediator` path only; the generated mediator is unaffected.
 
+Review trail: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Effort 1, roster general, one round, disposition clean (0 open).
+
 ## Session
 
 - Created: 686431 (2026-10-11)
 - 2026-10-12: implementer (ganda task work) landed C-1/C-2/C-3 fixes and regression tests; `./bin/dev workflow` and `ganda repo audit` green.
+- Review: opencode session ses_ed3da47abffeSdWFr7Ixl4aJro (2026-10-12). Effort 1, general only.
 
 ## Results
 
@@ -59,4 +63,12 @@ dotnet test tests/timewarp-mediator-tests -c Release --filter "FullyQualifiedNam
 ```
 
 **Expect:** All 22 `GenericRequestHandlerTests` pass, including the four new ones. `./bin/dev workflow` ends with `Pipeline SUCCEEDED` (timewarp-mediator-tests: 170 passed, 2 skipped). The existing `ShouldThrowExceptionWhenTimeoutOccurs` still throws `TimeoutException` with the same message.
+
+### Review
+
+- Rounds: 1. Roster: general. Effort: 1.
+- Counts (final, `review/round-1/merged.md`): bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix).
+- Disposition: clean (`review/disposition.md`). No wontfix, no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Re-verified during review: `dotnet test tests/timewarp-mediator-tests -c Release --filter "FullyQualifiedName~GenericRequestHandlerTests"` — Passed 22, Failed 0, Skipped 0.
 
