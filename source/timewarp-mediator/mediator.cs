@@ -33,8 +33,8 @@ public class Mediator : IMediator
     /// <param name="publisher">Notification publisher. Defaults to <see cref="ForeachAwaitPublisher"/>.</param>
     public Mediator(IServiceProvider serviceProvider, INotificationPublisher publisher)
     {
-        _serviceProvider = serviceProvider;
-        _publisher = publisher;
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
     }
 
     public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
@@ -105,7 +105,7 @@ public class Mediator : IMediator
             return (RequestHandlerBase)wrapper;
         });
 
-        // call via dynamic dispatch to avoid calling through reflection for performance reasons
+        // the cached wrapper is already closed over the request type, so this is a virtual call, not reflection
         return handler.Handle(request, _serviceProvider, cancellationToken);
     }
 

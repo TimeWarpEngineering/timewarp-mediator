@@ -435,6 +435,12 @@ public static class ServiceRegistrar
         }
     }
 
+    /// <summary>
+    /// Registers <paramref name="behaviorType"/> only when an implementation of <paramref name="subBehaviorType"/> is already
+    /// in <paramref name="services"/>. The check runs once, at <c>AddMediator</c> time: exception handlers or actions registered
+    /// after <c>AddMediator</c> do not cause the behavior to be added. Register them before calling <c>AddMediator</c>, or add
+    /// the behavior explicitly with <c>AddOpenBehavior</c>.
+    /// </summary>
     private static void RegisterBehaviorIfImplementationsExist(IServiceCollection services, Type behaviorType, Type subBehaviorType)
     {
         bool hasAnyRegistrationsOfSubBehaviorType = services

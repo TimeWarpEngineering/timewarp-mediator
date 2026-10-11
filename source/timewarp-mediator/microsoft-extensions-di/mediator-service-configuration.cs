@@ -99,7 +99,7 @@ public class MediatorServiceConfiguration
     /// <param name="type">Type from assembly to scan</param>
     /// <returns>This</returns>
     public MediatorServiceConfiguration RegisterServicesFromAssemblyContaining(Type type)
-        => RegisterServicesFromAssembly(type.Assembly);
+        => RegisterServicesFromAssembly(ThrowIfNull(type, nameof(type)).Assembly);
 
     /// <summary>
     /// Register various handlers from assembly
@@ -108,7 +108,7 @@ public class MediatorServiceConfiguration
     /// <returns>This</returns>
     public MediatorServiceConfiguration RegisterServicesFromAssembly(Assembly assembly)
     {
-        AssembliesToRegister.Add(assembly);
+        AssembliesToRegister.Add(ThrowIfNull(assembly, nameof(assembly)));
 
         return this;
     }
@@ -121,7 +121,7 @@ public class MediatorServiceConfiguration
     public MediatorServiceConfiguration RegisterServicesFromAssemblies(
         params Assembly[] assemblies)
     {
-        AssembliesToRegister.AddRange(assemblies);
+        AssembliesToRegister.AddRange(ThrowIfNull(assemblies, nameof(assemblies)));
 
         return this;
     }
@@ -155,7 +155,7 @@ public class MediatorServiceConfiguration
     /// <returns>This</returns>
     public MediatorServiceConfiguration AddBehavior(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
-        List<Type> implementedGenericInterfaces = implementationType.FindInterfacesThatClose(typeof(IPipelineBehavior<,>)).ToList();
+        List<Type> implementedGenericInterfaces = ThrowIfNull(implementationType, nameof(implementationType)).FindInterfacesThatClose(typeof(IPipelineBehavior<,>)).ToList();
 
         if (implementedGenericInterfaces.Count == 0)
         {
@@ -201,7 +201,7 @@ public class MediatorServiceConfiguration
     /// <returns>This</returns>
     public MediatorServiceConfiguration AddOpenBehaviors(IEnumerable<Type> openBehaviorTypes, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
-        foreach (Type openBehaviorType in openBehaviorTypes)
+        foreach (Type openBehaviorType in ThrowIfNull(openBehaviorTypes, nameof(openBehaviorTypes)))
         {
             AddOpenBehavior(openBehaviorType, serviceLifetime);
         }
@@ -216,9 +216,9 @@ public class MediatorServiceConfiguration
     /// <returns>This</returns>
     public MediatorServiceConfiguration AddOpenBehaviors(IEnumerable<OpenBehavior> openBehaviors)
     {
-        foreach (OpenBehavior openBehavior in openBehaviors)
+        foreach (OpenBehavior openBehavior in ThrowIfNull(openBehaviors, nameof(openBehaviors)))
         {
-            AddOpenBehavior(openBehavior.OpenBehaviorType!, openBehavior.ServiceLifetime);
+            AddOpenBehavior(openBehavior.OpenBehaviorType, openBehavior.ServiceLifetime);
         }
 
         return this;
@@ -265,7 +265,7 @@ public class MediatorServiceConfiguration
     /// <returns>This</returns>
     public MediatorServiceConfiguration AddStreamBehavior(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
-        List<Type> implementedGenericInterfaces = implementationType.FindInterfacesThatClose(typeof(IStreamPipelineBehavior<,>)).ToList();
+        List<Type> implementedGenericInterfaces = ThrowIfNull(implementationType, nameof(implementationType)).FindInterfacesThatClose(typeof(IStreamPipelineBehavior<,>)).ToList();
 
         if (implementedGenericInterfaces.Count == 0)
         {
@@ -331,7 +331,7 @@ public class MediatorServiceConfiguration
     /// <returns>This</returns>
     public MediatorServiceConfiguration AddRequestPreProcessor(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
-        List<Type> implementedGenericInterfaces = implementationType.FindInterfacesThatClose(typeof(IRequestPreProcessor<>)).ToList();
+        List<Type> implementedGenericInterfaces = ThrowIfNull(implementationType, nameof(implementationType)).FindInterfacesThatClose(typeof(IRequestPreProcessor<>)).ToList();
 
         if (implementedGenericInterfaces.Count == 0)
         {
@@ -396,7 +396,7 @@ public class MediatorServiceConfiguration
     /// <returns>This</returns>
     public MediatorServiceConfiguration AddRequestPostProcessor(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
-        List<Type> implementedGenericInterfaces = implementationType.FindInterfacesThatClose(typeof(IRequestPostProcessor<,>)).ToList();
+        List<Type> implementedGenericInterfaces = ThrowIfNull(implementationType, nameof(implementationType)).FindInterfacesThatClose(typeof(IRequestPostProcessor<,>)).ToList();
 
         if (implementedGenericInterfaces.Count == 0)
         {
@@ -421,12 +421,7 @@ public class MediatorServiceConfiguration
 
     private MediatorServiceConfiguration AddOpenGeneric(Type openBehaviorType, Type openInterfaceType, List<ServiceDescriptor> registrations, ServiceLifetime serviceLifetime)
     {
-        if (openBehaviorType is null)
-        {
-            throw new ArgumentNullException(nameof(openBehaviorType));
-        }
-
-        if (!openBehaviorType.IsGenericTypeDefinition)
+        if (!ThrowIfNull(openBehaviorType, nameof(openBehaviorType)).IsGenericTypeDefinition)
         {
             throw new InvalidOperationException($"{openBehaviorType.Name} must be an open generic type definition");
         }
@@ -443,4 +438,7 @@ public class MediatorServiceConfiguration
 
         return this;
     }
+
+    private static T ThrowIfNull<T>(T? argument, string paramName) where T : class
+        => argument ?? throw new ArgumentNullException(paramName);
 }
