@@ -30,10 +30,13 @@ Samples compile but never run, all use ProjectReference, and benchmarks produce 
 
 Parent: 013. Depends on the target-framework decision for TFM bumps; the rest can proceed.
 
+Review trail: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md` (clean, one round, general, effort 2).
+
 ## Session
 
 - Created: 686431 (2026-10-11)
 - 2026-10-12: implement oracle (Claude Opus 5.5) — all product work landed on the task branch.
+- Review: Grok `01a1303d-a90a-7872-a205-de2b354d3226` (2026-10-12)
 
 ## Results
 
@@ -69,6 +72,13 @@ Parent: 013. Depends on the target-framework decision for TFM bumps; the rest ca
   from `generated-vs-legacy.md`.
 - Not done: NativeAOT *publish* of the aot sample in CI (it runs JIT; the AOT/trim analyzers still
   gate the build). Benchmarks stay out of `dev workflow` (CI runners too noisy for a stored number).
+
+### Review
+
+- Rounds: 1. Roster: general. Effort: 2 (by-diff, 717 lines).
+- Counts: bug 0, suggestion 0, nit 0. No open findings. No wontfix.
+- Disposition: clean.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
