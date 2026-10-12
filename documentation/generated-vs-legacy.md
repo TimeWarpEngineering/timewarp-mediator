@@ -36,6 +36,25 @@ The generated path (`AddGeneratedMediator()` from `TimeWarp.Mediator.Contracts` 
 `TimeWarp.Mediator` assembly. `samples/timewarp-mediator-examples-aot` publishes with
 `PublishAot`, `IsAotCompatible`, and the trim/AOT analyzers on, with no IL2026/IL3050 `NoWarn`.
 
+### Aot / Link profile limits
+
+`<TimeWarpMediatorProfile>Aot</TimeWarpMediatorProfile>` (or `Link`) emits no
+`AddGeneratedMediator()` and no `IServiceProvider`: `new Mediator()` dispatches through static
+`ServiceGen` fields.
+
+- **Handlers are process-wide singletons.** Each handler is created once with `new Handler()`
+  into a `static readonly` field and shared by every `Mediator` instance and every thread. Keep
+  Aot handlers stateless (or thread-safe).
+- **Handlers must be constructible with `new Handler()`.** An accessible parameterless
+  constructor is enough (optional parameters are fine). A handler with required constructor
+  parameters, only a private constructor, or a `required` member that constructor does not set
+  (`[SetsRequiredMembers]`) is **TWM006** (error) at the handler. Use the Host profile when
+  handlers take DI dependencies.
+- **`[assembly: MediatorBehavior]` is not woven.** Each registered behavior that would close
+  over a request is **TWM005** (warning) at the attribute, and `MediatorManifest.Json` lists
+  `"behaviors":[]` for every request so the manifest matches the emitted pipeline. Validation,
+  transaction, and logging behaviors need the Host profile.
+
 ## 14.0.0-beta is not a drop-in for 13.0.0
 
 As of `14.0.0-beta.4`, the generated stack is proven only against the M1/M2 golden files in
@@ -99,7 +118,7 @@ stays **open** until a **stable 14.0.0**. This beta does not close that issue.
 |---------|------|
 | `TimeWarp.Mediator.Contracts` | `IRequest` / `ISender` / `ISender<TScope>` / membership attributes. Required at compile and runtime. |
 | `TimeWarp.Mediator.Generators` | Source generator + `buildTransitive` props. Development dependency; emits `AddGeneratedMediator` into `Microsoft.Extensions.DependencyInjection`. Packs `TimeWarp.Mediator.Analyzers.dll` next to the generator. |
-| `TimeWarp.Mediator.Analyzers` | TWM001–TWM004. Add this package **when the generator is not referenced** (a contracts/library project that should fail the build on a missing handler without emitting a mediator). |
+| `TimeWarp.Mediator.Analyzers` | TWM001–TWM004 (the generator adds TWM005/TWM006 under the Aot/Link profile). Add this package **when the generator is not referenced** (a contracts/library project that should fail the build on a missing handler without emitting a mediator). |
 | `TimeWarp.Mediator` | Reflection runtime and `AddMediator()`. Not required for a generated-only host. |
 
 The Generators nupkg is `DevelopmentDependency` and suppresses package dependencies, so

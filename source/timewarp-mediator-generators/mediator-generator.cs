@@ -22,7 +22,13 @@ public sealed class MediatorGenerator : IIncrementalGenerator
                 productionContext.ReportDiagnostic(diagnostic);
             }
 
-            MediatorEmitter.Emit(productionContext, graph);
+            AotProfile aotProfile = AotProfile.Analyze(input.Compilation, graph);
+            foreach (Diagnostic diagnostic in aotProfile.Diagnostics)
+            {
+                productionContext.ReportDiagnostic(diagnostic);
+            }
+
+            MediatorEmitter.Emit(productionContext, graph, aotProfile);
             ManifestEmitter.Emit(productionContext, graph);
         });
     }
