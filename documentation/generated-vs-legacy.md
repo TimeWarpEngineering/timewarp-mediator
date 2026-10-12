@@ -126,6 +126,14 @@ Contracts is **not** transitive. Analyzers are not a NuGet dependency of Generat
 they ride along as analyzer DLLs inside that nupkg. A library that does not reference
 Generators must add `TimeWarp.Mediator.Analyzers` itself.
 
+### Minimum SDK / IDE
+
+`TimeWarp.Mediator.Generators` and `TimeWarp.Mediator.Analyzers` are built against
+**Microsoft.CodeAnalysis.CSharp 4.8.0**, so the host compiler must be Roslyn 4.8 or later:
+**.NET SDK 8.0.100** or later, or **Visual Studio 2022 17.8** or later (or a Rider/MSBuild that
+ships Roslyn 4.8+). On an older compiler the generator does not load (CS9057) and no mediator is
+emitted. CI runs the generator compilation tests against 4.8.0 as well as the current compiler.
+
 A reflection host (13.x fork behavior) still uses:
 
 ```xml

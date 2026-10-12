@@ -29,9 +29,9 @@ public sealed class AotProfileTests
     {
         HostCompilation host = HostCompiler.Compile("AotManifest", BehaviorSource, "Aot");
 
-        string json = ManifestJson(host);
-        json.ShouldContain("\"behaviors\":[]");
-        json.ShouldNotContain("LoggingBehavior");
+        ManifestDocument manifest = host.Manifest();
+        manifest.Profile.ShouldBe("Aot");
+        manifest.Request("Pipes.Ping").Behaviors.ShouldBeEmpty();
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class AotProfileTests
 
         Errors(host).ShouldBeEmpty();
         host.Diagnostics.ShouldNotContain(d => d.Id == "TWM005");
-        ManifestJson(host).ShouldContain("Pipes.LoggingBehavior<Pipes.Ping, string>");
+        host.Manifest().Request("Pipes.Ping").Behaviors.ShouldBe(new[] { "Pipes.LoggingBehavior<Pipes.Ping, string>" });
     }
 
     [Fact]
@@ -135,14 +135,6 @@ public sealed class AotProfileTests
         return new AssemblyLoadContext(assemblyName, isCollectible: true).LoadFromStream(stream);
     }
 
-    private static string ManifestJson(HostCompilation host)
-    {
-        IFieldSymbol json = host.GetType("TimeWarp.Mediator.Generated.MediatorManifest")
-            .GetMembers("Json")
-            .OfType<IFieldSymbol>()
-            .Single();
-        return (string)json.ConstantValue!;
-    }
 
     private const string BehaviorSource = @"
 using System.Threading;

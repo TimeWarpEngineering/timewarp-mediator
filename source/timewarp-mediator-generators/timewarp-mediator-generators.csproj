@@ -31,6 +31,7 @@
   <ItemGroup>
     <!-- Incrementality tests read the TrackingNames step names. -->
     <InternalsVisibleTo Include="timewarp-mediator-generators-compilation-tests" />
+    <InternalsVisibleTo Include="timewarp-mediator-generators-roslyn-floor-tests" />
   </ItemGroup>
 
   <ItemGroup>

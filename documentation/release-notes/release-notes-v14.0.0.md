@@ -26,3 +26,18 @@ These types stay public because consumers use them directly: `Mediator`, `INotif
 `OpenBehavior`, `RequestExceptionActionProcessorStrategy`, `RequestExceptionHandlerState<TResponse>`,
 the pre/post/exception processor interfaces, and the four built-in behaviors. Containers other
 than Microsoft.Extensions.DependencyInjection register those behaviors by hand.
+
+## Fixes
+
+### Generator: struct requests compile
+
+A request declared as a `struct` (for example `readonly struct Measure : IRequest<int>`) made the
+generated `Mediator.g.cs` fail with CS0037, because the typed `Send(...)` overload and the dispatch
+method null-checked the request. The generator now omits that check for value-type requests.
+
+## Tooling
+
+- The generator and analyzers require Roslyn 4.8 (**.NET SDK 8.0.100** / **Visual Studio 2022
+  17.8**) or later. A test leg now compiles against Microsoft.CodeAnalysis.CSharp 4.8.0.
+- `AnalyzerReleases.Shipped.md` records TWM001–TWM004 under `## Release 14.0.0`, noted as shipped in
+  14.0.0-beta.1 (release headers cannot carry a prerelease label).

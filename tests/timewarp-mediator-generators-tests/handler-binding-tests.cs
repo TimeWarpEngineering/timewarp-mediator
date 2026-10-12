@@ -2,7 +2,6 @@
 // Discovery binds every handler interface on a class and skips interfaces a concrete base handler already binds.
 #endregion
 
-[Collection(PipelineLogCollection.Name)]
 public class HandlerBindingTests
 {
     [Fact]
@@ -81,11 +80,14 @@ public class HandlerBindingTests
     [Fact]
     public void Manifest_ListsEachBinding()
     {
-        MediatorManifest.Json.ShouldContain("GetOrderCount");
-        MediatorManifest.Json.ShouldContain("GetOrderLabel");
-        MediatorManifest.Json.ShouldContain("ArchiveOrder");
-        MediatorManifest.Json.ShouldContain("OrderShipped");
-        MediatorManifest.Json.ShouldNotContain("\"handler\":\"TimeWarp.Mediator.Generators.Tests.Bindings.AuditedInvoiceHandler\"");
+        const string Bindings = "TimeWarp.Mediator.Generators.Tests.Bindings.";
+        ManifestDocument manifest = ManifestDocument.Parse(MediatorManifest.Json);
+        manifest.Request(Bindings + "GetOrderCount").Handler.ShouldBe(Bindings + "OrderHandler");
+        manifest.Request(Bindings + "GetOrderLabel").Handler.ShouldBe(Bindings + "OrderHandler");
+        manifest.Request(Bindings + "ArchiveOrder").Handler.ShouldBe(Bindings + "OrderHandler");
+        manifest.Notification(Bindings + "OrderShipped").Handlers.ShouldBe(new[] { Bindings + "OrderHandler" });
+        manifest.Notification(Bindings + "InvoicePaid").Handlers.ShouldBe(new[] { Bindings + "AuditedInvoiceHandler" });
+        manifest.Requests.Select(r => r.Handler).ShouldNotContain(Bindings + "AuditedInvoiceHandler");
     }
 
     private static ServiceProvider CreateProvider()

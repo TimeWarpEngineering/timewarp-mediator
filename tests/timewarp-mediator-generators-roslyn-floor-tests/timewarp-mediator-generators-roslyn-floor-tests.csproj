@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Roslyn floor leg: the generator and analyzer packages declare Microsoft.CodeAnalysis.CSharp 4.8.0
+    (SDK 8.0.100 / VS 17.8). This project compiles the generator compilation tests against exactly
+    that compiler so the floor is exercised, not only the 5.x the main compilation tests use.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RollForward>LatestMajor</RollForward>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>TimeWarp.Mediator.Generators.Compilation.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\source\timewarp-mediator\timewarp-mediator.csproj" />
+    <ProjectReference Include="..\..\source\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" />
+    <ProjectReference Include="..\..\source\timewarp-mediator-generators\timewarp-mediator-generators.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\timewarp-mediator-generators-compilation-tests\*.cs" LinkBase="compilation-tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" VersionOverride="4.8.0" />
+    <!-- TimeWarp.SourceGenerators is removed so it does not run inside this test host. -->
+    <PackageReference Remove="TimeWarp.SourceGenerators" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

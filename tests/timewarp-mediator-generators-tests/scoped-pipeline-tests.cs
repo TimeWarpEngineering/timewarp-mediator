@@ -97,10 +97,23 @@ public class ScopedPipelineTests
     [Fact]
     public void Manifest_RecordsScopedRequests()
     {
-        MediatorManifest.Json.ShouldContain("ClientPipeline");
-        MediatorManifest.Json.ShouldContain("ServerPipeline");
-        MediatorManifest.Json.ShouldContain("ClientPing");
-        MediatorManifest.Json.ShouldContain("ServerPing");
+        ManifestDocument manifest = ManifestDocument.Parse(MediatorManifest.Json);
+        ManifestRequest client = manifest.Request("TimeWarp.Mediator.Generators.Tests.Pipelines.ClientPing");
+        client.Scope.ShouldBe("TimeWarp.Mediator.Generators.Tests.Pipelines.ClientPipeline");
+        client.Behaviors.ShouldBe(new[]
+        {
+            "TimeWarp.Mediator.Generators.Tests.Pipelines.ClientStampBehavior<TimeWarp.Mediator.Generators.Tests.Pipelines.ClientPing, string>",
+        });
+        ManifestRequest server = manifest.Request("TimeWarp.Mediator.Generators.Tests.Pipelines.ServerPing");
+        server.Scope.ShouldBe("TimeWarp.Mediator.Generators.Tests.Pipelines.ServerPipeline");
+        server.Behaviors.ShouldBe(new[]
+        {
+            "TimeWarp.Mediator.Generators.Tests.Pipelines.ServerStampBehavior<TimeWarp.Mediator.Generators.Tests.Pipelines.ServerPing, string>",
+        });
+        manifest.Notification("TimeWarp.Mediator.Generators.Tests.Pipelines.ClientNote").Scope
+            .ShouldBe("TimeWarp.Mediator.Generators.Tests.Pipelines.ClientPipeline");
+        manifest.Notification("TimeWarp.Mediator.Generators.Tests.Pipelines.ServerNote").Scope
+            .ShouldBe("TimeWarp.Mediator.Generators.Tests.Pipelines.ServerPipeline");
     }
 
     private static bool IsMonomorphicSend(MethodInfo method, System.Type requestType)

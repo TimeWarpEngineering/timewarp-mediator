@@ -19,7 +19,7 @@ public sealed class GeneratorDiagnosticsTests
         error.GetMessage().ShouldContain("Members.HiddenHandler");
         error.GetMessage().ShouldContain("InternalMember");
         error.GetMessage().ShouldContain("InternalsVisibleTo(\"InternalHost\")");
-        ManifestJson(host).ShouldNotContain("HiddenHandler");
+        host.Manifest().Handlers.ShouldNotContain("Members.HiddenHandler");
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public sealed class GeneratorDiagnosticsTests
         HostCompilation host = HostCompiler.Compile("VisibleHost", HostSource, "Host", member);
 
         Errors(host).ShouldBeEmpty();
-        ManifestJson(host).ShouldContain("Members.HiddenHandler");
+        host.Manifest().Request("Members.Hidden").Handler.ShouldBe("Members.HiddenHandler");
     }
 
     [Fact]
@@ -49,9 +49,9 @@ public sealed class GeneratorDiagnosticsTests
         error.Id.ShouldBe("TWM007");
         error.GetMessage().ShouldContain("Members.HiddenPipeline");
         error.GetMessage().ShouldContain("InternalsVisibleTo(\"ScopeHost\")");
-        string manifest = ManifestJson(host);
-        manifest.ShouldNotContain("PayHandler");
-        manifest.ShouldNotContain("PaidHandler");
+        ManifestDocument manifest = host.Manifest();
+        manifest.Handlers.ShouldNotContain("Members.PayHandler");
+        manifest.Handlers.ShouldNotContain("Members.PaidHandler");
     }
 
     [Fact]
@@ -71,10 +71,13 @@ public sealed class GeneratorDiagnosticsTests
 
         Errors(host).ShouldBeEmpty();
         host.Diagnostics.ShouldNotContain(d => d.Id == "CS0122");
-        string manifest = ManifestJson(host);
-        manifest.ShouldContain("Members.PayHandler");
-        manifest.ShouldContain("Members.PaidHandler");
-        manifest.ShouldContain("Members.HiddenPipeline");
+        ManifestDocument manifest = host.Manifest();
+        ManifestRequest pay = manifest.Request("Members.Pay");
+        pay.Handler.ShouldBe("Members.PayHandler");
+        pay.Scope.ShouldBe("Members.HiddenPipeline");
+        ManifestNotification paid = manifest.Notification("Members.Paid");
+        paid.Handlers.ShouldBe(new[] { "Members.PaidHandler" });
+        paid.Scope.ShouldBe("Members.HiddenPipeline");
     }
 
     [Theory]
@@ -218,14 +221,6 @@ public sealed class GeneratorDiagnosticsTests
         return new AssemblyLoadContext(assemblyName, isCollectible: true).LoadFromStream(stream);
     }
 
-    private static string ManifestJson(HostCompilation host)
-    {
-        IFieldSymbol json = host.GetType("TimeWarp.Mediator.Generated.MediatorManifest")
-            .GetMembers("Json")
-            .OfType<IFieldSymbol>()
-            .Single();
-        return (string)json.ConstantValue!;
-    }
 
     private const string HostSource = @"
 using System.Threading;

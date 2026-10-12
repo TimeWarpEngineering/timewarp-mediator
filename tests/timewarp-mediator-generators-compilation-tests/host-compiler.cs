@@ -11,6 +11,8 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 internal static class HostCompiler
 {
+    internal const string DefaultNamespace = "TimeWarp.Mediator.Generated";
+
     internal static readonly CSharpParseOptions ParseOptions = new(LanguageVersion.Latest);
 
     // The SDK suppresses CS1701/CS1702 (assembly unification) by default; match it.
@@ -37,7 +39,8 @@ internal static class HostCompiler
         string assemblyName,
         string source,
         string profile,
-        IEnumerable<MetadataReference> references)
+        IEnumerable<MetadataReference> references,
+        string generatedNamespace = DefaultNamespace)
     {
         CSharpCompilation compilation = CSharpCompilation.Create(
             assemblyName,
@@ -45,7 +48,7 @@ internal static class HostCompiler
             references: references,
             options: CompilationOptions);
 
-        GeneratorDriver driver = CreateDriver(profile);
+        GeneratorDriver driver = CreateDriver(profile, generatedNamespace: generatedNamespace);
 
         driver.RunGeneratorsAndUpdateCompilation(
             compilation,
@@ -55,7 +58,7 @@ internal static class HostCompiler
         ImmutableArray<Diagnostic> analyzerDiagnostics = output
             .WithAnalyzers(
                 ImmutableArray.Create<DiagnosticAnalyzer>(new TimeWarp.Mediator.Analyzers.RequestHandlerAnalyzer()),
-                new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(profile)))
+                new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(profile, generatedNamespace)))
             .GetAnalyzerDiagnosticsAsync()
             .GetAwaiter()
             .GetResult();
@@ -65,29 +68,38 @@ internal static class HostCompiler
             generatorDiagnostics.AddRange(analyzerDiagnostics).AddRange(output.GetDiagnostics()));
     }
 
-    internal static GeneratorDriver CreateDriver(string profile = "Host", bool trackSteps = false)
+    internal static GeneratorDriver CreateDriver(
+        string profile = "Host",
+        bool trackSteps = false,
+        string generatedNamespace = DefaultNamespace)
     {
         return CSharpGeneratorDriver.Create(
             generators: new[] { new MediatorGenerator().AsSourceGenerator() },
             additionalTexts: null,
             parseOptions: ParseOptions,
-            optionsProvider: CreateOptionsProvider(profile),
+            optionsProvider: CreateOptionsProvider(profile, generatedNamespace),
             driverOptions: new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: trackSteps));
     }
 
-    private static AnalyzerConfigOptionsProvider CreateOptionsProvider(string profile)
+    private static AnalyzerConfigOptionsProvider CreateOptionsProvider(string profile, string generatedNamespace)
     {
         return new BuildPropertyOptionsProvider(new Dictionary<string, string>
         {
             ["build_property.TimeWarpMediatorAssembly"] = "true",
             ["build_property.TimeWarpMediatorGenerator"] = "true",
             ["build_property.TimeWarpMediatorProfile"] = profile,
-            ["build_property.TimeWarpMediatorNamespace"] = "TimeWarp.Mediator.Generated",
+            ["build_property.TimeWarpMediatorNamespace"] = generatedNamespace,
         });
     }
 
     // A member assembly compiled without the generator, as a referenced library project would be.
     internal static MetadataReference CompileLibrary(string assemblyName, string source)
+    {
+        return MetadataReference.CreateFromImage(CompileLibraryImage(assemblyName, source));
+    }
+
+    // The emitted image, for runtime tests that load the library beside the host.
+    internal static byte[] CompileLibraryImage(string assemblyName, string source)
     {
         CSharpCompilation compilation = CSharpCompilation.Create(
             assemblyName,
@@ -97,7 +109,7 @@ internal static class HostCompiler
         using MemoryStream stream = new();
         EmitResult result = compilation.Emit(stream);
         result.Success.ShouldBeTrue(string.Join(Environment.NewLine, result.Diagnostics));
-        return MetadataReference.CreateFromImage(stream.ToArray());
+        return stream.ToArray();
     }
 
     internal static IEnumerable<MetadataReference> GetBaseReferences()
@@ -178,6 +190,15 @@ internal sealed class HostCompilation
         EmitResult result = Compilation.Emit(stream);
         result.Success.ShouldBeTrue(string.Join(Environment.NewLine, result.Diagnostics));
         return MetadataReference.CreateFromImage(stream.ToArray());
+    }
+
+    public ManifestDocument Manifest(string generatedNamespace = HostCompiler.DefaultNamespace)
+    {
+        IFieldSymbol json = GetType(generatedNamespace + ".MediatorManifest")
+            .GetMembers("Json")
+            .OfType<IFieldSymbol>()
+            .Single();
+        return ManifestDocument.Parse((string)json.ConstantValue!);
     }
 
     public INamedTypeSymbol GetType(string metadataName)
