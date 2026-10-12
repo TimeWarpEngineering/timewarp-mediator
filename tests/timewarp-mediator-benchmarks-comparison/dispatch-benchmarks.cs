@@ -7,7 +7,7 @@ using TimeWarp.Mediator;
 namespace MediatorBenchmarks;
 
 [MemoryDiagnoser]
-[SimpleJob(RuntimeMoniker.Net80, warmupCount: 3, iterationCount: 8)]
+[SimpleJob(warmupCount: 3, iterationCount: 8)]
 public class DispatchBenchmarks
 {
     private IMediator LegacyMediator = null!;

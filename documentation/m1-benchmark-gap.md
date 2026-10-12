@@ -1,5 +1,9 @@
 # M1 dispatch gap
 
+> Historical M1 snapshot. The current numbers, with commit SHA and date, are in
+> [benchmarks/comparison-baseline.md](./benchmarks/comparison-baseline.md); re-record them with
+> `./bin/dev benchmark --record`.
+
 Measured on AMD Ryzen 9 7950X3D, Ubuntu, BenchmarkDotNet 0.13.10, `.NET 10.0.11` host, 8 iterations. Project: `tests/timewarp-mediator-benchmarks-comparison`. Ping/Pong, no pipeline behaviors.
 
 | Method | Mean | vs legacy | Allocated |
@@ -18,5 +22,6 @@ Measured on AMD Ryzen 9 7950X3D, Ubuntu, BenchmarkDotNet 0.13.10, `.NET 10.0.11`
 Re-run:
 
 ```bash
-DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tests/timewarp-mediator-benchmarks-comparison -c Release
+./bin/dev benchmark            # run only; results in artifacts/benchmarks/comparison
+./bin/dev benchmark --record   # also rewrite documentation/benchmarks/comparison-baseline.md
 ```

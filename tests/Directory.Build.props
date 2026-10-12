@@ -4,8 +4,9 @@
   
   <!-- Test-specific overrides -->
   <PropertyGroup>
-    <!-- Disable strict compilation settings for tests -->
-    <Nullable>disable</Nullable>
+    <!-- Relax strict compilation settings for tests. Nullable stays enabled from the root props;
+         a project that opts out says so in its own csproj (props are imported before the csproj body,
+         so a csproj value always wins). -->
     <Features></Features>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>

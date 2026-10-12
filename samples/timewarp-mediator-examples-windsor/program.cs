@@ -32,7 +32,8 @@ internal class Program
         container.Register(fromAssemblyContainingPing.BasedOn(typeof(IRequestPreProcessor<>)).WithServiceAllInterfaces().AllowMultipleMatches());
         container.Register(fromAssemblyContainingPing.BasedOn(typeof(IRequestPostProcessor<,>)).WithServiceAllInterfaces().AllowMultipleMatches());
 
-        container.Register(Component.For<IMediator>().ImplementedBy<Mediator>());
+        container.Register(Component.For<IServiceProvider>().UsingFactoryMethod<IServiceProvider>(k => new ServiceFactoryServiceProvider(k.Resolve<ServiceFactory>())));
+        container.Register(Component.For<IMediator>().ImplementedBy<Mediator>().UsingFactoryMethod<IMediator>(k => new Mediator(k.Resolve<IServiceProvider>())));
         container.Register(Component.For<TextWriter>().Instance(writer));
         container.Register(Component.For<ServiceFactory>().UsingFactoryMethod<ServiceFactory>(k => (type =>
         {

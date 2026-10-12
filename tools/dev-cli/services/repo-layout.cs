@@ -5,6 +5,8 @@
 // Every clean/build/test names timewarp-mediator.slnx explicitly.
 // Packable product projects live under source/ with kebab path basenames;
 // PackageId/AssemblyName stay PascalCase (TimeWarp.Mediator*).
+// The package smoke project sits outside the slnx because it restores the
+// packed nupkgs from artifacts/packages, so it can only build after pack.
 #endregion
 
 namespace DevCli;
@@ -33,9 +35,47 @@ internal static class RepoLayout
     [
       "analyzers/dotnet/cs/TimeWarp.Mediator.Generators.dll",
       "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll",
+      "buildTransitive/TimeWarp.Mediator.Generators.props",
       .. LicenseEntries
     ])
   ];
+
+  // The only lib/ TFM folder a runtime package may ship (net10.0 floor). A stray
+  // or missing folder changes what consumers on other TFMs resolve.
+  internal const string LibTargetFramework = "net10.0";
+
+  internal static readonly string[] LibPackageIds = ["TimeWarp.Mediator", "TimeWarp.Mediator.Contracts"];
+
+  internal const string PackageSmokeProject =
+    "tests/timewarp-mediator-package-smoke/timewarp-mediator-package-smoke.csproj";
+
+  // Stdout a sample must print besides exiting 0; samples not listed only need exit code 0.
+  internal static readonly Dictionary<string, string> SampleExpectedOutput = new(StringComparer.Ordinal)
+  {
+    ["timewarp-mediator-examples-aot"] = "aot-pong",
+    ["timewarp-mediator-examples-named-pipelines"] = "server:hello"
+  };
+
+  internal static readonly (string Name, string Project)[] BenchmarkProjects =
+  [
+    ("comparison", "tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj"),
+    ("legacy", "tests/timewarp-mediator-benchmarks/timewarp-mediator-benchmarks.csproj")
+  ];
+
+  /// <summary>Reads the single <c>&lt;Version&gt;</c> from source/Directory.Build.props.</summary>
+  internal static string? ReadVersion(string repoRoot)
+  {
+    string propsPath = Path.Combine(repoRoot, "source", "Directory.Build.props");
+    if (!File.Exists(propsPath))
+    {
+      return null;
+    }
+
+    return XDocument.Load(propsPath)
+      .Descendants("Version")
+      .Select(element => element.Value.Trim())
+      .FirstOrDefault(value => value.Length > 0);
+  }
 
   internal static string SolutionPath(string repoRoot) =>
     Path.Combine(repoRoot, SolutionFileName);
