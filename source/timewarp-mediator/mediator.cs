@@ -37,6 +37,7 @@ public class Mediator : IMediator
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
     }
 
+    /// <inheritdoc/>
     public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
         if (request == null)
@@ -54,6 +55,7 @@ public class Mediator : IMediator
         return handler.Handle(request, _serviceProvider, cancellationToken);
     }
 
+    /// <inheritdoc/>
     public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
         where TRequest : IRequest
     {
@@ -73,6 +75,7 @@ public class Mediator : IMediator
         return handler.Handle(request, _serviceProvider, cancellationToken);
     }
 
+    /// <inheritdoc/>
     public Task<object?> Send(object request, CancellationToken cancellationToken = default)
     {
         if (request == null)
@@ -109,6 +112,7 @@ public class Mediator : IMediator
         return handler.Handle(request, _serviceProvider, cancellationToken);
     }
 
+    /// <inheritdoc/>
     public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
         where TNotification : INotification
     {
@@ -120,6 +124,7 @@ public class Mediator : IMediator
         return PublishNotification(notification, cancellationToken);
     }
 
+    /// <inheritdoc/>
     public Task Publish(object notification, CancellationToken cancellationToken = default) =>
         notification switch
         {
@@ -150,7 +155,7 @@ public class Mediator : IMediator
         return handler.Handle(notification, _serviceProvider, PublishCore, cancellationToken);
     }
 
-
+    /// <inheritdoc/>
     public IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
         if (request == null)
@@ -170,7 +175,7 @@ public class Mediator : IMediator
         return items;
     }
 
-
+    /// <inheritdoc/>
     public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default)
     {
         if (request == null)

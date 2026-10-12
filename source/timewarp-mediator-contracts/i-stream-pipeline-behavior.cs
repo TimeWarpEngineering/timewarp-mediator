@@ -21,8 +21,8 @@ public interface IStreamPipelineBehavior<in TRequest, TResponse> where TRequest 
     /// Stream Pipeline handler. Perform any additional behavior and iterate the <paramref name="next"/> delegate as necessary
     /// </summary>
     /// <param name="request">Incoming request</param>
-    /// <param name="next">Awaitable delegate for the next action in the pipeline. Eventually this delegate represents the handler.</param>
+    /// <param name="next">Delegate for the next action in the pipeline. Eventually this delegate represents the handler.</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Awaitable task returning the <typeparamref name="TResponse"/></returns>
+    /// <returns>Async enumerable of <typeparamref name="TResponse"/> items</returns>
     IAsyncEnumerable<TResponse> Handle(TRequest request, StreamHandlerDelegate<TResponse> next, CancellationToken cancellationToken);
 }

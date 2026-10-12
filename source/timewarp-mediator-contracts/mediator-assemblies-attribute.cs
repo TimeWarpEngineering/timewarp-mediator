@@ -13,7 +13,7 @@ public sealed class MediatorAssembliesAttribute : Attribute
     /// <summary>
     /// Initializes the attribute with marker types whose assemblies should be linked.
     /// </summary>
-    /// <param name="markerTypes">Types used only to identify member assemblies.</param>
+    /// <param name="markerTypes">Types used only to identify member assemblies. A <c>null</c> array is treated as empty.</param>
     public MediatorAssembliesAttribute(params Type[] markerTypes)
     {
         MarkerTypes = markerTypes ?? Array.Empty<Type>();

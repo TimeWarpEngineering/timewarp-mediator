@@ -12,6 +12,7 @@ namespace TimeWarp.Mediator.NotificationPublishers;
 /// </summary>
 public class ForeachAwaitPublisher : INotificationPublisher
 {
+    /// <inheritdoc/>
     public async Task Publish(IEnumerable<NotificationHandlerExecutor> handlerExecutors, INotification notification, CancellationToken cancellationToken)
     {
         foreach (NotificationHandlerExecutor handler in handlerExecutors)

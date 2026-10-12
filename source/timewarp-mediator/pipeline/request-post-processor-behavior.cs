@@ -12,9 +12,14 @@ public class RequestPostProcessorBehavior<TRequest, TResponse> : IPipelineBehavi
 {
     private readonly IEnumerable<IRequestPostProcessor<TRequest, TResponse>> _postProcessors;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RequestPostProcessorBehavior{TRequest,TResponse}"/> class.
+    /// </summary>
+    /// <param name="postProcessors">Post-processors to run, in order, after the handler returns</param>
     public RequestPostProcessorBehavior(IEnumerable<IRequestPostProcessor<TRequest, TResponse>> postProcessors) 
         => _postProcessors = postProcessors;
 
+    /// <inheritdoc/>
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         TResponse? response = await next(cancellationToken).ConfigureAwait(false);

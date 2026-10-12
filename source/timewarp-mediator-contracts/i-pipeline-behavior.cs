@@ -6,8 +6,13 @@ namespace TimeWarp.Mediator;
 /// Represents an async continuation for the next task to execute in the pipeline
 /// </summary>
 /// <typeparam name="TResponse">Response type</typeparam>
+/// <param name="cancellationToken">
+/// Token for the rest of the pipeline. When omitted or <see cref="CancellationToken.None"/> (<c>default</c>),
+/// the token originally passed to <c>Send</c> is used instead, so a behavior can only substitute a different
+/// token, not clear it.
+/// </param>
 /// <returns>Awaitable task returning a <typeparamref name="TResponse"/></returns>
-public delegate Task<TResponse> RequestHandlerDelegate<TResponse>(CancellationToken t = default);
+public delegate Task<TResponse> RequestHandlerDelegate<TResponse>(CancellationToken cancellationToken = default);
 
 /// <summary>
 /// Pipeline behavior to surround the inner handler.

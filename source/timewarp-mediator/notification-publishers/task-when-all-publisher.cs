@@ -15,6 +15,7 @@ namespace TimeWarp.Mediator.NotificationPublishers;
 /// </summary>
 public class TaskWhenAllPublisher : INotificationPublisher
 {
+    /// <inheritdoc/>
     public Task Publish(IEnumerable<NotificationHandlerExecutor> handlerExecutors, INotification notification, CancellationToken cancellationToken)
     {
         Task[] tasks = handlerExecutors
