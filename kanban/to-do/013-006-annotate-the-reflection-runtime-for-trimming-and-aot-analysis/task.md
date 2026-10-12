@@ -27,6 +27,8 @@ The product pitches a source-generated AOT path, but the shipped TimeWarp.Mediat
 
 Parent: 013.
 
+Review: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Effort 2, roster general. Outcome accepted-exceptions (M1 wontfix, M2 fixed).
+
 ## Results
 
 - `[RequiresUnreferencedCode]` + `[RequiresDynamicCode]` on both `AddMediator` overloads, both `Mediator`
@@ -46,6 +48,14 @@ Parent: 013.
 - `./bin/dev workflow` green (248 passed, 2 pre-existing skips). AOT sample publishes with zero warnings and prints `aot-pong`.
   The AOT sample does not reference `TimeWarp.Mediator`, so the annotations cannot add warnings there.
   Host note: native link needs `libz.so` (zlib1g-dev). Without it, set `LIBRARY_PATH` to a dir holding a `libz.so -> libz.so.1` symlink.
+- Review fix: `TrimmingMessages` no longer says `AddGeneratedMediator()` ships from the Generators assembly. It tells the caller to reference `TimeWarp.Mediator.Contracts` and the `TimeWarp.Mediator.Generators` source generator, which emits `AddGeneratedMediator()` into the host.
+
+### Review
+
+- Rounds: 2. Roster: general. Effort: 2 (220-line diff).
+- Round 1 counts: bug 0, suggestion 1 (M1 wontfix), nit 1 (M2 fixed). Round 2: no new issues. Final open count: 0.
+- Disposition: `accepted-exceptions`. M1 stays wontfix. Annotating `Send`, `Publish`, `CreateStream`, or behavior `Handle` without the same attributes on `ISender`, `IPublisher`, and `IPipelineBehavior` is IL2046. Annotating those contracts would mark the generated mediator unsafe. `AddMediator` and the `Mediator` constructors remain the call-site signal.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -68,3 +78,4 @@ dotnet publish samples/timewarp-mediator-examples-aot/timewarp-mediator-examples
 
 - Created: 686431 (2026-10-11)
 - 2026-10-12 implement oracle (Claude Opus 5.5): annotations, reflection cache, doc, test; workflow + AOT publish green.
+- Review: Grok session 01a12ef0-c0e7-7dc0-aedc-0f1c19826ae7 (2026-10-12)
