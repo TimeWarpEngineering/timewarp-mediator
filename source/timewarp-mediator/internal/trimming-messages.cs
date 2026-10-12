@@ -8,9 +8,9 @@ internal static class TrimmingMessages
 {
     public const string UnreferencedCode =
         "The reflection mediator scans assemblies and closes generic handler, wrapper, and exception handler types at runtime, " +
-        "which trimming can break. Use the source-generated AddGeneratedMediator() from TimeWarp.Mediator.Generators for trimmed apps.";
+        "which trimming can break. Reference TimeWarp.Mediator.Contracts and the TimeWarp.Mediator.Generators source generator, which emits AddGeneratedMediator() into the host, and call that instead.";
 
     public const string DynamicCode =
         "The reflection mediator calls MakeGenericType and Activator.CreateInstance at runtime, which is not compatible with " +
-        "NativeAOT. Use the source-generated AddGeneratedMediator() from TimeWarp.Mediator.Generators for AOT apps.";
+        "NativeAOT. Reference TimeWarp.Mediator.Contracts and the TimeWarp.Mediator.Generators source generator, which emits AddGeneratedMediator() into the host, and call that instead.";
 }
