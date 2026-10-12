@@ -10,6 +10,8 @@
 // Pipeline assignment is MediatorScopeAttribute (marker type), not MediatorModule's string name.
 // IsHost is the generator itself or TimeWarpMediatorAssembly=true; an attribute-only library is
 // not a host, so whole-program checks (TWM004 on interface-typed or unscoped sends) stay off there.
+// Build properties come only from GlobalOptions (MembershipOptions): CompilerVisibleProperty values
+// are global, so scanning per-tree options cost a loop over every syntax tree for nothing.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
@@ -24,6 +26,7 @@ public sealed class Membership
     public const string MsBuildPropertyName = "build_property.TimeWarpMediatorAssembly";
     public const string ProfilePropertyName = "build_property.TimeWarpMediatorProfile";
     public const string NamespacePropertyName = "build_property.TimeWarpMediatorNamespace";
+    public const string GeneratorPropertyName = "build_property.TimeWarpMediatorGenerator";
 
     private Membership(
         IAssemblySymbol compilationAssembly,
@@ -75,20 +78,16 @@ public sealed class Membership
 
     public static bool TryCreate(
         Compilation compilation,
-        AnalyzerConfigOptionsProvider? optionsProvider,
+        MembershipOptions options,
         bool currentCompilationIsHost,
+        CancellationToken cancellationToken,
         out Membership membership)
     {
-        string profile = ReadProperty(optionsProvider, compilation, ProfilePropertyName) ?? "Host";
-        string generatedNamespace = ReadProperty(optionsProvider, compilation, NamespacePropertyName)
-            ?? "TimeWarp.Mediator.Generated";
-
-        bool msBuildMember = IsTrue(ReadProperty(optionsProvider, compilation, MsBuildPropertyName));
         bool attributeMember = HasAssemblyAttribute(compilation.Assembly, AssemblyAttributeMetadataName)
             || HasAssemblyAttribute(compilation.Assembly, AssembliesAttributeMetadataName)
-            || HasModuleAttribute(compilation.Assembly);
+            || HasModuleAttribute(compilation.Assembly, cancellationToken);
 
-        if (!currentCompilationIsHost && !msBuildMember && !attributeMember)
+        if (!currentCompilationIsHost && !options.IsMsBuildMember && !attributeMember)
         {
             membership = null!;
             return false;
@@ -101,6 +100,7 @@ public sealed class Membership
 
         foreach (IAssemblySymbol assembly in GetReferencedAssemblies(compilation))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (HasAssemblyAttribute(assembly, AssemblyAttributeMetadataName))
             {
                 members.Add(assembly);
@@ -124,15 +124,15 @@ public sealed class Membership
         membership = new Membership(
             compilation.Assembly,
             memberBuilder.ToImmutable(),
-            profile,
-            generatedNamespace,
-            currentCompilationIsHost || msBuildMember);
+            options.Profile,
+            options.GeneratedNamespace,
+            currentCompilationIsHost || options.IsMsBuildMember);
         return true;
     }
 
-    public static Membership ForGenerator(Compilation compilation, AnalyzerConfigOptionsProvider optionsProvider)
+    public static Membership ForGenerator(Compilation compilation, MembershipOptions options, CancellationToken cancellationToken)
     {
-        if (TryCreate(compilation, optionsProvider, currentCompilationIsHost: true, out Membership membership))
+        if (TryCreate(compilation, options, currentCompilationIsHost: true, cancellationToken, out Membership membership))
         {
             return membership;
         }
@@ -140,10 +140,11 @@ public sealed class Membership
         throw new InvalidOperationException("Generator membership should always succeed for the current compilation.");
     }
 
-    private static bool HasModuleAttribute(IAssemblySymbol assembly)
+    private static bool HasModuleAttribute(IAssemblySymbol assembly, CancellationToken cancellationToken)
     {
         foreach (INamedTypeSymbol type in EnumerateTypes(assembly.GlobalNamespace))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             foreach (AttributeData attribute in type.GetAttributes())
             {
                 if (attribute.AttributeClass?.ToDisplayString() == ModuleAttributeMetadataName)
@@ -241,43 +242,6 @@ public sealed class Membership
                 yield return child;
             }
         }
-    }
-
-    private static string? ReadProperty(
-        AnalyzerConfigOptionsProvider? optionsProvider,
-        Compilation compilation,
-        string key)
-    {
-        if (optionsProvider is not null
-            && optionsProvider.GlobalOptions.TryGetValue(key, out string? value)
-            && !string.IsNullOrWhiteSpace(value))
-        {
-            return value.Trim();
-        }
-
-        // Syntax trees can carry the same MSBuild-visible properties.
-        foreach (SyntaxTree tree in compilation.SyntaxTrees)
-        {
-            if (optionsProvider is null)
-            {
-                break;
-            }
-
-            if (optionsProvider.GetOptions(tree).TryGetValue(key, out string? perTree)
-                && !string.IsNullOrWhiteSpace(perTree))
-            {
-                return perTree.Trim();
-            }
-        }
-
-        return null;
-    }
-
-    private static bool IsTrue(string? value)
-    {
-        return value is not null
-            && (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
-                || value == "1");
     }
 
     private sealed class AssemblySymbolComparer : IEqualityComparer<IAssemblySymbol>

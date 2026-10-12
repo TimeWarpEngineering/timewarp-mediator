@@ -52,7 +52,7 @@ public static class MessageGraphBuilder
         "TimeWarp.Mediator.Pipeline.IRequestExceptionAction`2",
     };
 
-    public static MessageGraph Build(Compilation compilation, Membership membership)
+    public static MessageGraph Build(Compilation compilation, Membership membership, CancellationToken cancellationToken)
     {
         INamedTypeSymbol? requestHandler1 = compilation.GetTypeByMetadataName(RequestHandler1);
         INamedTypeSymbol? requestHandler2 = compilation.GetTypeByMetadataName(RequestHandler2);
@@ -85,6 +85,7 @@ public static class MessageGraphBuilder
         {
             foreach (INamedTypeSymbol type in Membership.EnumerateTypes(assembly.GlobalNamespace))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (!IsDiscoverableType(type))
                 {
                     continue;

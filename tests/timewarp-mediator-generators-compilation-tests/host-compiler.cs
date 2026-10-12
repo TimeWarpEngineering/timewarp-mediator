@@ -2,6 +2,11 @@
 // Compiles an in-memory host assembly with MediatorGenerator, the way a generator-referencing project builds.
 #endregion
 
+#region Design
+// The Generators package ships the analyzer and sets TimeWarpMediatorGenerator=true, so a host runs
+// both. Diagnostics here are the generator's plus the analyzer's on the generated compilation.
+#endregion
+
 namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 internal static class HostCompiler
@@ -40,22 +45,45 @@ internal static class HostCompiler
             references: references,
             options: CompilationOptions);
 
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            generators: new[] { new MediatorGenerator().AsSourceGenerator() },
-            parseOptions: ParseOptions,
-            optionsProvider: new BuildPropertyOptionsProvider(new Dictionary<string, string>
-            {
-                ["build_property.TimeWarpMediatorAssembly"] = "true",
-                ["build_property.TimeWarpMediatorProfile"] = profile,
-                ["build_property.TimeWarpMediatorNamespace"] = "TimeWarp.Mediator.Generated",
-            }));
+        GeneratorDriver driver = CreateDriver(profile);
 
         driver.RunGeneratorsAndUpdateCompilation(
             compilation,
             out Microsoft.CodeAnalysis.Compilation output,
             out ImmutableArray<Diagnostic> generatorDiagnostics);
 
-        return new HostCompilation(output, generatorDiagnostics.AddRange(output.GetDiagnostics()));
+        ImmutableArray<Diagnostic> analyzerDiagnostics = output
+            .WithAnalyzers(
+                ImmutableArray.Create<DiagnosticAnalyzer>(new TimeWarp.Mediator.Analyzers.RequestHandlerAnalyzer()),
+                new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(profile)))
+            .GetAnalyzerDiagnosticsAsync()
+            .GetAwaiter()
+            .GetResult();
+
+        return new HostCompilation(
+            output,
+            generatorDiagnostics.AddRange(analyzerDiagnostics).AddRange(output.GetDiagnostics()));
+    }
+
+    internal static GeneratorDriver CreateDriver(string profile = "Host", bool trackSteps = false)
+    {
+        return CSharpGeneratorDriver.Create(
+            generators: new[] { new MediatorGenerator().AsSourceGenerator() },
+            additionalTexts: null,
+            parseOptions: ParseOptions,
+            optionsProvider: CreateOptionsProvider(profile),
+            driverOptions: new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: trackSteps));
+    }
+
+    private static AnalyzerConfigOptionsProvider CreateOptionsProvider(string profile)
+    {
+        return new BuildPropertyOptionsProvider(new Dictionary<string, string>
+        {
+            ["build_property.TimeWarpMediatorAssembly"] = "true",
+            ["build_property.TimeWarpMediatorGenerator"] = "true",
+            ["build_property.TimeWarpMediatorProfile"] = profile,
+            ["build_property.TimeWarpMediatorNamespace"] = "TimeWarp.Mediator.Generated",
+        });
     }
 
     // A member assembly compiled without the generator, as a referenced library project would be.

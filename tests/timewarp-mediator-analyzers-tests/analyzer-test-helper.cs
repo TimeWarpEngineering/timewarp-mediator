@@ -4,14 +4,16 @@
 
 #region Design
 // isHost sets build_property.TimeWarpMediatorAssembly=true, which the generator package sets for
-// hosts; without it the snippet is an attribute-only library.
+// hosts; without it the snippet is an attribute-only library. generatorHost adds
+// build_property.TimeWarpMediatorGenerator=true, also set by the generator package, under which
+// the generator (not this analyzer) reports TWM001–TWM003.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers.Tests;
 
 internal static class AnalyzerTestHelper
 {
-    internal static async Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync(string source, bool isHost = false)
+    internal static async Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync(string source, bool isHost = false, bool generatorHost = false)
     {
         SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(source);
         CSharpCompilation compilation = CSharpCompilation.Create(
@@ -25,6 +27,11 @@ internal static class AnalyzerTestHelper
         if (isHost)
         {
             properties["build_property.TimeWarpMediatorAssembly"] = "true";
+        }
+
+        if (generatorHost)
+        {
+            properties["build_property.TimeWarpMediatorGenerator"] = "true";
         }
 
         AnalyzerOptions options = new(

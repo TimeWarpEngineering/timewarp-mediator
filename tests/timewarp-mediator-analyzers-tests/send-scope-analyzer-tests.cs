@@ -155,6 +155,21 @@ public class SendScopeAnalyzerTests
     }
 
     [Fact]
+    public async Task Twm004_UnscopedSenderWithScopedRequest_IsErrorInGeneratorHost()
+    {
+        string source = Pipelines +
+            """
+            public static class Use
+            {
+                public static Task<int> Go(IMediator mediator) => mediator.Send(new ServerPing());
+            }
+            """;
+
+        Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source, generatorHost: true)).ShouldHaveSingleItem();
+        diagnostic.Id.ShouldBe("TWM004");
+    }
+
+    [Fact]
     public async Task Twm004_UnscopedSenderWithScopedRequest_IsNotReportedInLibrary()
     {
         string source = Pipelines +

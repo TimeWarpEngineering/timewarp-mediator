@@ -29,6 +29,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Incrementality tests read the TrackingNames step names. -->
+    <InternalsVisibleTo Include="timewarp-mediator-generators-compilation-tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" PrivateAssets="all" />
   </ItemGroup>
 

@@ -1,14 +1,16 @@
 # TimeWarp.Mediator diagnostics
 
 The analyzer package reports TWM001–TWM004. The generator package also reports TWM005–TWM011,
-which describe what the generated mediator can and cannot emit. Each descriptor's help link
+which describe what the generated mediator can and cannot emit. Each diagnostic has one reporter:
+in a generator host the generator reports TWM001–TWM003 and the bundled analyzer skips them (the
+generator package sets `TimeWarpMediatorGenerator=true`); in a library the analyzer reports them. Each descriptor's help link
 points to its section here.
 
 | Id | Severity | Reported by | Summary |
 |----|----------|-------------|---------|
-| [TWM001](#twm001) | Error | analyzer, generator | Request has no handler |
-| [TWM002](#twm002) | Error | analyzer, generator | Duplicate handler for request |
-| [TWM003](#twm003) | Error | analyzer, generator | Handler and message belong to different pipelines |
+| [TWM001](#twm001) | Error | generator (host), analyzer (library) | Request has no handler |
+| [TWM002](#twm002) | Error | generator (host), analyzer (library) | Duplicate handler for request |
+| [TWM003](#twm003) | Error | generator (host), analyzer (library) | Handler and message belong to different pipelines |
 | [TWM004](#twm004) | Error | analyzer | Request is not a member of this sender pipeline |
 | [TWM005](#twm005) | Warning | generator (Aot/Link) | Pipeline behavior is not woven under the Aot profile |
 | [TWM006](#twm006) | Error | generator (Aot/Link) | Aot handler is not constructible with `new()` |
@@ -41,7 +43,7 @@ or scope only one side.
 **Request is not a member of this sender pipeline.** `ISender<TScope>.Send` only dispatches
 requests assigned to `TScope`. Detection covers `sender.Send(x)`, `sender?.Send(x)`, and
 receivers that implement `ISender<TScope>`. Only calls that bind to `ISender.Send` count; other
-methods named `Send` are ignored. In a generator host (`TimeWarpMediatorAssembly=true`) two more
+methods named `Send` are ignored. In a generator host (`TimeWarpMediatorGenerator=true` or `TimeWarpMediatorAssembly=true`) two more
 cases are reported:
 
 - an unscoped `ISender`/`IMediator` sending a scoped request (the generated `Mediator` only

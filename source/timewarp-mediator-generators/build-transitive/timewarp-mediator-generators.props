@@ -2,11 +2,14 @@
   <PropertyGroup>
     <!-- Hosts that reference the generator are graph members even without [assembly: MediatorAssembly]. -->
     <TimeWarpMediatorAssembly Condition="'$(TimeWarpMediatorAssembly)' == ''">true</TimeWarpMediatorAssembly>
+    <!-- The generator runs here and reports TWM001-TWM003; the bundled analyzer then leaves them to it. -->
+    <TimeWarpMediatorGenerator>true</TimeWarpMediatorGenerator>
     <TimeWarpMediatorProfile Condition="'$(TimeWarpMediatorProfile)' == ''">Host</TimeWarpMediatorProfile>
     <TimeWarpMediatorNamespace Condition="'$(TimeWarpMediatorNamespace)' == ''">TimeWarp.Mediator.Generated</TimeWarpMediatorNamespace>
   </PropertyGroup>
   <ItemGroup>
     <CompilerVisibleProperty Include="TimeWarpMediatorAssembly" />
+    <CompilerVisibleProperty Include="TimeWarpMediatorGenerator" />
     <CompilerVisibleProperty Include="TimeWarpMediatorProfile" />
     <CompilerVisibleProperty Include="TimeWarpMediatorNamespace" />
   </ItemGroup>

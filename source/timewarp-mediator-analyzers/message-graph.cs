@@ -25,7 +25,7 @@ public sealed class MessageGraph
     public ImmutableArray<NotificationBinding> Notifications { get; }
 
     /// <summary>
-    /// TWM001–TWM003: reported by both the analyzer and the generator.
+    /// TWM001–TWM003: reported by the generator in a generator host, by the analyzer everywhere else.
     /// </summary>
     public ImmutableArray<Diagnostic> Diagnostics { get; }
 

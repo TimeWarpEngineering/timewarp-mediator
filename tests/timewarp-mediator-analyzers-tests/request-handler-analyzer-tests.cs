@@ -23,6 +23,18 @@ public class RequestHandlerAnalyzerTests
     }
 
     [Fact]
+    public async Task GeneratorHost_LeavesTwm001ToTheGenerator()
+    {
+        const string Source =
+            """
+            using TimeWarp.Mediator;
+            public sealed class Orphan : IRequest<int> { }
+            """;
+
+        (await AnalyzerTestHelper.GetDiagnosticsAsync(Source, isHost: true, generatorHost: true)).ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task Twm002_DuplicateHandler_IsError()
     {
         const string Source =
