@@ -11,7 +11,7 @@ namespace TimeWarp.Mediator.Generators;
 
 internal static class ManifestEmitter
 {
-    internal static void Emit(SourceProductionContext context, MessageGraph graph)
+    internal static void Emit(List<GeneratedSource> sources, MessageGraph graph)
     {
         string json = BuildJson(graph);
         string ns = graph.Membership.GeneratedNamespace;
@@ -28,7 +28,7 @@ internal static class ManifestEmitter
         builder.Append("        @\"").Append(json.Replace("\"", "\"\"")).AppendLine("\";");
         builder.AppendLine("}");
 
-        context.AddSource("MediatorManifest.g.cs", SourceText.From(builder.ToString(), Encoding.UTF8));
+        sources.Add(new GeneratedSource("MediatorManifest.g.cs", builder.ToString()));
     }
 
     private static string BuildJson(MessageGraph graph)

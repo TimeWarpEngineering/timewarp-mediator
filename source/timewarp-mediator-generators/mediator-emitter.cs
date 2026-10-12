@@ -24,25 +24,21 @@ internal static class MediatorEmitter
 {
     private static readonly SymbolDisplayFormat FullyQualified = SymbolDisplayFormat.FullyQualifiedFormat;
 
-    internal static void Emit(SourceProductionContext context, MessageGraph graph, AotProfile aotProfile)
+    internal static void Emit(List<GeneratedSource> sources, MessageGraph graph, AotProfile aotProfile)
     {
         MemberNames names = new(graph);
-        context.AddSource("Mediator.g.cs", SourceText.From(EmitMediator(graph, names, aotProfile), Encoding.UTF8));
+        sources.Add(new GeneratedSource("Mediator.g.cs", EmitMediator(graph, names, aotProfile)));
 
         foreach (INamedTypeSymbol scope in DistinctScopes(graph))
         {
             string suffix = ScopeSuffix(scope, graph, names);
-            context.AddSource(
-                "Sender_" + suffix + ".g.cs",
-                SourceText.From(EmitScopedSender(graph, names, scope, suffix), Encoding.UTF8));
-            context.AddSource(
-                "Publisher_" + suffix + ".g.cs",
-                SourceText.From(EmitScopedPublisher(graph, names, scope, suffix), Encoding.UTF8));
+            sources.Add(new GeneratedSource("Sender_" + suffix + ".g.cs", EmitScopedSender(graph, names, scope, suffix)));
+            sources.Add(new GeneratedSource("Publisher_" + suffix + ".g.cs", EmitScopedPublisher(graph, names, scope, suffix)));
         }
 
         if (!graph.IsAotProfile)
         {
-            context.AddSource("MediatorServiceCollectionExtensions.g.cs", SourceText.From(EmitRegistration(graph, names), Encoding.UTF8));
+            sources.Add(new GeneratedSource("MediatorServiceCollectionExtensions.g.cs", EmitRegistration(graph, names)));
         }
     }
 

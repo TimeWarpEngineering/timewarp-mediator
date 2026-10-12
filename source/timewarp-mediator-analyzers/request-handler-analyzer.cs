@@ -12,6 +12,11 @@
 // an unscoped ISender/IMediator receiver, which is the generated Mediator there, and an argument
 // typed as an interface or abstract class (IRequest<T>), reported when every bound request it
 // could be belongs to another pipeline. A library sees only part of the graph, so it skips both.
+// Membership and the graph are built lazily, on the first ISender.Send call or at compilation end,
+// never in CompilationStart: a compilation with no sends and no end analysis (IDE without full
+// solution analysis) never pays for them. Both honor the analysis cancellation token.
+// In a generator host (TimeWarpMediatorGenerator=true) the generator reports TWM001–TWM003, so
+// this analyzer keeps only TWM004 there.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
@@ -32,27 +37,29 @@ public sealed class RequestHandlerAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(startContext =>
         {
-            if (!Membership.TryCreate(
-                    startContext.Compilation,
-                    startContext.Options.AnalyzerConfigOptionsProvider,
-                    currentCompilationIsHost: false,
-                    out Membership membership))
+            Compilation compilation = startContext.Compilation;
+            MembershipOptions options = MembershipOptions.Read(startContext.Options.AnalyzerConfigOptionsProvider.GlobalOptions);
+            CancellationToken cancellationToken = startContext.CancellationToken;
+            Lazy<MessageGraph?> graph = new(
+                () => Membership.TryCreate(compilation, options, options.IsGeneratorHost, cancellationToken, out Membership membership)
+                    ? MessageGraphBuilder.Build(compilation, membership, cancellationToken)
+                    : null,
+                LazyThreadSafetyMode.ExecutionAndPublication);
+
+            // The generator reports TWM001–TWM003 in its own host; reporting them here too doubles them.
+            if (!options.IsGeneratorHost)
             {
-                return;
+                startContext.RegisterCompilationEndAction(endContext =>
+                {
+                    foreach (Diagnostic diagnostic in graph.Value?.Diagnostics ?? ImmutableArray<Diagnostic>.Empty)
+                    {
+                        endContext.ReportDiagnostic(diagnostic);
+                    }
+                });
             }
 
-            MessageGraph graph = MessageGraphBuilder.Build(startContext.Compilation, membership);
-            INamedTypeSymbol? sender0 = startContext.Compilation.GetTypeByMetadataName("TimeWarp.Mediator.ISender");
-            INamedTypeSymbol? sender1 = startContext.Compilation.GetTypeByMetadataName("TimeWarp.Mediator.ISender`1");
-
-            startContext.RegisterCompilationEndAction(endContext =>
-            {
-                foreach (Diagnostic diagnostic in graph.Diagnostics)
-                {
-                    endContext.ReportDiagnostic(diagnostic);
-                }
-            });
-
+            INamedTypeSymbol? sender0 = compilation.GetTypeByMetadataName("TimeWarp.Mediator.ISender");
+            INamedTypeSymbol? sender1 = compilation.GetTypeByMetadataName("TimeWarp.Mediator.ISender`1");
             if (sender0 is null || sender1 is null)
             {
                 return;
@@ -67,7 +74,7 @@ public sealed class RequestHandlerAnalyzer : DiagnosticAnalyzer
 
     private static void AnalyzeSendInvocation(
         OperationAnalysisContext context,
-        MessageGraph graph,
+        Lazy<MessageGraph?> lazyGraph,
         SenderTypes senders)
     {
         if (context.Operation is not IInvocationOperation invocation
@@ -75,7 +82,8 @@ public sealed class RequestHandlerAnalyzer : DiagnosticAnalyzer
             || invocation.TargetMethod.Parameters.Length == 0
             || invocation.TargetMethod.Parameters[0].Type.SpecialType == SpecialType.System_Object
             || invocation.Instance?.Type is not INamedTypeSymbol receiverType
-            || !IsSenderSend(invocation.TargetMethod, receiverType, senders.Sender0))
+            || !IsSenderSend(invocation.TargetMethod, receiverType, senders.Sender0)
+            || lazyGraph.Value is not MessageGraph graph)
         {
             return;
         }
