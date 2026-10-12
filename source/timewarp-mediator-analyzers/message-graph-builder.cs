@@ -7,6 +7,10 @@
 // [assembly: MediatorBehavior] so pipelines do not pick up unrelated IPipelineBehavior types from
 // referenced projects. Order matches MediatR GetServices().Reverse().Aggregate: first listed is outermost.
 // Member assemblies are ordered by name before SourceIndex so tie-breaking is deterministic.
+// Discovery walks member assemblies by name and sorts each handler list by display name, so
+// notification handler order and the TWM002 handler list do not depend on hash-set order.
+// A class binds every handler interface it implements; an interface already implemented by a
+// concrete, discovered base handler is inherited, not a second binding (no TWM002, no double publish).
 // TryCloseBehavior returns null when the constructed type is not IPipelineBehavior<TRequest, TResponse>.
 // Pipeline membership is [MediatorScope(typeof(TScope))] on handler, request, containing type, or
 // assembly. Unscoped (no attribute) is the default ISender/IPublisher pipeline. Behaviors with a
@@ -50,7 +54,7 @@ public static class MessageGraphBuilder
             new(SymbolEqualityComparer.Default);
         HashSet<INamedTypeSymbol> requests = new(SymbolEqualityComparer.Default);
 
-        foreach (IAssemblySymbol assembly in membership.MemberAssemblies)
+        foreach (IAssemblySymbol assembly in membership.MemberAssemblies.OrderBy(a => a.Name, System.StringComparer.Ordinal))
         {
             foreach (INamedTypeSymbol type in Membership.EnumerateTypes(assembly.GlobalNamespace))
             {
@@ -61,25 +65,25 @@ public static class MessageGraphBuilder
 
                 CollectRequest(type, request0, request1, requests);
 
-                if (TryGetRequestHandler(type, requestHandler1, requestHandler2, unitType, out INamedTypeSymbol requestType, out ITypeSymbol responseType, out bool isVoid))
+                foreach (RequestHandlerMatch match in GetRequestHandlers(type, requestHandler1, requestHandler2, unitType, membership))
                 {
-                    if (!handlersByRequest.TryGetValue(requestType, out List<INamedTypeSymbol>? list))
+                    if (!handlersByRequest.TryGetValue(match.RequestType, out List<INamedTypeSymbol>? list))
                     {
                         list = new List<INamedTypeSymbol>();
-                        handlersByRequest[requestType] = list;
+                        handlersByRequest[match.RequestType] = list;
                     }
 
                     list.Add(type);
-                    responseByRequest[requestType] = responseType;
-                    if (isVoid)
+                    responseByRequest[match.RequestType] = match.ResponseType;
+                    if (match.IsVoid)
                     {
-                        voidRequests.Add(requestType);
+                        voidRequests.Add(match.RequestType);
                     }
 
-                    requests.Add(requestType);
+                    requests.Add(match.RequestType);
                 }
 
-                if (TryGetNotificationHandler(type, notificationHandler1, out INamedTypeSymbol notificationType))
+                foreach (INamedTypeSymbol notificationType in GetNotificationHandlers(type, notificationHandler1, membership))
                 {
                     if (!handlersByNotification.TryGetValue(notificationType, out List<INamedTypeSymbol>? list))
                     {
@@ -90,6 +94,16 @@ public static class MessageGraphBuilder
                     list.Add(type);
                 }
             }
+        }
+
+        foreach (List<INamedTypeSymbol> list in handlersByRequest.Values)
+        {
+            SortByDisplayName(list);
+        }
+
+        foreach (List<INamedTypeSymbol> list in handlersByNotification.Values)
+        {
+            SortByDisplayName(list);
         }
 
         ImmutableArray<BehaviorRegistration> behaviors = DiscoverBehaviors(membership, pipelineBehavior2);
@@ -242,48 +256,89 @@ public static class MessageGraphBuilder
         }
     }
 
-    private static bool TryGetRequestHandler(
+    private static List<RequestHandlerMatch> GetRequestHandlers(
         INamedTypeSymbol type,
         INamedTypeSymbol? handler1,
         INamedTypeSymbol? handler2,
         INamedTypeSymbol? unitType,
-        out INamedTypeSymbol requestType,
-        out ITypeSymbol responseType,
-        out bool isVoid)
+        Membership membership)
     {
-        requestType = null!;
-        responseType = null!;
-        isVoid = false;
-
+        List<RequestHandlerMatch> matches = new();
         if (type.TypeKind != TypeKind.Class || type.IsAbstract || type.Arity > 0)
         {
-            return false;
+            return matches;
         }
 
+        HashSet<INamedTypeSymbol> bound = new(SymbolEqualityComparer.Default);
         foreach (INamedTypeSymbol iface in type.AllInterfaces)
         {
             if (handler2 is not null
                 && SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, handler2)
                 && iface.TypeArguments.Length == 2
                 && iface.TypeArguments[0] is INamedTypeSymbol request2
-                && iface.TypeArguments[1] is ITypeSymbol response2)
+                && iface.TypeArguments[1] is ITypeSymbol response2
+                && !IsBoundByBaseHandler(type, iface, membership)
+                && bound.Add(request2))
             {
-                requestType = request2;
-                responseType = response2;
-                return true;
+                matches.Add(new RequestHandlerMatch(request2, response2, false));
             }
         }
 
+        // A two-arity binding wins over IRequestHandler<T> for the same request on one class.
         foreach (INamedTypeSymbol iface in type.AllInterfaces)
         {
             if (handler1 is not null
                 && SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, handler1)
                 && iface.TypeArguments.Length == 1
-                && iface.TypeArguments[0] is INamedTypeSymbol request1)
+                && iface.TypeArguments[0] is INamedTypeSymbol request1
+                && !IsBoundByBaseHandler(type, iface, membership)
+                && bound.Add(request1))
             {
-                requestType = request1;
-                responseType = unitType ?? request1;
-                isVoid = true;
+                matches.Add(new RequestHandlerMatch(request1, unitType ?? request1, true));
+            }
+        }
+
+        return matches;
+    }
+
+    private static List<INamedTypeSymbol> GetNotificationHandlers(
+        INamedTypeSymbol type,
+        INamedTypeSymbol? handler1,
+        Membership membership)
+    {
+        List<INamedTypeSymbol> notifications = new();
+        if (handler1 is null || type.TypeKind != TypeKind.Class || type.IsAbstract || type.Arity > 0)
+        {
+            return notifications;
+        }
+
+        foreach (INamedTypeSymbol iface in type.AllInterfaces)
+        {
+            if (SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, handler1)
+                && iface.TypeArguments.Length == 1
+                && iface.TypeArguments[0] is INamedTypeSymbol notification
+                && !IsBoundByBaseHandler(type, iface, membership))
+            {
+                notifications.Add(notification);
+            }
+        }
+
+        return notifications;
+    }
+
+    // True when a concrete base class that discovery already binds implements the same closed
+    // interface: the derived class inherits that binding instead of introducing a second one.
+    private static bool IsBoundByBaseHandler(INamedTypeSymbol type, INamedTypeSymbol iface, Membership membership)
+    {
+        for (INamedTypeSymbol? current = type.BaseType; current is not null; current = current.BaseType)
+        {
+            if (current.TypeKind == TypeKind.Class
+                && !current.IsAbstract
+                && current.Arity == 0
+                && IsDiscoverableType(current)
+                && membership.Includes(current)
+                && current.AllInterfaces.Contains(iface, SymbolEqualityComparer.Default))
+            {
                 return true;
             }
         }
@@ -291,29 +346,9 @@ public static class MessageGraphBuilder
         return false;
     }
 
-    private static bool TryGetNotificationHandler(
-        INamedTypeSymbol type,
-        INamedTypeSymbol? handler1,
-        out INamedTypeSymbol notificationType)
+    private static void SortByDisplayName(List<INamedTypeSymbol> handlers)
     {
-        notificationType = null!;
-        if (handler1 is null || type.TypeKind != TypeKind.Class || type.IsAbstract || type.Arity > 0)
-        {
-            return false;
-        }
-
-        foreach (INamedTypeSymbol iface in type.AllInterfaces)
-        {
-            if (SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, handler1)
-                && iface.TypeArguments.Length == 1
-                && iface.TypeArguments[0] is INamedTypeSymbol notification)
-            {
-                notificationType = notification;
-                return true;
-            }
-        }
-
-        return false;
+        handlers.Sort((left, right) => System.StringComparer.Ordinal.Compare(left.ToDisplayString(), right.ToDisplayString()));
     }
 
     private static ImmutableArray<BehaviorRegistration> DiscoverBehaviors(
@@ -680,6 +715,22 @@ public static class MessageGraphBuilder
         }
 
         return builder.ToString().Trim('_');
+    }
+
+    private readonly struct RequestHandlerMatch
+    {
+        public RequestHandlerMatch(INamedTypeSymbol requestType, ITypeSymbol responseType, bool isVoid)
+        {
+            RequestType = requestType;
+            ResponseType = responseType;
+            IsVoid = isVoid;
+        }
+
+        public INamedTypeSymbol RequestType { get; }
+
+        public ITypeSymbol ResponseType { get; }
+
+        public bool IsVoid { get; }
     }
 
     private sealed class NotificationGroup

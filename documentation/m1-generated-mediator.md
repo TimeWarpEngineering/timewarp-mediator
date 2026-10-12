@@ -53,6 +53,12 @@ See spec §9.
 
 Hosts that reference the generator package get `TimeWarpMediatorAssembly=true` from `buildTransitive/TimeWarp.Mediator.Generators.props`. Libraries that only need diagnostics reference `TimeWarp.Mediator.Analyzers` and add `[assembly: MediatorAssembly]`.
 
+## Handler discovery and ordering
+
+- **Every interface binds.** A class that implements several handler interfaces (`INotificationHandler<A>` and `INotificationHandler<B>`, or several `IRequestHandler<,>`) is bound and registered once per interface. When a class implements both `IRequestHandler<T, R>` and `IRequestHandler<T>` for the same `T`, the two-arity binding wins.
+- **Inherited bindings do not repeat.** If a concrete, non-generic base class in a member assembly already handles an interface, a derived class does not get a second binding for it. `class B : A` is not a TWM002 duplicate, and a notification is not published to it twice. A derived class still binds the interfaces it adds itself. Abstract or generic bases (`HandlerBase<T>`) are not bound themselves, so their closed derived classes bind normally.
+- **Deterministic order.** Member assemblies are walked in ordinal order of assembly name, and each handler list is sorted ordinally by fully qualified display name. Notification handlers run in that order. The TWM002 message lists handlers in that order and points at the second one. The generated source does not depend on reference order or hash-set order.
+
 ## Deferred
 
 | Item | Where |

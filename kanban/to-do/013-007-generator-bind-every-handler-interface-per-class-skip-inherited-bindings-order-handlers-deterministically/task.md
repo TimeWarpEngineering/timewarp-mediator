@@ -17,15 +17,42 @@
 
 ## Checklist
 
-- [ ] Multi-binding discovery with tests
-- [ ] Inherited-handler exclusion with tests
-- [ ] Deterministic ordering with test and doc
-- [ ] `./bin/dev workflow` green; PR with merge commit
+- [x] Multi-binding discovery with tests
+- [x] Inherited-handler exclusion with tests
+- [x] Deterministic ordering with test and doc
+- [ ] `./bin/dev workflow` green; PR with merge commit (workflow green; PR is opened by the host)
 
 ## Notes
 
 Parent: 013.
 
+## Results
+
+- `message-graph-builder.cs`: `GetRequestHandlers` / `GetNotificationHandlers` return every matching closed interface on a class (G-3). A two-arity `IRequestHandler<T, R>` still wins over `IRequestHandler<T>` for the same `T` on one class.
+- `IsBoundByBaseHandler` skips an interface that a concrete, non-generic, discoverable base class in a member assembly already implements (G-4). The derived class still binds interfaces it adds. Abstract and generic bases are unchanged.
+- Member assemblies are walked by ordinal assembly name, and each handler list is sorted by display name (G-10). This fixes notification handler order and the TWM002 handler list and location.
+- `mediator-emitter.cs`: `EmitHandlerRegistrations` used to skip every interface forward after a handler type's first one. It now registers the concrete type once and adds one `IRequestHandler<…>` / `INotificationHandler<…>` forward per binding. Without this, the second interface never resolved from DI.
+- Docs: new "Handler discovery and ordering" section in `documentation/m1-generated-mediator.md`.
+- Tests:
+  - `tests/timewarp-mediator-generators-tests/handler-binding-tests.cs` + `bindings/binding-messages.cs`: one class with 2 notifications + 3 requests; a concrete base handler with a derived handler (no TWM002, publish runs once, the derived class binds its own new interface); an abstract generic base.
+  - `tests/timewarp-mediator-generators-compilation-tests/member-assembly-order-tests.cs`: two in-memory member assemblies (`Zeta`, `Alpha`) referenced in both orders. Generated source is byte-identical, notification handlers come out Alpha → Host → Zeta, and the TWM002 message is fixed. This test lives in the compilation-tests project because only that project can build several member assemblies in memory.
+- Behavior note: notification handlers inside one assembly now run in display-name order instead of declaration/namespace walk order.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet build-server shutdown   # the compiler server can keep a stale analyzer DLL loaded
+./bin/dev workflow
+dotnet test tests/timewarp-mediator-generators-tests -c Release --no-build --filter "FullyQualifiedName~HandlerBindingTests"
+dotnet test tests/timewarp-mediator-generators-compilation-tests -c Release --no-build --filter "FullyQualifiedName~MemberAssemblyOrderTests"
+ganda repo audit
+```
+
+Expect: `Pipeline SUCCEEDED`. HandlerBindingTests: 6 passed. MemberAssemblyOrderTests: 3 passed. The generators-tests project builds with no TWM001 for `GetOrderLabel` / `ArchiveOrder` and no TWM002 for `GetInvoiceTotal`. `ganda repo audit` reports "Repository passes all audit checks."
+
 ## Session
 
 - Created: 686431 (2026-10-11)
+- 2026-10-12 implement (claude-opus-5-5, ganda task work): discovery, emitter registration, ordering, docs, tests; `./bin/dev workflow` green; `ganda repo audit` clean.

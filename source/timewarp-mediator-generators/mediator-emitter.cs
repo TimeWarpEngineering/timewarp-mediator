@@ -574,14 +574,16 @@ internal static class MediatorEmitter
             if (registered.Add(handlerType))
             {
                 builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<").Append(handlerType).AppendLine(">(services);");
-                if (request.IsUnitResponse)
-                {
-                    builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::TimeWarp.Mediator.IRequestHandler<").Append(Fq(request.RequestType)).Append(">>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(handlerType).AppendLine(">(sp));");
-                }
-                else
-                {
-                    builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::TimeWarp.Mediator.IRequestHandler<").Append(Fq(request.RequestType)).Append(", ").Append(Fq(request.ResponseType)).Append(">>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(handlerType).AppendLine(">(sp));");
-                }
+            }
+
+            // One class may handle several requests: each closed interface gets its own forward.
+            if (request.IsUnitResponse)
+            {
+                builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::TimeWarp.Mediator.IRequestHandler<").Append(Fq(request.RequestType)).Append(">>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(handlerType).AppendLine(">(sp));");
+            }
+            else
+            {
+                builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::TimeWarp.Mediator.IRequestHandler<").Append(Fq(request.RequestType)).Append(", ").Append(Fq(request.ResponseType)).Append(">>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(handlerType).AppendLine(">(sp));");
             }
 
             foreach (INamedTypeSymbol behavior in request.ClosedBehaviors)
@@ -602,12 +604,11 @@ internal static class MediatorEmitter
             foreach (INamedTypeSymbol handler in notification.HandlerTypes)
             {
                 string handlerType = Fq(handler);
-                if (!registered.Add(handlerType))
+                if (registered.Add(handlerType))
                 {
-                    continue;
+                    builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<").Append(handlerType).AppendLine(">(services);");
                 }
 
-                builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<").Append(handlerType).AppendLine(">(services);");
                 builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::TimeWarp.Mediator.INotificationHandler<").Append(Fq(notification.NotificationType)).Append(">>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(handlerType).AppendLine(">(sp));");
             }
         }
