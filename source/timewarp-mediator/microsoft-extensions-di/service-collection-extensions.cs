@@ -4,7 +4,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Extensions to scan for Mediator handlers and register them.
-/// - Scans for handler interface implementations and registers them under <see cref="MediatorServiceConfiguration.Lifetime"/>
+/// - Scans for handler interface implementations and registers them as <see cref="ServiceLifetime.Transient"/>
 /// - Registers <see cref="IMediator"/>, <see cref="ISender"/>, and <see cref="IPublisher"/> under <see cref="MediatorServiceConfiguration.Lifetime"/>
 /// - Registers <see cref="RequestPreProcessorBehavior{TRequest,TResponse}"/> and <see cref="RequestPostProcessorBehavior{TRequest,TResponse}"/> when pre- or post-processors are configured
 /// After calling AddMediator you can use the container to resolve an <see cref="IMediator"/> instance.
