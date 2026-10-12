@@ -11,6 +11,10 @@
 // Sender and Publisher with a disjoint type switch — no runtime "is this my message?" filter.
 // Every emitted type is internal in every profile: each host emits the same type names, so
 // public types collide (CS0436) in any compilation that references two hosts.
+// Send(object) cases and Publish(object) type tests are ordered most-derived first (TypeOrder).
+// Publish delivers to every bound notification type the object is assignable to (MediatR
+// contravariance). Pattern locals are indexed (r0, n0), never derived from type names, and
+// sanitized member names come from MemberNames so A.B_C and A_B.C cannot share Dispatch_*.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -21,31 +25,33 @@ internal static class MediatorEmitter
 
     internal static void Emit(SourceProductionContext context, MessageGraph graph)
     {
-        context.AddSource("Mediator.g.cs", SourceText.From(EmitMediator(graph), Encoding.UTF8));
+        MemberNames names = new(graph);
+        context.AddSource("Mediator.g.cs", SourceText.From(EmitMediator(graph, names), Encoding.UTF8));
 
         foreach (INamedTypeSymbol scope in DistinctScopes(graph))
         {
-            string suffix = ScopeSuffix(scope, graph);
+            string suffix = ScopeSuffix(scope, graph, names);
             context.AddSource(
                 "Sender_" + suffix + ".g.cs",
-                SourceText.From(EmitScopedSender(graph, scope, suffix), Encoding.UTF8));
+                SourceText.From(EmitScopedSender(graph, names, scope, suffix), Encoding.UTF8));
             context.AddSource(
                 "Publisher_" + suffix + ".g.cs",
-                SourceText.From(EmitScopedPublisher(graph, scope, suffix), Encoding.UTF8));
+                SourceText.From(EmitScopedPublisher(graph, names, scope, suffix), Encoding.UTF8));
         }
 
         if (!graph.IsAotProfile)
         {
-            context.AddSource("MediatorServiceCollectionExtensions.g.cs", SourceText.From(EmitRegistration(graph), Encoding.UTF8));
+            context.AddSource("MediatorServiceCollectionExtensions.g.cs", SourceText.From(EmitRegistration(graph, names), Encoding.UTF8));
         }
     }
 
-    private static string EmitMediator(MessageGraph graph)
+    private static string EmitMediator(MessageGraph graph, MemberNames names)
     {
         List<RequestBinding> requests = RequestsFor(graph, scope: null);
         List<NotificationBinding> notifications = NotificationsFor(graph, scope: null);
         return EmitDispatcher(
             graph,
+            names,
             className: "Mediator",
             interfaceList: "global::TimeWarp.Mediator.IMediator",
             requests,
@@ -55,11 +61,12 @@ internal static class MediatorEmitter
             includeServiceGen: graph.IsAotProfile);
     }
 
-    private static string EmitScopedSender(MessageGraph graph, INamedTypeSymbol scope, string suffix)
+    private static string EmitScopedSender(MessageGraph graph, MemberNames names, INamedTypeSymbol scope, string suffix)
     {
         List<RequestBinding> requests = RequestsFor(graph, scope);
         return EmitDispatcher(
             graph,
+            names,
             className: "Sender_" + suffix,
             interfaceList: "global::TimeWarp.Mediator.ISender<" + Fq(scope) + ">",
             requests,
@@ -69,11 +76,12 @@ internal static class MediatorEmitter
             includeServiceGen: false);
     }
 
-    private static string EmitScopedPublisher(MessageGraph graph, INamedTypeSymbol scope, string suffix)
+    private static string EmitScopedPublisher(MessageGraph graph, MemberNames names, INamedTypeSymbol scope, string suffix)
     {
         List<NotificationBinding> notifications = NotificationsFor(graph, scope);
         return EmitDispatcher(
             graph,
+            names,
             className: "Publisher_" + suffix,
             interfaceList: "global::TimeWarp.Mediator.IPublisher<" + Fq(scope) + ">",
             requests: new List<RequestBinding>(),
@@ -85,6 +93,7 @@ internal static class MediatorEmitter
 
     private static string EmitDispatcher(
         MessageGraph graph,
+        MemberNames names,
         string className,
         string interfaceList,
         List<RequestBinding> requests,
@@ -104,7 +113,7 @@ internal static class MediatorEmitter
 
         if (includeServiceGen)
         {
-            EmitServiceGen(builder, graph);
+            EmitServiceGen(builder, graph, names);
         }
 
         builder.Append("internal sealed class ").Append(className).Append(" : ").AppendLine(interfaceList);
@@ -134,15 +143,15 @@ internal static class MediatorEmitter
         if (includeSend)
         {
             EmitInterfaceSend(builder);
-            EmitMonomorphicSend(builder, requests, aot);
-            EmitObjectSend(builder, requests, aot);
+            EmitMonomorphicSend(builder, names, requests, aot);
+            EmitObjectSend(builder, names, requests, aot);
             EmitStreams(builder);
-            EmitDispatchMethods(builder, requests, aot);
+            EmitDispatchMethods(builder, names, requests, aot);
         }
 
         if (includePublish)
         {
-            EmitPublish(builder, notifications, aot);
+            EmitPublish(builder, names, notifications, aot);
         }
 
         if (includeSend)
@@ -159,14 +168,14 @@ internal static class MediatorEmitter
         return builder.ToString();
     }
 
-    private static void EmitServiceGen(StringBuilder builder, MessageGraph graph)
+    private static void EmitServiceGen(StringBuilder builder, MessageGraph graph, MemberNames names)
     {
         builder.AppendLine("internal static class ServiceGen");
         builder.AppendLine("{");
         HashSet<string> emitted = new();
         foreach (RequestBinding request in graph.Requests)
         {
-            string field = HandlerFieldName(request.HandlerType);
+            string field = names.For(request.HandlerType);
             string typeName = Fq(request.HandlerType);
             if (!emitted.Add(typeName))
             {
@@ -181,7 +190,7 @@ internal static class MediatorEmitter
         {
             foreach (INamedTypeSymbol handler in notification.HandlerTypes)
             {
-                string field = HandlerFieldName(handler);
+                string field = names.For(handler);
                 string typeName = Fq(handler);
                 if (!emitted.Add(typeName))
                 {
@@ -228,13 +237,13 @@ internal static class MediatorEmitter
         builder.AppendLine();
     }
 
-    private static void EmitMonomorphicSend(StringBuilder builder, List<RequestBinding> requests, bool aot)
+    private static void EmitMonomorphicSend(StringBuilder builder, MemberNames names, List<RequestBinding> requests, bool aot)
     {
         foreach (RequestBinding request in requests)
         {
             string requestType = Fq(request.RequestType);
             string responseType = Fq(request.ResponseType);
-            string dispatch = DispatchName(request.RequestType);
+            string dispatch = "Dispatch_" + names.For(request.RequestType);
             builder.Append("    public global::System.Threading.Tasks.ValueTask<").Append(responseType).Append("> Send(");
             builder.Append(requestType).AppendLine(" request, global::System.Threading.CancellationToken cancellationToken = default)");
             builder.AppendLine("    {");
@@ -255,7 +264,7 @@ internal static class MediatorEmitter
         }
     }
 
-    private static void EmitObjectSend(StringBuilder builder, List<RequestBinding> requests, bool aot)
+    private static void EmitObjectSend(StringBuilder builder, MemberNames names, List<RequestBinding> requests, bool aot)
     {
         builder.AppendLine("    public global::System.Threading.Tasks.Task<object?> Send(object request, global::System.Threading.CancellationToken cancellationToken = default)");
         builder.AppendLine("    {");
@@ -266,18 +275,23 @@ internal static class MediatorEmitter
         builder.AppendLine();
         builder.AppendLine("        switch (request)");
         builder.AppendLine("        {");
-        HashSet<string> seen = new();
+        // Most-derived first: a base case before its derived case is CS8120. Locals are indexed so a
+        // type named Request, Object, or Lock cannot shadow a parameter or hit a keyword.
+        Dictionary<INamedTypeSymbol, RequestBinding> firstByType = new(SymbolEqualityComparer.Default);
         foreach (RequestBinding request in requests)
         {
-            string requestType = Fq(request.RequestType);
-            if (!seen.Add(requestType))
+            if (!firstByType.ContainsKey(request.RequestType))
             {
-                continue;
+                firstByType.Add(request.RequestType, request);
             }
+        }
 
-            string local = LocalName(request.RequestType);
-            string dispatch = DispatchName(request.RequestType);
-            builder.Append("            case ").Append(requestType).Append(' ').Append(local).AppendLine(":");
+        int index = 0;
+        foreach (INamedTypeSymbol requestType in TypeOrder.MostDerivedFirst(firstByType.Keys))
+        {
+            string local = "r" + index;
+            string dispatch = "Dispatch_" + names.For(firstByType[requestType].RequestType);
+            builder.Append("            case ").Append(Fq(requestType)).Append(' ').Append(local).AppendLine(":");
             builder.Append("                return Box(").Append(dispatch).Append('(');
             if (!aot)
             {
@@ -285,6 +299,7 @@ internal static class MediatorEmitter
             }
 
             builder.Append(local).AppendLine(", cancellationToken));");
+            index++;
         }
 
         builder.AppendLine("            default:");
@@ -294,7 +309,7 @@ internal static class MediatorEmitter
         builder.AppendLine();
     }
 
-    private static void EmitPublish(StringBuilder builder, List<NotificationBinding> notifications, bool aot)
+    private static void EmitPublish(StringBuilder builder, MemberNames names, List<NotificationBinding> notifications, bool aot)
     {
         builder.AppendLine("    public global::System.Threading.Tasks.Task Publish<TNotification>(TNotification notification, global::System.Threading.CancellationToken cancellationToken = default)");
         builder.AppendLine("        where TNotification : global::TimeWarp.Mediator.INotification");
@@ -314,33 +329,48 @@ internal static class MediatorEmitter
         builder.AppendLine("            throw new global::System.ArgumentNullException(nameof(notification));");
         builder.AppendLine("        }");
         builder.AppendLine();
-        builder.AppendLine("        switch (notification)");
-        builder.AppendLine("        {");
-        HashSet<string> seen = new();
-        foreach (NotificationBinding notification in notifications)
+        if (notifications.Count == 0)
         {
-            string typeName = Fq(notification.NotificationType);
-            if (!seen.Add(typeName))
-            {
-                continue;
-            }
-
-            string local = LocalName(notification.NotificationType);
-            builder.Append("            case ").Append(typeName).Append(' ').Append(local).AppendLine(":");
-            builder.Append("                return Publish_").Append(MessageGraphBuilder.Sanitize(notification.NotificationType));
-            builder.Append('(').Append(local).AppendLine(", cancellationToken);");
+            builder.AppendLine("        return global::System.Threading.Tasks.Task.CompletedTask;");
+            builder.AppendLine("    }");
+            builder.AppendLine();
+            return;
         }
 
-        builder.AppendLine("            default:");
-        builder.AppendLine("                return global::System.Threading.Tasks.Task.CompletedTask;");
-        builder.AppendLine("        }");
+        builder.AppendLine("        return PublishCore(notification, cancellationToken);");
+        builder.AppendLine("    }");
+        builder.AppendLine();
+
+        // Contravariant delivery (MediatR parity): every bound notification type the runtime object
+        // is assignable to gets its handlers, most-derived type first. Separate if statements, not a
+        // switch, so a Derived notification also reaches INotificationHandler<Base>.
+        builder.AppendLine("    private async global::System.Threading.Tasks.Task PublishCore(object notification, global::System.Threading.CancellationToken cancellationToken)");
+        builder.AppendLine("    {");
+        List<INamedTypeSymbol> notificationTypes = new();
+        foreach (NotificationBinding notification in notifications)
+        {
+            notificationTypes.Add(notification.NotificationType);
+        }
+
+        int caseIndex = 0;
+        foreach (INamedTypeSymbol notificationType in TypeOrder.MostDerivedFirst(notificationTypes))
+        {
+            string local = "n" + caseIndex;
+            builder.Append("        if (notification is ").Append(Fq(notificationType)).Append(' ').Append(local).AppendLine(")");
+            builder.AppendLine("        {");
+            builder.Append("            await Publish_").Append(names.For(notificationType));
+            builder.Append('(').Append(local).AppendLine(", cancellationToken).ConfigureAwait(false);");
+            builder.AppendLine("        }");
+            caseIndex++;
+        }
+
         builder.AppendLine("    }");
         builder.AppendLine();
 
         foreach (NotificationBinding notification in notifications)
         {
             string typeName = Fq(notification.NotificationType);
-            string method = "Publish_" + MessageGraphBuilder.Sanitize(notification.NotificationType);
+            string method = "Publish_" + names.For(notification.NotificationType);
             builder.Append("    private ");
             if (!aot)
             {
@@ -358,7 +388,7 @@ internal static class MediatorEmitter
                 if (aot)
                 {
                     builder.Append("        ").Append(handlerType).Append(' ').Append(variable);
-                    builder.Append(" = ServiceGen.").Append(HandlerFieldName(handler)).AppendLine(";");
+                    builder.Append(" = ServiceGen.").Append(names.For(handler)).AppendLine(";");
                 }
                 else
                 {
@@ -390,14 +420,14 @@ internal static class MediatorEmitter
         builder.AppendLine();
     }
 
-    private static void EmitDispatchMethods(StringBuilder builder, List<RequestBinding> requests, bool aot)
+    private static void EmitDispatchMethods(StringBuilder builder, MemberNames names, List<RequestBinding> requests, bool aot)
     {
         foreach (RequestBinding request in requests)
         {
             string requestType = Fq(request.RequestType);
             string responseType = Fq(request.ResponseType);
             string handlerType = Fq(request.HandlerType);
-            string dispatch = DispatchName(request.RequestType);
+            string dispatch = "Dispatch_" + names.For(request.RequestType);
             builder.Append("    public static async global::System.Threading.Tasks.ValueTask<").Append(responseType).Append("> ").Append(dispatch).Append('(');
             if (!aot)
             {
@@ -424,7 +454,7 @@ internal static class MediatorEmitter
 
             if (aot)
             {
-                builder.Append("        ").Append(handlerType).Append(" handler = ServiceGen.").Append(HandlerFieldName(request.HandlerType)).AppendLine(";");
+                builder.Append("        ").Append(handlerType).Append(" handler = ServiceGen.").Append(names.For(request.HandlerType)).AppendLine(";");
             }
             else
             {
@@ -489,7 +519,7 @@ internal static class MediatorEmitter
         builder.Append(", t").Append(behaviorIndex).Append(" == default ? cancellationToken : t").Append(behaviorIndex).Append(')');
     }
 
-    private static string EmitRegistration(MessageGraph graph)
+    private static string EmitRegistration(MessageGraph graph, MemberNames names)
     {
         string ns = graph.Membership.GeneratedNamespace;
         StringBuilder builder = new();
@@ -530,7 +560,7 @@ internal static class MediatorEmitter
             builder.AppendLine();
             foreach (INamedTypeSymbol scope in scopes)
             {
-                string suffix = ScopeSuffix(scope, graph);
+                string suffix = ScopeSuffix(scope, graph, names);
                 builder.Append("        if (typeof(TScope) == typeof(").Append(Fq(scope)).AppendLine("))");
                 builder.AppendLine("        {");
                 builder.Append("            AddGeneratedMediator_").Append(suffix).AppendLine("(services);");
@@ -543,7 +573,7 @@ internal static class MediatorEmitter
 
             foreach (INamedTypeSymbol scope in scopes)
             {
-                string suffix = ScopeSuffix(scope, graph);
+                string suffix = ScopeSuffix(scope, graph, names);
                 string senderType = ns + ".Sender_" + suffix;
                 string publisherType = ns + ".Publisher_" + suffix;
                 builder.AppendLine();
@@ -619,33 +649,6 @@ internal static class MediatorEmitter
         return type.ToDisplayString(FullyQualified);
     }
 
-    private static string DispatchName(INamedTypeSymbol requestType)
-    {
-        return "Dispatch_" + MessageGraphBuilder.Sanitize(requestType);
-    }
-
-    private static string HandlerFieldName(INamedTypeSymbol handlerType)
-    {
-        return MessageGraphBuilder.Sanitize(handlerType);
-    }
-
-    private static string LocalName(INamedTypeSymbol type)
-    {
-        string name = type.Name;
-        if (string.IsNullOrEmpty(name))
-        {
-            return "value";
-        }
-
-        char first = char.ToLowerInvariant(name[0]);
-        if (name.Length == 1)
-        {
-            return first.ToString();
-        }
-
-        return first + name.Substring(1);
-    }
-
     private static List<INamedTypeSymbol> DistinctScopes(MessageGraph graph)
     {
         List<INamedTypeSymbol> scopes = new();
@@ -681,7 +684,7 @@ internal static class MediatorEmitter
         scopes.Add(scope);
     }
 
-    private static string ScopeSuffix(INamedTypeSymbol scope, MessageGraph graph)
+    private static string ScopeSuffix(INamedTypeSymbol scope, MessageGraph graph, MemberNames names)
     {
         int sameName = 0;
         foreach (INamedTypeSymbol candidate in DistinctScopes(graph))
@@ -692,7 +695,7 @@ internal static class MediatorEmitter
             }
         }
 
-        return sameName <= 1 ? scope.Name : MessageGraphBuilder.Sanitize(scope);
+        return sameName <= 1 ? scope.Name : names.For(scope);
     }
 
     private static List<RequestBinding> RequestsFor(MessageGraph graph, INamedTypeSymbol? scope)

@@ -59,6 +59,13 @@ Hosts that reference the generator package get `TimeWarpMediatorAssembly=true` f
 - **Inherited bindings do not repeat.** If a concrete, non-generic base class in a member assembly already handles an interface, a derived class does not get a second binding for it. `class B : A` is not a TWM002 duplicate, and a notification is not published to it twice. A derived class still binds the interfaces it adds itself. Abstract or generic bases (`HandlerBase<T>`) are not bound themselves, so their closed derived classes bind normally.
 - **Deterministic order.** Member assemblies are walked in ordinal order of assembly name, and each handler list is sorted ordinally by fully qualified display name. Notification handlers run in that order. The TWM002 message lists handlers in that order and points at the second one. The generated source does not depend on reference order or hash-set order.
 
+## Type switch and notification variance
+
+- **`Send(object)` is most-derived first.** Request cases are ordered so a derived request type comes before every base class or interface it implements (ordinal display name breaks ties). A `ZDerived : ABase` request with its own handler dispatches to that handler, and the generated switch never hits CS8120. A runtime request type with no handler of its own dispatches through the first bound supertype in that order.
+- **`Publish` is contravariant (MediatR parity).** `Publish(notification)` runs the handlers of **every** bound notification type the runtime object is assignable to: its own type, base classes, and interfaces (`INotificationHandler<IAuditEvent>` receives every notification that implements `IAuditEvent`). Types run most-derived first, then each type's handlers in display-name order. A derived notification with no handler of its own still reaches its bases' handlers. A class that handles both `Base` and `Derived` is called once per interface. Assignability is the base-class chain plus implemented interfaces; generic variance on a notification interface (`IEvent<out T>`) is not modelled.
+- **Named pipelines** apply the same rules within one `TScope`: delivery only reaches handlers bound in that scope.
+- **Generated names are safe.** Pattern locals are fixed (`r0`, `n0`), so a message named `Request`, `Object`, `Lock`, `Params`, or `Base` compiles. `Dispatch_*`, `Publish_*`, and `ServiceGen` members use the sanitized fully qualified name; when two types sanitize to the same name (`A.B_C` and `A_B.C`), both get a stable hash suffix (`Dispatch_global__A_B_C_1a2b3c4d`). Non-colliding names are unchanged.
+
 ## Deferred
 
 | Item | Where |
