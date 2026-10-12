@@ -8,6 +8,8 @@
     <PackageId>TimeWarp.Mediator</PackageId>
     <!-- Shipped package: every public member must be documented (root props suppress CS1591 for tests/samples). -->
     <NoWarn>$(NoWarn.Replace('CS1591', ''))</NoWarn>
+    <!-- Derived from Apache-2.0 MediatR code (task 013-016); the packed notice names the Apache portion. -->
+    <PackageLicenseExpression>Unlicense AND Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

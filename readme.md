@@ -229,4 +229,4 @@ With additional methods for open generics and overloads for explicit service typ
 
 ## License
 
-TimeWarp Mediator is released under The Unlicense (see `UNLICENSE`). Original MediatR code by Jimmy Bogard is under Apache 2.0 (see `NOTICE`).
+TimeWarp Mediator is released under The Unlicense (see `unlicense`). Original MediatR code by Jimmy Bogard is under Apache 2.0 (see `notice`).

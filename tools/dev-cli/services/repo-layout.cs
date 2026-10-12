@@ -21,13 +21,19 @@ internal static class RepoLayout
     "source/timewarp-mediator-generators/timewarp-mediator-generators.csproj"
   ];
 
+  // Every nupkg carries the Apache-2.0 notice for the MediatR-derived code and the Unlicense text.
+  private static readonly string[] LicenseEntries = ["notice", "unlicense"];
+
   internal static readonly (string PackageId, string[] RequiredEntries)[] PackageLayout =
   [
-    ("TimeWarp.Mediator.Analyzers", ["analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll"]),
+    ("TimeWarp.Mediator", ["lib/net10.0/TimeWarp.Mediator.dll", .. LicenseEntries]),
+    ("TimeWarp.Mediator.Contracts", ["lib/net10.0/TimeWarp.Mediator.Contracts.dll", .. LicenseEntries]),
+    ("TimeWarp.Mediator.Analyzers", ["analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll", .. LicenseEntries]),
     ("TimeWarp.Mediator.Generators",
     [
       "analyzers/dotnet/cs/TimeWarp.Mediator.Generators.dll",
-      "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll"
+      "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll",
+      .. LicenseEntries
     ])
   ];
 
