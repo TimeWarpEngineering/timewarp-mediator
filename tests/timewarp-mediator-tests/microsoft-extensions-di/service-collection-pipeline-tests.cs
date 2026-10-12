@@ -2,7 +2,7 @@
 
 namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
-public class PipelineTests
+public class ServiceCollectionPipelineTests
 {
     public class OuterBehavior : IPipelineBehavior<Ping, Pong>
     {
@@ -938,6 +938,9 @@ public class PipelineTests
         services.AddSingleton(new TimeWarp.Mediator.Tests.PipelineTests.Logger());
         services.AddSingleton(new TimeWarp.Mediator.Tests.StreamPipelineTests.Logger());
         services.AddSingleton(new TimeWarp.Mediator.Tests.SendTests.Dependency());
+        services.AddSingleton(new TimeWarp.Mediator.Tests.NotificationPublisherTests.HandlerGate());
+        services.AddSingleton(new TimeWarp.Mediator.Tests.VarianceTests.EventLog());
+        services.AddSingleton(new PipelineMultiCallToConstructorTests.ConstructorCallCounter());
         services.AddSingleton<System.IO.TextWriter>(new System.IO.StringWriter());
         services.AddTransient(typeof(IBlogger<>), typeof(Blogger<>));
         ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions
@@ -1029,6 +1032,9 @@ public class PipelineTests
         services.AddSingleton(new TimeWarp.Mediator.Tests.PipelineTests.Logger());
         services.AddSingleton(new TimeWarp.Mediator.Tests.StreamPipelineTests.Logger());
         services.AddSingleton(new TimeWarp.Mediator.Tests.SendTests.Dependency());
+        services.AddSingleton(new TimeWarp.Mediator.Tests.NotificationPublisherTests.HandlerGate());
+        services.AddSingleton(new TimeWarp.Mediator.Tests.VarianceTests.EventLog());
+        services.AddSingleton(new PipelineMultiCallToConstructorTests.ConstructorCallCounter());
         services.AddSingleton<System.IO.TextWriter>(new System.IO.StringWriter());
         services.AddTransient(typeof(IBlogger<>), typeof(Blogger<>));
         ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions

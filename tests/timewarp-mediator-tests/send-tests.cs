@@ -153,23 +153,32 @@ public class SendTests
         }
     }
 
+    public interface ITimeoutRequest
+    {
+    }
+
+    /// <summary>
+    /// Stands in for a timeout: starts the handler with its own token, then cancels that token
+    /// explicitly instead of waiting for a timer to fire.
+    /// </summary>
     public class TimeoutBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-        where TRequest : notnull
+        where TRequest : ITimeoutRequest
     {
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
-            using (CancellationTokenSource cts = new(500))
-            {
-                return await next(cts.Token);
-            }
+            using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            Task<TResponse> handlerTask = next(cts.Token);
+            handlerTask.IsCompleted.ShouldBeFalse();
+            await cts.CancelAsync();
+            return await handlerTask;
         }
     }
 
-    public class TimeoutRequest : IRequest
+    public class TimeoutRequest : IRequest, ITimeoutRequest
     {
     }
 
-    public class TimeoutRequest2 : IRequest<int>
+    public class TimeoutRequest2 : IRequest<int>, ITimeoutRequest
     {
     }
 
@@ -181,7 +190,7 @@ public class SendTests
 
         public async Task Handle(TimeoutRequest request, CancellationToken cancellationToken)
         {
-            await Task.Delay(2000, cancellationToken);
+            await Task.Delay(Timeout.Infinite, cancellationToken);
 
             _dependency.Called = true;
         }
@@ -195,7 +204,7 @@ public class SendTests
 
         public async Task<int> Handle(TimeoutRequest2 request, CancellationToken cancellationToken)
         {
-            await Task.Delay(2000, cancellationToken);
+            await Task.Delay(Timeout.Infinite, cancellationToken);
 
             _dependency.Called = true;
             return 1;

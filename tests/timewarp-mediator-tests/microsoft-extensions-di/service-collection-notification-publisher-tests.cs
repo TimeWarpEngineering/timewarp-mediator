@@ -2,7 +2,7 @@
 
 namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
-public class NotificationPublisherTests
+public class ServiceCollectionNotificationPublisherTests
 {
     public class MockPublisher : INotificationPublisher
     {
