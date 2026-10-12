@@ -82,35 +82,8 @@ stable reflection line.
 GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52)
 stays **open** until a **stable 14.0.0**. This beta does not close that issue.
 
-### Changes in 14.0.0-beta.4
-
-- Generated types are now `internal` in every profile (Host, Aot, Link): `Mediator`,
-  `Sender_*` / `Publisher_*`, `MediatorManifest`, and `GeneratedMediatorServiceCollectionExtensions`.
-  Every host emits the same type names, so public types produced CS0436 warnings (and ambiguous
-  `AddGeneratedMediator()` calls, CS0121) in any compilation that referenced two hosts, for
-  example a test project that references two apps. `AddGeneratedMediator()` stays callable from
-  the host's own code; it is no longer visible to assemblies that reference the host.
-  `InternalsVisibleTo` re-exposes them: a project that is a friend of two hosts still sees
-  duplicate generated types.
-- Consumers: a build step that strips the generator from a library compile only to avoid an
-  ambiguous public `AddGeneratedMediator()` is no longer needed.
-
-### Changes in 14.0.0-beta.3
-
-- Generator fix ([#68](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/68)):
-  an explicit `ICommand<Unit>` handled by `IRequestHandler<TCommand, Unit>` is now registered and
-  dispatched as the two-arity handler (it previously emitted the void `IRequestHandler<TCommand>`
-  and failed with CS0311). Void dispatch now comes only from `IRequestHandler<TRequest>`.
-- Generator fix ([#68](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/68)):
-  handlers whose response is not a named type (for example `IQuery<SearchResult[]>`) are now
-  discovered and dispatched, and pipeline behaviors close over those responses (previously TWM001).
-
-### Changes in 14.0.0-beta.2
-
-- Contracts add `IIdempotent`, `IIdempotentCommand` / `IIdempotentCommand<T>`, and
-  `IIdempotentCommandHandler<>` / `IIdempotentCommandHandler<,>`. `IQuery<T>` now implements
-  `IIdempotent` (additive). Both dispatchers treat idempotent commands exactly like `ICommand`.
-  Types only: no idempotency-key enforcement or dedup store.
+Per-beta changes (beta.1 to beta.4 and unreleased work) are in the
+[14.0.0 release notes](./release-notes/release-notes-v14.0.0.md).
 
 ## Packages for a generated host
 

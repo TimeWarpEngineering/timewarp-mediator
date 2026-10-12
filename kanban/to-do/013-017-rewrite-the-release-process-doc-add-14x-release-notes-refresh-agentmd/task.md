@@ -16,9 +16,9 @@
 
 ## Checklist
 
-- [ ] overview.md rewritten and verified against workflow.yml and dev-cli
-- [ ] release-notes folder with v13 and v14.0.0-beta notes
-- [ ] agent.md refreshed
+- [x] overview.md rewritten and verified against workflow.yml and dev-cli
+- [x] release-notes folder with v13 and v14.0.0-beta notes
+- [x] agent.md refreshed
 - [ ] PR with merge commit
 
 ## Notes
@@ -28,3 +28,44 @@ Parent: 013.
 ## Session
 
 - Created: 686431 (2026-10-11)
+- Implementer: claude (ganda task work, 2026-10-12)
+
+## Results
+
+- `documentation/overview.md` rewritten from `.github/workflows/workflow.yml` and `tools/dev-cli`:
+  four packages, single `<Version>` in `source/Directory.Build.props` (no MinVer, no MyGet), the
+  `ci` / `publish` jobs and their triggers, the four release guards, OIDC trusted publishing,
+  version bump PR then `dev release [--dry-run]`, break-glass (`--ref v<Version>`,
+  `confirm=release`) and probe modes, analyzer release tracking, and local dev commands. Links
+  the `tw-release` skill and notes that this repo rebuilds from the tag instead of promoting the
+  CI artifact.
+- `git mv release-notes-v13.0.0.md documentation/release-notes/`.
+- `documentation/release-notes/release-notes-v14.0.0.md`: not-a-drop-in warning up front, the
+  existing post-beta.4 content under "Unreleased (next 14.0.0 beta)", and new beta.4, beta.3,
+  beta.2 and beta.1 sections (from git tags `v14.0.0-beta.1`..`.4`, `generated-vs-legacy.md` and
+  `m1-generated-mediator.md`). The per-beta changelog in `generated-vs-legacy.md` is replaced by a
+  link to the notes.
+- `readme.md` links both release notes.
+- `agent.md`: dev CLI command table (incl. `verify-samples`, `check-version`, `release`, `clean`),
+  four-package table from the csproj files, accurate `microsoft-extensions-di/` description,
+  kebab-case test project list, warnings-as-errors scoped (tests/samples opt out), release pointer.
+- Checked: `./bin/dev check-version` refuses 14.0.0-beta.4 as already published (matches doc);
+  `./bin/dev release --dry-run` runs its guards (refused on dirty tree, as documented).
+
+### How to validate
+
+Smoke:
+
+```bash
+grep -nE "ci-cd.yml|MinVer|MyGet|MYGET|build-and-publish|12\.[45]\.0" documentation/overview.md agent.md
+ls documentation/release-notes/ && test ! -e release-notes-v13.0.0.md
+grep -n "release-notes" readme.md agent.md
+./bin/dev --help
+grep -nE "mode|confirm|id-token|Release guards" .github/workflows/workflow.yml
+```
+
+Expect: the first grep prints nothing; `documentation/release-notes/` holds
+`release-notes-v13.0.0.md` and `release-notes-v14.0.0.md` and no root copy exists; readme and
+agent.md link the release notes; every command named in overview.md and agent.md appears in
+`./bin/dev --help`; the workflow modes, `confirm=release` gate, `id-token: write` on `publish` and
+the guard step match what overview.md describes.
