@@ -7,8 +7,8 @@
 // (no test gate). Until 006-003, pack reads root Directory.Build.props Version
 // while shared check-version reads source/; AssertVersionSsot fails the pipeline
 // if they drift. Handlers are invoked directly so CI does not need a
-// pre-installed ./bin/dev. Push is skipped when no API key is supplied
-// (local pack-only).
+// pre-installed ./bin/dev. CI passes the OIDC key via NUGET_API_KEY env (never
+// argv). Push is skipped when no API key is supplied (local pack-only).
 #endregion
 
 namespace DevCli.Commands;
