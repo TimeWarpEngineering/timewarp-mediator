@@ -40,6 +40,7 @@ Parent: 013.
 
 - Created: 686431 (2026-10-11)
 - Implemented: 2026-10-12 (implement oracle)
+- Review: Grok session 01a12f68-d196-7263-b637-322de95fe26c (2026-10-12)
 
 ## Results
 
@@ -47,10 +48,11 @@ New diagnostics TWM007–TWM011, all generator-only, reported through `MessageGr
 The analyzer-only package still reports only TWM001–TWM004.
 
 - **G-9, TWM007 (Error).** `AccessGuard` in `MessageGraphBuilder` uses `compilation.IsSymbolAccessibleWithin`.
-  It checks each handler, request, response, notification, and behavior definition, including generic
-  arguments and array element types. An inaccessible type is not bound. TWM007 fires once per type and
-  suggests `InternalsVisibleTo("<host>")`. The orphaned request does not also get TWM001. Inaccessible
-  request types are no longer collected for TWM001.
+  It checks each handler, request, response, notification, behavior definition, and the pipeline scope
+  marker that generated `ISender<TScope>` / `IPublisher<TScope>` will name, including generic arguments
+  and array element types. An inaccessible type is not bound. TWM007 fires once per type and suggests
+  `InternalsVisibleTo("<host>")`. The orphaned request does not also get TWM001. Inaccessible request
+  types are no longer collected for TWM001. An inaccessible scope skips that request or notification binding.
 - **G-21, TWM008 (Error).** `MediatorGenerator.FindMissingRuntime` runs before the graph is built. It
   needs `TimeWarp.Mediator.IMediator`, and under Host it also needs `IServiceCollection`,
   `ServiceCollectionServiceExtensions`, and `ServiceProviderServiceExtensions`. If any is missing, the
@@ -104,9 +106,10 @@ dotnet test tests/timewarp-mediator-analyzers-tests -c Release --filter "FullyQu
 Expect:
 
 - The workflow ends with `Pipeline SUCCEEDED`. Analyzer tests: 18 passed. Generators tests: 40 passed.
-  Compilation tests: 45 passed. Core tests: 201 passed, 2 skipped. The Generators nupkg layout is verified.
+  Compilation tests: 47 passed. Core tests: 201 passed, 2 skipped. The Generators nupkg layout is verified.
 - `GeneratorDiagnosticsTests`:
   - An internal member handler gives only TWM007, with no CS0122 and no TWM001. With `InternalsVisibleTo` it binds.
+  - An internal assembly-level scope marker gives only TWM007, with no CS0122, and the handlers stay out of the manifest. With `InternalsVisibleTo` the request, notification, and marker bind.
   - No Contracts gives one TWM008 and zero generated trees. Host without MS.DI gives one TWM008. Aot without MS.DI generates.
   - A stream handler and a pre-processor give two TWM009 warnings. The `CreateStream` message has no `004-`.
   - A non-behavior gives TWM010 at the attribute. A constrained or empty-scope behavior gives TWM011.
@@ -118,3 +121,12 @@ Expect:
   - In a host, an unscoped `IMediator` with a scoped request and an `IRequest<int>` with only
     other-pipeline candidates give TWM004.
   - Every descriptor has a help link. TWM001–TWM003 are CompilationEnd.
+
+### Review
+
+- Rounds: 2. Roster: general. Effort: 3.
+- Round 1: 1 open bug (M1). 0 suggestions. 0 nits.
+- M1: an inaccessible pipeline scope marker in a referenced member assembly was still named by generated `ISender<TScope>` / `IPublisher<TScope>` (CS0122). Fixed on this task. Round 2 confirmed it.
+- Final counts: bug 0 open / 1 fixed / 0 wontfix. Suggestion 0. Nit 0.
+- Disposition: **clean**. No wontfix. No escalation.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
