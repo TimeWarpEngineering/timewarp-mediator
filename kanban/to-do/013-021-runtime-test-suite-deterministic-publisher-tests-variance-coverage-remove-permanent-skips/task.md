@@ -38,6 +38,8 @@ exception, stream, create-stream) use it as a second container next to the MS.DI
 "concrete and open generics" tests are ported to MS.DI, which mixes closed and open generic
 registrations in registration order. Lamar does not.
 
+Review trail: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md` (clean, two rounds, general, effort 2).
+
 ## Results
 
 - **D-16:** `tests/timewarp-mediator-tests/notification-publisher-tests.cs` no longer uses
@@ -46,10 +48,13 @@ registrations in registration order. Lamar does not.
   one handler has started while the gate is closed, and that events come in start/end/start/end
   order. The concurrent tests (`TaskWhenAllPublisher` directly, and through
   `NotificationPublisherType`) assert that both handlers start before the gate opens.
-- **D-20:** new `variance-tests.cs` covers contravariant notification dispatch (a derived
-  notification reaches the derived, base-class and interface handlers, but a base notification
-  does not reach the derived handler), `Publish(object)` dispatch on the runtime type, and a
-  contravariant request handler (a `Greeting` handler serving `FormalGreeting`).
+- **D-20:** new `variance-tests.cs` covers the reflection registrar's notification variance.
+  A derived notification reaches the derived, base-class, and interface handlers when those
+  handlers are scanned together, and a base notification does not reach the derived handler.
+  `Publish(object)` dispatches on the runtime type. A base request handler is not bound to a
+  derived request; the derived-request test registers `IRequestHandler<FormalGreeting, string>`
+  explicitly (legal because `TRequest` is contravariant) and checks that the handler sees the
+  runtime type.
 - **D-17:** in `send-tests.cs` the handlers await `Task.Delay(Timeout.Infinite, ct)`.
   `TimeoutBehavior` (constrained to `ITimeoutRequest`) starts the handler, then cancels its linked
   token explicitly. No 500 ms timer or 2 s delays remain.
@@ -68,6 +73,14 @@ registrations in registration order. Lamar does not.
 - Environment note: one local build failed with `TypeLoadException ... MembershipOptions`
   (a stale VBCSCompiler server holding an old Analyzers DLL). `dotnet build-server shutdown`
   fixed it. This is not a code issue.
+
+### Review
+
+- Rounds: 2. Roster: general. Effort: 2 (by-diff, 552 lines).
+- Round 1 counts: suggestion 1 open. No bugs, no nits.
+- Round 2 counts: suggestion 0 open / 1 fixed. No wontfix.
+- Disposition: clean. M1 (`variance-tests.cs` claimed a base handler handles a derived message; the reflection registrar does that for notifications only when a derived handler is scanned, and does not bind a base request handler to a derived request).
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -92,3 +105,4 @@ grep -rn "Skip =\|Stopwatch\|Task.Delay(2000\|Task.Delay(500\|Task.Delay(250" te
 
 - Created: 686431 (2026-10-11)
 - 2026-10-12: implemented D-16..D-21 (implement oracle, Claude).
+- Reviewer: Grok session `01a13050-c2e2-7a30-8756-0c7717742fe5` (2026-10-12)
