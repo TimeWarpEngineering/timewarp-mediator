@@ -2,6 +2,11 @@
 // Emits mediator.manifest.json v1 as the MediatorManifest.Json const (source generators cannot write loose files).
 #endregion
 
+#region Design
+// The manifest lists the pipeline that is emitted: Aot/Link does not weave behaviors (TWM005),
+// so every request lists an empty "behaviors" array in that profile.
+#endregion
+
 namespace TimeWarp.Mediator.Generators;
 
 internal static class ManifestEmitter
@@ -28,6 +33,7 @@ internal static class ManifestEmitter
 
     private static string BuildJson(MessageGraph graph)
     {
+        bool weavesBehaviors = !graph.IsAotProfile;
         StringBuilder builder = new();
         builder.Append('{');
         builder.Append("\"version\":1,");
@@ -51,7 +57,7 @@ internal static class ManifestEmitter
                 builder.Append("\"scope\":\"").Append(Escape(request.ScopeType.ToDisplayString())).Append("\",");
             }
             builder.Append("\"behaviors\":[");
-            for (int b = 0; b < request.ClosedBehaviors.Length; b++)
+            for (int b = 0; weavesBehaviors && b < request.ClosedBehaviors.Length; b++)
             {
                 if (b > 0)
                 {

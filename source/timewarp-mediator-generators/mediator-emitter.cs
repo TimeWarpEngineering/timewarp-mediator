@@ -4,8 +4,9 @@
 
 #region Design
 // Host profile resolves handlers/behaviors from IServiceProvider in compile-time order.
-// Aot profile uses ServiceGen static fields (parameterless handlers only) and does not weave
-// [assembly: MediatorBehavior] into Dispatch_*. CallSiteInlining prototype is the public
+// Aot profile uses ServiceGen static fields (parameterless handlers only, process-wide
+// singletons) and does not weave [assembly: MediatorBehavior] into Dispatch_*; AotProfile reports
+// TWM005/TWM006 for what that drops or cannot construct. CallSiteInlining prototype is the public
 // static Dispatch_* method the interceptors would target.
 // Unscoped Mediator is the default pipeline (no [MediatorScope]). Each TScope gets its own
 // Sender and Publisher with a disjoint type switch — no runtime "is this my message?" filter.
@@ -23,10 +24,10 @@ internal static class MediatorEmitter
 {
     private static readonly SymbolDisplayFormat FullyQualified = SymbolDisplayFormat.FullyQualifiedFormat;
 
-    internal static void Emit(SourceProductionContext context, MessageGraph graph)
+    internal static void Emit(SourceProductionContext context, MessageGraph graph, AotProfile aotProfile)
     {
         MemberNames names = new(graph);
-        context.AddSource("Mediator.g.cs", SourceText.From(EmitMediator(graph, names), Encoding.UTF8));
+        context.AddSource("Mediator.g.cs", SourceText.From(EmitMediator(graph, names, aotProfile), Encoding.UTF8));
 
         foreach (INamedTypeSymbol scope in DistinctScopes(graph))
         {
@@ -45,7 +46,7 @@ internal static class MediatorEmitter
         }
     }
 
-    private static string EmitMediator(MessageGraph graph, MemberNames names)
+    private static string EmitMediator(MessageGraph graph, MemberNames names, AotProfile aotProfile)
     {
         List<RequestBinding> requests = RequestsFor(graph, scope: null);
         List<NotificationBinding> notifications = NotificationsFor(graph, scope: null);
@@ -58,7 +59,8 @@ internal static class MediatorEmitter
             notifications,
             includeSend: true,
             includePublish: true,
-            includeServiceGen: graph.IsAotProfile);
+            includeServiceGen: graph.IsAotProfile,
+            aotProfile);
     }
 
     private static string EmitScopedSender(MessageGraph graph, MemberNames names, INamedTypeSymbol scope, string suffix)
@@ -73,7 +75,8 @@ internal static class MediatorEmitter
             notifications: new List<NotificationBinding>(),
             includeSend: true,
             includePublish: false,
-            includeServiceGen: false);
+            includeServiceGen: false,
+            AotProfile.None);
     }
 
     private static string EmitScopedPublisher(MessageGraph graph, MemberNames names, INamedTypeSymbol scope, string suffix)
@@ -88,7 +91,8 @@ internal static class MediatorEmitter
             notifications,
             includeSend: false,
             includePublish: true,
-            includeServiceGen: false);
+            includeServiceGen: false,
+            AotProfile.None);
     }
 
     private static string EmitDispatcher(
@@ -100,7 +104,8 @@ internal static class MediatorEmitter
         List<NotificationBinding> notifications,
         bool includeSend,
         bool includePublish,
-        bool includeServiceGen)
+        bool includeServiceGen,
+        AotProfile aotProfile)
     {
         string ns = graph.Membership.GeneratedNamespace;
         bool aot = graph.IsAotProfile;
@@ -113,7 +118,7 @@ internal static class MediatorEmitter
 
         if (includeServiceGen)
         {
-            EmitServiceGen(builder, graph, names);
+            EmitServiceGen(builder, graph, names, aotProfile);
         }
 
         builder.Append("internal sealed class ").Append(className).Append(" : ").AppendLine(interfaceList);
@@ -168,7 +173,7 @@ internal static class MediatorEmitter
         return builder.ToString();
     }
 
-    private static void EmitServiceGen(StringBuilder builder, MessageGraph graph, MemberNames names)
+    private static void EmitServiceGen(StringBuilder builder, MessageGraph graph, MemberNames names, AotProfile aotProfile)
     {
         builder.AppendLine("internal static class ServiceGen");
         builder.AppendLine("{");
@@ -182,8 +187,7 @@ internal static class MediatorEmitter
                 continue;
             }
 
-            builder.Append("    internal static readonly ").Append(typeName).Append(' ').Append(field);
-            builder.Append(" = new ").Append(typeName).AppendLine("();");
+            EmitServiceGenField(builder, request.HandlerType, field, typeName, aotProfile);
         }
 
         foreach (NotificationBinding notification in graph.Notifications)
@@ -197,13 +201,32 @@ internal static class MediatorEmitter
                     continue;
                 }
 
-                builder.Append("    internal static readonly ").Append(typeName).Append(' ').Append(field);
-                builder.Append(" = new ").Append(typeName).AppendLine("();");
+                EmitServiceGenField(builder, handler, field, typeName, aotProfile);
             }
         }
 
         builder.AppendLine("}");
         builder.AppendLine();
+    }
+
+    // Handlers are process-wide singletons. An unconstructible handler (TWM006) gets default! so the
+    // TWM006 error is the only one the build reports.
+    private static void EmitServiceGenField(
+        StringBuilder builder,
+        INamedTypeSymbol handler,
+        string field,
+        string typeName,
+        AotProfile aotProfile)
+    {
+        builder.Append("    internal static readonly ").Append(typeName).Append(' ').Append(field);
+        if (aotProfile.UnconstructibleHandlers.Contains(handler))
+        {
+            builder.AppendLine(" = default!;");
+        }
+        else
+        {
+            builder.Append(" = new ").Append(typeName).AppendLine("();");
+        }
     }
 
     private static void EmitInterfaceSend(StringBuilder builder)

@@ -8,3 +8,5 @@ TWM001  | TimeWarp.Mediator | Error | RequestHasNoHandler
 TWM002  | TimeWarp.Mediator | Error | DuplicateHandler
 TWM003  | TimeWarp.Mediator | Error | ScopeMismatch
 TWM004  | TimeWarp.Mediator | Error | WrongScopeSend
+TWM005  | TimeWarp.Mediator | Warning | AotBehaviorNotWoven
+TWM006  | TimeWarp.Mediator | Error | AotHandlerNotConstructible
