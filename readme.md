@@ -49,6 +49,8 @@ stays **open** until a **stable 14.0.0**.
 Comparison: [documentation/generated-vs-legacy.md](./documentation/generated-vs-legacy.md).
 Milestones: [m1-generated-mediator.md](./documentation/m1-generated-mediator.md),
 [m2-named-pipelines.md](./documentation/m2-named-pipelines.md).
+Release notes: [14.0.0 betas](./documentation/release-notes/release-notes-v14.0.0.md),
+[13.0.0](./documentation/release-notes/release-notes-v13.0.0.md).
 
 ---
 
