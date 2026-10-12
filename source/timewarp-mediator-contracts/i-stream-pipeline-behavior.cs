@@ -17,12 +17,12 @@ public delegate IAsyncEnumerable<TResponse> StreamHandlerDelegate<out TResponse>
 /// <typeparam name="TResponse">Response type</typeparam>
 public interface IStreamPipelineBehavior<in TRequest, TResponse> where TRequest : notnull
 {
-    /// <summary>
-    /// Stream Pipeline handler. Perform any additional behavior and iterate the <paramref name="next"/> delegate as necessary
-    /// </summary>
-    /// <param name="request">Incoming request</param>
-    /// <param name="next">Delegate for the next action in the pipeline. Eventually this delegate represents the handler.</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Async enumerable of <typeparamref name="TResponse"/> items</returns>
-    IAsyncEnumerable<TResponse> Handle(TRequest request, StreamHandlerDelegate<TResponse> next, CancellationToken cancellationToken);
+  /// <summary>
+  /// Stream Pipeline handler. Perform any additional behavior and iterate the <paramref name="next"/> delegate as necessary
+  /// </summary>
+  /// <param name="request">Incoming request</param>
+  /// <param name="next">Delegate for the next action in the pipeline. Eventually this delegate represents the handler.</param>
+  /// <param name="cancellationToken">Cancellation token</param>
+  /// <returns>Async enumerable of <typeparamref name="TResponse"/> items</returns>
+  IAsyncEnumerable<TResponse> Handle(TRequest request, StreamHandlerDelegate<TResponse> next, CancellationToken cancellationToken);
 }

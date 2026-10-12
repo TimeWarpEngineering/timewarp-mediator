@@ -5,37 +5,37 @@ namespace TimeWarp.Mediator.Benchmarks;
 [DotTraceDiagnoser]
 public class Benchmarks
 {
-    private IMediator _mediator;
-    private readonly Ping _request = new() { Message = "Hello World"};
-    private readonly Pinged _notification = new();
+  private IMediator Mediator;
+  private readonly Ping Ping = new() { Message = "Hello World" };
+  private readonly Pinged Pinged = new();
 
-    [GlobalSetup]
-    public void GlobalSetup()
+  [GlobalSetup]
+  public void GlobalSetup()
+  {
+    ServiceCollection services = new();
+
+    services.AddSingleton(TextWriter.Null);
+
+    services.AddMediator(cfg =>
     {
-        ServiceCollection services = new();
+      cfg.RegisterServicesFromAssemblyContaining(typeof(Ping));
+      cfg.AddOpenBehavior(typeof(GenericPipelineBehavior<,>));
+    });
 
-        services.AddSingleton(TextWriter.Null);
+    ServiceProvider provider = services.BuildServiceProvider();
 
-        services.AddMediator(cfg =>
-        {
-            cfg.RegisterServicesFromAssemblyContaining(typeof(Ping));
-            cfg.AddOpenBehavior(typeof(GenericPipelineBehavior<,>));
-        });
+    Mediator = provider.GetRequiredService<IMediator>();
+  }
 
-        ServiceProvider provider = services.BuildServiceProvider();
+  [Benchmark]
+  public Task SendingRequests()
+  {
+    return Mediator.Send(Ping);
+  }
 
-        _mediator = provider.GetRequiredService<IMediator>();
-    }
-
-    [Benchmark]
-    public Task SendingRequests()
-    {
-        return _mediator.Send(_request);
-    }
-
-    [Benchmark]
-    public Task PublishingNotifications()
-    {
-        return _mediator.Publish(_notification);
-    }
+  [Benchmark]
+  public Task PublishingNotifications()
+  {
+    return Mediator.Publish(Pinged);
+  }
 }

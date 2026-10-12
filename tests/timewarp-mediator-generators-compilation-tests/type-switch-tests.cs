@@ -7,121 +7,121 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 public sealed class TypeSwitchTests
 {
-    [Theory]
-    [InlineData("Host")]
-    [InlineData("Aot")]
-    public void BaseRequestSortingBeforeDerived_Compiles(string profile)
-    {
-        HostCompilation host = HostCompiler.Compile("BaseBeforeDerived" + profile, HierarchySource, profile);
+  [Theory]
+  [InlineData("Host")]
+  [InlineData("Aot")]
+  public void BaseRequestSortingBeforeDerived_Compiles(string profile)
+  {
+    HostCompilation host = HostCompiler.Compile("BaseBeforeDerived" + profile, HierarchySource, profile);
 
-        Errors(host).ShouldBeEmpty();
-    }
+    Errors(host).ShouldBeEmpty();
+  }
 
-    [Fact]
-    public async Task DerivedRequest_DispatchesToItsOwnHandler()
-    {
-        IMediator mediator = LoadAotMediator("RequestHierarchy", HierarchySource, out Assembly assembly);
+  [Fact]
+  public async Task DerivedRequest_DispatchesToItsOwnHandler()
+  {
+    IMediator mediator = LoadAotMediator("RequestHierarchy", HierarchySource, out Assembly assembly);
 
-        object? derived = await mediator.Send(Activator.CreateInstance(assembly.GetType("Shapes.ZDerivedRequest", true)!)!);
-        object? baseRequest = await mediator.Send(Activator.CreateInstance(assembly.GetType("Shapes.ABaseRequest", true)!)!);
+    object? derived = await mediator.Send(Activator.CreateInstance(assembly.GetType("Shapes.ZDerivedRequest", true)!)!);
+    object? baseRequest = await mediator.Send(Activator.CreateInstance(assembly.GetType("Shapes.ABaseRequest", true)!)!);
 
-        derived.ShouldBe("derived");
-        baseRequest.ShouldBe("base");
-    }
+    derived.ShouldBe("derived");
+    baseRequest.ShouldBe("base");
+  }
 
-    [Fact]
-    public async Task DerivedNotification_ReachesBaseAndInterfaceHandlers()
-    {
-        IMediator mediator = LoadAotMediator("NotificationHierarchy", HierarchySource, out Assembly assembly);
+  [Fact]
+  public async Task DerivedNotification_ReachesBaseAndInterfaceHandlers()
+  {
+    IMediator mediator = LoadAotMediator("NotificationHierarchy", HierarchySource, out Assembly assembly);
 
-        object derived = Activator.CreateInstance(assembly.GetType("Shapes.ZDerivedNote", true)!)!;
-        await mediator.Publish(derived);
-        Seen(derived).ShouldBe(new[] { "derived", "base", "audit" });
+    object derived = Activator.CreateInstance(assembly.GetType("Shapes.ZDerivedNote", true)!)!;
+    await mediator.Publish(derived);
+    Seen(derived).ShouldBe(new[] { "derived", "base", "audit" });
 
-        object baseNote = Activator.CreateInstance(assembly.GetType("Shapes.ABaseNote", true)!)!;
-        await mediator.Publish(baseNote);
-        Seen(baseNote).ShouldBe(new[] { "base" });
-    }
+    object baseNote = Activator.CreateInstance(assembly.GetType("Shapes.ABaseNote", true)!)!;
+    await mediator.Publish(baseNote);
+    Seen(baseNote).ShouldBe(new[] { "base" });
+  }
 
-    [Fact]
-    public async Task UnboundDerivedNotification_ReachesEveryBoundSupertype()
-    {
-        IMediator mediator = LoadAotMediator("UnboundDerived", HierarchySource, out Assembly assembly);
+  [Fact]
+  public async Task UnboundDerivedNotification_ReachesEveryBoundSupertype()
+  {
+    IMediator mediator = LoadAotMediator("UnboundDerived", HierarchySource, out Assembly assembly);
 
-        object note = Activator.CreateInstance(assembly.GetType("Shapes.UnboundNote", true)!)!;
-        await mediator.Publish(note);
+    object note = Activator.CreateInstance(assembly.GetType("Shapes.UnboundNote", true)!)!;
+    await mediator.Publish(note);
 
-        Seen(note).ShouldBe(new[] { "base", "audit" });
-    }
+    Seen(note).ShouldBe(new[] { "base", "audit" });
+  }
 
-    [Theory]
-    [InlineData("Host")]
-    [InlineData("Aot")]
-    public void KeywordNamedMessages_Compile(string profile)
-    {
-        HostCompilation host = HostCompiler.Compile("KeywordNames" + profile, KeywordSource, profile);
+  [Theory]
+  [InlineData("Host")]
+  [InlineData("Aot")]
+  public void KeywordNamedMessages_Compile(string profile)
+  {
+    HostCompilation host = HostCompiler.Compile("KeywordNames" + profile, KeywordSource, profile);
 
-        Errors(host).ShouldBeEmpty();
-    }
+    Errors(host).ShouldBeEmpty();
+  }
 
-    [Theory]
-    [InlineData("Host")]
-    [InlineData("Aot")]
-    public void CollidingSanitizedNames_Compile(string profile)
-    {
-        HostCompilation host = HostCompiler.Compile("Colliding" + profile, CollidingSource, profile);
+  [Theory]
+  [InlineData("Host")]
+  [InlineData("Aot")]
+  public void CollidingSanitizedNames_Compile(string profile)
+  {
+    HostCompilation host = HostCompiler.Compile("Colliding" + profile, CollidingSource, profile);
 
-        Errors(host).ShouldBeEmpty();
-        INamedTypeSymbol mediator = host.GetType("TimeWarp.Mediator.Generated.Mediator");
-        string[] dispatch = mediator.GetMembers()
-            .Select(m => m.Name)
-            .Where(n => n.StartsWith("Dispatch_global__A_B_C", StringComparison.Ordinal))
-            .ToArray();
-        dispatch.Length.ShouldBe(2);
-        dispatch.Distinct().Count().ShouldBe(2);
-    }
+    Errors(host).ShouldBeEmpty();
+    INamedTypeSymbol mediator = host.GetType("TimeWarp.Mediator.Generated.Mediator");
+    string[] dispatch = mediator.GetMembers()
+        .Select(m => m.Name)
+        .Where(n => n.StartsWith("Dispatch_global__A_B_C", StringComparison.Ordinal))
+        .ToArray();
+    dispatch.Length.ShouldBe(2);
+    dispatch.Distinct().Count().ShouldBe(2);
+  }
 
-    [Fact]
-    public async Task CollidingSanitizedNames_DispatchToTheirOwnHandlers()
-    {
-        IMediator mediator = LoadAotMediator("CollidingRuntime", CollidingSource, out Assembly assembly);
+  [Fact]
+  public async Task CollidingSanitizedNames_DispatchToTheirOwnHandlers()
+  {
+    IMediator mediator = LoadAotMediator("CollidingRuntime", CollidingSource, out Assembly assembly);
 
-        object? first = await mediator.Send(Activator.CreateInstance(assembly.GetType("A.B_C", true)!)!);
-        object? second = await mediator.Send(Activator.CreateInstance(assembly.GetType("A_B.C", true)!)!);
+    object? first = await mediator.Send(Activator.CreateInstance(assembly.GetType("A.B_C", true)!)!);
+    object? second = await mediator.Send(Activator.CreateInstance(assembly.GetType("A_B.C", true)!)!);
 
-        first.ShouldBe("A.B_C");
-        second.ShouldBe("A_B.C");
-    }
+    first.ShouldBe("A.B_C");
+    second.ShouldBe("A_B.C");
+  }
 
-    private static Diagnostic[] Errors(HostCompilation host)
-    {
-        return host.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
-    }
+  private static Diagnostic[] Errors(HostCompilation host)
+  {
+    return host.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+  }
 
-    private static string[] Seen(object notification)
-    {
-        object list = notification.GetType().GetField("Seen")!.GetValue(notification)!;
-        return ((List<string>)list).ToArray();
-    }
+  private static string[] Seen(object notification)
+  {
+    object list = notification.GetType().GetField("Seen")!.GetValue(notification)!;
+    return ((List<string>) list).ToArray();
+  }
 
-    private static IMediator LoadAotMediator(string assemblyName, string source, out Assembly assembly)
-    {
-        HostCompilation host = HostCompiler.Compile(assemblyName, source, "Aot");
-        Errors(host).ShouldBeEmpty();
+  private static IMediator LoadAotMediator(string assemblyName, string source, out Assembly assembly)
+  {
+    HostCompilation host = HostCompiler.Compile(assemblyName, source, "Aot");
+    Errors(host).ShouldBeEmpty();
 
-        using MemoryStream stream = new();
-        EmitResult result = host.Compilation.Emit(stream);
-        result.Success.ShouldBeTrue(string.Join(Environment.NewLine, result.Diagnostics));
-        stream.Position = 0;
+    using MemoryStream stream = new();
+    EmitResult result = host.Compilation.Emit(stream);
+    result.Success.ShouldBeTrue(string.Join(Environment.NewLine, result.Diagnostics));
+    stream.Position = 0;
 
-        AssemblyLoadContext context = new(assemblyName, isCollectible: true);
-        assembly = context.LoadFromStream(stream);
-        Type mediatorType = assembly.GetType("TimeWarp.Mediator.Generated.Mediator", true)!;
-        return (IMediator)Activator.CreateInstance(mediatorType)!;
-    }
+    AssemblyLoadContext context = new(assemblyName, isCollectible: true);
+    assembly = context.LoadFromStream(stream);
+    Type mediatorType = assembly.GetType("TimeWarp.Mediator.Generated.Mediator", true)!;
+    return (IMediator) Activator.CreateInstance(mediatorType)!;
+  }
 
-    // ABase* sorts before ZDerived*: alphabetical emission produced CS8120 and lost base delivery.
-    private const string HierarchySource = @"
+  // ABase* sorts before ZDerived*: alphabetical emission produced CS8120 and lost base delivery.
+  private const string HierarchySource = @"
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -198,8 +198,8 @@ namespace Shapes
 }
 ";
 
-    // Lower-casing these names produced `request`, `notification`, `object`, `lock`, `params`, `base`.
-    private const string KeywordSource = @"
+  // Lower-casing these names produced `request`, `notification`, `object`, `lock`, `params`, `base`.
+  private const string KeywordSource = @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -253,8 +253,8 @@ namespace Keywords
 }
 ";
 
-    // A.B_C and A_B.C both sanitize to global__A_B_C (requests, notifications, and handlers).
-    private const string CollidingSource = @"
+  // A.B_C and A_B.C both sanitize to global__A_B_C (requests, notifications, and handlers).
+  private const string CollidingSource = @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;

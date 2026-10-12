@@ -10,13 +10,13 @@ namespace TimeWarp.Mediator;
 public interface IRequestHandler<in TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    /// <summary>
-    /// Handles a request
-    /// </summary>
-    /// <param name="request">The request</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Response from the request</returns>
-    Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken);
+  /// <summary>
+  /// Handles a request
+  /// </summary>
+  /// <param name="request">The request</param>
+  /// <param name="cancellationToken">Cancellation token</param>
+  /// <returns>Response from the request</returns>
+  Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -26,11 +26,11 @@ public interface IRequestHandler<in TRequest, TResponse>
 public interface IRequestHandler<in TRequest>
     where TRequest : IRequest
 {
-    /// <summary>
-    /// Handles a request
-    /// </summary>
-    /// <param name="request">The request</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Response from the request</returns>
-    Task Handle(TRequest request, CancellationToken cancellationToken);
+  /// <summary>
+  /// Handles a request
+  /// </summary>
+  /// <param name="request">The request</param>
+  /// <param name="cancellationToken">Cancellation token</param>
+  /// <returns>Response from the request</returns>
+  Task Handle(TRequest request, CancellationToken cancellationToken);
 }

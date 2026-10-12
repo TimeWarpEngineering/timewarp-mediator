@@ -13,38 +13,38 @@ namespace TimeWarp.Mediator.Generators.Tests.State;
 public sealed class StateTransactionBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IAction
 {
-    private readonly IStore Store;
-    private readonly IPublisher Publisher;
+  private readonly IStore Store;
+  private readonly IPublisher Publisher;
 
-    public StateTransactionBehavior(IStore store, IPublisher publisher)
+  public StateTransactionBehavior(IStore store, IPublisher publisher)
+  {
+    Store = store;
+    Publisher = publisher;
+  }
+
+  public async Task<TResponse> Handle(
+      TRequest request,
+      RequestHandlerDelegate<TResponse> next,
+      CancellationToken cancellationToken)
+  {
+    Type enclosingStateType = typeof(TRequest).GetEnclosingStateType();
+    IState originalState = Store.GetState(enclosingStateType);
+    IState newState = originalState.Clone();
+    newState.Sender = originalState.Sender;
+    Store.SetState(newState);
+
+    try
     {
-        Store = store;
-        Publisher = publisher;
+      return await next(cancellationToken).ConfigureAwait(false);
     }
-
-    public async Task<TResponse> Handle(
-        TRequest request,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+    catch (Exception exception)
     {
-        Type enclosingStateType = typeof(TRequest).GetEnclosingStateType();
-        IState originalState = Store.GetState(enclosingStateType);
-        IState newState = originalState.Clone();
-        newState.Sender = originalState.Sender;
-        Store.SetState(newState);
-
-        try
-        {
-            return await next(cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception exception)
-        {
-            Store.SetState(originalState);
-            ExceptionNotification exceptionNotification = new(
-                requestName: typeof(StateTransactionBehavior<TRequest, TResponse>).Name,
-                exception: exception);
-            await Publisher.Publish(exceptionNotification, cancellationToken).ConfigureAwait(false);
-            return default!;
-        }
+      Store.SetState(originalState);
+      ExceptionNotification exceptionNotification = new(
+          requestName: typeof(StateTransactionBehavior<TRequest, TResponse>).Name,
+          exception: exception);
+      await Publisher.Publish(exceptionNotification, cancellationToken).ConfigureAwait(false);
+      return default!;
     }
+  }
 }

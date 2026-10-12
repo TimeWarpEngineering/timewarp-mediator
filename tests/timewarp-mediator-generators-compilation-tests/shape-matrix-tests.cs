@@ -13,40 +13,40 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 public sealed class ShapeMatrixTests
 {
-    public static IEnumerable<object[]> Shapes()
+  public static IEnumerable<object[]> Shapes()
+  {
+    foreach (string profile in new[] { "Host", "Aot" })
     {
-        foreach (string profile in new[] { "Host", "Aot" })
-        {
-            foreach (string shape in ShapeSources.Keys)
-            {
-                yield return new object[] { shape, profile };
-            }
-        }
+      foreach (string shape in ShapeSources.Keys)
+      {
+        yield return new object[] { shape, profile };
+      }
     }
+  }
 
-    [Theory]
-    [MemberData(nameof(Shapes))]
-    public void Shape_CompilesCleanAndBindsEveryHandler(string shape, string profile)
-    {
-        ShapeSource row = ShapeSources[shape];
+  [Theory]
+  [MemberData(nameof(Shapes))]
+  public void Shape_CompilesCleanAndBindsEveryHandler(string shape, string profile)
+  {
+    ShapeSource row = ShapeSources[shape];
 
-        HostCompilation host = HostCompiler.Compile("Shape" + shape + profile, row.Source, profile);
+    HostCompilation host = HostCompiler.Compile("Shape" + shape + profile, row.Source, profile);
 
-        Diagnostic[] problems = host.Diagnostics.Where(d => d.Severity >= DiagnosticSeverity.Warning).ToArray();
-        problems.ShouldBeEmpty(string.Join(Environment.NewLine, problems.Select(d => d.ToString())));
-        ManifestDocument manifest = host.Manifest();
-        manifest.Profile.ShouldBe(profile);
-        manifest.Requests.Select(r => r.Request + " => " + r.Handler).OrderBy(b => b, StringComparer.Ordinal)
-            .ShouldBe(row.Requests.OrderBy(b => b, StringComparer.Ordinal));
-        manifest.Notifications.Select(n => n.Notification + " => " + string.Join(", ", n.Handlers))
-            .OrderBy(b => b, StringComparer.Ordinal)
-            .ShouldBe(row.Notifications.OrderBy(b => b, StringComparer.Ordinal));
-    }
+    Diagnostic[] problems = host.Diagnostics.Where(d => d.Severity >= DiagnosticSeverity.Warning).ToArray();
+    problems.ShouldBeEmpty(string.Join(Environment.NewLine, problems.Select(d => d.ToString())));
+    ManifestDocument manifest = host.Manifest();
+    manifest.Profile.ShouldBe(profile);
+    manifest.Requests.Select(r => r.Request + " => " + r.Handler).OrderBy(b => b, StringComparer.Ordinal)
+        .ShouldBe(row.Requests.OrderBy(b => b, StringComparer.Ordinal));
+    manifest.Notifications.Select(n => n.Notification + " => " + string.Join(", ", n.Handlers))
+        .OrderBy(b => b, StringComparer.Ordinal)
+        .ShouldBe(row.Notifications.OrderBy(b => b, StringComparer.Ordinal));
+  }
 
-    private static readonly Dictionary<string, ShapeSource> ShapeSources = new()
-    {
-        ["Nested"] = new ShapeSource(
-            @"
+  private static readonly Dictionary<string, ShapeSource> ShapeSources = new()
+  {
+    ["Nested"] = new ShapeSource(
+          @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -69,10 +69,10 @@ namespace Shapes
     }
 }
 ",
-            new[] { "Shapes.Outer.Ping => Shapes.Outer.Inner.PingHandler" }),
+          new[] { "Shapes.Outer.Ping => Shapes.Outer.Inner.PingHandler" }),
 
-        ["Internal"] = new ShapeSource(
-            @"
+    ["Internal"] = new ShapeSource(
+          @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -98,11 +98,11 @@ namespace Shapes
     }
 }
 ",
-            new[] { "Shapes.Ping => Shapes.PingHandler" },
-            new[] { "Shapes.Note => Shapes.NoteHandler" }),
+          new[] { "Shapes.Ping => Shapes.PingHandler" },
+          new[] { "Shapes.Note => Shapes.NoteHandler" }),
 
-        ["KeywordNamed"] = new ShapeSource(
-            @"
+    ["KeywordNamed"] = new ShapeSource(
+          @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -128,12 +128,12 @@ namespace @event.@class
     }
 }
 ",
-            // The manifest keeps the @ escapes, so a name read back from it is valid C#.
-            new[] { "@event.@class.@object => @event.@class.@string" },
-            new[] { "@event.@class.@int => @event.@class.@namespace" }),
+          // The manifest keeps the @ escapes, so a name read back from it is valid C#.
+          new[] { "@event.@class.@object => @event.@class.@string" },
+          new[] { "@event.@class.@int => @event.@class.@namespace" }),
 
-        ["ClosedGeneric"] = new ShapeSource(
-            @"
+    ["ClosedGeneric"] = new ShapeSource(
+          @"
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -156,10 +156,10 @@ namespace Shapes
     }
 }
 ",
-            new[] { "Shapes.Box<int> => Shapes.IntBoxHandler", "Shapes.Box<string> => Shapes.StringBoxHandler" }),
+          new[] { "Shapes.Box<int> => Shapes.IntBoxHandler", "Shapes.Box<string> => Shapes.StringBoxHandler" }),
 
-        ["MultiInterfaceHandler"] = new ShapeSource(
-            @"
+    ["MultiInterfaceHandler"] = new ShapeSource(
+          @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -198,16 +198,16 @@ namespace Shapes
     }
 }
 ",
-            new[]
-            {
+          new[]
+          {
                 "Shapes.Archive => Shapes.EverythingHandler",
                 "Shapes.GetCount => Shapes.EverythingHandler",
                 "Shapes.GetName => Shapes.EverythingHandler",
-            },
-            new[] { "Shapes.Archived => Shapes.EverythingHandler" }),
+          },
+          new[] { "Shapes.Archived => Shapes.EverythingHandler" }),
 
-        ["DerivedHandler"] = new ShapeSource(
-            @"
+    ["DerivedHandler"] = new ShapeSource(
+          @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -229,10 +229,10 @@ namespace Shapes
     }
 }
 ",
-            new[] { "Shapes.Ping => Shapes.PingHandler" }),
+          new[] { "Shapes.Ping => Shapes.PingHandler" }),
 
-        ["NotificationFanOut"] = new ShapeSource(
-            @"
+    ["NotificationFanOut"] = new ShapeSource(
+          @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -263,11 +263,11 @@ namespace Shapes
     }
 }
 ",
-            Array.Empty<string>(),
-            new[] { "Shapes.Changed => Shapes.AuditHandler, Shapes.CacheHandler", "Shapes.Renamed => Shapes.RenamedHandler" }),
+          Array.Empty<string>(),
+          new[] { "Shapes.Changed => Shapes.AuditHandler, Shapes.CacheHandler", "Shapes.Renamed => Shapes.RenamedHandler" }),
 
-        ["ScopedPipeline"] = new ShapeSource(
-            @"
+    ["ScopedPipeline"] = new ShapeSource(
+          @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -299,10 +299,10 @@ namespace Shapes
     }
 }
 ",
-            new[] { "Shapes.Ping => Shapes.PingHandler", "Shapes.Pong => Shapes.PongHandler" }),
+          new[] { "Shapes.Ping => Shapes.PingHandler", "Shapes.Pong => Shapes.PongHandler" }),
 
-        ["StructRequest"] = new ShapeSource(
-            @"
+    ["StructRequest"] = new ShapeSource(
+          @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -319,26 +319,26 @@ namespace Shapes
     }
 }
 ",
-            new[] { "Shapes.Ping => Shapes.PingHandler" }),
+          new[] { "Shapes.Ping => Shapes.PingHandler" }),
 
-        ["Empty"] = new ShapeSource(
-            "namespace Shapes { public sealed class Program { } }",
-            Array.Empty<string>()),
-    };
+    ["Empty"] = new ShapeSource(
+          "namespace Shapes { public sealed class Program { } }",
+          Array.Empty<string>()),
+  };
 
-    private sealed class ShapeSource
+  private sealed class ShapeSource
+  {
+    public ShapeSource(string source, string[] requests, string[]? notifications = null)
     {
-        public ShapeSource(string source, string[] requests, string[]? notifications = null)
-        {
-            Source = source;
-            Requests = requests;
-            Notifications = notifications ?? Array.Empty<string>();
-        }
-
-        public string Source { get; }
-
-        public string[] Requests { get; }
-
-        public string[] Notifications { get; }
+      Source = source;
+      Requests = requests;
+      Notifications = notifications ?? Array.Empty<string>();
     }
+
+    public string Source { get; }
+
+    public string[] Requests { get; }
+
+    public string[] Notifications { get; }
+  }
 }

@@ -1,373 +1,374 @@
 // Modified by Steven T. Cramer
 
 namespace TimeWarp.Mediator.Tests;
+
 public class SendTests
 {
-    private readonly IServiceProvider _serviceProvider;
-    private Dependency _dependency;
-    private readonly IMediator _mediator;
+  private readonly IServiceProvider ServiceProvider;
+  private Dependency SharedDependency;
+  private readonly IMediator Mediator;
 
-    public SendTests()
+  public SendTests()
+  {
+    SharedDependency = new Dependency();
+    ServiceCollection services = new();
+    services.AddMediator(cfg =>
     {
-        _dependency = new Dependency();
-        ServiceCollection services = new();
-        services.AddMediator(cfg =>
-        {
-            cfg.RegisterServicesFromAssemblies(typeof(Ping).Assembly);
-            cfg.AddOpenBehavior(typeof(TimeoutBehavior<,>), ServiceLifetime.Transient);
-            cfg.RegisterGenericHandlers = true;
-        });
-        services.AddSingleton(_dependency);
-        _serviceProvider = services.BuildServiceProvider();
-        _mediator = _serviceProvider.GetService<IMediator>()!;
-    }
+      cfg.RegisterServicesFromAssemblies(typeof(Ping).Assembly);
+      cfg.AddOpenBehavior(typeof(TimeoutBehavior<,>), ServiceLifetime.Transient);
+      cfg.RegisterGenericHandlers = true;
+    });
+    services.AddSingleton(SharedDependency);
+    ServiceProvider = services.BuildServiceProvider();
+    Mediator = ServiceProvider.GetService<IMediator>()!;
+  }
 
-    public class Ping : IRequest<Pong>
+  public class Ping : IRequest<Pong>
+  {
+    public string? Message { get; set; }
+  }
+
+  public class VoidPing : IRequest
+  {
+  }
+
+  public class Pong
+  {
+    public string? Message { get; set; }
+  }
+
+  public class PingHandler : IRequestHandler<Ping, Pong>
+  {
+    public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
     {
-        public string? Message { get; set; }
+      return Task.FromResult(new Pong { Message = request.Message + " Pong" });
     }
+  }
 
-    public class VoidPing : IRequest
+  public class Dependency
+  {
+    public bool Called { get; set; }
+    public bool CalledSpecific { get; set; }
+  }
+
+  public class VoidPingHandler : IRequestHandler<VoidPing>
+  {
+    private readonly Dependency Dependency;
+
+    public VoidPingHandler(Dependency dependency) => Dependency = dependency;
+
+    public Task Handle(VoidPing request, CancellationToken cancellationToken)
     {
-    }
+      Dependency.Called = true;
 
-    public class Pong
+      return Task.CompletedTask;
+    }
+  }
+
+  public class GenericPing<T> : IRequest<T>
+      where T : Pong
+  {
+    public T? Pong { get; set; }
+  }
+
+  public class GenericPingHandler<T> : IRequestHandler<GenericPing<T>, T>
+      where T : Pong
+  {
+    private readonly Dependency Dependency;
+
+    public GenericPingHandler(Dependency dependency) => Dependency = dependency;
+
+    public Task<T> Handle(GenericPing<T> request, CancellationToken cancellationToken)
     {
-        public string? Message { get; set; }
+      Dependency.Called = true;
+      request.Pong!.Message += " Pong";
+      return Task.FromResult(request.Pong!);
     }
+  }
 
-    public class PingHandler : IRequestHandler<Ping, Pong>
+  public class VoidGenericPing<T> : IRequest
+      where T : Pong
+  { }
+
+  public class VoidGenericPingHandler<T> : IRequestHandler<VoidGenericPing<T>>
+      where T : Pong
+  {
+    private readonly Dependency Dependency;
+    public VoidGenericPingHandler(Dependency dependency) => Dependency = dependency;
+
+    public Task Handle(VoidGenericPing<T> request, CancellationToken cancellationToken)
     {
-        public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(new Pong { Message = request.Message + " Pong" });
-        }
-    }
+      Dependency.Called = true;
 
-    public class Dependency
+      return Task.CompletedTask;
+    }
+  }
+
+  public class PongExtension : Pong
+  {
+
+  }
+
+  public class TestClass1PingRequestHandler : IRequestHandler<VoidGenericPing<PongExtension>>
+  {
+    private readonly Dependency Dependency;
+
+    public TestClass1PingRequestHandler(Dependency dependency) => Dependency = dependency;
+
+    public Task Handle(VoidGenericPing<PongExtension> request, CancellationToken cancellationToken)
     {
-        public bool Called { get; set; }
-        public bool CalledSpecific { get; set; }
+      Dependency.CalledSpecific = true;
+      return Task.CompletedTask;
     }
+  }
 
-    public class VoidPingHandler : IRequestHandler<VoidPing>
+  public interface ITestInterface1 { }
+  public interface ITestInterface2 { }
+  public interface ITestInterface3 { }
+
+  public class TestClass1 : ITestInterface1 { }
+  public class TestClass2 : ITestInterface2 { }
+  public class TestClass3 : ITestInterface3 { }
+
+  public class MultipleGenericTypeParameterRequest<T1, T2, T3> : IRequest<int>
+     where T1 : ITestInterface1
+     where T2 : ITestInterface2
+     where T3 : ITestInterface3
+  {
+    public int Foo { get; set; }
+  }
+
+  public class MultipleGenericTypeParameterRequestHandler<T1, T2, T3> : IRequestHandler<MultipleGenericTypeParameterRequest<T1, T2, T3>, int>
+      where T1 : ITestInterface1
+      where T2 : ITestInterface2
+      where T3 : ITestInterface3
+  {
+    private readonly Dependency Dependency;
+
+    public MultipleGenericTypeParameterRequestHandler(Dependency dependency) => Dependency = dependency;
+
+    public Task<int> Handle(MultipleGenericTypeParameterRequest<T1, T2, T3> request, CancellationToken cancellationToken)
     {
-        private readonly Dependency _dependency;
-
-        public VoidPingHandler(Dependency dependency) => _dependency = dependency;
-
-        public Task Handle(VoidPing request, CancellationToken cancellationToken)
-        {
-            _dependency.Called = true;
-
-            return Task.CompletedTask;
-        }
+      Dependency.Called = true;
+      return Task.FromResult(1);
     }
+  }
 
-    public class GenericPing<T> : IRequest<T>
-        where T : Pong
+  public interface ITimeoutRequest
+  {
+  }
+
+  /// <summary>
+  /// Stands in for a timeout: starts the handler with its own token, then cancels that token
+  /// explicitly instead of waiting for a timer to fire.
+  /// </summary>
+  public class TimeoutBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+      where TRequest : ITimeoutRequest
+  {
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        public T? Pong { get; set; }
+      using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+      Task<TResponse> handlerTask = next(cts.Token);
+      handlerTask.IsCompleted.ShouldBeFalse();
+      await cts.CancelAsync();
+      return await handlerTask;
     }
+  }
 
-    public class GenericPingHandler<T> : IRequestHandler<GenericPing<T>, T>
-        where T : Pong
+  public class TimeoutRequest : IRequest, ITimeoutRequest
+  {
+  }
+
+  public class TimeoutRequest2 : IRequest<int>, ITimeoutRequest
+  {
+  }
+
+  public class TimeoutRequestHandler : IRequestHandler<TimeoutRequest>
+  {
+    private readonly Dependency Dependency;
+
+    public TimeoutRequestHandler(Dependency dependency) => Dependency = dependency;
+
+    public async Task Handle(TimeoutRequest request, CancellationToken cancellationToken)
     {
-        private readonly Dependency _dependency;
+      await Task.Delay(Timeout.Infinite, cancellationToken);
 
-        public GenericPingHandler(Dependency dependency) => _dependency = dependency;
-
-        public Task<T> Handle(GenericPing<T> request, CancellationToken cancellationToken)
-        {
-            _dependency.Called = true;
-            request.Pong!.Message += " Pong";
-            return Task.FromResult(request.Pong!);
-        }
+      Dependency.Called = true;
     }
+  }
 
-    public class VoidGenericPing<T> : IRequest
-        where T : Pong
-    { }
+  public class TimeoutRequest2Handler : IRequestHandler<TimeoutRequest2, int>
+  {
+    private readonly Dependency Dependency;
 
-    public class VoidGenericPingHandler<T> : IRequestHandler<VoidGenericPing<T>>
-        where T : Pong
+    public TimeoutRequest2Handler(Dependency dependency) => Dependency = dependency;
+
+    public async Task<int> Handle(TimeoutRequest2 request, CancellationToken cancellationToken)
     {
-        private readonly Dependency _dependency;
-        public VoidGenericPingHandler(Dependency dependency) => _dependency = dependency;
+      await Task.Delay(Timeout.Infinite, cancellationToken);
 
-        public Task Handle(VoidGenericPing<T> request, CancellationToken cancellationToken)
-        {
-            _dependency.Called = true;
-
-            return Task.CompletedTask;
-        }
+      Dependency.Called = true;
+      return 1;
     }
+  }
 
-    public class PongExtension : Pong
+  [Fact]
+  public async Task Should_resolve_main_handler()
+  {
+    Pong response = await Mediator.Send(new Ping { Message = "Ping" });
+
+    response.Message.ShouldBe("Ping Pong");
+  }
+
+  [Fact]
+  public async Task Should_resolve_main_void_handler()
+  {
+    await Mediator.Send(new VoidPing());
+
+    SharedDependency.Called.ShouldBeTrue();
+  }
+
+  [Fact]
+  public async Task Should_resolve_main_handler_via_dynamic_dispatch()
+  {
+    object request = new Ping { Message = "Ping" };
+    object? response = await Mediator.Send(request);
+
+    Pong pong = response.ShouldBeOfType<Pong>();
+    pong.Message.ShouldBe("Ping Pong");
+  }
+
+  [Fact]
+  public async Task Should_resolve_main_void_handler_via_dynamic_dispatch()
+  {
+    object request = new VoidPing();
+    object? response = await Mediator.Send(request);
+
+    response.ShouldBeOfType<Unit>();
+
+    SharedDependency.Called.ShouldBeTrue();
+  }
+
+  [Fact]
+  public async Task Should_resolve_main_handler_by_specific_interface()
+  {
+    Pong response = await Mediator.Send(new Ping { Message = "Ping" });
+
+    response.Message.ShouldBe("Ping Pong");
+  }
+
+  [Fact]
+  public async Task Should_resolve_main_handler_by_given_interface()
+  {
+    // wrap requests in an array, so this test won't break on a 'replace with var' refactoring
+    IRequest[] requests = new IRequest[] { new VoidPing() };
+    await Mediator.Send(requests[0]);
+
+    SharedDependency.Called.ShouldBeTrue();
+  }
+
+  [Fact]
+  public Task Should_raise_execption_on_null_request() => Should.ThrowAsync<ArgumentNullException>(async () => await Mediator.Send(default!));
+
+  [Fact]
+  public async Task Should_resolve_generic_handler()
+  {
+    GenericPing<Pong> request = new()
+    { Pong = new Pong { Message = "Ping" } };
+    Pong result = await Mediator.Send(request);
+
+    Pong pong = result.ShouldBeOfType<Pong>();
+    pong.Message.ShouldBe("Ping Pong");
+
+    SharedDependency.Called.ShouldBeTrue();
+  }
+
+  [Fact]
+  public async Task Should_resolve_generic_void_handler()
+  {
+    VoidGenericPing<Pong> request = new();
+    await Mediator.Send(request);
+
+    SharedDependency.Called.ShouldBeTrue();
+  }
+
+  [Fact]
+  public async Task Should_resolve_multiple_type_parameter_generic_handler()
+  {
+    MultipleGenericTypeParameterRequest<TestClass1, TestClass2, TestClass3> request = new();
+    await Mediator.Send(request);
+
+    SharedDependency.Called.ShouldBeTrue();
+  }
+
+  [Fact]
+  public async Task Should_resolve_closed_handler_if_defined()
+  {
+    Dependency dependency = new();
+    ServiceCollection services = new();
+    services.AddSingleton(dependency);
+    services.AddMediator(cfg =>
     {
+      cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly());
+      cfg.RegisterGenericHandlers = true;
+    });
 
-    }
+    services.AddTransient<IRequestHandler<VoidGenericPing<PongExtension>>, TestClass1PingRequestHandler>();
+    ServiceProvider serviceProvider = services.BuildServiceProvider();
+    IMediator med = serviceProvider.GetService<IMediator>()!;
 
-    public class TestClass1PingRequestHandler : IRequestHandler<VoidGenericPing<PongExtension>>
+    VoidGenericPing<PongExtension> request = new();
+    await med.Send(request);
+
+    dependency.Called.ShouldBeFalse();
+    dependency.CalledSpecific.ShouldBeTrue();
+  }
+
+  [Fact]
+  public async Task Should_resolve_open_handler_if_not_defined()
+  {
+    Dependency dependency = new();
+    ServiceCollection services = new();
+    services.AddSingleton(dependency);
+    services.AddMediator(cfg =>
     {
-        private readonly Dependency _dependency;
+      cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly());
+      cfg.RegisterGenericHandlers = true;
+    });
+    services.AddTransient<IRequestHandler<VoidGenericPing<PongExtension>>, TestClass1PingRequestHandler>();
+    ServiceProvider serviceProvider = services.BuildServiceProvider();
+    IMediator med = serviceProvider.GetService<IMediator>()!;
 
-        public TestClass1PingRequestHandler(Dependency dependency) => _dependency = dependency;
+    VoidGenericPing<Pong> request = new();
+    await med.Send(request);
 
-        public Task Handle(VoidGenericPing<PongExtension> request, CancellationToken cancellationToken)
-        {
-            _dependency.CalledSpecific = true;
-            return Task.CompletedTask;
-        }
-    }
+    dependency.Called.ShouldBeTrue();
+    dependency.CalledSpecific.ShouldBeFalse();
+  }
 
-    public interface ITestInterface1 { }
-    public interface ITestInterface2 { }
-    public interface ITestInterface3 { }
+  [Fact]
+  public async Task TimeoutBehavior_Void_Should_Cancel_Long_Running_Task_And_Throw_Exception()
+  {
+    TimeoutRequest request = new();
 
-    public class TestClass1 : ITestInterface1 { }
-    public class TestClass2 : ITestInterface2 { }
-    public class TestClass3 : ITestInterface3 { }
+    TaskCanceledException exception = await Should.ThrowAsync<TaskCanceledException>(() => Mediator.Send(request));
 
-    public class MultipleGenericTypeParameterRequest<T1, T2, T3> : IRequest<int>
-       where T1 : ITestInterface1
-       where T2 : ITestInterface2
-       where T3 : ITestInterface3
-    {
-        public int Foo { get; set; }
-    }
+    exception.ShouldNotBeNull();
+    exception.ShouldBeAssignableTo<TaskCanceledException>();
+    SharedDependency.Called.ShouldBeFalse();
+  }
 
-    public class MultipleGenericTypeParameterRequestHandler<T1, T2, T3> : IRequestHandler<MultipleGenericTypeParameterRequest<T1, T2, T3>, int>
-        where T1 : ITestInterface1
-        where T2 : ITestInterface2
-        where T3 : ITestInterface3
-    {
-        private readonly Dependency _dependency;
+  [Fact]
+  public async Task TimeoutBehavior_NonVoid_Should_Cancel_Long_Running_Task_And_Throw_Exception()
+  {
+    TimeoutRequest2 request = new();
+    int result = 0;
 
-        public MultipleGenericTypeParameterRequestHandler(Dependency dependency) => _dependency = dependency;
+    TaskCanceledException exception = await Should.ThrowAsync<TaskCanceledException>(async () => { result = await Mediator.Send(request); });
 
-        public Task<int> Handle(MultipleGenericTypeParameterRequest<T1, T2, T3> request, CancellationToken cancellationToken)
-        {
-            _dependency.Called = true;
-            return Task.FromResult(1);
-        }
-    }
-
-    public interface ITimeoutRequest
-    {
-    }
-
-    /// <summary>
-    /// Stands in for a timeout: starts the handler with its own token, then cancels that token
-    /// explicitly instead of waiting for a timer to fire.
-    /// </summary>
-    public class TimeoutBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-        where TRequest : ITimeoutRequest
-    {
-        public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
-        {
-            using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            Task<TResponse> handlerTask = next(cts.Token);
-            handlerTask.IsCompleted.ShouldBeFalse();
-            await cts.CancelAsync();
-            return await handlerTask;
-        }
-    }
-
-    public class TimeoutRequest : IRequest, ITimeoutRequest
-    {
-    }
-
-    public class TimeoutRequest2 : IRequest<int>, ITimeoutRequest
-    {
-    }
-
-    public class TimeoutRequestHandler : IRequestHandler<TimeoutRequest>
-    {
-        private readonly Dependency _dependency;
-
-        public TimeoutRequestHandler(Dependency dependency) => _dependency = dependency;
-
-        public async Task Handle(TimeoutRequest request, CancellationToken cancellationToken)
-        {
-            await Task.Delay(Timeout.Infinite, cancellationToken);
-
-            _dependency.Called = true;
-        }
-    }
-
-    public class TimeoutRequest2Handler : IRequestHandler<TimeoutRequest2, int>
-    {
-        private readonly Dependency _dependency;
-
-        public TimeoutRequest2Handler(Dependency dependency) => _dependency = dependency;
-
-        public async Task<int> Handle(TimeoutRequest2 request, CancellationToken cancellationToken)
-        {
-            await Task.Delay(Timeout.Infinite, cancellationToken);
-
-            _dependency.Called = true;
-            return 1;
-        }
-    }
-
-    [Fact]
-    public async Task Should_resolve_main_handler()
-    {
-        Pong response = await _mediator.Send(new Ping { Message = "Ping" });
-
-        response.Message.ShouldBe("Ping Pong");
-    }
-
-    [Fact]
-    public async Task Should_resolve_main_void_handler()
-    {
-        await _mediator.Send(new VoidPing());
-
-        _dependency.Called.ShouldBeTrue();
-    }
-
-    [Fact]
-    public async Task Should_resolve_main_handler_via_dynamic_dispatch()
-    {
-        object request = new Ping { Message = "Ping" };
-        object? response = await _mediator.Send(request);
-
-        Pong pong = response.ShouldBeOfType<Pong>();
-        pong.Message.ShouldBe("Ping Pong");
-    }
-
-    [Fact]
-    public async Task Should_resolve_main_void_handler_via_dynamic_dispatch()
-    {
-        object request = new VoidPing();
-        object? response = await _mediator.Send(request);
-
-        response.ShouldBeOfType<Unit>();
-
-        _dependency.Called.ShouldBeTrue();
-    }
-
-    [Fact]
-    public async Task Should_resolve_main_handler_by_specific_interface()
-    {
-        Pong response = await _mediator.Send(new Ping { Message = "Ping" });
-
-        response.Message.ShouldBe("Ping Pong");
-    }
-
-    [Fact]
-    public async Task Should_resolve_main_handler_by_given_interface()
-    {
-        // wrap requests in an array, so this test won't break on a 'replace with var' refactoring
-        IRequest[] requests = new IRequest[] { new VoidPing() };
-        await _mediator.Send(requests[0]);
-
-        _dependency.Called.ShouldBeTrue();
-    }
-
-    [Fact]
-    public Task Should_raise_execption_on_null_request() => Should.ThrowAsync<ArgumentNullException>(async () => await _mediator.Send(default!));
-
-    [Fact]
-    public async Task Should_resolve_generic_handler()
-    {
-        GenericPing<Pong> request = new()
-        { Pong = new Pong { Message = "Ping" } };
-        Pong result = await _mediator.Send(request);
-
-        Pong pong = result.ShouldBeOfType<Pong>();
-        pong.Message.ShouldBe("Ping Pong");
-
-        _dependency.Called.ShouldBeTrue();
-    }
-
-    [Fact]
-    public async Task Should_resolve_generic_void_handler()
-    {
-        VoidGenericPing<Pong> request = new();
-        await _mediator.Send(request);
-
-        _dependency.Called.ShouldBeTrue();
-    }
-
-    [Fact]
-    public async Task Should_resolve_multiple_type_parameter_generic_handler()
-    {
-        MultipleGenericTypeParameterRequest<TestClass1, TestClass2, TestClass3> request = new();
-        await _mediator.Send(request);
-
-        _dependency.Called.ShouldBeTrue();
-    }
-
-    [Fact]
-    public async Task Should_resolve_closed_handler_if_defined()
-    {
-        Dependency dependency = new();
-        ServiceCollection services = new();
-        services.AddSingleton(dependency);
-        services.AddMediator(cfg =>
-        {
-            cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly());
-            cfg.RegisterGenericHandlers = true;
-        });
-
-        services.AddTransient<IRequestHandler<VoidGenericPing<PongExtension>>,TestClass1PingRequestHandler>();
-        ServiceProvider serviceProvider = services.BuildServiceProvider();
-        IMediator med = serviceProvider.GetService<IMediator>()!;
-
-        VoidGenericPing<PongExtension> request = new();
-        await med.Send(request);
-
-        dependency.Called.ShouldBeFalse();
-        dependency.CalledSpecific.ShouldBeTrue();
-    }
-
-    [Fact]
-    public async Task Should_resolve_open_handler_if_not_defined()
-    {
-        Dependency dependency = new();
-        ServiceCollection services = new();
-        services.AddSingleton(dependency);
-        services.AddMediator(cfg => 
-        {
-            cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly());
-            cfg.RegisterGenericHandlers = true;
-        });
-        services.AddTransient<IRequestHandler<VoidGenericPing<PongExtension>>, TestClass1PingRequestHandler>();
-        ServiceProvider serviceProvider = services.BuildServiceProvider();
-        IMediator med = serviceProvider.GetService<IMediator>()!;
-
-        VoidGenericPing<Pong> request = new();
-        await med.Send(request);
-
-        dependency.Called.ShouldBeTrue();
-        dependency.CalledSpecific.ShouldBeFalse();
-    }
-
-    [Fact]
-    public async Task TimeoutBehavior_Void_Should_Cancel_Long_Running_Task_And_Throw_Exception()
-    {
-        TimeoutRequest request = new();
-
-        TaskCanceledException exception = await Should.ThrowAsync<TaskCanceledException>(() => _mediator.Send(request));
-
-        exception.ShouldNotBeNull();
-        exception.ShouldBeAssignableTo<TaskCanceledException>();
-        _dependency.Called.ShouldBeFalse();
-    }
-
-    [Fact]
-    public async Task TimeoutBehavior_NonVoid_Should_Cancel_Long_Running_Task_And_Throw_Exception()
-    {
-        TimeoutRequest2 request = new();
-        int result = 0;
-
-        TaskCanceledException exception = await Should.ThrowAsync<TaskCanceledException>(async () => { result = await _mediator.Send(request); });
-
-        exception.ShouldNotBeNull();
-        exception.ShouldBeAssignableTo<TaskCanceledException>();
-        _dependency.Called.ShouldBeFalse();
-        result.ShouldBe(0);
-    }
+    exception.ShouldNotBeNull();
+    exception.ShouldBeAssignableTo<TaskCanceledException>();
+    SharedDependency.Called.ShouldBeFalse();
+    result.ShouldBe(0);
+  }
 }

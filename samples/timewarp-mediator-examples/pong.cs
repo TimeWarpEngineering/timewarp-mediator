@@ -3,5 +3,5 @@ namespace TimeWarp.Mediator.Examples;
 
 public class Pong
 {
-    public string Message { get; set; }
+  public string Message { get; set; }
 }

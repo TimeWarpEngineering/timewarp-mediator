@@ -18,175 +18,175 @@ namespace TimeWarp.Mediator.Generators;
 
 internal sealed class AotProfile
 {
-    private AotProfile(ImmutableArray<Diagnostic> diagnostics, HashSet<INamedTypeSymbol> unconstructibleHandlers)
+  private AotProfile(ImmutableArray<Diagnostic> diagnostics, HashSet<INamedTypeSymbol> unconstructibleHandlers)
+  {
+    Diagnostics = diagnostics;
+    UnconstructibleHandlers = unconstructibleHandlers;
+  }
+
+  internal static AotProfile None { get; } =
+      new(ImmutableArray<Diagnostic>.Empty, new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default));
+
+  internal ImmutableArray<Diagnostic> Diagnostics { get; }
+
+  internal HashSet<INamedTypeSymbol> UnconstructibleHandlers { get; }
+
+  internal static AotProfile Analyze(Compilation compilation, MessageGraph graph)
+  {
+    if (!graph.IsAotProfile)
     {
-        Diagnostics = diagnostics;
-        UnconstructibleHandlers = unconstructibleHandlers;
+      return None;
     }
 
-    internal static AotProfile None { get; } =
-        new(ImmutableArray<Diagnostic>.Empty, new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default));
+    string profile = graph.Membership.Profile;
+    List<Diagnostic> diagnostics = new();
+    HashSet<INamedTypeSymbol> unconstructible = new(SymbolEqualityComparer.Default);
+    HashSet<INamedTypeSymbol> reportedBehaviors = new(SymbolEqualityComparer.Default);
 
-    internal ImmutableArray<Diagnostic> Diagnostics { get; }
-
-    internal HashSet<INamedTypeSymbol> UnconstructibleHandlers { get; }
-
-    internal static AotProfile Analyze(Compilation compilation, MessageGraph graph)
+    foreach (RequestBinding request in graph.Requests)
     {
-        if (!graph.IsAotProfile)
+      foreach (INamedTypeSymbol behavior in request.ClosedBehaviors)
+      {
+        INamedTypeSymbol definition = behavior.OriginalDefinition;
+        if (!reportedBehaviors.Add(definition))
         {
-            return None;
+          continue;
         }
 
-        string profile = graph.Membership.Profile;
-        List<Diagnostic> diagnostics = new();
-        HashSet<INamedTypeSymbol> unconstructible = new(SymbolEqualityComparer.Default);
-        HashSet<INamedTypeSymbol> reportedBehaviors = new(SymbolEqualityComparer.Default);
-
-        foreach (RequestBinding request in graph.Requests)
-        {
-            foreach (INamedTypeSymbol behavior in request.ClosedBehaviors)
-            {
-                INamedTypeSymbol definition = behavior.OriginalDefinition;
-                if (!reportedBehaviors.Add(definition))
-                {
-                    continue;
-                }
-
-                diagnostics.Add(
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.AotBehaviorNotWoven,
-                        BehaviorLocation(compilation, definition),
-                        definition.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-                        profile));
-            }
-
-            CheckHandler(compilation, request.HandlerType, profile, diagnostics, unconstructible);
-        }
-
-        foreach (NotificationBinding notification in graph.Notifications)
-        {
-            foreach (INamedTypeSymbol handler in notification.HandlerTypes)
-            {
-                CheckHandler(compilation, handler, profile, diagnostics, unconstructible);
-            }
-        }
-
-        return new AotProfile(diagnostics.ToImmutableArray(), unconstructible);
-    }
-
-    private static void CheckHandler(
-        Compilation compilation,
-        INamedTypeSymbol handler,
-        string profile,
-        List<Diagnostic> diagnostics,
-        HashSet<INamedTypeSymbol> unconstructible)
-    {
-        if (unconstructible.Contains(handler) || HasAccessibleParameterlessConstructor(compilation, handler))
-        {
-            return;
-        }
-
-        unconstructible.Add(handler);
         diagnostics.Add(
             Diagnostic.Create(
-                DiagnosticDescriptors.AotHandlerNotConstructible,
-                SourceLocation(compilation, handler.Locations),
-                handler.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                DiagnosticDescriptors.AotBehaviorNotWoven,
+                BehaviorLocation(compilation, definition),
+                definition.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
                 profile));
+      }
+
+      CheckHandler(compilation, request.HandlerType, profile, diagnostics, unconstructible);
     }
 
-    private static bool HasAccessibleParameterlessConstructor(Compilation compilation, INamedTypeSymbol handler)
+    foreach (NotificationBinding notification in graph.Notifications)
     {
-        if (handler.IsAbstract)
-        {
-            return false;
-        }
-
-        bool hasRequiredMembers = HasRequiredMembers(handler);
-        if (handler.IsValueType && !hasRequiredMembers)
-        {
-            return true;
-        }
-
-        foreach (IMethodSymbol constructor in handler.InstanceConstructors)
-        {
-            if (constructor.Parameters.All(p => p.IsOptional || p.IsParams)
-                && compilation.IsSymbolAccessibleWithin(constructor, compilation.Assembly)
-                && (!hasRequiredMembers || SetsRequiredMembers(constructor)))
-            {
-                return true;
-            }
-        }
-
-        return false;
+      foreach (INamedTypeSymbol handler in notification.HandlerTypes)
+      {
+        CheckHandler(compilation, handler, profile, diagnostics, unconstructible);
+      }
     }
 
-    private static bool HasRequiredMembers(INamedTypeSymbol handler)
+    return new AotProfile(diagnostics.ToImmutableArray(), unconstructible);
+  }
+
+  private static void CheckHandler(
+      Compilation compilation,
+      INamedTypeSymbol handler,
+      string profile,
+      List<Diagnostic> diagnostics,
+      HashSet<INamedTypeSymbol> unconstructible)
+  {
+    if (unconstructible.Contains(handler) || HasAccessibleParameterlessConstructor(compilation, handler))
     {
-        for (INamedTypeSymbol? current = handler;
-            current is not null && current.SpecialType != SpecialType.System_Object;
-            current = current.BaseType)
-        {
-            foreach (ISymbol member in current.GetMembers())
-            {
-                if (member is IFieldSymbol { IsRequired: true } or IPropertySymbol { IsRequired: true })
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+      return;
     }
 
-    private static bool SetsRequiredMembers(IMethodSymbol constructor)
+    unconstructible.Add(handler);
+    diagnostics.Add(
+        Diagnostic.Create(
+            DiagnosticDescriptors.AotHandlerNotConstructible,
+            SourceLocation(compilation, handler.Locations),
+            handler.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+            profile));
+  }
+
+  private static bool HasAccessibleParameterlessConstructor(Compilation compilation, INamedTypeSymbol handler)
+  {
+    if (handler.IsAbstract)
     {
-        foreach (AttributeData attribute in constructor.GetAttributes())
-        {
-            if (attribute.AttributeClass?.ToDisplayString()
-                == "System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute")
-            {
-                return true;
-            }
-        }
-
-        return false;
+      return false;
     }
 
-    private static Location BehaviorLocation(Compilation compilation, INamedTypeSymbol definition)
+    bool hasRequiredMembers = HasRequiredMembers(handler);
+    if (handler.IsValueType && !hasRequiredMembers)
     {
-        foreach (AttributeData attribute in compilation.Assembly.GetAttributes())
-        {
-            if (attribute.AttributeClass?.ToDisplayString() != Membership.BehaviorAttributeMetadataName
-                || attribute.ConstructorArguments.Length == 0
-                || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol registered
-                || !SymbolEqualityComparer.Default.Equals(registered.OriginalDefinition, definition))
-            {
-                continue;
-            }
-
-            Location? location = attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation();
-            if (location is not null)
-            {
-                return location;
-            }
-        }
-
-        return SourceLocation(compilation, definition.Locations);
+      return true;
     }
 
-    // A generator may only report locations in this compilation's syntax trees.
-    private static Location SourceLocation(Compilation compilation, ImmutableArray<Location> locations)
+    foreach (IMethodSymbol constructor in handler.InstanceConstructors)
     {
-        foreach (Location location in locations)
-        {
-            if (location.IsInSource && compilation.ContainsSyntaxTree(location.SourceTree!))
-            {
-                return location;
-            }
-        }
-
-        return Location.None;
+      if (constructor.Parameters.All(p => p.IsOptional || p.IsParams)
+          && compilation.IsSymbolAccessibleWithin(constructor, compilation.Assembly)
+          && (!hasRequiredMembers || SetsRequiredMembers(constructor)))
+      {
+        return true;
+      }
     }
+
+    return false;
+  }
+
+  private static bool HasRequiredMembers(INamedTypeSymbol handler)
+  {
+    for (INamedTypeSymbol? current = handler;
+        current is not null && current.SpecialType != SpecialType.System_Object;
+        current = current.BaseType)
+    {
+      foreach (ISymbol member in current.GetMembers())
+      {
+        if (member is IFieldSymbol { IsRequired: true } or IPropertySymbol { IsRequired: true })
+        {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static bool SetsRequiredMembers(IMethodSymbol constructor)
+  {
+    foreach (AttributeData attribute in constructor.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString()
+          == "System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute")
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static Location BehaviorLocation(Compilation compilation, INamedTypeSymbol definition)
+  {
+    foreach (AttributeData attribute in compilation.Assembly.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() != Membership.BehaviorAttributeMetadataName
+          || attribute.ConstructorArguments.Length == 0
+          || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol registered
+          || !SymbolEqualityComparer.Default.Equals(registered.OriginalDefinition, definition))
+      {
+        continue;
+      }
+
+      Location? location = attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation();
+      if (location is not null)
+      {
+        return location;
+      }
+    }
+
+    return SourceLocation(compilation, definition.Locations);
+  }
+
+  // A generator may only report locations in this compilation's syntax trees.
+  private static Location SourceLocation(Compilation compilation, ImmutableArray<Location> locations)
+  {
+    foreach (Location location in locations)
+    {
+      if (location.IsInSource && compilation.ContainsSyntaxTree(location.SourceTree!))
+      {
+        return location;
+      }
+    }
+
+    return Location.None;
+  }
 }

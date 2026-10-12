@@ -7,13 +7,13 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public enum RequestExceptionActionProcessorStrategy
 {
-    /// <summary>
-    /// Run exception actions only for exceptions that no exception handler marked as handled.
-    /// </summary>
-    ApplyForUnhandledExceptions,
+  /// <summary>
+  /// Run exception actions only for exceptions that no exception handler marked as handled.
+  /// </summary>
+  ApplyForUnhandledExceptions,
 
-    /// <summary>
-    /// Run exception actions for every exception, including ones an exception handler later marks as handled.
-    /// </summary>
-    ApplyForAllExceptions
+  /// <summary>
+  /// Run exception actions for every exception, including ones an exception handler later marks as handled.
+  /// </summary>
+  ApplyForAllExceptions
 }

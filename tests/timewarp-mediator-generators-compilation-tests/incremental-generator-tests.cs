@@ -6,78 +6,78 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 public sealed class IncrementalGeneratorTests
 {
-    [Fact]
-    public void UnrelatedEdit_LeavesModelUnchanged_AndSourcesCached()
-    {
-        CSharpCompilation compilation = CreateCompilation(HostSource);
-        GeneratorDriver driver = HostCompiler.CreateDriver(trackSteps: true).RunGenerators(compilation);
-        string[] firstTexts = GeneratedTexts(driver);
+  [Fact]
+  public void UnrelatedEdit_LeavesModelUnchanged_AndSourcesCached()
+  {
+    CSharpCompilation compilation = CreateCompilation(HostSource);
+    GeneratorDriver driver = HostCompiler.CreateDriver(trackSteps: true).RunGenerators(compilation);
+    string[] firstTexts = GeneratedTexts(driver);
 
-        CSharpCompilation edited = compilation.AddSyntaxTrees(
-            CSharpSyntaxTree.ParseText(UnrelatedSource, HostCompiler.ParseOptions, path: "Unrelated.cs"));
-        driver = driver.RunGenerators(edited);
+    CSharpCompilation edited = compilation.AddSyntaxTrees(
+        CSharpSyntaxTree.ParseText(UnrelatedSource, HostCompiler.ParseOptions, path: "Unrelated.cs"));
+    driver = driver.RunGenerators(edited);
 
-        GeneratorRunResult result = driver.GetRunResult().Results.ShouldHaveSingleItem();
-        Reasons(result, TrackingNames.Options).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
-        Reasons(result, TrackingNames.Model).ShouldAllBe(reason => reason == IncrementalStepRunReason.Unchanged);
-        Reasons(result, TrackingNames.Sources).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
-        IncrementalStepRunReason[] emitReasons = result.TrackedOutputSteps.SelectMany(pair => pair.Value)
-            .Where(step => step.Inputs.Any(input => input.Source.Name == TrackingNames.Sources))
-            .SelectMany(step => step.Outputs)
-            .Select(output => output.Reason)
-            .ToArray();
-        emitReasons.ShouldNotBeEmpty();
-        emitReasons.ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
-        GeneratedTexts(driver).ShouldBe(firstTexts);
-    }
+    GeneratorRunResult result = driver.GetRunResult().Results.ShouldHaveSingleItem();
+    Reasons(result, TrackingNames.Options).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
+    Reasons(result, TrackingNames.Model).ShouldAllBe(reason => reason == IncrementalStepRunReason.Unchanged);
+    Reasons(result, TrackingNames.Sources).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
+    IncrementalStepRunReason[] emitReasons = result.TrackedOutputSteps.SelectMany(pair => pair.Value)
+        .Where(step => step.Inputs.Any(input => input.Source.Name == TrackingNames.Sources))
+        .SelectMany(step => step.Outputs)
+        .Select(output => output.Reason)
+        .ToArray();
+    emitReasons.ShouldNotBeEmpty();
+    emitReasons.ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
+    GeneratedTexts(driver).ShouldBe(firstTexts);
+  }
 
-    [Fact]
-    public void NewHandler_ModifiesModel_AndReEmits()
-    {
-        CSharpCompilation compilation = CreateCompilation(HostSource);
-        GeneratorDriver driver = HostCompiler.CreateDriver(trackSteps: true).RunGenerators(compilation);
+  [Fact]
+  public void NewHandler_ModifiesModel_AndReEmits()
+  {
+    CSharpCompilation compilation = CreateCompilation(HostSource);
+    GeneratorDriver driver = HostCompiler.CreateDriver(trackSteps: true).RunGenerators(compilation);
 
-        driver = driver.RunGenerators(compilation.AddSyntaxTrees(
-            CSharpSyntaxTree.ParseText(NewHandlerSource, HostCompiler.ParseOptions, path: "Pong.cs")));
+    driver = driver.RunGenerators(compilation.AddSyntaxTrees(
+        CSharpSyntaxTree.ParseText(NewHandlerSource, HostCompiler.ParseOptions, path: "Pong.cs")));
 
-        GeneratorRunResult result = driver.GetRunResult().Results.ShouldHaveSingleItem();
-        Reasons(result, TrackingNames.Model).ShouldAllBe(reason => reason == IncrementalStepRunReason.Modified);
-        Reasons(result, TrackingNames.Sources).ShouldAllBe(reason => reason == IncrementalStepRunReason.Modified);
-        result.GeneratedSources.ShouldContain(source => source.SourceText.ToString().Contains("App.PongHandler"));
-    }
+    GeneratorRunResult result = driver.GetRunResult().Results.ShouldHaveSingleItem();
+    Reasons(result, TrackingNames.Model).ShouldAllBe(reason => reason == IncrementalStepRunReason.Modified);
+    Reasons(result, TrackingNames.Sources).ShouldAllBe(reason => reason == IncrementalStepRunReason.Modified);
+    result.GeneratedSources.ShouldContain(source => source.SourceText.ToString().Contains("App.PongHandler"));
+  }
 
-    [Fact]
-    public void RequestWithNoHandler_IsReportedOnce_WithGeneratorAndAnalyzer()
-    {
-        HostCompilation host = HostCompiler.Compile("SingleReporter", HostSource + UnhandledSource);
+  [Fact]
+  public void RequestWithNoHandler_IsReportedOnce_WithGeneratorAndAnalyzer()
+  {
+    HostCompilation host = HostCompiler.Compile("SingleReporter", HostSource + UnhandledSource);
 
-        Diagnostic twm001 = host.Diagnostics.Where(d => d.Id == "TWM001").ShouldHaveSingleItem();
-        twm001.GetMessage().ShouldContain("App.Orphan");
-        twm001.Location.SourceTree.ShouldNotBeNull();
-        twm001.Location.SourceTree!.GetText().ToString(twm001.Location.SourceSpan).ShouldBe("Orphan");
-    }
+    Diagnostic twm001 = host.Diagnostics.Where(d => d.Id == "TWM001").ShouldHaveSingleItem();
+    twm001.GetMessage().ShouldContain("App.Orphan");
+    twm001.Location.SourceTree.ShouldNotBeNull();
+    twm001.Location.SourceTree!.GetText().ToString(twm001.Location.SourceSpan).ShouldBe("Orphan");
+  }
 
-    private static CSharpCompilation CreateCompilation(string source)
-    {
-        return CSharpCompilation.Create(
-            "IncrementalHost",
-            syntaxTrees: new[] { CSharpSyntaxTree.ParseText(source, HostCompiler.ParseOptions, path: "Host.cs") },
-            references: HostCompiler.GetBaseReferences(),
-            options: HostCompiler.CompilationOptions);
-    }
+  private static CSharpCompilation CreateCompilation(string source)
+  {
+    return CSharpCompilation.Create(
+        "IncrementalHost",
+        syntaxTrees: new[] { CSharpSyntaxTree.ParseText(source, HostCompiler.ParseOptions, path: "Host.cs") },
+        references: HostCompiler.GetBaseReferences(),
+        options: HostCompiler.CompilationOptions);
+  }
 
-    private static string[] GeneratedTexts(GeneratorDriver driver)
-    {
-        return driver.GetRunResult().GeneratedTrees.Select(tree => tree.ToString()).ToArray();
-    }
+  private static string[] GeneratedTexts(GeneratorDriver driver)
+  {
+    return driver.GetRunResult().GeneratedTrees.Select(tree => tree.ToString()).ToArray();
+  }
 
-    private static IEnumerable<IncrementalStepRunReason> Reasons(GeneratorRunResult result, string stepName)
-    {
-        result.TrackedSteps.ShouldContainKey(stepName);
-        return result.TrackedSteps[stepName].SelectMany(step => step.Outputs).Select(output => output.Reason);
-    }
+  private static IEnumerable<IncrementalStepRunReason> Reasons(GeneratorRunResult result, string stepName)
+  {
+    result.TrackedSteps.ShouldContainKey(stepName);
+    return result.TrackedSteps[stepName].SelectMany(step => step.Outputs).Select(output => output.Reason);
+  }
 
-    private const string HostSource = """
+  private const string HostSource = """
         using System.Threading;
         using System.Threading.Tasks;
         using TimeWarp.Mediator;
@@ -94,7 +94,7 @@ public sealed class IncrementalGeneratorTests
 
         """;
 
-    private const string UnrelatedSource = """
+  private const string UnrelatedSource = """
         namespace App
         {
             public static class Unrelated
@@ -104,7 +104,7 @@ public sealed class IncrementalGeneratorTests
         }
         """;
 
-    private const string NewHandlerSource = """
+  private const string NewHandlerSource = """
         using System.Threading;
         using System.Threading.Tasks;
         using TimeWarp.Mediator;
@@ -120,7 +120,7 @@ public sealed class IncrementalGeneratorTests
         }
         """;
 
-    private const string UnhandledSource = """
+  private const string UnhandledSource = """
         namespace App
         {
             public sealed class Orphan : TimeWarp.Mediator.IRequest<int> { }

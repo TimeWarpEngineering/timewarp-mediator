@@ -4,15 +4,15 @@ namespace TimeWarp.Mediator.Examples;
 
 public class GenericHandler : INotificationHandler<INotification>
 {
-    private readonly TextWriter _writer;
+  private readonly TextWriter TextWriter;
 
-    public GenericHandler(TextWriter writer)
-    {
-        _writer = writer;
-    }
+  public GenericHandler(TextWriter writer)
+  {
+    TextWriter = writer;
+  }
 
-    public Task Handle(INotification notification, CancellationToken cancellationToken)
-    {
-        return _writer.WriteLineAsync("Got notified.");
-    }
+  public Task Handle(INotification notification, CancellationToken cancellationToken)
+  {
+    return TextWriter.WriteLineAsync("Got notified.");
+  }
 }

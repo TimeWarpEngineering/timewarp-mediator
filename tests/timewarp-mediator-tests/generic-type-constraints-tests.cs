@@ -4,152 +4,151 @@ namespace TimeWarp.Mediator.Tests;
 
 public class GenericTypeConstraintsTests
 {
-    public interface IGenericTypeRequestHandlerTestClass<TRequest> where TRequest : IBaseRequest
+  public interface IGenericTypeRequestHandlerTestClass<TRequest> where TRequest : IBaseRequest
+  {
+    Type[] Handle(TRequest request);
+  }
+
+  public abstract class GenericTypeRequestHandlerTestClass<TRequest> : IGenericTypeRequestHandlerTestClass<TRequest>
+      where TRequest : IBaseRequest
+  {
+    public bool IsIRequest { get; }
+
+    public bool IsIRequestT { get; }
+
+    public bool IsIBaseRequest { get; }
+
+    public GenericTypeRequestHandlerTestClass()
     {
-        Type[] Handle(TRequest request);
+      IsIRequest = typeof(IRequest).IsAssignableFrom(typeof(TRequest));
+      IsIRequestT = typeof(TRequest).GetInterfaces()
+          .Any(x => x.GetTypeInfo().IsGenericType &&
+                    x.GetGenericTypeDefinition() == typeof(IRequest<>));
+
+      IsIBaseRequest = typeof(IBaseRequest).IsAssignableFrom(typeof(TRequest));
     }
 
-    public abstract class GenericTypeRequestHandlerTestClass<TRequest> : IGenericTypeRequestHandlerTestClass<TRequest>
-        where TRequest : IBaseRequest
+    public Type[] Handle(TRequest request)
     {
-        public bool IsIRequest { get; }
-
-
-        public bool IsIRequestT { get; }
-
-        public bool IsIBaseRequest { get; }
-
-        public GenericTypeRequestHandlerTestClass()
-        {
-            IsIRequest = typeof(IRequest).IsAssignableFrom(typeof(TRequest));
-            IsIRequestT = typeof(TRequest).GetInterfaces()
-                .Any(x => x.GetTypeInfo().IsGenericType &&
-                          x.GetGenericTypeDefinition() == typeof(IRequest<>));
-
-            IsIBaseRequest = typeof(IBaseRequest).IsAssignableFrom(typeof(TRequest));
-        }
-
-        public Type[] Handle(TRequest request)
-        {
-            return typeof(TRequest).GetInterfaces();
-        }
+      return typeof(TRequest).GetInterfaces();
     }
+  }
 
-    public class GenericTypeConstraintPing : GenericTypeRequestHandlerTestClass<Ping>
+  public class GenericTypeConstraintPing : GenericTypeRequestHandlerTestClass<Ping>
+  {
+
+  }
+
+  public class GenericTypeConstraintJing : GenericTypeRequestHandlerTestClass<Jing>
+  {
+
+  }
+
+  public class Jing : IRequest
+  {
+    public string? Message { get; set; }
+  }
+
+  public class JingHandler : IRequestHandler<Jing>
+  {
+    public Task Handle(Jing request, CancellationToken cancellationToken)
     {
-
+      // empty handle
+      return Task.CompletedTask;
     }
+  }
 
-    public class GenericTypeConstraintJing : GenericTypeRequestHandlerTestClass<Jing>
+  public class Ping : IRequest<Pong>
+  {
+    public string? Message { get; set; }
+  }
+
+  public class Pong
+  {
+    public string? Message { get; set; }
+  }
+
+  public class PingHandler : IRequestHandler<Ping, Pong>
+  {
+    public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
     {
-
+      return Task.FromResult(new Pong { Message = request.Message + " Pong" });
     }
+  }
 
-    public class Jing : IRequest
+  private readonly IMediator Mediator;
+
+  public GenericTypeConstraintsTests()
+  {
+    Container container = new(cfg =>
     {
-        public string? Message { get; set; }
-    }
+      cfg.Scan(scanner =>
+          {
+            scanner.AssemblyContainingType(typeof(GenericTypeConstraintsTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.IncludeNamespaceContainingType<Jing>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+            scanner.AddAllTypesOf(typeof(IRequestHandler<>));
+          });
+      cfg.For<IMediator>().Use<Mediator>();
+    });
 
-    public class JingHandler : IRequestHandler<Jing>
-    {
-        public Task Handle(Jing request, CancellationToken cancellationToken)
-        {
-            // empty handle
-            return Task.CompletedTask;
-        }
-    }
+    Mediator = container.GetInstance<IMediator>();
+  }
 
-    public class Ping : IRequest<Pong>
-    {
-        public string? Message { get; set; }
-    }
+  [Fact]
+  public async Task Should_Resolve_Void_Return_Request()
+  {
+    // Create Request
+    Jing jing = new() { Message = "Jing" };
 
-    public class Pong
-    {
-        public string? Message { get; set; }
-    }
+    // Test med still works sending request
+    await Mediator.Send(jing);
 
-    public class PingHandler : IRequestHandler<Ping, Pong>
-    {
-        public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(new Pong { Message = request.Message + " Pong" });
-        }
-    }
+    // Create new instance of type constrained class
+    GenericTypeConstraintJing genericTypeConstraintsVoidReturn = new();
 
-    private readonly IMediator _mediator;
+    // Assert it is of type IRequest and IRequest<T>
+    Assert.True(genericTypeConstraintsVoidReturn.IsIRequest);
+    Assert.False(genericTypeConstraintsVoidReturn.IsIRequestT);
+    Assert.True(genericTypeConstraintsVoidReturn.IsIBaseRequest);
 
-    public GenericTypeConstraintsTests()
-    {
-        Container container = new(cfg =>
-        {
-            cfg.Scan(scanner =>
-            {
-                scanner.AssemblyContainingType(typeof(GenericTypeConstraintsTests));
-                scanner.IncludeNamespaceContainingType<Ping>();
-                scanner.IncludeNamespaceContainingType<Jing>();
-                scanner.WithDefaultConventions();
-                scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-                scanner.AddAllTypesOf(typeof(IRequestHandler<>));
-            });
-            cfg.For<IMediator>().Use<Mediator>();
-        });
+    // Verify it is of IRequest and IBaseRequest
+    Type[] results = genericTypeConstraintsVoidReturn.Handle(jing);
 
-        _mediator = container.GetInstance<IMediator>();
-    }
+    Assert.Equal(2, results.Length);
 
-    [Fact]
-    public async Task Should_Resolve_Void_Return_Request()
-    {
-        // Create Request
-        Jing jing = new() { Message = "Jing" };
+    results.ShouldNotContain(typeof(IRequest<Unit>));
+    results.ShouldContain(typeof(IBaseRequest));
+    results.ShouldContain(typeof(IRequest));
+  }
 
-        // Test med still works sending request
-        await _mediator.Send(jing);
+  [Fact]
+  public async Task Should_Resolve_Response_Return_Request()
+  {
+    // Create Request
+    Ping ping = new() { Message = "Ping" };
 
-        // Create new instance of type constrained class
-        GenericTypeConstraintJing genericTypeConstraintsVoidReturn = new();
+    // Test med still works sending request and gets response
+    Pong pingResponse = await Mediator.Send(ping);
+    pingResponse.Message.ShouldBe("Ping Pong");
 
-        // Assert it is of type IRequest and IRequest<T>
-        Assert.True(genericTypeConstraintsVoidReturn.IsIRequest);
-        Assert.False(genericTypeConstraintsVoidReturn.IsIRequestT);
-        Assert.True(genericTypeConstraintsVoidReturn.IsIBaseRequest);
+    // Create new instance of type constrained class
+    GenericTypeConstraintPing genericTypeConstraintsResponseReturn = new();
 
-        // Verify it is of IRequest and IBaseRequest
-        Type[] results = genericTypeConstraintsVoidReturn.Handle(jing);
+    // Assert it is of type IRequest<T> but not IRequest
+    Assert.False(genericTypeConstraintsResponseReturn.IsIRequest);
+    Assert.True(genericTypeConstraintsResponseReturn.IsIRequestT);
+    Assert.True(genericTypeConstraintsResponseReturn.IsIBaseRequest);
 
-        Assert.Equal(2, results.Length);
+    // Verify it is of IRequest<Pong> and IBaseRequest, but not IRequest
+    Type[] results = genericTypeConstraintsResponseReturn.Handle(ping);
 
-        results.ShouldNotContain(typeof(IRequest<Unit>));
-        results.ShouldContain(typeof(IBaseRequest));
-        results.ShouldContain(typeof(IRequest));
-    }
+    Assert.Equal(2, results.Length);
 
-    [Fact]
-    public async Task Should_Resolve_Response_Return_Request()
-    {
-        // Create Request
-        Ping ping = new() { Message = "Ping" };
-
-        // Test med still works sending request and gets response
-        Pong pingResponse = await _mediator.Send(ping);
-        pingResponse.Message.ShouldBe("Ping Pong");
-
-        // Create new instance of type constrained class
-        GenericTypeConstraintPing genericTypeConstraintsResponseReturn = new();
-
-        // Assert it is of type IRequest<T> but not IRequest
-        Assert.False(genericTypeConstraintsResponseReturn.IsIRequest);
-        Assert.True(genericTypeConstraintsResponseReturn.IsIRequestT);
-        Assert.True(genericTypeConstraintsResponseReturn.IsIBaseRequest);
-
-        // Verify it is of IRequest<Pong> and IBaseRequest, but not IRequest
-        Type[] results = genericTypeConstraintsResponseReturn.Handle(ping);
-
-        Assert.Equal(2, results.Length);
-
-        results.ShouldContain(typeof(IRequest<Pong>));
-        results.ShouldContain(typeof(IBaseRequest));
-        results.ShouldNotContain(typeof(IRequest));
-    }
+    results.ShouldContain(typeof(IRequest<Pong>));
+    results.ShouldContain(typeof(IBaseRequest));
+    results.ShouldNotContain(typeof(IRequest));
+  }
 }

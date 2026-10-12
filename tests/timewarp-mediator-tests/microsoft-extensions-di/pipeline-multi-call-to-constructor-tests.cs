@@ -4,88 +4,88 @@ namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
 public class PipelineMultiCallToConstructorTests
 {
-    public class ConstructorTestBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-        where TRequest : IRequest<TResponse>
+  public class ConstructorTestBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+      where TRequest : IRequest<TResponse>
+  {
+    private readonly Logger Logger;
+
+    public ConstructorTestBehavior(Logger output) => Logger = output;
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        private readonly Logger _output;
+      Logger.Messages.Add("ConstructorTestBehavior before");
+      TResponse? response = await next();
+      Logger.Messages.Add("ConstructorTestBehavior after");
 
-        public ConstructorTestBehavior(Logger output) => _output = output;
+      return response;
+    }
+  }
 
-        public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
-        {
-            _output.Messages.Add("ConstructorTestBehavior before");
-            TResponse? response = await next();
-            _output.Messages.Add("ConstructorTestBehavior after");
+  public class ConstructorTestRequest : IRequest<ConstructorTestResponse>
+  {
+    public string? Message { get; set; }
+  }
 
-            return response;
-        }
+  public class ConstructorTestResponse
+  {
+    public string? Message { get; set; }
+  }
+
+  public class ConstructorCallCounter
+  {
+    private int CallCount;
+
+    public int Count => Volatile.Read(ref CallCount);
+
+    public void Increment() => Interlocked.Increment(ref CallCount);
+  }
+
+  public class ConstructorTestHandler : IRequestHandler<ConstructorTestRequest, ConstructorTestResponse>
+  {
+    private readonly Logger Logger;
+
+    public ConstructorTestHandler(Logger logger, ConstructorCallCounter counter)
+    {
+      Logger = logger;
+      counter.Increment();
     }
 
-    public class ConstructorTestRequest : IRequest<ConstructorTestResponse>
+    public Task<ConstructorTestResponse> Handle(ConstructorTestRequest request, CancellationToken cancellationToken)
     {
-        public string? Message { get; set; }
+      Logger.Messages.Add("Handler");
+      return Task.FromResult(new ConstructorTestResponse { Message = request.Message + " ConstructorPong" });
     }
+  }
 
-    public class ConstructorTestResponse
+  [Fact]
+  public async Task Should_not_call_constructor_multiple_times_when_using_a_pipeline()
+  {
+    ConstructorCallCounter counter = new();
+    Logger output = new();
+    IServiceCollection services = new ServiceCollection();
+
+    services.AddSingleton(output);
+    services.AddSingleton(counter);
+    services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ConstructorTestBehavior<,>));
+    services.AddMediator(cfg =>
     {
-        public string? Message { get; set; }
-    }
+      cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly);
+      cfg.AddOpenBehavior(typeof(ConstructorTestBehavior<,>));
+    });
+    ServiceProvider provider = services.BuildServiceProvider();
 
-    public class ConstructorCallCounter
+    IMediator med = provider.GetRequiredService<IMediator>();
+
+    ConstructorTestResponse response = await med.Send(new ConstructorTestRequest { Message = "ConstructorPing" });
+
+    response.Message.ShouldBe("ConstructorPing ConstructorPong");
+
+    output.Messages.ShouldBe(new[]
     {
-        private int _count;
-
-        public int Count => Volatile.Read(ref _count);
-
-        public void Increment() => Interlocked.Increment(ref _count);
-    }
-
-    public class ConstructorTestHandler : IRequestHandler<ConstructorTestRequest, ConstructorTestResponse>
-    {
-        private readonly Logger _logger;
-
-        public ConstructorTestHandler(Logger logger, ConstructorCallCounter counter)
-        {
-            _logger = logger;
-            counter.Increment();
-        }
-
-        public Task<ConstructorTestResponse> Handle(ConstructorTestRequest request, CancellationToken cancellationToken)
-        {
-            _logger.Messages.Add("Handler");
-            return Task.FromResult(new ConstructorTestResponse { Message = request.Message + " ConstructorPong" });
-        }
-    }
-
-    [Fact]
-    public async Task Should_not_call_constructor_multiple_times_when_using_a_pipeline()
-    {
-        ConstructorCallCounter counter = new();
-        Logger output = new();
-        IServiceCollection services = new ServiceCollection();
-
-        services.AddSingleton(output);
-        services.AddSingleton(counter);
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ConstructorTestBehavior<,>));
-        services.AddMediator(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(typeof(Ping).Assembly);
-            cfg.AddOpenBehavior(typeof(ConstructorTestBehavior<,>));
-        });
-        ServiceProvider provider = services.BuildServiceProvider();
-
-        IMediator med = provider.GetRequiredService<IMediator>();
-
-        ConstructorTestResponse response = await med.Send(new ConstructorTestRequest { Message = "ConstructorPing" });
-
-        response.Message.ShouldBe("ConstructorPing ConstructorPong");
-
-        output.Messages.ShouldBe(new[]
-        {
             "ConstructorTestBehavior before",
             "Handler",
             "ConstructorTestBehavior after"
         });
-        counter.Count.ShouldBe(1);
-    }
+    counter.Count.ShouldBe(1);
+  }
 }

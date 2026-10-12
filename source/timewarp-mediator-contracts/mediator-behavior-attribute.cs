@@ -19,30 +19,30 @@ namespace TimeWarp.Mediator;
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
 public sealed class MediatorBehaviorAttribute : Attribute
 {
-    /// <summary>
-    /// Initializes the attribute.
-    /// </summary>
-    /// <param name="behaviorType">Closed or open generic behavior type implementing <c>IPipelineBehavior&lt;,&gt;</c>.</param>
-    /// <param name="order">Optional explicit order. Lower runs further out. Default 0 keeps source order.</param>
-    public MediatorBehaviorAttribute(Type behaviorType, int order = 0)
-    {
-        BehaviorType = behaviorType ?? throw new ArgumentNullException(nameof(behaviorType));
-        Order = order;
-    }
+  /// <summary>
+  /// Initializes the attribute.
+  /// </summary>
+  /// <param name="behaviorType">Closed or open generic behavior type implementing <c>IPipelineBehavior&lt;,&gt;</c>.</param>
+  /// <param name="order">Optional explicit order. Lower runs further out. Default 0 keeps source order.</param>
+  public MediatorBehaviorAttribute(Type behaviorType, int order = 0)
+  {
+    BehaviorType = behaviorType ?? throw new ArgumentNullException(nameof(behaviorType));
+    Order = order;
+  }
 
-    /// <summary>
-    /// Behavior implementation type.
-    /// </summary>
-    public Type BehaviorType { get; }
+  /// <summary>
+  /// Behavior implementation type.
+  /// </summary>
+  public Type BehaviorType { get; }
 
-    /// <summary>
-    /// Sort key. Lower values wrap the rest of the chain (run first).
-    /// </summary>
-    public int Order { get; }
+  /// <summary>
+  /// Sort key. Lower values wrap the rest of the chain (run first).
+  /// </summary>
+  public int Order { get; }
 
-    /// <summary>
-    /// Pipeline marker type this behavior belongs to. When null, the behavior runs only on the
-    /// unscoped default pipeline. Scoped pipelines never run unscoped behaviors.
-    /// </summary>
-    public Type? Scope { get; set; }
+  /// <summary>
+  /// Pipeline marker type this behavior belongs to. When null, the behavior runs only on the
+  /// unscoped default pipeline. Scoped pipelines never run unscoped behaviors.
+  /// </summary>
+  public Type? Scope { get; set; }
 }
