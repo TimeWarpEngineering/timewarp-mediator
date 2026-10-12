@@ -3,7 +3,8 @@
 #endregion
 #region Design
 // Runs tests/<project> in Release through BenchmarkSwitcher, so --filter reaches
-// BenchmarkDotNet unchanged. Results land in artifacts/benchmarks/<name>/ (not
+// BenchmarkDotNet unchanged (its default config already exports the GitHub
+// markdown report). Results land in artifacts/benchmarks/<name>/ (not
 // the BenchmarkDotNet.Artifacts/ default) so `dev clean` owns them. --record
 // copies the GitHub-flavored report to documentation/benchmarks/<name>-baseline.md
 // under a header with the commit SHA, a dirty-tree flag and the UTC date;
@@ -66,7 +67,7 @@ public sealed class BenchmarkCommand : ICommand<Unit>
       int exitCode = await DotNet.Run()
         .WithProject(Path.Combine(repoRoot, match.Project))
         .WithConfiguration("Release")
-        .WithArguments("--filter", filter, "--exporters", "github", "--artifacts", artifactsPath)
+        .WithArguments("--filter", filter, "--artifacts", artifactsPath)
         .WithNoValidation()
         .RunAsync(ct);
 
