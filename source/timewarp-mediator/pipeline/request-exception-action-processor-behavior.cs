@@ -13,8 +13,13 @@ public class RequestExceptionActionProcessorBehavior<TRequest, TResponse> : IPip
 {
     private readonly IServiceProvider _serviceProvider;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RequestExceptionActionProcessorBehavior{TRequest,TResponse}"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">Service provider used to resolve the <see cref="IRequestExceptionAction{TRequest,TException}"/> instances for each exception type</param>
     public RequestExceptionActionProcessorBehavior(IServiceProvider serviceProvider) => _serviceProvider = serviceProvider;
 
+    /// <inheritdoc/>
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         try

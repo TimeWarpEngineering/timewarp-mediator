@@ -3,7 +3,7 @@
 namespace TimeWarp.Mediator.Pipeline;
 
 /// <summary>
-/// Defined a request pre-processor for a handler
+/// Defines a request pre-processor for a handler
 /// </summary>
 /// <typeparam name="TRequest">Request type</typeparam>
 public interface IRequestPreProcessor<in TRequest> where TRequest : notnull

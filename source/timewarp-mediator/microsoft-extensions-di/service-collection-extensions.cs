@@ -3,18 +3,18 @@
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// Extensions to scan for Mediator handlers and registers them.
-/// - Scans for any handler interface implementations and registers them as <see cref="ServiceLifetime.Transient"/>
-/// - Scans for any <see cref="IRequestPreProcessor{TRequest}"/> and <see cref="IRequestPostProcessor{TRequest,TResponse}"/> implementations and registers them as transient instances
-/// Registers <see cref="IMediator"/> as a transient instance
+/// Extensions to scan for Mediator handlers and register them.
+/// - Scans for handler interface implementations and registers them as <see cref="ServiceLifetime.Transient"/>
+/// - Registers <see cref="IMediator"/>, <see cref="ISender"/>, and <see cref="IPublisher"/> under <see cref="MediatorServiceConfiguration.Lifetime"/>
+/// - Registers <see cref="RequestPreProcessorBehavior{TRequest,TResponse}"/> and <see cref="RequestPostProcessorBehavior{TRequest,TResponse}"/> when pre- or post-processors are configured
 /// After calling AddMediator you can use the container to resolve an <see cref="IMediator"/> instance.
-/// This does not scan for any <see cref="IPipelineBehavior{TRequest,TResponse}"/> instances including <see cref="RequestPreProcessorBehavior{TRequest,TResponse}"/> and <see cref="RequestPreProcessorBehavior{TRequest,TResponse}"/>.
-/// To register behaviors, use the <see cref="ServiceCollectionServiceExtensions.AddTransient(IServiceCollection,Type,Type)"/> with the open generic or closed generic types.
+/// Other <see cref="IPipelineBehavior{TRequest,TResponse}"/> implementations are not scanned; register them through
+/// <see cref="MediatorServiceConfiguration.AddBehavior(Type, ServiceLifetime)"/> or <see cref="MediatorServiceConfiguration.AddOpenBehavior(Type, ServiceLifetime)"/>.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers handlers and med types from the specified assemblies
+    /// Registers handlers and mediator types from the specified assemblies
     /// </summary>
     /// <param name="services">Service collection</param>
     /// <param name="configuration">The action used to configure the options</param>
@@ -40,7 +40,7 @@ public static class ServiceCollectionExtensions
     }
     
     /// <summary>
-    /// Registers handlers and med types from the specified assemblies
+    /// Registers handlers and mediator types from the specified assemblies
     /// </summary>
     /// <param name="services">Service collection</param>
     /// <param name="configuration">Configuration options</param>

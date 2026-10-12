@@ -1,5 +1,10 @@
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// Options for the reflection-based mediator registration performed by
+/// <see cref="ServiceCollectionExtensions.AddMediator(IServiceCollection, Action{MediatorServiceConfiguration})"/>:
+/// which assemblies to scan, which behaviors and processors to register, and the lifetimes to use.
+/// </summary>
 public class MediatorServiceConfiguration
 {
     /// <summary>
@@ -81,7 +86,7 @@ public class MediatorServiceConfiguration
     public int RegistrationTimeout { get; set; } = 15000;
 
     /// <summary>
-    /// Flag that controlls whether Mediator will attempt to register handlers that containg generic type parameters.
+    /// Flag that controls whether Mediator will attempt to register handlers that contain generic type parameters.
     /// </summary>
     public bool RegisterGenericHandlers { get; set; } = false;
 

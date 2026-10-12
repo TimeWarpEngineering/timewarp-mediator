@@ -8,6 +8,8 @@
     <AssemblyName>TimeWarp.Mediator.Contracts</AssemblyName>
     <PackageId>TimeWarp.Mediator.Contracts</PackageId>
     <LangVersion>10.0</LangVersion>
+    <!-- Shipped package: every public member must be documented (root props suppress CS1591 for tests/samples). -->
+    <NoWarn>$(NoWarn.Replace('CS1591', ''))</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

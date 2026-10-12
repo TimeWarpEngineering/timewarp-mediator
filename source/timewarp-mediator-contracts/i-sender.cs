@@ -3,7 +3,7 @@
 namespace TimeWarp.Mediator;
 
 /// <summary>
-/// Send a request through the med pipeline to be handled by a single handler.
+/// Send a request through the mediator pipeline to be handled by a single handler.
 /// </summary>
 public interface ISender
 {
@@ -19,6 +19,7 @@ public interface ISender
     /// <summary>
     /// Asynchronously send a request to a single handler with no response
     /// </summary>
+    /// <typeparam name="TRequest">Request type</typeparam>
     /// <param name="request">Request object</param>
     /// <param name="cancellationToken">Optional cancellation token</param>
     /// <returns>A task that represents the send operation.</returns>
@@ -36,18 +37,18 @@ public interface ISender
     /// <summary>
     /// Create a stream via a single stream handler
     /// </summary>
-    /// <typeparam name="TResponse"></typeparam>
-    /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <typeparam name="TResponse">Type of each streamed item</typeparam>
+    /// <param name="request">Stream request object</param>
+    /// <param name="cancellationToken">Optional cancellation token, observed while the stream is enumerated</param>
+    /// <returns>An async enumerable of the items produced by the stream handler</returns>
     IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Create a stream via an object request to a stream handler
     /// </summary>
-    /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="request">Stream request object; its type must implement <see cref="IStreamRequest{TResponse}"/></param>
+    /// <param name="cancellationToken">Optional cancellation token, observed while the stream is enumerated</param>
+    /// <returns>An async enumerable of the type erased items produced by the stream handler</returns>
     IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default);
 }
 

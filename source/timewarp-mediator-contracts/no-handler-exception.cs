@@ -15,13 +15,23 @@ public sealed class NoHandlerException : InvalidOperationException
     /// </summary>
     /// <param name="requestType">Runtime request type.</param>
     public NoHandlerException(Type requestType)
-        : base($"No handler registered for request type '{requestType}'.")
+        : base(CreateMessage(requestType))
     {
-        RequestType = requestType ?? throw new ArgumentNullException(nameof(requestType));
+        RequestType = requestType;
     }
 
     /// <summary>
     /// Request type that was not in the generated switch.
     /// </summary>
     public Type RequestType { get; }
+
+    private static string CreateMessage(Type requestType)
+    {
+        if (requestType is null)
+        {
+            throw new ArgumentNullException(nameof(requestType));
+        }
+
+        return $"No handler registered for request type '{requestType}'.";
+    }
 }

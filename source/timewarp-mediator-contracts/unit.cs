@@ -76,7 +76,7 @@ public readonly struct Unit : IEquatable<Unit>, IComparable<Unit>, IComparable
     /// </summary>
     /// <param name="first">The first object.</param>
     /// <param name="second">The second object.</param>
-    /// <c>true</c> if the <paramref name="first"/> object is equal to the <paramref name="second" /> object; otherwise, <c>false</c>.
+    /// <returns><c>true</c> if the <paramref name="first"/> object is equal to the <paramref name="second" /> object; otherwise, <c>false</c>.</returns>
     public static bool operator ==(Unit first, Unit second) => true;
 
     /// <summary>
@@ -84,7 +84,7 @@ public readonly struct Unit : IEquatable<Unit>, IComparable<Unit>, IComparable
     /// </summary>
     /// <param name="first">The first object.</param>
     /// <param name="second">The second object.</param>
-    /// <c>true</c> if the <paramref name="first"/> object is not equal to the <paramref name="second" /> object; otherwise, <c>false</c>.
+    /// <returns><c>true</c> if the <paramref name="first"/> object is not equal to the <paramref name="second" /> object; otherwise, <c>false</c>.</returns>
     public static bool operator !=(Unit first, Unit second) => false;
 
     /// <summary>

@@ -3,7 +3,7 @@
 namespace TimeWarp.Mediator;
 
 /// <summary>
-/// Publish a notification or event through the med pipeline to be handled by multiple handlers.
+/// Publish a notification or event through the mediator pipeline to be handled by multiple handlers.
 /// </summary>
 public interface IPublisher
 {
@@ -18,6 +18,7 @@ public interface IPublisher
     /// <summary>
     /// Asynchronously send a notification to multiple handlers
     /// </summary>
+    /// <typeparam name="TNotification">Notification type</typeparam>
     /// <param name="notification">Notification object</param>
     /// <param name="cancellationToken">Optional cancellation token</param>
     /// <returns>A task that represents the publish operation.</returns>

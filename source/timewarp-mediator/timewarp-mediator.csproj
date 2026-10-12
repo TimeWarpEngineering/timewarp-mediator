@@ -9,6 +9,8 @@
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
     <AssemblyName>TimeWarp.Mediator</AssemblyName>
     <PackageId>TimeWarp.Mediator</PackageId>
+    <!-- Shipped package: every public member must be documented (root props suppress CS1591 for tests/samples). -->
+    <NoWarn>$(NoWarn.Replace('CS1591', ''))</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
