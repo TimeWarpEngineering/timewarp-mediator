@@ -92,7 +92,7 @@ Same architecture; the name rides on the profile where it's true. I think that c
 
 ## Answers to your four asks
 
-1. **Revise the doc?** Done — interceptors are `CallSiteInlining` opt-in (Link profile); default is generated `Mediator` + analyzers + scoped senders + MessageGraph center. See revised [`Analysis/2026-06-17-source-gen-aot-rewrite-opus.md`](../../../Analysis/2026-06-17-source-gen-aot-rewrite-opus.md), new "Profiles" and "MessageGraph" sections.
+1. **Revise the doc?** Done — interceptors are `CallSiteInlining` opt-in (Link profile); default is generated `Mediator` + analyzers + scoped senders + MessageGraph center. See revised [`2026-06-17-source-gen-aot-rewrite-opus.md`](../2026-06-17-source-gen-aot-rewrite-opus.md), new "Profiles" and "MessageGraph" sections.
 2. **Interceptor gaps justifying interceptor-first for M1?** No — your cross-assembly coverage point is the gap that settles it. Interceptor-first for M1 is wrong. Interceptors stay out of M1 entirely.
 3. **Pruning opt-in only?** Agreed, and bound to the `Send(object)` switch with a manifest of pruned types + strict-mode error.
 4. **Inline vs composed-at-init?** Composed-at-init default; inline weave behind `[Inline]` / threshold / perf profile. Agreeing with your hybrid, re-justified on per-call inlining rather than IL size (point 5).

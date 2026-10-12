@@ -1,6 +1,6 @@
 # M2 named pipelines (`ISender<TScope>`)
 
-Source-generated per-scope senders and publishers (milestone M2). Design SSOT: `analysis/2026-06-17-source-gen-aot-rewrite-spec.md` §9.1.
+Source-generated per-scope senders and publishers (milestone M2). Design SSOT: [`design/2026-06-17-source-gen-aot-rewrite-spec.md`](design/2026-06-17-source-gen-aot-rewrite-spec.md) §9.1.
 
 Pipelines are **marker types**, not strings. Use empty types such as `ClientPipeline` /
 `ServerPipeline`. `[MediatorModule("Orders")]` does not name a pipeline.

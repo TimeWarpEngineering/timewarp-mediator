@@ -1,6 +1,6 @@
 # Source Generator + AOT Rewrite Analysis for TimeWarp.Mediator
 
-> **⚠ Superseded** by [`2026-06-17-source-gen-aot-rewrite-spec.md`](./2026-06-17-source-gen-aot-rewrite-spec.md) (consolidated single source of truth). Kept for history — the consumer-requirement material (TimeWarp.State + TimeWarp.Architecture) is carried forward into §2 of the spec.
+> **⚠ Superseded** by [`2026-06-17-source-gen-aot-rewrite-spec.md`](../../design/2026-06-17-source-gen-aot-rewrite-spec.md) (consolidated single source of truth). Kept for history — the consumer-requirement material (TimeWarp.State + TimeWarp.Architecture) is carried forward into §2 of the spec.
 
 **Date:** 2026-06-17  
 **Author:** Grok (based on exploration and conversation)  

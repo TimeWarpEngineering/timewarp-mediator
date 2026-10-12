@@ -16,10 +16,10 @@ This doc merges and replaces:
 
 | Source doc | Author | What it contributed |
 |-----------|--------|--------------------|
-| [`…-rewrite.md`](./2026-06-17-source-gen-aot-rewrite.md) | Composer (survey) | Option space; martinothamar steal/skip; CQRS semantics; three-layer ServiceGen north star |
-| [`…-rewrite-opus.md`](./2026-06-17-source-gen-aot-rewrite-opus.md) | Opus | Linker metaphor; MessageGraph IR; profiles; the interceptor/DI/pipeline decisions |
-| [`…-rewrite-grok.md`](./2026-06-17-source-gen-aot-rewrite-grok.md) | Grok | **Consumer requirements** — TimeWarp.State (ActionSets, re-entrancy) + TimeWarp.Architecture (CQRS, OneOf) |
-| [collaboration thread](../.agents/collaboration/2026-06-17-source-gen-aot-rewrite/) | Composer↔Opus | The five resolved design decisions |
+| [`…-rewrite.md`](../archive/2026-06-17-source-gen-aot-rewrite/2026-06-17-source-gen-aot-rewrite.md) | Composer (survey) | Option space; martinothamar steal/skip; CQRS semantics; three-layer ServiceGen north star |
+| [`…-rewrite-opus.md`](../archive/2026-06-17-source-gen-aot-rewrite/2026-06-17-source-gen-aot-rewrite-opus.md) | Opus | Linker metaphor; MessageGraph IR; profiles; the interceptor/DI/pipeline decisions |
+| [`…-rewrite-grok.md`](../archive/2026-06-17-source-gen-aot-rewrite/2026-06-17-source-gen-aot-rewrite-grok.md) | Grok | **Consumer requirements** — TimeWarp.State (ActionSets, re-entrancy) + TimeWarp.Architecture (CQRS, OneOf) |
+| [collaboration thread](../archive/2026-06-17-source-gen-aot-rewrite/collaboration/) | Composer↔Opus | The five resolved design decisions |
 
 The prior docs remain for history; each now carries a "superseded" banner pointing here.
 

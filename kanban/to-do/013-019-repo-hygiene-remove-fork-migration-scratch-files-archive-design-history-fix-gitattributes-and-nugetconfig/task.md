@@ -21,15 +21,40 @@ Root-level leftovers and small config defects. Parent review task 013, findings 
 
 ## Checklist
 
-- [ ] Scratch files removed
-- [ ] Design docs moved and links fixed
-- [ ] gitattributes and nuget.config fixed
-- [ ] snk note
+- [x] Scratch files removed
+- [x] Design docs moved and links fixed
+- [x] gitattributes and nuget.config fixed
+- [x] snk note
 - [ ] `ganda repo audit` clean; PR with merge commit
 
 ## Notes
 
 Parent: 013.
+
+## Results
+
+- B-6 / D-8: `git rm` of `file-mapping.csv`, `files-to-modify.txt`, `files-to-modify-filtered.txt`, `original-fork-files.txt`.
+- D-7: `git mv` of the live spec to `documentation/design/2026-06-17-source-gen-aot-rewrite-spec.md`. The three superseded analyses and the Composer/Opus thread (from `.agents/collaboration/2026-06-17-source-gen-aot-rewrite/`) moved to `documentation/archive/2026-06-17-source-gen-aot-rewrite/` (thread under `collaboration/`). The two 2025 release analyses moved to `documentation/archive/2025-release-process/`. `analysis/` is gone. m1 and m2 link the new spec path. Cross-links inside the spec, the archived analyses and the thread were rewritten (no more capitalized `Analysis/`). `.agents/collaboration/readme.md` now points at `documentation/design/` and documents the archive location.
+- D-9: the orphan blip moved to `documentation/archive/posts/blips/`.
+- B-14: `.gitattributes` drops `core.eol crlf` and every `merge=union` line (csproj/vbproj/fsproj/dbproj/sln), adds `*.snk binary`. `build-command.cs` Design comment no longer claims a .sln exists. `skills/.gitkeep` kept: it is the TimeWarp convention scaffold and `ganda repo audit` directory-structure passes with it.
+- B-17: `nuget.config` has no BOM, `<clear />`, and a `packageSourceMapping` of `*` to nuget.org.
+- B-18: agent.md Build Properties notes the snk is an intentional public identity key, that only Mediator and Contracts (of the four packages) are strong-named, and that tests share the key for `InternalsVisibleTo`.
+- Gates: `ganda repo audit` clean; `./bin/dev build --clean` and `./bin/dev test` pass (a stale VBCSCompiler server first served an old Analyzers DLL; `dotnet build-server shutdown` cleared it).
+
+### How to validate
+
+Smoke:
+```bash
+ls analysis file-mapping.csv files-to-modify.txt files-to-modify-filtered.txt original-fork-files.txt 2>&1
+ls documentation/design documentation/archive
+grep -rn "Analysis/\|analysis/2026" --exclude-dir=kanban --exclude-dir=.git . | grep -v documentation/archive
+grep -n "core.eol\|merge=union" .gitattributes
+head -c3 nuget.config | xxd; grep -n "clear\|packageSourceMapping" nuget.config
+grep -n "snk" agent.md
+ganda repo audit && ./bin/dev build --clean --quiet && ./bin/dev test --no-build --quiet
+```
+
+Expect: every `ls` of a removed path reports "No such file"; `documentation/design` holds the spec and `documentation/archive` holds `2026-06-17-source-gen-aot-rewrite/`, `2025-release-process/`, `posts/`; both greps print nothing; nuget.config starts with `3c3f 78` (no BOM) and shows `<clear />` and `<packageSourceMapping>`; agent.md shows the snk note; audit, build and test all succeed.
 
 ## Session
 

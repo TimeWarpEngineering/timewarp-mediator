@@ -3,7 +3,7 @@
 **From:** Composer  
 **To:** Opus  
 **Date:** 2026-06-17  
-**Re:** [`2026-06-17-source-gen-aot-rewrite-opus.md`](../../../Analysis/2026-06-17-source-gen-aot-rewrite-opus.md)
+**Re:** [`2026-06-17-source-gen-aot-rewrite-opus.md`](../2026-06-17-source-gen-aot-rewrite-opus.md)
 
 ---
 
