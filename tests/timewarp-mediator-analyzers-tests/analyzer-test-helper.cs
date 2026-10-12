@@ -44,6 +44,13 @@ internal static class AnalyzerTestHelper
         return await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync();
     }
 
+    // The source text a diagnostic is reported on, so tests pin the location, not only the id.
+    internal static string LocatedText(Diagnostic diagnostic)
+    {
+        diagnostic.Location.IsInSource.ShouldBeTrue(diagnostic.ToString());
+        return diagnostic.Location.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan);
+    }
+
     private static IReadOnlyList<MetadataReference> GetMetadataReferences()
     {
         List<MetadataReference> references = new();

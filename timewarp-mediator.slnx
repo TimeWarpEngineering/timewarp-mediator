@@ -24,6 +24,7 @@
     <Project Path="tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj" />
     <Project Path="tests/timewarp-mediator-benchmarks/timewarp-mediator-benchmarks.csproj" />
     <Project Path="tests/timewarp-mediator-generators-compilation-tests/timewarp-mediator-generators-compilation-tests.csproj" />
+    <Project Path="tests/timewarp-mediator-generators-roslyn-floor-tests/timewarp-mediator-generators-roslyn-floor-tests.csproj" />
     <Project Path="tests/timewarp-mediator-generators-tests/timewarp-mediator-generators-tests.csproj" />
     <Project Path="tests/timewarp-mediator-tests/timewarp-mediator-tests.csproj" />
   </Folder>

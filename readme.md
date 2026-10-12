@@ -101,6 +101,14 @@ dotnet add package TimeWarp.Mediator.Analyzers --version 14.0.0-beta.4
 
 Do **not** add only `TimeWarp.Mediator` and call `AddMediator()` expecting this stack.
 
+### Minimum SDK / IDE
+
+`TimeWarp.Mediator.Generators` and `TimeWarp.Mediator.Analyzers` are built against
+**Microsoft.CodeAnalysis.CSharp 4.8.0**, so the host compiler must be Roslyn 4.8 or later:
+**.NET SDK 8.0.100** or later, or **Visual Studio 2022 17.8** or later (or a Rider/MSBuild that
+ships Roslyn 4.8+). On an older compiler the generator does not load (CS9057) and no mediator is
+emitted. CI runs the generator compilation tests against 4.8.0 as well as the current compiler.
+
 ## Using Contracts-Only Package
 
 To reference only the contracts for TimeWarp.Mediator, which includes:

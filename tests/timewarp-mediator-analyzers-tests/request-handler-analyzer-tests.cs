@@ -19,7 +19,8 @@ public class RequestHandlerAnalyzerTests
         ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
         Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
         diagnostic.Id.ShouldBe("TWM001");
-        diagnostic.GetMessage().ShouldContain("Orphan");
+        diagnostic.GetMessage().ShouldBe("Request 'Orphan' has no handler");
+        AnalyzerTestHelper.LocatedText(diagnostic).ShouldBe("Orphan");
     }
 
     [Fact]
@@ -55,7 +56,10 @@ public class RequestHandlerAnalyzerTests
             """;
 
         ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
-        diagnostics.Any(d => d.Id == "TWM002").ShouldBeTrue();
+        Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
+        diagnostic.Id.ShouldBe("TWM002");
+        diagnostic.GetMessage().ShouldBe("Request 'Ping' has multiple handlers: PingHandlerA, PingHandlerB");
+        AnalyzerTestHelper.LocatedText(diagnostic).ShouldBe("PingHandlerB");
     }
 
     [Fact]
@@ -112,7 +116,10 @@ public class RequestHandlerAnalyzerTests
             """;
 
         ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
-        diagnostics.Any(d => d.Id == "TWM003").ShouldBeTrue();
+        Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
+        diagnostic.Id.ShouldBe("TWM003");
+        diagnostic.GetMessage().ShouldBe("Handler 'PingHandler' is assigned to pipeline 'ServerPipeline' but message 'Ping' is assigned to pipeline 'ClientPipeline'");
+        AnalyzerTestHelper.LocatedText(diagnostic).ShouldBe("PingHandler");
     }
 
     [Fact]
@@ -150,6 +157,9 @@ public class RequestHandlerAnalyzerTests
             """;
 
         ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
-        diagnostics.Any(d => d.Id == "TWM004").ShouldBeTrue();
+        Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
+        diagnostic.Id.ShouldBe("TWM004");
+        diagnostic.GetMessage().ShouldBe("Request 'ServerPing' belongs to pipeline 'ServerPipeline' and cannot be sent through 'ISender<ClientPipeline>'");
+        AnalyzerTestHelper.LocatedText(diagnostic).ShouldBe("sender.Send(new ServerPing())");
     }
 }

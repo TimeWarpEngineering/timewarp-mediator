@@ -5,7 +5,6 @@
 
 using GeneratedMediator = TimeWarp.Mediator.Generated.Mediator;
 
-[Collection(PipelineLogCollection.Name)]
 public class ResponseShapeTests
 {
     [Fact]
@@ -123,16 +122,22 @@ public class ResponseShapeTests
         await sender.Send(new CreateWidget { Name = "wrapped" });
 
         PipelineLog.Events.ShouldBe(new[] { "outer-before", "inner-before", "handler", "inner-after", "outer-after" });
-        MediatorManifest.Json.ShouldContain("UnitOnlyBehavior<TimeWarp.Mediator.Generators.Tests.Responses.CreateWidget>");
+        ManifestDocument.Parse(MediatorManifest.Json)
+            .Request("TimeWarp.Mediator.Generators.Tests.Responses.CreateWidget")
+            .Behaviors.ShouldContain("TimeWarp.Mediator.Generators.Tests.State.UnitOnlyBehavior<TimeWarp.Mediator.Generators.Tests.Responses.CreateWidget>");
     }
 
     [Fact]
     public void Manifest_RecordsResponseShapes()
     {
-        MediatorManifest.Json.ShouldContain("\"request\":\"TimeWarp.Mediator.Generators.Tests.Responses.SearchWidgets\",\"response\":\"string[]\"");
-        MediatorManifest.Json.ShouldContain("\"request\":\"TimeWarp.Mediator.Generators.Tests.Responses.ListWidgets\",\"response\":\"System.Collections.Generic.List<string>\"");
-        MediatorManifest.Json.ShouldContain("\"request\":\"TimeWarp.Mediator.Generators.Tests.Responses.CreateWidget\",\"response\":\"TimeWarp.Mediator.Unit\"");
-        MediatorManifest.Json.ShouldContain("SearchWidgetsAuditBehavior");
+        ManifestDocument manifest = ManifestDocument.Parse(MediatorManifest.Json);
+        ManifestRequest search = manifest.Request("TimeWarp.Mediator.Generators.Tests.Responses.SearchWidgets");
+        search.Response.ShouldBe("string[]");
+        search.Behaviors.ShouldContain("TimeWarp.Mediator.Generators.Tests.Responses.SearchWidgetsAuditBehavior");
+        manifest.Request("TimeWarp.Mediator.Generators.Tests.Responses.ListWidgets").Response
+            .ShouldBe("System.Collections.Generic.List<string>");
+        manifest.Request("TimeWarp.Mediator.Generators.Tests.Responses.CreateWidget").Response
+            .ShouldBe("TimeWarp.Mediator.Unit");
     }
 
     private static ServiceProvider CreateProvider()

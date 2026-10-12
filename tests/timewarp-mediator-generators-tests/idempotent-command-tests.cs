@@ -2,7 +2,6 @@
 // IIdempotentCommand (void + generic) is registered by AddGeneratedMediator and dispatched like ICommand.
 #endregion
 
-[Collection(PipelineLogCollection.Name)]
 public class IdempotentCommandTests
 {
     [Fact]
@@ -83,8 +82,13 @@ public class IdempotentCommandTests
     [Fact]
     public void Manifest_RecordsIdempotentCommands()
     {
-        MediatorManifest.Json.ShouldContain("UpsertSetting");
-        MediatorManifest.Json.ShouldContain("ResetSetting");
+        ManifestDocument manifest = ManifestDocument.Parse(MediatorManifest.Json);
+        ManifestRequest upsert = manifest.Request("TimeWarp.Mediator.Generators.Tests.Idempotency.UpsertSetting");
+        upsert.Response.ShouldBe("string");
+        upsert.Handler.ShouldBe("TimeWarp.Mediator.Generators.Tests.Idempotency.UpsertSettingHandler");
+        ManifestRequest reset = manifest.Request("TimeWarp.Mediator.Generators.Tests.Idempotency.ResetSetting");
+        reset.Response.ShouldBe("TimeWarp.Mediator.Unit");
+        reset.Handler.ShouldBe("TimeWarp.Mediator.Generators.Tests.Idempotency.ResetSettingHandler");
     }
 
     private static ServiceProvider CreateProvider()

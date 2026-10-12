@@ -4,13 +4,18 @@
 
 namespace TimeWarp.Mediator.Generators.Tests.State;
 
+// Per async flow, not process-wide: every unscoped send runs the global tracking behaviors, so a
+// static list would couple test classes by execution order. Clear() (synchronous) starts a fresh
+// log for the calling test; behaviors awaited from that test then write into it.
 public static class PipelineLog
 {
-    public static List<string> Events { get; } = new();
+    private static readonly AsyncLocal<List<string>?> Current = new();
+
+    public static List<string> Events => Current.Value ??= new List<string>();
 
     public static void Clear()
     {
-        Events.Clear();
+        Current.Value = new List<string>();
     }
 }
 

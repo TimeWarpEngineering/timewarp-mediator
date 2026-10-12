@@ -256,6 +256,21 @@ internal static class MediatorEmitter
         builder.AppendLine();
     }
 
+    // A struct request cannot be null; `request is null` on it is CS0037.
+    private static void EmitRequestNullGuard(StringBuilder builder, ITypeSymbol requestType)
+    {
+        if (requestType.IsValueType)
+        {
+            return;
+        }
+
+        builder.AppendLine("        if (request is null)");
+        builder.AppendLine("        {");
+        builder.AppendLine("            throw new global::System.ArgumentNullException(nameof(request));");
+        builder.AppendLine("        }");
+        builder.AppendLine();
+    }
+
     private static void EmitMonomorphicSend(StringBuilder builder, MemberNames names, List<RequestBinding> requests, bool aot)
     {
         foreach (RequestBinding request in requests)
@@ -266,11 +281,7 @@ internal static class MediatorEmitter
             builder.Append("    public global::System.Threading.Tasks.ValueTask<").Append(responseType).Append("> Send(");
             builder.Append(requestType).AppendLine(" request, global::System.Threading.CancellationToken cancellationToken = default)");
             builder.AppendLine("    {");
-            builder.AppendLine("        if (request is null)");
-            builder.AppendLine("        {");
-            builder.AppendLine("            throw new global::System.ArgumentNullException(nameof(request));");
-            builder.AppendLine("        }");
-            builder.AppendLine();
+            EmitRequestNullGuard(builder, request.RequestType);
             builder.Append("        return ").Append(dispatch).Append('(');
             if (!aot)
             {
@@ -465,11 +476,7 @@ internal static class MediatorEmitter
                 builder.AppendLine();
             }
 
-            builder.AppendLine("        if (request is null)");
-            builder.AppendLine("        {");
-            builder.AppendLine("            throw new global::System.ArgumentNullException(nameof(request));");
-            builder.AppendLine("        }");
-            builder.AppendLine();
+            EmitRequestNullGuard(builder, request.RequestType);
 
             if (aot)
             {

@@ -4,7 +4,6 @@
 
 using GeneratedMediator = TimeWarp.Mediator.Generated.Mediator;
 
-[Collection(PipelineLogCollection.Name)]
 public class IncrementActionSetTests
 {
     [Fact]
@@ -17,10 +16,18 @@ public class IncrementActionSetTests
     [Fact]
     public void Manifest_IsVersion1()
     {
+        ManifestDocument manifest = ManifestDocument.Parse(MediatorManifest.Json);
         MediatorManifest.Version.ShouldBe(1);
-        MediatorManifest.Json.ShouldContain("\"version\":1");
-        MediatorManifest.Json.ShouldContain("IncrementActionSet");
-        MediatorManifest.Json.ShouldContain("StateTransactionBehavior");
+        manifest.Version.ShouldBe(1);
+        manifest.Profile.ShouldBe("Host");
+        manifest.Namespace.ShouldBe("TimeWarp.Mediator.Generated");
+        manifest.Membership.ShouldBe(new[] { "timewarp-mediator-generators-tests" });
+        ManifestRequest increment = manifest.Request("TimeWarp.Mediator.Generators.Tests.State.CounterState.IncrementActionSet.Action");
+        increment.Response.ShouldBe("TimeWarp.Mediator.Unit");
+        increment.Handler.ShouldBe("TimeWarp.Mediator.Generators.Tests.State.CounterState.IncrementActionSet.Handler");
+        increment.Scope.ShouldBeNull();
+        increment.Behaviors.ShouldContain(
+            "TimeWarp.Mediator.Generators.Tests.State.StateTransactionBehavior<TimeWarp.Mediator.Generators.Tests.State.CounterState.IncrementActionSet.Action, TimeWarp.Mediator.Unit>");
     }
 
     [Fact]
@@ -116,9 +123,21 @@ public class IncrementActionSetTests
     [Fact]
     public void UnitOnlyBehavior_ClosesOntoUnitRequestsOnly()
     {
-        MediatorManifest.Json.ShouldContain("UnitOnlyBehavior");
-        MediatorManifest.Json.ShouldNotContain("UnitOnlyBehavior<TimeWarp.Mediator.Generators.Tests.State.Ping");
-        MediatorManifest.Json.ShouldContain("UnitOnlyBehavior<TimeWarp.Mediator.Generators.Tests.State.CounterState.IncrementActionSet.Action");
+        ManifestDocument manifest = ManifestDocument.Parse(MediatorManifest.Json);
+        foreach (ManifestRequest request in manifest.Requests)
+        {
+            string unitOnly = "TimeWarp.Mediator.Generators.Tests.State.UnitOnlyBehavior<" + request.Request + ">";
+            if (request.Response == "TimeWarp.Mediator.Unit" && request.Scope is null)
+            {
+                request.Behaviors.ShouldContain(unitOnly);
+            }
+            else
+            {
+                request.Behaviors.ShouldNotContain(b => b.StartsWith("TimeWarp.Mediator.Generators.Tests.State.UnitOnlyBehavior<", StringComparison.Ordinal));
+            }
+        }
+
+        manifest.Request("TimeWarp.Mediator.Generators.Tests.State.Ping").Response.ShouldBe("string");
     }
 
     private sealed class Fixture

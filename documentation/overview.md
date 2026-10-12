@@ -49,9 +49,11 @@ Automatically detects alpha/beta versions and prevents accidental stable release
 
 ### Simple Process
 1. Update `<Version>` in `Directory.Build.props` (e.g., from `12.4.0` to `12.5.0`)
-2. Commit and push changes
-3. Create GitHub release with tag `v12.5.0`
-4. CI/CD automatically builds and publishes both packages
+2. Move every rule row in `source/timewarp-mediator-analyzers/AnalyzerReleases.Unshipped.md` to the
+   `## Release 12.5.0` section of `AnalyzerReleases.Shipped.md` (see [Analyzer release tracking](#analyzer-release-tracking))
+3. Commit and push changes
+4. Create GitHub release with tag `v12.5.0`
+5. CI/CD automatically builds and publishes both packages
 
 ### GitHub Release Creation
 ```bash
@@ -76,16 +78,30 @@ gh release create v12.5.0 --generate-notes
    ```xml
    <Version>12.5.0</Version> <!-- Update this line -->
    ```
-2. Commit and push:
+2. Move the rule rows from `AnalyzerReleases.Unshipped.md` to the `## Release 12.5.0` section of
+   `AnalyzerReleases.Shipped.md` (both under `source/timewarp-mediator-analyzers/`).
+3. Commit and push:
    ```bash
-   git add Directory.Build.props
+   git add Directory.Build.props source/timewarp-mediator-analyzers/AnalyzerReleases.*.md
    git commit -m "Bump version to 12.5.0"
    git push origin master
    ```
-3. Create release:
+4. Create release:
    ```bash
    gh release create v12.5.0 --title "Release v12.5.0" --generate-notes
    ```
+
+### Analyzer release tracking
+
+`TimeWarp.Mediator.Analyzers` uses Roslyn analyzer release tracking (RS2000–RS2008). New or changed
+TWM rules go in `AnalyzerReleases.Unshipped.md`. Every release that publishes packages — prereleases
+included — moves those rows to `AnalyzerReleases.Shipped.md` and leaves Unshipped with only its header.
+
+Release headers must parse as `System.Version` (RS2007 rejects `## Release 14.0.0-beta.1`), so a
+prerelease files its rows under its target version: every 14.0.0 beta adds to `## Release 14.0.0`
+and notes the beta in the Notes column (`RequestHasNoHandler, shipped in 14.0.0-beta.1`). Create the
+section if it does not exist yet. TWM001–TWM004 shipped in 14.0.0-beta.1; TWM005–TWM011 move at the
+next release.
 
 ### Verification
 1. Check GitHub Actions logs
