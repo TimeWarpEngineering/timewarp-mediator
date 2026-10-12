@@ -27,6 +27,20 @@ that cannot target net10.0 or newer stay on 13.x. `TimeWarp.Mediator.Generators`
 `TimeWarp.Mediator.Analyzers` stay netstandard2.0 because Roslyn loads them inside the compiler;
 their analyzer payload does not depend on your app's target framework.
 
+#### License expression
+
+`TimeWarp.Mediator` and `TimeWarp.Mediator.Contracts` now declare
+`Unlicense AND Apache-2.0`. `TimeWarp.Mediator.Generators` and
+`TimeWarp.Mediator.Analyzers` stay `Unlicense`. Every package packs `notice` and `unlicense`.
+
+#### Trim warnings on the reflection runtime
+
+`AddMediator(...)` (both overloads), the `Mediator` constructors, and the constructors of
+`RequestExceptionProcessorBehavior<,>` and `RequestExceptionActionProcessorBehavior<,>` are
+annotated `[RequiresUnreferencedCode]` and `[RequiresDynamicCode]`. A trimmed or NativeAOT host
+that still calls them gets IL2026 / IL3050. The generated path does not. See
+[generated-vs-legacy.md](../generated-vs-legacy.md).
+
 #### Smaller public API in the `TimeWarp.Mediator` runtime package
 
 Types that only the runtime uses are no longer public. Code that only uses `IMediator`, `ISender`,
@@ -68,13 +82,15 @@ method null-checked the request. The generator now omits that check for value-ty
 ### Generated types are internal
 
 The generator now emits every generated type as `internal` in every profile (Host, Aot, Link):
-`Mediator`, `Sender_*` / `Publisher_*`, `MediatorManifest` and
-`GeneratedMediatorServiceCollectionExtensions`. Every host emits the same type names, so public
-types caused CS0436 warnings, and ambiguous `AddGeneratedMediator()` calls (CS0121), in any
-compilation that referenced two hosts, for example a test project that references two apps.
+`Mediator`, `Sender_*` / `Publisher_*`, and `MediatorManifest`. The Host profile also emits
+internal `GeneratedMediatorServiceCollectionExtensions`. Aot and Link do not emit that type, so
+they have no `AddGeneratedMediator()`. Every host emits the same type names, so public types
+caused CS0436 warnings, and ambiguous `AddGeneratedMediator()` calls (CS0121), in any compilation
+that referenced two hosts, for example a test project that references two apps.
 
-- `AddGeneratedMediator()` stays callable from the host's own code. Assemblies that reference the
-  host no longer see it; resolve `IMediator` / `ISender` / `IPublisher` instead.
+- On the Host profile, `AddGeneratedMediator()` stays callable from the host's own code.
+  Assemblies that reference the host no longer see it; resolve `IMediator` / `ISender` /
+  `IPublisher` instead.
 - `InternalsVisibleTo` re-exposes the types, so a friend of two hosts still sees duplicates.
 - A build step that removed the generator from a library compile only to avoid an ambiguous public
   `AddGeneratedMediator()` is no longer needed.

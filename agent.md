@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TimeWarp Mediator is a fork of the MediatR library that implements the mediator pattern for .NET applications. It provides in-process messaging with no dependencies, supporting request/response, commands, queries, notifications, and events with both synchronous and asynchronous patterns.
+TimeWarp Mediator is a fork of the MediatR library that implements the mediator pattern for .NET applications. It provides in-process messaging, supporting request/response, commands, queries, notifications, and events with both synchronous and asynchronous patterns.
 
 ## Build Commands
 
@@ -54,8 +54,11 @@ dotnet test tests/timewarp-mediator-tests/timewarp-mediator-tests.csproj --filte
    `TimeWarp.Mediator`. Trim and NativeAOT safe; the `Aot` profile dispatches through static
    fields. See `documentation/generated-vs-legacy.md`.
 
-Shared patterns: request/response via `ISender.Send()` (one handler), notifications via
-`IPublisher.Publish()` (many handlers), pipeline behaviors, and streams via `IStreamRequest<>`.
+Shared patterns: request/response via `ISender.Send()` (one handler) and notifications via
+`IPublisher.Publish()` (many handlers). `IPipelineBehavior<,>` runs on the reflection runtime
+and on the generated Host profile; the Aot and Link profiles do not weave behaviors. Streams
+(`CreateStream` / `IStreamRequest<>`) are reflection-only: the generated mediator throws
+`NotSupportedException` and reports TWM009. See `documentation/diagnostics.md`.
 
 ## Test Architecture (`tests/`)
 
