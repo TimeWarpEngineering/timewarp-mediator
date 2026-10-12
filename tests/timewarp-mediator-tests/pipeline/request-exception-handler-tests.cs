@@ -4,187 +4,187 @@ namespace TimeWarp.Mediator.Tests.Pipeline;
 
 public class RequestExceptionHandlerTests
 {
-    public class Ping : IRequest<Pong>
+  public class Ping : IRequest<Pong>
+  {
+    public string? Message { get; set; }
+  }
+
+  public class Pong
+  {
+    public string? Message { get; set; }
+  }
+
+  public class PingException : Exception
+  {
+    public PingException(string? message) : base(message + " Thrown")
     {
-        public string? Message { get; set; }
     }
+  }
 
-    public class Pong
+  public class PingHandler : IRequestHandler<Ping, Pong>
+  {
+    public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
     {
-        public string? Message { get; set; }
+      throw new PingException(request.Message);
     }
+  }
 
-    public class PingException : Exception
+  public class GenericPingExceptionHandler : IRequestExceptionHandler<Ping, Pong, Exception>
+  {
+    public int ExecutionCount { get; private set; }
+
+    public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong> state, CancellationToken cancellationToken)
     {
-        public PingException(string? message) : base(message + " Thrown")
-        {
-        }
+      ExecutionCount++;
+      return Task.CompletedTask;
     }
+  }
 
-    public class PingHandler : IRequestHandler<Ping, Pong>
+  public class PingPongExceptionHandlerForType : IRequestExceptionHandler<Ping, Pong, PingException>
+  {
+    public Task Handle(Ping request, PingException exception, RequestExceptionHandlerState<Pong> state, CancellationToken cancellationToken)
     {
-        public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
-        {
-            throw new PingException(request.Message);
-        }
-    }
+      state.SetHandled(new Pong() { Message = exception.Message + " Handled by Type" });
 
-    public class GenericPingExceptionHandler : IRequestExceptionHandler<Ping, Pong, Exception>
+      return Task.CompletedTask;
+    }
+  }
+
+  public class PingPongExceptionHandler : IRequestExceptionHandler<Ping, Pong, Exception>
+  {
+    public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong> state, CancellationToken token)
     {
-        public int ExecutionCount { get; private set; }
+      state.SetHandled(new Pong() { Message = exception.Message + " Handled" });
 
-        public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong> state, CancellationToken cancellationToken)
-        {
-            ExecutionCount++;
-            return Task.CompletedTask;
-        }
+      return Task.CompletedTask;
     }
+  }
 
-    public class PingPongExceptionHandlerForType : IRequestExceptionHandler<Ping, Pong, PingException>
+  public class PingPongExceptionHandlerNotHandled : IRequestExceptionHandler<Ping, Pong, Exception>
+  {
+    public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong> state, CancellationToken token)
     {
-        public Task Handle(Ping request, PingException exception, RequestExceptionHandlerState<Pong> state, CancellationToken cancellationToken)
-        {
-            state.SetHandled(new Pong() { Message = exception.Message + " Handled by Type" });
+      request.Message = exception.Message + " Not Handled";
 
-            return Task.CompletedTask;
-        }
+      return Task.CompletedTask;
     }
+  }
 
-    public class PingPongExceptionHandler : IRequestExceptionHandler<Ping, Pong, Exception>
+  public class PingPongThrowingExceptionHandler : IRequestExceptionHandler<Ping, Pong, Exception>
+  {
+    public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong> state, CancellationToken token)
     {
-        public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong> state, CancellationToken token)
-        {
-            state.SetHandled(new Pong() { Message = exception.Message + " Handled"});
-            
-            return Task.CompletedTask;
-        }
+      throw new ApplicationException("Surprise!");
     }
+  }
 
-    public class PingPongExceptionHandlerNotHandled : IRequestExceptionHandler<Ping, Pong, Exception>
+  [Fact]
+  public async Task Should_run_exception_handler_and_allow_for_exception_not_to_throw()
+  {
+    Container container = new(cfg =>
     {
-        public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong> state, CancellationToken token)
-        {
-            request.Message = exception.Message + " Not Handled";
-            
-            return Task.CompletedTask;
-        }
-    }
+      cfg.For<IRequestHandler<Ping, Pong>>().Use<PingHandler>();
+      cfg.For<IRequestExceptionHandler<Ping, Pong, Exception>>().Use<PingPongExceptionHandler>();
+      cfg.For<IRequestExceptionHandler<Ping, Pong, PingException>>().Use<PingPongExceptionHandlerForType>();
+      cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestExceptionProcessorBehavior<,>));
+      cfg.For<IMediator>().Use<Mediator>();
+    });
 
-    public class PingPongThrowingExceptionHandler : IRequestExceptionHandler<Ping, Pong, Exception>
+    IMediator med = container.GetInstance<IMediator>();
+
+    Pong response = await med.Send(new Ping { Message = "Ping" });
+
+    response.Message.ShouldBe("Ping Thrown Handled by Type");
+  }
+
+  [Fact]
+  public async Task Should_run_exception_handler_and_allow_for_exception_to_be_still_thrown()
+  {
+    Container container = new(cfg =>
     {
-        public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong> state, CancellationToken token)
-        {
-            throw new ApplicationException("Surprise!");
-        }
-    }
+      cfg.For<IRequestHandler<Ping, Pong>>().Use<PingHandler>();
+      cfg.For<IRequestExceptionHandler<Ping, Pong, Exception>>().Use<PingPongExceptionHandlerNotHandled>();
+      cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestExceptionProcessorBehavior<,>));
+      cfg.For<IMediator>().Use<Mediator>();
+    });
 
-    [Fact]
-    public async Task Should_run_exception_handler_and_allow_for_exception_not_to_throw()
+    IMediator med = container.GetInstance<IMediator>();
+
+    Ping request = new() { Message = "Ping" };
+    await Should.ThrowAsync<PingException>(async () =>
     {
-        Container container = new(cfg =>
-        {
-            cfg.For<IRequestHandler<Ping, Pong>>().Use<PingHandler>();
-            cfg.For<IRequestExceptionHandler<Ping, Pong, Exception>>().Use<PingPongExceptionHandler>();
-            cfg.For<IRequestExceptionHandler<Ping, Pong, PingException>>().Use<PingPongExceptionHandlerForType>();
-            cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestExceptionProcessorBehavior<,>));
-            cfg.For<IMediator>().Use<Mediator>();
-        });
+      await med.Send(request);
+    });
 
-        IMediator med = container.GetInstance<IMediator>();
+    request.Message.ShouldBe("Ping Thrown Not Handled");
+  }
 
-        Pong response = await med.Send(new Ping { Message = "Ping" });
-
-        response.Message.ShouldBe("Ping Thrown Handled by Type");
-    }
-
-    [Fact]
-    public async Task Should_run_exception_handler_and_allow_for_exception_to_be_still_thrown()
+  [Fact]
+  public async Task Should_run_exception_handler_and_unwrap_expections_thrown_in_the_handler()
+  {
+    Container container = new(cfg =>
     {
-        Container container = new(cfg =>
-        {
-            cfg.For<IRequestHandler<Ping, Pong>>().Use<PingHandler>();
-            cfg.For<IRequestExceptionHandler<Ping, Pong, Exception>>().Use<PingPongExceptionHandlerNotHandled>();
-            cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestExceptionProcessorBehavior<,>));
-            cfg.For<IMediator>().Use<Mediator>();
-        });
+      cfg.For<IRequestHandler<Ping, Pong>>().Use<PingHandler>();
+      cfg.For<IRequestExceptionHandler<Ping, Pong, Exception>>().Use<PingPongThrowingExceptionHandler>();
+      cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestExceptionProcessorBehavior<,>));
+      cfg.For<IMediator>().Use<Mediator>();
+    });
 
-        IMediator med = container.GetInstance<IMediator>();
+    IMediator med = container.GetInstance<IMediator>();
 
-        Ping request = new() { Message = "Ping" };
-        await Should.ThrowAsync<PingException>(async () =>
-        {
-            await med.Send(request);
-        });
-
-        request.Message.ShouldBe("Ping Thrown Not Handled");
-    }
-
-    [Fact]
-    public async Task Should_run_exception_handler_and_unwrap_expections_thrown_in_the_handler()
+    Ping request = new() { Message = "Ping" };
+    await Should.ThrowAsync<ApplicationException>(async () =>
     {
-        Container container = new(cfg =>
-        {
-            cfg.For<IRequestHandler<Ping, Pong>>().Use<PingHandler>();
-            cfg.For<IRequestExceptionHandler<Ping, Pong, Exception>>().Use<PingPongThrowingExceptionHandler>();
-            cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestExceptionProcessorBehavior<,>));
-            cfg.For<IMediator>().Use<Mediator>();
-        });
+      await med.Send(request);
+    });
+  }
 
-        IMediator med = container.GetInstance<IMediator>();
-
-        Ping request = new() { Message = "Ping" };
-        await Should.ThrowAsync<ApplicationException>(async () =>
-        {
-            await med.Send(request);
-        });
-    }
-
-    [Fact]
-    public async Task Should_run_matching_exception_handlers_only_once()
+  [Fact]
+  public async Task Should_run_matching_exception_handlers_only_once()
+  {
+    GenericPingExceptionHandler genericPingExceptionHandler = new();
+    Container container = new(cfg =>
     {
-        GenericPingExceptionHandler genericPingExceptionHandler = new();
-        Container container = new(cfg =>
-        {
-            cfg.For<IRequestHandler<Ping, Pong>>().Use<PingHandler>();
-            cfg.For<IRequestExceptionHandler<Ping, Pong, Exception>>().Use(genericPingExceptionHandler);
-            cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestExceptionProcessorBehavior<,>));
-            cfg.For<IMediator>().Use<Mediator>();
-        });
+      cfg.For<IRequestHandler<Ping, Pong>>().Use<PingHandler>();
+      cfg.For<IRequestExceptionHandler<Ping, Pong, Exception>>().Use(genericPingExceptionHandler);
+      cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestExceptionProcessorBehavior<,>));
+      cfg.For<IMediator>().Use<Mediator>();
+    });
 
-        IMediator med = container.GetInstance<IMediator>();
+    IMediator med = container.GetInstance<IMediator>();
 
-        Ping request = new() { Message = "Ping" };
-        await Should.ThrowAsync<PingException>(async () =>
-        {
-            await med.Send(request);
-        });
-
-        genericPingExceptionHandler.ExecutionCount.ShouldBe(1);
-    }
-
-    public class NullPongExceptionHandler : IRequestExceptionHandler<Ping, Pong?, Exception>
+    Ping request = new() { Message = "Ping" };
+    await Should.ThrowAsync<PingException>(async () =>
     {
-        public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong?> state, CancellationToken cancellationToken)
-        {
-            state.SetHandled(null);
+      await med.Send(request);
+    });
 
-            return Task.CompletedTask;
-        }
-    }
+    genericPingExceptionHandler.ExecutionCount.ShouldBe(1);
+  }
 
-    [Fact]
-    public async Task Should_return_null_response_when_exception_handled_with_null()
+  public class NullPongExceptionHandler : IRequestExceptionHandler<Ping, Pong?, Exception>
+  {
+    public Task Handle(Ping request, Exception exception, RequestExceptionHandlerState<Pong?> state, CancellationToken cancellationToken)
     {
-        RequestExceptionProcessorBehavior<Ping, Pong?> behavior = new(
-            new ServiceCollection()
-                .AddTransient<IRequestExceptionHandler<Ping, Pong?, Exception>, NullPongExceptionHandler>()
-                .BuildServiceProvider());
+      state.SetHandled(null);
 
-        Pong? response = await behavior.Handle(
-            new Ping { Message = "Ping" },
-            _ => throw new PingException("Ping"),
-            CancellationToken.None);
-
-        response.ShouldBeNull();
+      return Task.CompletedTask;
     }
+  }
+
+  [Fact]
+  public async Task Should_return_null_response_when_exception_handled_with_null()
+  {
+    RequestExceptionProcessorBehavior<Ping, Pong?> behavior = new(
+        new ServiceCollection()
+            .AddTransient<IRequestExceptionHandler<Ping, Pong?, Exception>, NullPongExceptionHandler>()
+            .BuildServiceProvider());
+
+    Pong? response = await behavior.Handle(
+        new Ping { Message = "Ping" },
+        _ => throw new PingException("Ping"),
+        CancellationToken.None);
+
+    response.ShouldBeNull();
+  }
 }

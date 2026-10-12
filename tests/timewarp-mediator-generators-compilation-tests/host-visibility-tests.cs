@@ -6,81 +6,81 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 public sealed class HostVisibilityTests
 {
-    private const string GeneratedNamespace = "TimeWarp.Mediator.Generated";
-    private const string RegistrationType = "Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions";
+  private const string GeneratedNamespace = "TimeWarp.Mediator.Generated";
+  private const string RegistrationType = "Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions";
 
-    [Theory]
-    [InlineData("Host")]
-    [InlineData("Aot")]
-    [InlineData("Link")]
-    public void GeneratedTypes_AreInternal(string profile)
+  [Theory]
+  [InlineData("Host")]
+  [InlineData("Aot")]
+  [InlineData("Link")]
+  public void GeneratedTypes_AreInternal(string profile)
+  {
+    HostCompilation host = HostCompiler.Compile("HostA", HostSource("HostA"), profile);
+
+    ShouldBeClean(host);
+    host.GetType(GeneratedNamespace + ".Mediator").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
+    host.GetType(GeneratedNamespace + ".MediatorManifest").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
+    host.GetType(GeneratedNamespace + ".Sender_AppPipeline").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
+    host.GetType(GeneratedNamespace + ".Publisher_AppPipeline").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
+    if (profile == "Host")
     {
-        HostCompilation host = HostCompiler.Compile("HostA", HostSource("HostA"), profile);
-
-        ShouldBeClean(host);
-        host.GetType(GeneratedNamespace + ".Mediator").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
-        host.GetType(GeneratedNamespace + ".MediatorManifest").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
-        host.GetType(GeneratedNamespace + ".Sender_AppPipeline").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
-        host.GetType(GeneratedNamespace + ".Publisher_AppPipeline").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
-        if (profile == "Host")
-        {
-            host.GetType(RegistrationType).DeclaredAccessibility.ShouldBe(Accessibility.Internal);
-        }
-        else
-        {
-            host.Compilation.Assembly.GetTypeByMetadataName(RegistrationType).ShouldBeNull();
-        }
+      host.GetType(RegistrationType).DeclaredAccessibility.ShouldBe(Accessibility.Internal);
     }
-
-    [Theory]
-    [InlineData("Host")]
-    [InlineData("Aot")]
-    [InlineData("Link")]
-    public void ThirdHost_ReferencingTwoHosts_CompilesWithoutCS0436(string profile)
+    else
     {
-        HostCompilation hostA = HostCompiler.Compile("HostA", HostSource("HostA"), profile);
-        HostCompilation hostB = HostCompiler.Compile("HostB", HostSource("HostB"), profile);
-        ShouldBeClean(hostA);
-        ShouldBeClean(hostB);
-
-        string source = HostSource("HostC") + (profile == "Host" ? HostCRegistrationSource : HostCAotSource);
-        HostCompilation hostC = HostCompiler.Compile(
-            "HostC",
-            source,
-            profile,
-            hostA.ToMetadataReference(),
-            hostB.ToMetadataReference());
-
-        hostC.Diagnostics.ShouldNotContain(d => d.Id == "CS0436" || d.Id == "CS0433" || d.Id == "CS0121");
-        ShouldBeClean(hostC);
-        hostC.ToMetadataReference();
+      host.Compilation.Assembly.GetTypeByMetadataName(RegistrationType).ShouldBeNull();
     }
+  }
 
-    [Fact]
-    public void AddGeneratedMediator_IsNotVisibleOutsideTheHost()
-    {
-        HostCompilation hostA = HostCompiler.Compile("HostA", HostSource("HostA"));
-        CSharpCompilation consumer = CSharpCompilation.Create(
-            "Consumer",
-            syntaxTrees: new[] { CSharpSyntaxTree.ParseText(ConsumerSource, HostCompiler.ParseOptions) },
-            references: HostCompiler.GetBaseReferences().Append(hostA.ToMetadataReference()),
-            options: HostCompiler.CompilationOptions);
+  [Theory]
+  [InlineData("Host")]
+  [InlineData("Aot")]
+  [InlineData("Link")]
+  public void ThirdHost_ReferencingTwoHosts_CompilesWithoutCS0436(string profile)
+  {
+    HostCompilation hostA = HostCompiler.Compile("HostA", HostSource("HostA"), profile);
+    HostCompilation hostB = HostCompiler.Compile("HostB", HostSource("HostB"), profile);
+    ShouldBeClean(hostA);
+    ShouldBeClean(hostB);
 
-        Diagnostic[] errors = consumer.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
-        errors.Select(d => d.Id).ShouldBe(new[] { "CS1061" }, string.Join(Environment.NewLine, errors.Select(d => d.ToString())));
-    }
+    string source = HostSource("HostC") + (profile == "Host" ? HostCRegistrationSource : HostCAotSource);
+    HostCompilation hostC = HostCompiler.Compile(
+        "HostC",
+        source,
+        profile,
+        hostA.ToMetadataReference(),
+        hostB.ToMetadataReference());
 
-    private static void ShouldBeClean(HostCompilation host)
-    {
-        Diagnostic[] problems = host.Diagnostics
-            .Where(d => d.Severity >= DiagnosticSeverity.Warning)
-            .ToArray();
-        problems.ShouldBeEmpty(string.Join(Environment.NewLine, problems.Select(d => d.ToString())));
-    }
+    hostC.Diagnostics.ShouldNotContain(d => d.Id == "CS0436" || d.Id == "CS0433" || d.Id == "CS0121");
+    ShouldBeClean(hostC);
+    hostC.ToMetadataReference();
+  }
 
-    private static string HostSource(string hostNamespace)
-    {
-        return @"
+  [Fact]
+  public void AddGeneratedMediator_IsNotVisibleOutsideTheHost()
+  {
+    HostCompilation hostA = HostCompiler.Compile("HostA", HostSource("HostA"));
+    CSharpCompilation consumer = CSharpCompilation.Create(
+        "Consumer",
+        syntaxTrees: new[] { CSharpSyntaxTree.ParseText(ConsumerSource, HostCompiler.ParseOptions) },
+        references: HostCompiler.GetBaseReferences().Append(hostA.ToMetadataReference()),
+        options: HostCompiler.CompilationOptions);
+
+    Diagnostic[] errors = consumer.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+    errors.Select(d => d.Id).ShouldBe(new[] { "CS1061" }, string.Join(Environment.NewLine, errors.Select(d => d.ToString())));
+  }
+
+  private static void ShouldBeClean(HostCompilation host)
+  {
+    Diagnostic[] problems = host.Diagnostics
+        .Where(d => d.Severity >= DiagnosticSeverity.Warning)
+        .ToArray();
+    problems.ShouldBeEmpty(string.Join(Environment.NewLine, problems.Select(d => d.ToString())));
+  }
+
+  private static string HostSource(string hostNamespace)
+  {
+    return @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -123,9 +123,9 @@ namespace " + hostNamespace + @"
     }
 }
 ";
-    }
+  }
 
-    private const string ConsumerSource = @"
+  private const string ConsumerSource = @"
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Consumer
@@ -137,7 +137,7 @@ namespace Consumer
 }
 ";
 
-    private const string HostCRegistrationSource = @"
+  private const string HostCRegistrationSource = @"
 namespace HostC.Composition
 {
     using Microsoft.Extensions.DependencyInjection;
@@ -157,7 +157,7 @@ namespace HostC.Composition
 }
 ";
 
-    private const string HostCAotSource = @"
+  private const string HostCAotSource = @"
 namespace HostC.Composition
 {
     public static class Startup

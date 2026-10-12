@@ -6,8 +6,8 @@ namespace TimeWarp.Mediator.Analyzers.Tests;
 
 public class SendScopeAnalyzerTests
 {
-    private const string Pipelines =
-        """
+  private const string Pipelines =
+      """
         using System.Threading;
         using System.Threading.Tasks;
         using TimeWarp.Mediator;
@@ -30,11 +30,11 @@ public class SendScopeAnalyzerTests
         }
         """;
 
-    [Fact]
-    public async Task Twm003_NotificationHandlerInAnotherPipeline_IsError()
-    {
-        const string Source =
-            """
+  [Fact]
+  public async Task Twm003_NotificationHandlerInAnotherPipeline_IsError()
+  {
+    const string Source =
+        """
             using System.Threading;
             using System.Threading.Tasks;
             using TimeWarp.Mediator;
@@ -50,17 +50,17 @@ public class SendScopeAnalyzerTests
             }
             """;
 
-        ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
-        Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
-        diagnostic.Id.ShouldBe("TWM003");
-        diagnostic.GetMessage().ShouldContain("message 'Note'");
-    }
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+    Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWM003");
+    diagnostic.GetMessage().ShouldContain("message 'Note'");
+  }
 
-    [Fact]
-    public async Task Twm003_OnlyOneSideScoped_IsClean()
-    {
-        const string Source =
-            """
+  [Fact]
+  public async Task Twm003_OnlyOneSideScoped_IsClean()
+  {
+    const string Source =
+        """
             using System.Threading;
             using System.Threading.Tasks;
             using TimeWarp.Mediator;
@@ -80,45 +80,45 @@ public class SendScopeAnalyzerTests
             }
             """;
 
-        ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
-        diagnostics.ShouldBeEmpty();
-    }
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+    diagnostics.ShouldBeEmpty();
+  }
 
-    [Fact]
-    public async Task Twm004_ConditionalAccessSend_IsError()
-    {
-        string source = Pipelines +
-            """
+  [Fact]
+  public async Task Twm004_ConditionalAccessSend_IsError()
+  {
+    string source = Pipelines +
+        """
             public static class Use
             {
                 public static Task<int>? Go(ISender<ClientPipeline>? sender) => sender?.Send(new ServerPing());
             }
             """;
 
-        Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source)).ShouldHaveSingleItem();
-        diagnostic.Id.ShouldBe("TWM004");
-        diagnostic.GetMessage().ShouldContain("'ISender<ClientPipeline>'");
-    }
+    Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source)).ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWM004");
+    diagnostic.GetMessage().ShouldContain("'ISender<ClientPipeline>'");
+  }
 
-    [Fact]
-    public async Task Twm004_ObjectSend_IsNotReported()
-    {
-        string source = Pipelines +
-            """
+  [Fact]
+  public async Task Twm004_ObjectSend_IsNotReported()
+  {
+    string source = Pipelines +
+        """
             public static class Use
             {
                 public static Task<object?> Go(ISender<ClientPipeline> sender) => sender.Send((object)new ServerPing());
             }
             """;
 
-        (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldBeEmpty();
-    }
+    (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldBeEmpty();
+  }
 
-    [Fact]
-    public async Task Twm004_UnrelatedMethodNamedSend_IsNotReported()
-    {
-        string source = Pipelines +
-            """
+  [Fact]
+  public async Task Twm004_UnrelatedMethodNamedSend_IsNotReported()
+  {
+    string source = Pipelines +
+        """
             public static class Use
             {
                 public static Task<int> Send(this ISender<ClientPipeline> sender, ServerPing request) => Task.FromResult(0);
@@ -134,124 +134,124 @@ public class SendScopeAnalyzerTests
             }
             """;
 
-        (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldBeEmpty();
-    }
+    (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldBeEmpty();
+  }
 
-    [Fact]
-    public async Task Twm004_UnscopedSenderWithScopedRequest_IsErrorInHost()
-    {
-        string source = Pipelines +
-            """
+  [Fact]
+  public async Task Twm004_UnscopedSenderWithScopedRequest_IsErrorInHost()
+  {
+    string source = Pipelines +
+        """
             public static class Use
             {
                 public static Task<int> Go(IMediator mediator) => mediator.Send(new ServerPing());
             }
             """;
 
-        Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldHaveSingleItem();
-        diagnostic.Id.ShouldBe("TWM004");
-        diagnostic.GetMessage().ShouldContain("'ServerPipeline'");
-        diagnostic.GetMessage().ShouldContain("'ISender (unscoped)'");
-    }
+    Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWM004");
+    diagnostic.GetMessage().ShouldContain("'ServerPipeline'");
+    diagnostic.GetMessage().ShouldContain("'ISender (unscoped)'");
+  }
 
-    [Fact]
-    public async Task Twm004_UnscopedSenderWithScopedRequest_IsErrorInGeneratorHost()
-    {
-        string source = Pipelines +
-            """
+  [Fact]
+  public async Task Twm004_UnscopedSenderWithScopedRequest_IsErrorInGeneratorHost()
+  {
+    string source = Pipelines +
+        """
             public static class Use
             {
                 public static Task<int> Go(IMediator mediator) => mediator.Send(new ServerPing());
             }
             """;
 
-        Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source, generatorHost: true)).ShouldHaveSingleItem();
-        diagnostic.Id.ShouldBe("TWM004");
-    }
+    Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source, generatorHost: true)).ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWM004");
+  }
 
-    [Fact]
-    public async Task Twm004_UnscopedSenderWithScopedRequest_IsNotReportedInLibrary()
-    {
-        string source = Pipelines +
-            """
+  [Fact]
+  public async Task Twm004_UnscopedSenderWithScopedRequest_IsNotReportedInLibrary()
+  {
+    string source = Pipelines +
+        """
             public static class Use
             {
                 public static Task<int> Go(ISender sender) => sender.Send(new ServerPing());
             }
             """;
 
-        (await AnalyzerTestHelper.GetDiagnosticsAsync(source)).ShouldBeEmpty();
-    }
+    (await AnalyzerTestHelper.GetDiagnosticsAsync(source)).ShouldBeEmpty();
+  }
 
-    [Fact]
-    public async Task Twm004_InterfaceTypedRequestOnlyInAnotherPipeline_IsErrorInHost()
-    {
-        string source = Pipelines +
-            """
+  [Fact]
+  public async Task Twm004_InterfaceTypedRequestOnlyInAnotherPipeline_IsErrorInHost()
+  {
+    string source = Pipelines +
+        """
             public static class Use
             {
                 public static Task<int> Go(ISender<ClientPipeline> sender, IRequest<int> request) => sender.Send(request);
             }
             """;
 
-        Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldHaveSingleItem();
-        diagnostic.Id.ShouldBe("TWM004");
-        diagnostic.GetMessage().ShouldContain("IRequest<int>");
-        diagnostic.GetMessage().ShouldContain("'ServerPipeline'");
-    }
+    Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWM004");
+    diagnostic.GetMessage().ShouldContain("IRequest<int>");
+    diagnostic.GetMessage().ShouldContain("'ServerPipeline'");
+  }
 
-    [Fact]
-    public async Task Twm004_InterfaceTypedRequestWithAMatchInThePipeline_IsNotReported()
-    {
-        string source = Pipelines +
-            """
+  [Fact]
+  public async Task Twm004_InterfaceTypedRequestWithAMatchInThePipeline_IsNotReported()
+  {
+    string source = Pipelines +
+        """
             public static class Use
             {
                 public static Task<string> Go(ISender<ClientPipeline> sender, IRequest<string> request) => sender.Send(request);
             }
             """;
 
-        (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldBeEmpty();
-    }
+    (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldBeEmpty();
+  }
 
-    [Fact]
-    public async Task Twm004_InterfaceTypedRequest_IsNotReportedInLibrary()
-    {
-        string source = Pipelines +
-            """
+  [Fact]
+  public async Task Twm004_InterfaceTypedRequest_IsNotReportedInLibrary()
+  {
+    string source = Pipelines +
+        """
             public static class Use
             {
                 public static Task<int> Go(ISender<ClientPipeline> sender, IRequest<int> request) => sender.Send(request);
             }
             """;
 
-        (await AnalyzerTestHelper.GetDiagnosticsAsync(source)).ShouldBeEmpty();
-    }
+    (await AnalyzerTestHelper.GetDiagnosticsAsync(source)).ShouldBeEmpty();
+  }
 
-    [Fact]
-    public async Task Twm004_MatchingScopedSend_IsClean()
-    {
-        string source = Pipelines +
-            """
+  [Fact]
+  public async Task Twm004_MatchingScopedSend_IsClean()
+  {
+    string source = Pipelines +
+        """
             public static class Use
             {
                 public static Task<int> Go(ISender<ServerPipeline> sender) => sender.Send(new ServerPing());
             }
             """;
 
-        (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldBeEmpty();
-    }
+    (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true)).ShouldBeEmpty();
+  }
 
-    [Fact]
-    public void Descriptors_HaveHelpLinks_AndCompilationEndTagsForEndActions()
+  [Fact]
+  public void Descriptors_HaveHelpLinks_AndCompilationEndTagsForEndActions()
+  {
+    RequestHandlerAnalyzer analyzer = new();
+
+    foreach (DiagnosticDescriptor descriptor in analyzer.SupportedDiagnostics)
     {
-        RequestHandlerAnalyzer analyzer = new();
-
-        foreach (DiagnosticDescriptor descriptor in analyzer.SupportedDiagnostics)
-        {
-            descriptor.HelpLinkUri.ShouldEndWith("diagnostics.md#" + descriptor.Id.ToLowerInvariant());
-            bool compilationEnd = descriptor.CustomTags.Contains(WellKnownDiagnosticTags.CompilationEnd);
-            compilationEnd.ShouldBe(descriptor.Id != "TWM004", descriptor.Id);
-        }
+      descriptor.HelpLinkUri.ShouldEndWith("diagnostics.md#" + descriptor.Id.ToLowerInvariant());
+      bool compilationEnd = descriptor.CustomTags.Contains(WellKnownDiagnosticTags.CompilationEnd);
+      compilationEnd.ShouldBe(descriptor.Id != "TWM004", descriptor.Id);
     }
+  }
 }

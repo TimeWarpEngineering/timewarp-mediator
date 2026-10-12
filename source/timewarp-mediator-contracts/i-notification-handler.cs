@@ -9,12 +9,12 @@ namespace TimeWarp.Mediator;
 public interface INotificationHandler<in TNotification>
     where TNotification : INotification
 {
-    /// <summary>
-    /// Handles a notification
-    /// </summary>
-    /// <param name="notification">The notification</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    Task Handle(TNotification notification, CancellationToken cancellationToken);
+  /// <summary>
+  /// Handles a notification
+  /// </summary>
+  /// <param name="notification">The notification</param>
+  /// <param name="cancellationToken">Cancellation token</param>
+  Task Handle(TNotification notification, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -24,16 +24,16 @@ public interface INotificationHandler<in TNotification>
 public abstract class NotificationHandler<TNotification> : INotificationHandler<TNotification>
     where TNotification : INotification
 {
-    Task INotificationHandler<TNotification>.Handle(TNotification notification, CancellationToken cancellationToken)
-    {
-        Handle(notification);
+  Task INotificationHandler<TNotification>.Handle(TNotification notification, CancellationToken cancellationToken)
+  {
+    Handle(notification);
 
-        return Task.CompletedTask;
-    }
+    return Task.CompletedTask;
+  }
 
-    /// <summary>
-    /// Override in a derived class for the handler logic
-    /// </summary>
-    /// <param name="notification">Notification</param>
-    protected abstract void Handle(TNotification notification);
+  /// <summary>
+  /// Override in a derived class for the handler logic
+  /// </summary>
+  /// <param name="notification">Notification</param>
+  protected abstract void Handle(TNotification notification);
 }

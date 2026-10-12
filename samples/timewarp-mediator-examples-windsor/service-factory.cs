@@ -14,5 +14,5 @@ internal delegate object ServiceFactory(Type serviceType);
 /// </summary>
 internal sealed class ServiceFactoryServiceProvider(ServiceFactory serviceFactory) : IServiceProvider
 {
-    public object GetService(Type serviceType) => serviceFactory(serviceType);
+  public object GetService(Type serviceType) => serviceFactory(serviceType);
 }

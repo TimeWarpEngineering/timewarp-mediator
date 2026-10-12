@@ -20,36 +20,36 @@ internal sealed record GeneratedSource(string HintName, string Text);
 
 internal sealed record LocationInfo(string FilePath, TextSpan Span, LinePositionSpan LineSpan)
 {
-    public static LocationInfo? From(Location location)
+  public static LocationInfo? From(Location location)
+  {
+    return location.IsInSource && location.SourceTree is not null
+        ? new LocationInfo(location.SourceTree.FilePath, location.SourceSpan, location.GetLineSpan().Span)
+        : null;
+  }
+
+  public Location ToLocation(Compilation compilation)
+  {
+    SyntaxTree? match = null;
+    foreach (SyntaxTree tree in compilation.SyntaxTrees)
     {
-        return location.IsInSource && location.SourceTree is not null
-            ? new LocationInfo(location.SourceTree.FilePath, location.SourceSpan, location.GetLineSpan().Span)
-            : null;
+      if (tree.FilePath != FilePath)
+      {
+        continue;
+      }
+
+      if (match is not null)
+      {
+        // Two trees share the path (in-memory compilations): fall back to a path location.
+        return Location.Create(FilePath, Span, LineSpan);
+      }
+
+      match = tree;
     }
 
-    public Location ToLocation(Compilation compilation)
-    {
-        SyntaxTree? match = null;
-        foreach (SyntaxTree tree in compilation.SyntaxTrees)
-        {
-            if (tree.FilePath != FilePath)
-            {
-                continue;
-            }
-
-            if (match is not null)
-            {
-                // Two trees share the path (in-memory compilations): fall back to a path location.
-                return Location.Create(FilePath, Span, LineSpan);
-            }
-
-            match = tree;
-        }
-
-        return match is not null && Span.End <= match.Length
-            ? Location.Create(match, Span)
-            : Location.Create(FilePath, Span, LineSpan);
-    }
+    return match is not null && Span.End <= match.Length
+        ? Location.Create(match, Span)
+        : Location.Create(FilePath, Span, LineSpan);
+  }
 }
 
 internal sealed record DiagnosticInfo(
@@ -59,31 +59,31 @@ internal sealed record DiagnosticInfo(
     int WarningLevel,
     LocationInfo? Location)
 {
-    public static DiagnosticInfo From(Diagnostic diagnostic)
-    {
-        return new DiagnosticInfo(
-            diagnostic.Descriptor,
-            diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture),
-            diagnostic.Severity,
-            diagnostic.WarningLevel,
-            LocationInfo.From(diagnostic.Location));
-    }
+  public static DiagnosticInfo From(Diagnostic diagnostic)
+  {
+    return new DiagnosticInfo(
+        diagnostic.Descriptor,
+        diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture),
+        diagnostic.Severity,
+        diagnostic.WarningLevel,
+        LocationInfo.From(diagnostic.Location));
+  }
 
-    public Diagnostic ToDiagnostic(Compilation compilation)
-    {
-        return Diagnostic.Create(
-            Descriptor.Id,
-            Descriptor.Category,
-            Message,
-            Severity,
-            Descriptor.DefaultSeverity,
-            Descriptor.IsEnabledByDefault,
-            WarningLevel,
-            Descriptor.Title,
-            Descriptor.Description,
-            Descriptor.HelpLinkUri,
-            Location?.ToLocation(compilation) ?? Microsoft.CodeAnalysis.Location.None,
-            additionalLocations: null,
-            customTags: Descriptor.CustomTags);
-    }
+  public Diagnostic ToDiagnostic(Compilation compilation)
+  {
+    return Diagnostic.Create(
+        Descriptor.Id,
+        Descriptor.Category,
+        Message,
+        Severity,
+        Descriptor.DefaultSeverity,
+        Descriptor.IsEnabledByDefault,
+        WarningLevel,
+        Descriptor.Title,
+        Descriptor.Description,
+        Descriptor.HelpLinkUri,
+        Location?.ToLocation(compilation) ?? Microsoft.CodeAnalysis.Location.None,
+        additionalLocations: null,
+        customTags: Descriptor.CustomTags);
+  }
 }

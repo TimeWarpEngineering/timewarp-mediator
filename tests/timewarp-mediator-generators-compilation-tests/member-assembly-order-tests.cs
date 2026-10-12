@@ -6,64 +6,64 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 public sealed class MemberAssemblyOrderTests
 {
-    [Fact]
-    public void GeneratedSource_IsIdenticalForEitherReferenceOrder()
+  [Fact]
+  public void GeneratedSource_IsIdenticalForEitherReferenceOrder()
+  {
+    (MetadataReference zeta, MetadataReference alpha) = CompileMembers();
+
+    string forward = GeneratedSource(HostCompiler.Compile("Host", HostSource, "Host", zeta, alpha));
+    string reverse = GeneratedSource(HostCompiler.Compile("Host", HostSource, "Host", alpha, zeta));
+
+    forward.ShouldBe(reverse);
+  }
+
+  [Fact]
+  public void NotificationHandlers_AreOrderedByDisplayName()
+  {
+    (MetadataReference zeta, MetadataReference alpha) = CompileMembers();
+
+    foreach (MetadataReference[] references in new[] { new[] { zeta, alpha }, new[] { alpha, zeta } })
     {
-        (MetadataReference zeta, MetadataReference alpha) = CompileMembers();
-
-        string forward = GeneratedSource(HostCompiler.Compile("Host", HostSource, "Host", zeta, alpha));
-        string reverse = GeneratedSource(HostCompiler.Compile("Host", HostSource, "Host", alpha, zeta));
-
-        forward.ShouldBe(reverse);
+      string source = GeneratedSource(HostCompiler.Compile("Host", HostSource, "Host", references));
+      source.ShouldContain("global::Alpha.NoteHandler handler0 =");
+      source.ShouldContain("global::Host.NoteHandler handler1 =");
+      source.ShouldContain("global::Zeta.NoteHandler handler2 =");
     }
+  }
 
-    [Fact]
-    public void NotificationHandlers_AreOrderedByDisplayName()
+  [Fact]
+  public void DuplicateHandlerDiagnostic_ListsHandlersByDisplayName()
+  {
+    (MetadataReference zeta, MetadataReference alpha) = CompileMembers();
+
+    foreach (MetadataReference[] references in new[] { new[] { zeta, alpha }, new[] { alpha, zeta } })
     {
-        (MetadataReference zeta, MetadataReference alpha) = CompileMembers();
+      HostCompilation host = HostCompiler.Compile("Host", HostSource, "Host", references);
+      Diagnostic[] duplicates = host.Diagnostics.Where(d => d.Id == "TWM002").ToArray();
 
-        foreach (MetadataReference[] references in new[] { new[] { zeta, alpha }, new[] { alpha, zeta } })
-        {
-            string source = GeneratedSource(HostCompiler.Compile("Host", HostSource, "Host", references));
-            source.ShouldContain("global::Alpha.NoteHandler handler0 =");
-            source.ShouldContain("global::Host.NoteHandler handler1 =");
-            source.ShouldContain("global::Zeta.NoteHandler handler2 =");
-        }
+      duplicates.Length.ShouldBe(1, string.Join(Environment.NewLine, host.Diagnostics));
+      duplicates[0].GetMessage().ShouldBe("Request 'Zeta.Ping' has multiple handlers: Alpha.PingHandler, Zeta.PingHandler");
     }
+  }
 
-    [Fact]
-    public void DuplicateHandlerDiagnostic_ListsHandlersByDisplayName()
-    {
-        (MetadataReference zeta, MetadataReference alpha) = CompileMembers();
+  private static (MetadataReference Zeta, MetadataReference Alpha) CompileMembers()
+  {
+    MetadataReference zeta = HostCompiler.Compile("Zeta", ZetaSource).ToMetadataReference();
+    MetadataReference alpha = HostCompiler.Compile("Alpha", AlphaSource, "Host", zeta).ToMetadataReference();
+    return (zeta, alpha);
+  }
 
-        foreach (MetadataReference[] references in new[] { new[] { zeta, alpha }, new[] { alpha, zeta } })
-        {
-            HostCompilation host = HostCompiler.Compile("Host", HostSource, "Host", references);
-            Diagnostic[] duplicates = host.Diagnostics.Where(d => d.Id == "TWM002").ToArray();
+  private static string GeneratedSource(HostCompilation host)
+  {
+    return string.Join(
+        Environment.NewLine,
+        host.Compilation.SyntaxTrees
+            .Where(t => t.FilePath.Length > 0)
+            .OrderBy(t => t.FilePath, StringComparer.Ordinal)
+            .Select(t => t.FilePath + Environment.NewLine + t.GetText()));
+  }
 
-            duplicates.Length.ShouldBe(1, string.Join(Environment.NewLine, host.Diagnostics));
-            duplicates[0].GetMessage().ShouldBe("Request 'Zeta.Ping' has multiple handlers: Alpha.PingHandler, Zeta.PingHandler");
-        }
-    }
-
-    private static (MetadataReference Zeta, MetadataReference Alpha) CompileMembers()
-    {
-        MetadataReference zeta = HostCompiler.Compile("Zeta", ZetaSource).ToMetadataReference();
-        MetadataReference alpha = HostCompiler.Compile("Alpha", AlphaSource, "Host", zeta).ToMetadataReference();
-        return (zeta, alpha);
-    }
-
-    private static string GeneratedSource(HostCompilation host)
-    {
-        return string.Join(
-            Environment.NewLine,
-            host.Compilation.SyntaxTrees
-                .Where(t => t.FilePath.Length > 0)
-                .OrderBy(t => t.FilePath, StringComparer.Ordinal)
-                .Select(t => t.FilePath + Environment.NewLine + t.GetText()));
-    }
-
-    private const string ZetaSource = @"
+  private const string ZetaSource = @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -92,7 +92,7 @@ namespace Zeta
 }
 ";
 
-    private const string AlphaSource = @"
+  private const string AlphaSource = @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
@@ -113,7 +113,7 @@ namespace Alpha
 }
 ";
 
-    private const string HostSource = @"
+  private const string HostSource = @"
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;

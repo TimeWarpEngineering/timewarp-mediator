@@ -19,17 +19,17 @@ namespace TimeWarp.Mediator;
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public sealed class MediatorScopeAttribute : Attribute
 {
-    /// <summary>
-    /// Initializes the attribute with the pipeline marker type.
-    /// </summary>
-    /// <param name="scopeType">Marker type that names the pipeline (for example <c>typeof(ClientPipeline)</c>).</param>
-    public MediatorScopeAttribute(Type scopeType)
-    {
-        ScopeType = scopeType ?? throw new ArgumentNullException(nameof(scopeType));
-    }
+  /// <summary>
+  /// Initializes the attribute with the pipeline marker type.
+  /// </summary>
+  /// <param name="scopeType">Marker type that names the pipeline (for example <c>typeof(ClientPipeline)</c>).</param>
+  public MediatorScopeAttribute(Type scopeType)
+  {
+    ScopeType = scopeType ?? throw new ArgumentNullException(nameof(scopeType));
+  }
 
-    /// <summary>
-    /// Pipeline marker type.
-    /// </summary>
-    public Type ScopeType { get; }
+  /// <summary>
+  /// Pipeline marker type.
+  /// </summary>
+  public Type ScopeType { get; }
 }

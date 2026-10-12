@@ -13,244 +13,244 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 public sealed class GeneratedMediatorTests
 {
-    [Fact]
-    public void ReferencedLibrary_JoinsTheGraphByMediatorAssembly_NotByMediatorModuleAlone()
+  [Fact]
+  public void ReferencedLibrary_JoinsTheGraphByMediatorAssembly_NotByMediatorModuleAlone()
+  {
+    MetadataReference member = HostCompiler.CompileLibrary("MemberLibrary", MemberLibraryAttribute + ModuleLibrarySource);
+    MetadataReference moduleOnly = HostCompiler.CompileLibrary("ModuleOnlyLibrary", ModuleLibrarySource);
+
+    HostCompilation linked = HostCompiler.Compile("MemberHost", PingSource, "Host", member);
+    HostCompilation unlinked = HostCompiler.Compile("ModuleOnlyHost", PingSource, "Host", moduleOnly);
+
+    Problems(linked).ShouldBeEmpty();
+    ManifestDocument manifest = linked.Manifest();
+    manifest.Request("Orders.PlaceOrder").Handler.ShouldBe("Orders.PlaceOrderHandler");
+    manifest.Membership.ShouldBe(new[] { "MemberHost", "MemberLibrary" });
+    Problems(unlinked).ShouldBeEmpty();
+    unlinked.Manifest().Requests.Select(r => r.Request).ShouldBe(new[] { "App.Ping" });
+    unlinked.Manifest().Membership.ShouldBe(new[] { "ModuleOnlyHost" });
+  }
+
+  [Fact]
+  public void MediatorAssembliesMarker_LinksAnAttributeFreeLibrary()
+  {
+    MetadataReference library = HostCompiler.CompileLibrary("PlainLibrary", PlainLibrarySource);
+
+    HostCompilation linked = HostCompiler.Compile(
+        "LinkedHost",
+        "[assembly: TimeWarp.Mediator.MediatorAssemblies(typeof(Plain.Marker))]" + PingSource,
+        "Host",
+        library);
+    HostCompilation unlinked = HostCompiler.Compile("UnlinkedHost", PingSource, "Host", library);
+
+    Problems(linked).ShouldBeEmpty();
+    linked.Manifest().Request("Plain.Lookup").Handler.ShouldBe("Plain.LookupHandler");
+    linked.Manifest().Membership.ShouldContain("PlainLibrary");
+    unlinked.Manifest().Requests.Select(r => r.Request).ShouldBe(new[] { "App.Ping" });
+    unlinked.Manifest().Membership.ShouldNotContain("PlainLibrary");
+  }
+
+  [Fact]
+  public async Task ReferencedMemberHandler_IsDispatched()
+  {
+    byte[] image = HostCompiler.CompileLibraryImage("RuntimeModuleLibrary", MemberLibraryAttribute + ModuleLibrarySource);
+    HostCompilation host = HostCompiler.Compile(
+        "RuntimeModuleHost",
+        PingSource,
+        "Aot",
+        MetadataReference.CreateFromImage(image));
+    Assembly assembly = Load(host, "RuntimeModuleHost", image);
+    IMediator mediator = CreateMediator(assembly);
+    Assembly library = AssemblyLoadContext.GetLoadContext(assembly)!.Assemblies.Single(a => a.GetName().Name == "RuntimeModuleLibrary");
+
+    object? response = await mediator.Send(Activator.CreateInstance(library.GetType("Orders.PlaceOrder", true)!)!);
+
+    response.ShouldBe(42);
+  }
+
+  [Theory]
+  [InlineData("Host")]
+  [InlineData("Aot")]
+  [InlineData("Link")]
+  public void ProfileAndNamespaceOverrides_AreHonored(string profile)
+  {
+    HostCompilation host = HostCompiler.CompileWithReferences(
+        "Override" + profile,
+        PingSource,
+        profile,
+        HostCompiler.GetBaseReferences(),
+        "Custom.Generated");
+
+    Problems(host).ShouldBeEmpty();
+    host.GetType("Custom.Generated.Mediator");
+    host.Compilation.Assembly.GetTypeByMetadataName(HostCompiler.DefaultNamespace + ".Mediator").ShouldBeNull();
+    ManifestDocument manifest = host.Manifest("Custom.Generated");
+    manifest.Version.ShouldBe(1);
+    manifest.Profile.ShouldBe(profile);
+    manifest.Namespace.ShouldBe("Custom.Generated");
+  }
+
+  [Fact]
+  public void Twm001FromTheGenerator_IsAtTheRequest()
+  {
+    HostCompilation host = HostCompiler.Compile("GeneratorTwm001", PingSource + OrphanSource);
+
+    Diagnostic diagnostic = Problems(host).ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWM001");
+    diagnostic.GetMessage().ShouldBe("Request 'App.Orphan' has no handler");
+    Span(diagnostic).ShouldBe("Orphan");
+  }
+
+  [Fact]
+  public void Twm002FromTheGenerator_IsAtTheSecondHandler()
+  {
+    HostCompilation host = HostCompiler.Compile("GeneratorTwm002", PingSource + DuplicateSource);
+
+    Diagnostic diagnostic = Problems(host).ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWM002");
+    diagnostic.GetMessage().ShouldBe("Request 'App.Ping' has multiple handlers: App.PingHandler, App.SecondPingHandler");
+    Span(diagnostic).ShouldBe("SecondPingHandler");
+  }
+
+  [Fact]
+  public void Twm003FromTheGenerator_IsAtTheHandler()
+  {
+    HostCompilation host = HostCompiler.Compile("GeneratorTwm003", PingSource + ScopeMismatchSource);
+
+    Diagnostic diagnostic = Problems(host).ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWM003");
+    diagnostic.GetMessage().ShouldBe(
+        "Handler 'App.ScopedHandler' is assigned to pipeline 'App.ServerPipeline' but message 'App.Scoped' is assigned to pipeline 'App.ClientPipeline'");
+    Span(diagnostic).ShouldBe("ScopedHandler");
+  }
+
+  [Fact]
+  public async Task Publish_DeliversToBaseTypeHandlers_MostDerivedFirst_InDisplayNameOrder()
+  {
+    HostCompilation host = HostCompiler.Compile("PublishOrder", NotificationSource, "Aot");
+    Assembly assembly = Load(host, "PublishOrder");
+    IMediator mediator = CreateMediator(assembly);
+
+    await mediator.Publish(Activator.CreateInstance(assembly.GetType("Notes.Renamed", true)!)!);
+    string[] renamed = Events(assembly);
+    Clear(assembly);
+    await mediator.Publish(Activator.CreateInstance(assembly.GetType("Notes.Changed", true)!)!);
+    string[] changed = Events(assembly);
+
+    renamed.ShouldBe(new[] { "Renamed:RenamedHandler", "Changed:AuditHandler", "Changed:CacheHandler" });
+    changed.ShouldBe(new[] { "Changed:AuditHandler", "Changed:CacheHandler" });
+  }
+
+  [Fact]
+  public async Task StructRequest_IsDispatched()
+  {
+    HostCompilation host = HostCompiler.Compile("StructDispatch", StructSource, "Aot");
+    Assembly assembly = Load(host, "StructDispatch");
+    IMediator mediator = CreateMediator(assembly);
+
+    object? response = await mediator.Send(Activator.CreateInstance(assembly.GetType("App.Measure", true)!)!);
+
+    response.ShouldBe(7);
+  }
+
+  [Fact]
+  public async Task NullArguments_ThrowArgumentNullException()
+  {
+    IMediator mediator = CreateMediator(HostCompiler.Compile("NullGuards", PingSource, "Aot"));
+
+    await Should.ThrowAsync<ArgumentNullException>(() => mediator.Send((object) null!));
+    await Should.ThrowAsync<ArgumentNullException>(() => mediator.Send((IRequest<string>) null!));
+    await Should.ThrowAsync<ArgumentNullException>(() => mediator.Publish((object) null!));
+    await Should.ThrowAsync<ArgumentNullException>(() => mediator.Publish((INotification) null!));
+  }
+
+  [Fact]
+  public async Task UnknownRequest_ThrowsNoHandlerException()
+  {
+    IMediator mediator = CreateMediator(HostCompiler.Compile("UnknownRequest", PingSource, "Aot"));
+
+    await Should.ThrowAsync<NoHandlerException>(() => mediator.Send(new object()));
+  }
+
+  [Fact]
+  public void CreateStream_ThrowsNotSupportedException()
+  {
+    IMediator mediator = CreateMediator(HostCompiler.Compile("StreamGuard", PingSource, "Aot"));
+
+    Should.Throw<NotSupportedException>(() => mediator.CreateStream(new object()));
+  }
+
+  [Fact]
+  public void AddGeneratedMediatorWithUnknownScope_ThrowsArgumentException()
+  {
+    HostCompilation host = HostCompiler.Compile("UnknownScope", PingSource + ScopedSource, "Host");
+    Problems(host).ShouldBeEmpty();
+    Assembly assembly = Load(host, "UnknownScope");
+    MethodInfo addScoped = assembly
+        .GetType("Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions", true)!
+        .GetMethods(BindingFlags.Public | BindingFlags.Static)
+        .Single(m => m.Name == "AddGeneratedMediator" && m.IsGenericMethodDefinition);
+    Microsoft.Extensions.DependencyInjection.ServiceCollection services = new();
+
+    TargetInvocationException known = Should.Throw<TargetInvocationException>(
+        () => addScoped.MakeGenericMethod(typeof(string)).Invoke(null, new object[] { services }));
+    addScoped.MakeGenericMethod(assembly.GetType("App.ClientPipeline", true)!).Invoke(null, new object[] { services });
+
+    ArgumentException exception = known.InnerException.ShouldBeOfType<ArgumentException>();
+    exception.ParamName.ShouldBe("TScope");
+    exception.Message.ShouldContain("System.String");
+    services.ShouldNotBeEmpty();
+  }
+
+  private static Diagnostic[] Problems(HostCompilation host)
+  {
+    return host.Diagnostics.Where(d => d.Severity >= DiagnosticSeverity.Warning).ToArray();
+  }
+
+  private static string Span(Diagnostic diagnostic)
+  {
+    diagnostic.Location.SourceTree.ShouldNotBeNull();
+    return diagnostic.Location.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan);
+  }
+
+  private static IMediator CreateMediator(HostCompilation host)
+  {
+    return CreateMediator(Load(host, host.Compilation.AssemblyName!));
+  }
+
+  private static IMediator CreateMediator(Assembly assembly)
+  {
+    return (IMediator) Activator.CreateInstance(assembly.GetType(HostCompiler.DefaultNamespace + ".Mediator", true)!)!;
+  }
+
+  private static string[] Events(Assembly assembly)
+  {
+    return ((List<string>) assembly.GetType("Notes.Log", true)!.GetField("Events")!.GetValue(null)!).ToArray();
+  }
+
+  private static void Clear(Assembly assembly)
+  {
+    ((List<string>) assembly.GetType("Notes.Log", true)!.GetField("Events")!.GetValue(null)!).Clear();
+  }
+
+  // Dependencies load into the same context first, so the host resolves its member libraries.
+  private static Assembly Load(HostCompilation host, string assemblyName, params byte[][] dependencies)
+  {
+    using MemoryStream stream = new();
+    EmitResult result = host.Compilation.Emit(stream);
+    result.Success.ShouldBeTrue(string.Join(Environment.NewLine, result.Diagnostics));
+    stream.Position = 0;
+    AssemblyLoadContext context = new(assemblyName, isCollectible: true);
+    foreach (byte[] dependency in dependencies)
     {
-        MetadataReference member = HostCompiler.CompileLibrary("MemberLibrary", MemberLibraryAttribute + ModuleLibrarySource);
-        MetadataReference moduleOnly = HostCompiler.CompileLibrary("ModuleOnlyLibrary", ModuleLibrarySource);
-
-        HostCompilation linked = HostCompiler.Compile("MemberHost", PingSource, "Host", member);
-        HostCompilation unlinked = HostCompiler.Compile("ModuleOnlyHost", PingSource, "Host", moduleOnly);
-
-        Problems(linked).ShouldBeEmpty();
-        ManifestDocument manifest = linked.Manifest();
-        manifest.Request("Orders.PlaceOrder").Handler.ShouldBe("Orders.PlaceOrderHandler");
-        manifest.Membership.ShouldBe(new[] { "MemberHost", "MemberLibrary" });
-        Problems(unlinked).ShouldBeEmpty();
-        unlinked.Manifest().Requests.Select(r => r.Request).ShouldBe(new[] { "App.Ping" });
-        unlinked.Manifest().Membership.ShouldBe(new[] { "ModuleOnlyHost" });
+      using MemoryStream image = new(dependency);
+      context.LoadFromStream(image);
     }
 
-    [Fact]
-    public void MediatorAssembliesMarker_LinksAnAttributeFreeLibrary()
-    {
-        MetadataReference library = HostCompiler.CompileLibrary("PlainLibrary", PlainLibrarySource);
+    return context.LoadFromStream(stream);
+  }
 
-        HostCompilation linked = HostCompiler.Compile(
-            "LinkedHost",
-            "[assembly: TimeWarp.Mediator.MediatorAssemblies(typeof(Plain.Marker))]" + PingSource,
-            "Host",
-            library);
-        HostCompilation unlinked = HostCompiler.Compile("UnlinkedHost", PingSource, "Host", library);
-
-        Problems(linked).ShouldBeEmpty();
-        linked.Manifest().Request("Plain.Lookup").Handler.ShouldBe("Plain.LookupHandler");
-        linked.Manifest().Membership.ShouldContain("PlainLibrary");
-        unlinked.Manifest().Requests.Select(r => r.Request).ShouldBe(new[] { "App.Ping" });
-        unlinked.Manifest().Membership.ShouldNotContain("PlainLibrary");
-    }
-
-    [Fact]
-    public async Task ReferencedMemberHandler_IsDispatched()
-    {
-        byte[] image = HostCompiler.CompileLibraryImage("RuntimeModuleLibrary", MemberLibraryAttribute + ModuleLibrarySource);
-        HostCompilation host = HostCompiler.Compile(
-            "RuntimeModuleHost",
-            PingSource,
-            "Aot",
-            MetadataReference.CreateFromImage(image));
-        Assembly assembly = Load(host, "RuntimeModuleHost", image);
-        IMediator mediator = CreateMediator(assembly);
-        Assembly library = AssemblyLoadContext.GetLoadContext(assembly)!.Assemblies.Single(a => a.GetName().Name == "RuntimeModuleLibrary");
-
-        object? response = await mediator.Send(Activator.CreateInstance(library.GetType("Orders.PlaceOrder", true)!)!);
-
-        response.ShouldBe(42);
-    }
-
-    [Theory]
-    [InlineData("Host")]
-    [InlineData("Aot")]
-    [InlineData("Link")]
-    public void ProfileAndNamespaceOverrides_AreHonored(string profile)
-    {
-        HostCompilation host = HostCompiler.CompileWithReferences(
-            "Override" + profile,
-            PingSource,
-            profile,
-            HostCompiler.GetBaseReferences(),
-            "Custom.Generated");
-
-        Problems(host).ShouldBeEmpty();
-        host.GetType("Custom.Generated.Mediator");
-        host.Compilation.Assembly.GetTypeByMetadataName(HostCompiler.DefaultNamespace + ".Mediator").ShouldBeNull();
-        ManifestDocument manifest = host.Manifest("Custom.Generated");
-        manifest.Version.ShouldBe(1);
-        manifest.Profile.ShouldBe(profile);
-        manifest.Namespace.ShouldBe("Custom.Generated");
-    }
-
-    [Fact]
-    public void Twm001FromTheGenerator_IsAtTheRequest()
-    {
-        HostCompilation host = HostCompiler.Compile("GeneratorTwm001", PingSource + OrphanSource);
-
-        Diagnostic diagnostic = Problems(host).ShouldHaveSingleItem();
-        diagnostic.Id.ShouldBe("TWM001");
-        diagnostic.GetMessage().ShouldBe("Request 'App.Orphan' has no handler");
-        Span(diagnostic).ShouldBe("Orphan");
-    }
-
-    [Fact]
-    public void Twm002FromTheGenerator_IsAtTheSecondHandler()
-    {
-        HostCompilation host = HostCompiler.Compile("GeneratorTwm002", PingSource + DuplicateSource);
-
-        Diagnostic diagnostic = Problems(host).ShouldHaveSingleItem();
-        diagnostic.Id.ShouldBe("TWM002");
-        diagnostic.GetMessage().ShouldBe("Request 'App.Ping' has multiple handlers: App.PingHandler, App.SecondPingHandler");
-        Span(diagnostic).ShouldBe("SecondPingHandler");
-    }
-
-    [Fact]
-    public void Twm003FromTheGenerator_IsAtTheHandler()
-    {
-        HostCompilation host = HostCompiler.Compile("GeneratorTwm003", PingSource + ScopeMismatchSource);
-
-        Diagnostic diagnostic = Problems(host).ShouldHaveSingleItem();
-        diagnostic.Id.ShouldBe("TWM003");
-        diagnostic.GetMessage().ShouldBe(
-            "Handler 'App.ScopedHandler' is assigned to pipeline 'App.ServerPipeline' but message 'App.Scoped' is assigned to pipeline 'App.ClientPipeline'");
-        Span(diagnostic).ShouldBe("ScopedHandler");
-    }
-
-    [Fact]
-    public async Task Publish_DeliversToBaseTypeHandlers_MostDerivedFirst_InDisplayNameOrder()
-    {
-        HostCompilation host = HostCompiler.Compile("PublishOrder", NotificationSource, "Aot");
-        Assembly assembly = Load(host, "PublishOrder");
-        IMediator mediator = CreateMediator(assembly);
-
-        await mediator.Publish(Activator.CreateInstance(assembly.GetType("Notes.Renamed", true)!)!);
-        string[] renamed = Events(assembly);
-        Clear(assembly);
-        await mediator.Publish(Activator.CreateInstance(assembly.GetType("Notes.Changed", true)!)!);
-        string[] changed = Events(assembly);
-
-        renamed.ShouldBe(new[] { "Renamed:RenamedHandler", "Changed:AuditHandler", "Changed:CacheHandler" });
-        changed.ShouldBe(new[] { "Changed:AuditHandler", "Changed:CacheHandler" });
-    }
-
-    [Fact]
-    public async Task StructRequest_IsDispatched()
-    {
-        HostCompilation host = HostCompiler.Compile("StructDispatch", StructSource, "Aot");
-        Assembly assembly = Load(host, "StructDispatch");
-        IMediator mediator = CreateMediator(assembly);
-
-        object? response = await mediator.Send(Activator.CreateInstance(assembly.GetType("App.Measure", true)!)!);
-
-        response.ShouldBe(7);
-    }
-
-    [Fact]
-    public async Task NullArguments_ThrowArgumentNullException()
-    {
-        IMediator mediator = CreateMediator(HostCompiler.Compile("NullGuards", PingSource, "Aot"));
-
-        await Should.ThrowAsync<ArgumentNullException>(() => mediator.Send((object)null!));
-        await Should.ThrowAsync<ArgumentNullException>(() => mediator.Send((IRequest<string>)null!));
-        await Should.ThrowAsync<ArgumentNullException>(() => mediator.Publish((object)null!));
-        await Should.ThrowAsync<ArgumentNullException>(() => mediator.Publish((INotification)null!));
-    }
-
-    [Fact]
-    public async Task UnknownRequest_ThrowsNoHandlerException()
-    {
-        IMediator mediator = CreateMediator(HostCompiler.Compile("UnknownRequest", PingSource, "Aot"));
-
-        await Should.ThrowAsync<NoHandlerException>(() => mediator.Send(new object()));
-    }
-
-    [Fact]
-    public void CreateStream_ThrowsNotSupportedException()
-    {
-        IMediator mediator = CreateMediator(HostCompiler.Compile("StreamGuard", PingSource, "Aot"));
-
-        Should.Throw<NotSupportedException>(() => mediator.CreateStream(new object()));
-    }
-
-    [Fact]
-    public void AddGeneratedMediatorWithUnknownScope_ThrowsArgumentException()
-    {
-        HostCompilation host = HostCompiler.Compile("UnknownScope", PingSource + ScopedSource, "Host");
-        Problems(host).ShouldBeEmpty();
-        Assembly assembly = Load(host, "UnknownScope");
-        MethodInfo addScoped = assembly
-            .GetType("Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions", true)!
-            .GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(m => m.Name == "AddGeneratedMediator" && m.IsGenericMethodDefinition);
-        Microsoft.Extensions.DependencyInjection.ServiceCollection services = new();
-
-        TargetInvocationException known = Should.Throw<TargetInvocationException>(
-            () => addScoped.MakeGenericMethod(typeof(string)).Invoke(null, new object[] { services }));
-        addScoped.MakeGenericMethod(assembly.GetType("App.ClientPipeline", true)!).Invoke(null, new object[] { services });
-
-        ArgumentException exception = known.InnerException.ShouldBeOfType<ArgumentException>();
-        exception.ParamName.ShouldBe("TScope");
-        exception.Message.ShouldContain("System.String");
-        services.ShouldNotBeEmpty();
-    }
-
-    private static Diagnostic[] Problems(HostCompilation host)
-    {
-        return host.Diagnostics.Where(d => d.Severity >= DiagnosticSeverity.Warning).ToArray();
-    }
-
-    private static string Span(Diagnostic diagnostic)
-    {
-        diagnostic.Location.SourceTree.ShouldNotBeNull();
-        return diagnostic.Location.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan);
-    }
-
-    private static IMediator CreateMediator(HostCompilation host)
-    {
-        return CreateMediator(Load(host, host.Compilation.AssemblyName!));
-    }
-
-    private static IMediator CreateMediator(Assembly assembly)
-    {
-        return (IMediator)Activator.CreateInstance(assembly.GetType(HostCompiler.DefaultNamespace + ".Mediator", true)!)!;
-    }
-
-    private static string[] Events(Assembly assembly)
-    {
-        return ((List<string>)assembly.GetType("Notes.Log", true)!.GetField("Events")!.GetValue(null)!).ToArray();
-    }
-
-    private static void Clear(Assembly assembly)
-    {
-        ((List<string>)assembly.GetType("Notes.Log", true)!.GetField("Events")!.GetValue(null)!).Clear();
-    }
-
-    // Dependencies load into the same context first, so the host resolves its member libraries.
-    private static Assembly Load(HostCompilation host, string assemblyName, params byte[][] dependencies)
-    {
-        using MemoryStream stream = new();
-        EmitResult result = host.Compilation.Emit(stream);
-        result.Success.ShouldBeTrue(string.Join(Environment.NewLine, result.Diagnostics));
-        stream.Position = 0;
-        AssemblyLoadContext context = new(assemblyName, isCollectible: true);
-        foreach (byte[] dependency in dependencies)
-        {
-            using MemoryStream image = new(dependency);
-            context.LoadFromStream(image);
-        }
-
-        return context.LoadFromStream(stream);
-    }
-
-    private const string PingSource = @"
+  private const string PingSource = @"
 namespace App
 {
     public sealed class Ping : TimeWarp.Mediator.IRequest<string>
@@ -265,7 +265,7 @@ namespace App
 }
 ";
 
-    private const string OrphanSource = @"
+  private const string OrphanSource = @"
 namespace App
 {
     public sealed class Orphan : TimeWarp.Mediator.IRequest<int>
@@ -274,7 +274,7 @@ namespace App
 }
 ";
 
-    private const string DuplicateSource = @"
+  private const string DuplicateSource = @"
 namespace App
 {
     public sealed class SecondPingHandler : TimeWarp.Mediator.IRequestHandler<Ping, string>
@@ -285,7 +285,7 @@ namespace App
 }
 ";
 
-    private const string ScopeMismatchSource = @"
+  private const string ScopeMismatchSource = @"
 namespace App
 {
     public sealed class ClientPipeline
@@ -310,7 +310,7 @@ namespace App
 }
 ";
 
-    private const string ScopedSource = @"
+  private const string ScopedSource = @"
 namespace App
 {
     public sealed class ClientPipeline
@@ -331,7 +331,7 @@ namespace App
 }
 ";
 
-    private const string StructSource = @"
+  private const string StructSource = @"
 namespace App
 {
     public readonly struct Measure : TimeWarp.Mediator.IRequest<int>
@@ -346,11 +346,11 @@ namespace App
 }
 ";
 
-    private const string MemberLibraryAttribute = "[assembly: TimeWarp.Mediator.MediatorAssembly]";
+  private const string MemberLibraryAttribute = "[assembly: TimeWarp.Mediator.MediatorAssembly]";
 
-    // [MediatorModule] makes the compilation declaring it a member; a referenced assembly still
-    // joins a host only by [assembly: MediatorAssembly] or a [MediatorAssemblies] marker.
-    private const string ModuleLibrarySource = @"
+  // [MediatorModule] makes the compilation declaring it a member; a referenced assembly still
+  // joins a host only by [assembly: MediatorAssembly] or a [MediatorAssemblies] marker.
+  private const string ModuleLibrarySource = @"
 namespace Orders
 {
     public sealed class PlaceOrder : TimeWarp.Mediator.IRequest<int>
@@ -366,7 +366,7 @@ namespace Orders
 }
 ";
 
-    private const string PlainLibrarySource = @"
+  private const string PlainLibrarySource = @"
 namespace Plain
 {
     public sealed class Marker
@@ -385,7 +385,7 @@ namespace Plain
 }
 ";
 
-    private const string NotificationSource = @"
+  private const string NotificationSource = @"
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;

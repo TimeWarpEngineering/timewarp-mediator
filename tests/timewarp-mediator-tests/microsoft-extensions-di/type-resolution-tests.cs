@@ -4,83 +4,83 @@ namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
 public class TypeResolutionTests
 {
-    private readonly IServiceProvider _provider;
+  private readonly IServiceProvider ServiceProvider;
 
-    public TypeResolutionTests()
-    {
-        IServiceCollection services = new ServiceCollection();
-        services.AddSingleton(new Logger());
-        services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining(typeof(Ping)));
-        _provider = services.BuildServiceProvider();
-    }
+  public TypeResolutionTests()
+  {
+    IServiceCollection services = new ServiceCollection();
+    services.AddSingleton(new Logger());
+    services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining(typeof(Ping)));
+    ServiceProvider = services.BuildServiceProvider();
+  }
 
-    [Fact]
-    public void ShouldResolveMediator()
-    {
-        _provider.GetService<IMediator>().ShouldNotBeNull();
-    }
+  [Fact]
+  public void ShouldResolveMediator()
+  {
+    ServiceProvider.GetService<IMediator>().ShouldNotBeNull();
+  }
 
-    [Fact]
-    public void ShouldResolveSender()
-    {
-        _provider.GetService<ISender>().ShouldNotBeNull();
-    }
+  [Fact]
+  public void ShouldResolveSender()
+  {
+    ServiceProvider.GetService<ISender>().ShouldNotBeNull();
+  }
 
-    [Fact]
-    public void ShouldResolvePublisher()
-    {
-        _provider.GetService<IPublisher>().ShouldNotBeNull();
-    }
+  [Fact]
+  public void ShouldResolvePublisher()
+  {
+    ServiceProvider.GetService<IPublisher>().ShouldNotBeNull();
+  }
 
-    [Fact]
-    public void ShouldResolveRequestHandler()
-    {
-        _provider.GetService<IRequestHandler<Ping, Pong>>().ShouldNotBeNull();
-    }
+  [Fact]
+  public void ShouldResolveRequestHandler()
+  {
+    ServiceProvider.GetService<IRequestHandler<Ping, Pong>>().ShouldNotBeNull();
+  }
 
-    [Fact]
-    public void ShouldResolveVoidRequestHandler()
-    {
-        _provider.GetService<IRequestHandler<Ding>>().ShouldNotBeNull();
-    }
+  [Fact]
+  public void ShouldResolveVoidRequestHandler()
+  {
+    ServiceProvider.GetService<IRequestHandler<Ding>>().ShouldNotBeNull();
+  }
 
-    [Fact]
-    public void ShouldResolveNotificationHandlers()
-    {
-        _provider.GetServices<INotificationHandler<Pinged>>().Count().ShouldBe(4);
-    }
+  [Fact]
+  public void ShouldResolveNotificationHandlers()
+  {
+    ServiceProvider.GetServices<INotificationHandler<Pinged>>().Count().ShouldBe(4);
+  }
 
-    [Fact]
-    public void ShouldNotThrowWithMissingEnumerables()
-    {
-        Should.NotThrow(() => _provider.GetRequiredService<IEnumerable<IRequestExceptionAction<int, Exception>>>());
-    }
+  [Fact]
+  public void ShouldNotThrowWithMissingEnumerables()
+  {
+    Should.NotThrow(() => ServiceProvider.GetRequiredService<IEnumerable<IRequestExceptionAction<int, Exception>>>());
+  }
 
-    [Fact]
-    public void ShouldResolveFirstDuplicateHandler()
-    {
-        _provider.GetService<IRequestHandler<DuplicateTest, string>>().ShouldNotBeNull();
-        _provider.GetService<IRequestHandler<DuplicateTest, string>>()
-            .ShouldBeAssignableTo<DuplicateHandler1>();
-    }
+  [Fact]
+  public void ShouldResolveFirstDuplicateHandler()
+  {
+    ServiceProvider.GetService<IRequestHandler<DuplicateTest, string>>().ShouldNotBeNull();
+    ServiceProvider.GetService<IRequestHandler<DuplicateTest, string>>()
+        .ShouldBeAssignableTo<DuplicateHandler1>();
+  }
 
-    [Fact]
-    public void ShouldResolveIgnoreSecondDuplicateHandler()
-    {
-        _provider.GetServices<IRequestHandler<DuplicateTest, string>>().Count().ShouldBe(1);
-    }
+  [Fact]
+  public void ShouldResolveIgnoreSecondDuplicateHandler()
+  {
+    ServiceProvider.GetServices<IRequestHandler<DuplicateTest, string>>().Count().ShouldBe(1);
+  }
 
-    [Fact]
-    public void ShouldHandleKeyedServices()
-    {
-        IServiceCollection services = new ServiceCollection();
-        services.AddSingleton(new Logger());
-        services.AddKeyedSingleton<string>("Foo", "Foo");
-        services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining(typeof(Ping)));
-        ServiceProvider serviceProvider = services.BuildServiceProvider();
+  [Fact]
+  public void ShouldHandleKeyedServices()
+  {
+    IServiceCollection services = new ServiceCollection();
+    services.AddSingleton(new Logger());
+    services.AddKeyedSingleton<string>("Foo", "Foo");
+    services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining(typeof(Ping)));
+    ServiceProvider serviceProvider = services.BuildServiceProvider();
 
-        IMediator med = serviceProvider.GetRequiredService<IMediator>();
-        
-        med.ShouldNotBeNull();
-    }
+    IMediator med = serviceProvider.GetRequiredService<IMediator>();
+
+    med.ShouldNotBeNull();
+  }
 }

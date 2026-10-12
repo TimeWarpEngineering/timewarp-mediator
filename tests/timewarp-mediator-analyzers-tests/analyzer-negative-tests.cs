@@ -12,8 +12,8 @@ namespace TimeWarp.Mediator.Analyzers.Tests;
 
 public class AnalyzerNegativeTests
 {
-    private const string Usings =
-        """
+  private const string Usings =
+      """
         using System.Threading;
         using System.Threading.Tasks;
         using TimeWarp.Mediator;
@@ -21,30 +21,30 @@ public class AnalyzerNegativeTests
 
         """;
 
-    public static IEnumerable<object[]> Negatives()
+  public static IEnumerable<object[]> Negatives()
+  {
+    foreach (string name in NegativeSources.Keys)
     {
-        foreach (string name in NegativeSources.Keys)
-        {
-            yield return new object[] { name, false };
-            yield return new object[] { name, true };
-        }
+      yield return new object[] { name, false };
+      yield return new object[] { name, true };
     }
+  }
 
-    [Theory]
-    [MemberData(nameof(Negatives))]
-    public async Task NearMiss_IsNotDiagnosed(string name, bool isHost)
-    {
-        ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Usings + NegativeSources[name], isHost: isHost);
+  [Theory]
+  [MemberData(nameof(Negatives))]
+  public async Task NearMiss_IsNotDiagnosed(string name, bool isHost)
+  {
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Usings + NegativeSources[name], isHost: isHost);
 
-        diagnostics.ShouldBeEmpty(string.Join(Environment.NewLine, diagnostics.Select(d => d.ToString())));
-    }
+    diagnostics.ShouldBeEmpty(string.Join(Environment.NewLine, diagnostics.Select(d => d.ToString())));
+  }
 
-    [Fact]
-    public async Task Twm001_EachOrphan_IsReportedAtItsOwnDeclaration()
-    {
-        const string Source =
-            Usings +
-            """
+  [Fact]
+  public async Task Twm001_EachOrphan_IsReportedAtItsOwnDeclaration()
+  {
+    const string Source =
+        Usings +
+        """
             public sealed class First : IRequest<int> { }
             public sealed class Handled : IRequest<int> { }
             public sealed class HandledHandler : IRequestHandler<Handled, int>
@@ -57,37 +57,37 @@ public class AnalyzerNegativeTests
             }
             """;
 
-        Diagnostic[] diagnostics = (await AnalyzerTestHelper.GetDiagnosticsAsync(Source))
-            .OrderBy(d => d.Location.SourceSpan.Start)
-            .ToArray();
+    Diagnostic[] diagnostics = (await AnalyzerTestHelper.GetDiagnosticsAsync(Source))
+        .OrderBy(d => d.Location.SourceSpan.Start)
+        .ToArray();
 
-        diagnostics.Select(d => d.Id).ShouldBe(new[] { "TWM001", "TWM001" });
-        diagnostics.Select(AnalyzerTestHelper.LocatedText).ShouldBe(new[] { "First", "Second" });
-        diagnostics[1].GetMessage().ShouldBe("Request 'Outer.Second' has no handler");
-    }
+    diagnostics.Select(d => d.Id).ShouldBe(new[] { "TWM001", "TWM001" });
+    diagnostics.Select(AnalyzerTestHelper.LocatedText).ShouldBe(new[] { "First", "Second" });
+    diagnostics[1].GetMessage().ShouldBe("Request 'Outer.Second' has no handler");
+  }
 
-    [Fact]
-    public async Task MediatorModule_MakesTheDeclaringLibraryAMember()
-    {
-        const string Source =
-            """
+  [Fact]
+  public async Task MediatorModule_MakesTheDeclaringLibraryAMember()
+  {
+    const string Source =
+        """
             using TimeWarp.Mediator;
             [MediatorModule("Orders")]
             public sealed class Orphan : IRequest<int> { }
             """;
 
-        Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(Source)).ShouldHaveSingleItem();
+    Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(Source)).ShouldHaveSingleItem();
 
-        diagnostic.Id.ShouldBe("TWM001");
-        AnalyzerTestHelper.LocatedText(diagnostic).ShouldBe("Orphan");
-    }
+    diagnostic.Id.ShouldBe("TWM001");
+    AnalyzerTestHelper.LocatedText(diagnostic).ShouldBe("Orphan");
+  }
 
-    [Fact]
-    public async Task Twm004_IsReportedAtEachWrongSendOnly()
-    {
-        const string Source =
-            Usings +
-            """
+  [Fact]
+  public async Task Twm004_IsReportedAtEachWrongSendOnly()
+  {
+    const string Source =
+        Usings +
+        """
             public sealed class ClientPipeline { }
             public sealed class ServerPipeline { }
             [MediatorScope(typeof(ClientPipeline))]
@@ -116,36 +116,36 @@ public class AnalyzerNegativeTests
             }
             """;
 
-        Diagnostic[] diagnostics = (await AnalyzerTestHelper.GetDiagnosticsAsync(Source))
-            .OrderBy(d => d.Location.SourceSpan.Start)
-            .ToArray();
+    Diagnostic[] diagnostics = (await AnalyzerTestHelper.GetDiagnosticsAsync(Source))
+        .OrderBy(d => d.Location.SourceSpan.Start)
+        .ToArray();
 
-        diagnostics.Select(d => d.Id).ShouldBe(new[] { "TWM004", "TWM004" });
-        diagnostics.Select(AnalyzerTestHelper.LocatedText)
-            .ShouldBe(new[] { "client.Send(new ServerPing())", "server.Send(new ClientPing())" });
-    }
+    diagnostics.Select(d => d.Id).ShouldBe(new[] { "TWM004", "TWM004" });
+    diagnostics.Select(AnalyzerTestHelper.LocatedText)
+        .ShouldBe(new[] { "client.Send(new ServerPing())", "server.Send(new ClientPing())" });
+  }
 
-    private static readonly Dictionary<string, string> NegativeSources = new()
-    {
-        // TWM001: only concrete requests need a handler.
-        ["AbstractRequest"] =
-            """
+  private static readonly Dictionary<string, string> NegativeSources = new()
+  {
+    // TWM001: only concrete requests need a handler.
+    ["AbstractRequest"] =
+          """
             public abstract class RequestBase : IRequest<int> { }
             """,
-        ["OpenGenericRequest"] =
-            """
+    ["OpenGenericRequest"] =
+          """
             public sealed class Box<T> : IRequest<T> { }
             """,
-        ["RequestInterface"] =
-            """
+    ["RequestInterface"] =
+          """
             public interface IAuditedRequest : IRequest<int> { }
             """,
-        ["NotificationWithNoHandler"] =
-            """
+    ["NotificationWithNoHandler"] =
+          """
             public sealed class Note : INotification { }
             """,
-        ["HandlerInBaseClass"] =
-            """
+    ["HandlerInBaseClass"] =
+          """
             public sealed class Ping : IRequest<int> { }
             public abstract class PingHandlerBase : IRequestHandler<Ping, int>
             {
@@ -157,10 +157,10 @@ public class AnalyzerNegativeTests
             }
             """,
 
-        // TWM002: one handler per request, but one class may handle several requests and a
-        // notification may have many handlers.
-        ["OneClassHandlesTwoRequests"] =
-            """
+    // TWM002: one handler per request, but one class may handle several requests and a
+    // notification may have many handlers.
+    ["OneClassHandlesTwoRequests"] =
+          """
             public sealed class First : IRequest<int> { }
             public sealed class Second : IRequest<string> { }
             public sealed class BothHandler : IRequestHandler<First, int>, IRequestHandler<Second, string>
@@ -169,8 +169,8 @@ public class AnalyzerNegativeTests
                 public Task<string> Handle(Second request, CancellationToken cancellationToken) => Task.FromResult("2");
             }
             """,
-        ["NotificationWithManyHandlers"] =
-            """
+    ["NotificationWithManyHandlers"] =
+          """
             public sealed class Note : INotification { }
             public sealed class AuditHandler : INotificationHandler<Note>
             {
@@ -182,9 +182,9 @@ public class AnalyzerNegativeTests
             }
             """,
 
-        // TWM003: matching markers, or a marker inherited from the containing type.
-        ["SameScopeOnBothSides"] =
-            """
+    // TWM003: matching markers, or a marker inherited from the containing type.
+    ["SameScopeOnBothSides"] =
+          """
             public sealed class ClientPipeline { }
             [MediatorScope(typeof(ClientPipeline))]
             public sealed class Ping : IRequest<int> { }
@@ -194,8 +194,8 @@ public class AnalyzerNegativeTests
                 public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(1);
             }
             """,
-        ["ScopeFromContainingType"] =
-            """
+    ["ScopeFromContainingType"] =
+          """
             public sealed class ClientPipeline { }
             [MediatorScope(typeof(ClientPipeline))]
             public static class Feature
@@ -208,9 +208,9 @@ public class AnalyzerNegativeTests
             }
             """,
 
-        // TWM004: the matching scoped sender, and Send(object) which is a runtime NoHandlerException.
-        ["MatchingScopedSendAndObjectSend"] =
-            """
+    // TWM004: the matching scoped sender, and Send(object) which is a runtime NoHandlerException.
+    ["MatchingScopedSendAndObjectSend"] =
+          """
             public sealed class ClientPipeline { }
             [MediatorScope(typeof(ClientPipeline))]
             public sealed class Ping : IRequest<int> { }
@@ -234,5 +234,5 @@ public class AnalyzerNegativeTests
                 }
             }
             """,
-    };
+  };
 }

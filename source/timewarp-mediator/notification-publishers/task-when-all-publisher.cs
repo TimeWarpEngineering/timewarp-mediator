@@ -15,25 +15,25 @@ namespace TimeWarp.Mediator.NotificationPublishers;
 /// </summary>
 public class TaskWhenAllPublisher : INotificationPublisher
 {
-    /// <inheritdoc/>
-    public Task Publish(IEnumerable<NotificationHandlerExecutor> handlerExecutors, INotification notification, CancellationToken cancellationToken)
-    {
-        Task[] tasks = handlerExecutors
-            .Select(handler => InvokeHandler(handler, notification, cancellationToken))
-            .ToArray();
+  /// <inheritdoc/>
+  public Task Publish(IEnumerable<NotificationHandlerExecutor> handlerExecutors, INotification notification, CancellationToken cancellationToken)
+  {
+    Task[] tasks = handlerExecutors
+        .Select(handler => InvokeHandler(handler, notification, cancellationToken))
+        .ToArray();
 
-        return Task.WhenAll(tasks);
-    }
+    return Task.WhenAll(tasks);
+  }
 
-    private static Task InvokeHandler(NotificationHandlerExecutor handler, INotification notification, CancellationToken cancellationToken)
+  private static Task InvokeHandler(NotificationHandlerExecutor handler, INotification notification, CancellationToken cancellationToken)
+  {
+    try
     {
-        try
-        {
-            return handler.HandlerCallback(notification, cancellationToken);
-        }
-        catch (Exception exception)
-        {
-            return Task.FromException(exception);
-        }
+      return handler.HandlerCallback(notification, cancellationToken);
     }
+    catch (Exception exception)
+    {
+      return Task.FromException(exception);
+    }
+  }
 }

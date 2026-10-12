@@ -99,6 +99,19 @@ Windsor, Microsoft DI) plus publish strategies. See `samples/readme.md`.
 - `source/Directory.Build.props`: the single `<Version>` and the package metadata for all four packages.
 - No repo-wide `LangVersion` pin: `net10.0` projects use the SDK default (C# 14); the netstandard2.0 Roslyn projects set `latest`. Generator-emitted code stays conservative so consumers on older language versions still compile it.
 
+## Code Style
+
+`.editorconfig` is the style source of truth and matches the TimeWarp `tw-csharp` conventions:
+
+- C#: 2-space indentation, LF line endings, no trailing whitespace, Allman braces.
+- Fields and other class-scope members are PascalCase with no underscore prefix; parameters and
+  locals are camelCase. A field takes its type's name (`IServiceProvider ServiceProvider`) unless
+  that collides with another member.
+- Run `dotnet format whitespace --folder --include source/ tests/ samples/` after large edits.
+- Files carried over from MediatR keep `// Modified by Steven T. Cramer` (or the XML-comment form
+  in project files) as the first line. That line is the Apache-2.0 §4(b) notice that the file was
+  changed, so do not remove it. Do not add it to new TimeWarp-authored files.
+
 ## Development Workflow
 
 1. Make changes to source code

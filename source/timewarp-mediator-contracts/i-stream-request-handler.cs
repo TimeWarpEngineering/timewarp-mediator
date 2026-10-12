@@ -10,11 +10,11 @@ namespace TimeWarp.Mediator;
 public interface IStreamRequestHandler<in TRequest, out TResponse>
     where TRequest : IStreamRequest<TResponse>
 {
-    /// <summary>
-    /// Handles a stream request with IAsyncEnumerable as return type.
-    /// </summary>
-    /// <param name="request">The request</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Response from the request</returns>
-    IAsyncEnumerable<TResponse> Handle(TRequest request, CancellationToken cancellationToken);
+  /// <summary>
+  /// Handles a stream request with IAsyncEnumerable as return type.
+  /// </summary>
+  /// <param name="request">The request</param>
+  /// <param name="cancellationToken">Cancellation token</param>
+  /// <returns>Response from the request</returns>
+  IAsyncEnumerable<TResponse> Handle(TRequest request, CancellationToken cancellationToken);
 }

@@ -4,20 +4,20 @@ namespace TimeWarp.Mediator.Examples;
 
 public class GenericStreamPipelineBehavior<TRequest, TResponse> : IStreamPipelineBehavior<TRequest, TResponse>
 {
-    private readonly TextWriter _writer;
+  private readonly TextWriter TextWriter;
 
-    public GenericStreamPipelineBehavior(TextWriter writer)
-    {
-        _writer = writer;
-    }
+  public GenericStreamPipelineBehavior(TextWriter writer)
+  {
+    TextWriter = writer;
+  }
 
-    public async IAsyncEnumerable<TResponse> Handle(TRequest request, StreamHandlerDelegate<TResponse> next, [EnumeratorCancellation]CancellationToken cancellationToken)
+  public async IAsyncEnumerable<TResponse> Handle(TRequest request, StreamHandlerDelegate<TResponse> next, [EnumeratorCancellation] CancellationToken cancellationToken)
+  {
+    await TextWriter.WriteLineAsync("-- Handling StreamRequest");
+    await foreach (TResponse response in next().WithCancellation(cancellationToken).ConfigureAwait(false))
     {
-        await _writer.WriteLineAsync("-- Handling StreamRequest");
-        await foreach (TResponse response in next().WithCancellation(cancellationToken).ConfigureAwait(false))
-        {
-            yield return response;
-        }
-        await _writer.WriteLineAsync("-- Finished StreamRequest");
+      yield return response;
     }
+    await TextWriter.WriteLineAsync("-- Finished StreamRequest");
+  }
 }

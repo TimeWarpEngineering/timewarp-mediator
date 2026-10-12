@@ -13,8 +13,8 @@ tab_width=4
 
 [*.{asax,ascx,aspx,cs,cshtml,css,htm,html,js,jsx,master,razor,skin,ts,tsx,vb,xaml,xamlx,xoml}]
 indent_style=space
-indent_size=4
-tab_width=4
+indent_size=2
+tab_width=2
 
 [*.{appxmanifest,build,config,csproj,dbml,discomap,dtd,json,jsproj,lsproj,njsproj,nuspec,proj,props,resjson,resw,resx,StyleCop,targets,tasks,vbproj,xml,xsd}]
 indent_style=space
@@ -24,7 +24,8 @@ tab_width=2
 [*]
 
 # Standard properties
-end_of_line=native
+end_of_line=lf
+trim_trailing_whitespace=true
 insert_final_newline=false
 
 # Microsoft .NET properties
@@ -80,5 +81,18 @@ dotnet_style_qualification_for_property=false:hint
 dotnet_style_require_accessibility_modifiers=for_non_interface_members:hint
 
 [*.cs]
+# Naming: class-scope members PascalCase, no underscore prefix (tw-csharp); locals and parameters camelCase.
+dotnet_naming_rule.fields_are_pascal_case.symbols=all_fields
+dotnet_naming_rule.fields_are_pascal_case.style=pascal_case
+dotnet_naming_rule.fields_are_pascal_case.severity=warning
+dotnet_naming_symbols.all_fields.applicable_kinds=field
+dotnet_naming_symbols.all_fields.applicable_accessibilities=*
+dotnet_naming_rule.locals_and_parameters_are_camel_case.symbols=locals_and_parameters
+dotnet_naming_rule.locals_and_parameters_are_camel_case.style=camel_case
+dotnet_naming_rule.locals_and_parameters_are_camel_case.severity=warning
+dotnet_naming_symbols.locals_and_parameters.applicable_kinds=parameter,local
+dotnet_naming_style.pascal_case.capitalization=pascal_case
+dotnet_naming_style.camel_case.capitalization=camel_case
+
 # TW0007 file-level usings (TimeWarp.SourceGenerators)
 dotnet_diagnostic.TW0007.filename = global-usings.cs

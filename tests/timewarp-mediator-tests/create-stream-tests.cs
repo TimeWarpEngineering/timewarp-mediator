@@ -5,152 +5,152 @@ namespace TimeWarp.Mediator.Tests;
 public class CreateStreamTests
 {
 
-    public class Ping : IStreamRequest<Pong>
-    {
-        public string? Message { get; set; }
-    }
+  public class Ping : IStreamRequest<Pong>
+  {
+    public string? Message { get; set; }
+  }
 
-    public class Pong
-    {
-        public string? Message { get; set; }
-    }
+  public class Pong
+  {
+    public string? Message { get; set; }
+  }
 
-    public class PingStreamHandler : IStreamRequestHandler<Ping, Pong>
+  public class PingStreamHandler : IStreamRequestHandler<Ping, Pong>
+  {
+    public async IAsyncEnumerable<Pong> Handle(Ping request, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        public async IAsyncEnumerable<Pong> Handle(Ping request, [EnumeratorCancellation]CancellationToken cancellationToken)
-        {
-            yield return await Task.Run(() => new Pong { Message = request.Message + " Pang" });
-        }
+      yield return await Task.Run(() => new Pong { Message = request.Message + " Pang" });
     }
+  }
 
-    [Fact]
-    public async Task Should_resolve_main_handler()
+  [Fact]
+  public async Task Should_resolve_main_handler()
+  {
+    Container container = new(cfg =>
     {
-        Container container = new(cfg =>
-        {
-            cfg.Scan(scanner =>
-            {
-                scanner.AssemblyContainingType(typeof(CreateStreamTests));
-                scanner.IncludeNamespaceContainingType<Ping>();
-                scanner.WithDefaultConventions();
-                scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
-            });
-            cfg.For<IMediator>().Use<Mediator>();
+      cfg.Scan(scanner =>
+          {
+          scanner.AssemblyContainingType(typeof(CreateStreamTests));
+          scanner.IncludeNamespaceContainingType<Ping>();
+          scanner.WithDefaultConventions();
+          scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
         });
+      cfg.For<IMediator>().Use<Mediator>();
+    });
 
-        IMediator med = container.GetInstance<IMediator>();
+    IMediator med = container.GetInstance<IMediator>();
 
-        IAsyncEnumerable<Pong> response = med.CreateStream(new Ping { Message = "Ping" });
-        int i = 0;
-        await foreach (Pong result in response)
-        {
-            if (i == 0)
-            {
-                result.Message.ShouldBe("Ping Pang");
-            }
+    IAsyncEnumerable<Pong> response = med.CreateStream(new Ping { Message = "Ping" });
+    int i = 0;
+    await foreach (Pong result in response)
+    {
+      if (i == 0)
+      {
+        result.Message.ShouldBe("Ping Pang");
+      }
 
-            i++;
-        }
-
-        i.ShouldBe(1);
+      i++;
     }
 
-    [Fact]
-    public async Task Should_resolve_main_handler_via_dynamic_dispatch()
+    i.ShouldBe(1);
+  }
+
+  [Fact]
+  public async Task Should_resolve_main_handler_via_dynamic_dispatch()
+  {
+    Container container = new(cfg =>
     {
-        Container container = new(cfg =>
-        {
-            cfg.Scan(scanner =>
-            {
-                scanner.AssemblyContainingType(typeof(CreateStreamTests));
-                scanner.IncludeNamespaceContainingType<Ping>();
-                scanner.WithDefaultConventions();
-                scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
-            });
-            cfg.For<IMediator>().Use<Mediator>();
+      cfg.Scan(scanner =>
+          {
+          scanner.AssemblyContainingType(typeof(CreateStreamTests));
+          scanner.IncludeNamespaceContainingType<Ping>();
+          scanner.WithDefaultConventions();
+          scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
         });
+      cfg.For<IMediator>().Use<Mediator>();
+    });
 
-        IMediator med = container.GetInstance<IMediator>();
+    IMediator med = container.GetInstance<IMediator>();
 
-        object request = new Ping { Message = "Ping" };
-        IAsyncEnumerable<object?> response = med.CreateStream(request);
-        int i = 0;
-        await foreach (Pong? result in response)
-        {
-            if (i == 0)
-            {
-                result!.Message.ShouldBe("Ping Pang");
-            }
+    object request = new Ping { Message = "Ping" };
+    IAsyncEnumerable<object?> response = med.CreateStream(request);
+    int i = 0;
+    await foreach (Pong? result in response)
+    {
+      if (i == 0)
+      {
+        result!.Message.ShouldBe("Ping Pang");
+      }
 
-            i++;
-        }
-
-        i.ShouldBe(1);
+      i++;
     }
 
-    [Fact]
-    public async Task Should_resolve_main_handler_by_specific_interface()
+    i.ShouldBe(1);
+  }
+
+  [Fact]
+  public async Task Should_resolve_main_handler_by_specific_interface()
+  {
+    Container container = new(cfg =>
     {
-        Container container = new(cfg =>
-        {
-            cfg.Scan(scanner =>
-            {
-                scanner.AssemblyContainingType(typeof(CreateStreamTests));
-                scanner.IncludeNamespaceContainingType<Ping>();
-                scanner.WithDefaultConventions();
-                scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
-            });
-            cfg.For<ISender>().Use<Mediator>();
+      cfg.Scan(scanner =>
+          {
+          scanner.AssemblyContainingType(typeof(CreateStreamTests));
+          scanner.IncludeNamespaceContainingType<Ping>();
+          scanner.WithDefaultConventions();
+          scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
         });
+      cfg.For<ISender>().Use<Mediator>();
+    });
 
-        ISender med = container.GetInstance<ISender>();
-        IAsyncEnumerable<Pong> response = med.CreateStream(new Ping { Message = "Ping" });
-        int i = 0;
-        await foreach (Pong result in response)
-        {
-            if (i == 0)
-            {
-                result.Message.ShouldBe("Ping Pang");
-            }
-
-            i++;
-        }
-
-        i.ShouldBe(1);
-    }
-
-    [Fact]
-    public void Should_raise_execption_on_null_request()
+    ISender med = container.GetInstance<ISender>();
+    IAsyncEnumerable<Pong> response = med.CreateStream(new Ping { Message = "Ping" });
+    int i = 0;
+    await foreach (Pong result in response)
     {
-        Container container = new(cfg =>
-        {
-            cfg.For<IMediator>().Use<Mediator>();
-        });
+      if (i == 0)
+      {
+        result.Message.ShouldBe("Ping Pang");
+      }
 
-        IMediator med = container.GetInstance<IMediator>();
-
-        Should.Throw<ArgumentNullException>(() => med.CreateStream((Ping) null!));
+      i++;
     }
 
-    [Fact]
-    public void Should_raise_execption_on_null_request_via_dynamic_dispatch()
+    i.ShouldBe(1);
+  }
+
+  [Fact]
+  public void Should_raise_execption_on_null_request()
+  {
+    Container container = new(cfg =>
     {
-        Container container = new(cfg =>
-        {
-            cfg.For<IMediator>().Use<Mediator>();
-        });
+      cfg.For<IMediator>().Use<Mediator>();
+    });
 
-        IMediator med = container.GetInstance<IMediator>();
+    IMediator med = container.GetInstance<IMediator>();
 
-        Should.Throw<ArgumentNullException>(() => med.CreateStream((object) null!));
-    }
+    Should.Throw<ArgumentNullException>(() => med.CreateStream((Ping) null!));
+  }
 
-    [Fact]
-    public void Should_resolve_stream_handler_when_stream_is_created()
+  [Fact]
+  public void Should_raise_execption_on_null_request_via_dynamic_dispatch()
+  {
+    Container container = new(cfg =>
     {
-        Mediator med = new(new ServiceCollection().BuildServiceProvider());
+      cfg.For<IMediator>().Use<Mediator>();
+    });
 
-        Should.Throw<InvalidOperationException>(() => med.CreateStream(new Ping()));
-        Should.Throw<InvalidOperationException>(() => med.CreateStream((object) new Ping()));
-    }
+    IMediator med = container.GetInstance<IMediator>();
+
+    Should.Throw<ArgumentNullException>(() => med.CreateStream((object) null!));
+  }
+
+  [Fact]
+  public void Should_resolve_stream_handler_when_stream_is_created()
+  {
+    Mediator med = new(new ServiceCollection().BuildServiceProvider());
+
+    Should.Throw<InvalidOperationException>(() => med.CreateStream(new Ping()));
+    Should.Throw<InvalidOperationException>(() => med.CreateStream((object) new Ping()));
+  }
 }

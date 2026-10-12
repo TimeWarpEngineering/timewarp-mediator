@@ -10,23 +10,23 @@ namespace TimeWarp.Mediator.Pipeline;
 public class RequestPreProcessorBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
-    private readonly IEnumerable<IRequestPreProcessor<TRequest>> _preProcessors;
+  private readonly IEnumerable<IRequestPreProcessor<TRequest>> PreProcessors;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RequestPreProcessorBehavior{TRequest,TResponse}"/> class.
-    /// </summary>
-    /// <param name="preProcessors">Pre-processors to run, in order, before the handler</param>
-    public RequestPreProcessorBehavior(IEnumerable<IRequestPreProcessor<TRequest>> preProcessors) 
-        => _preProcessors = preProcessors;
+  /// <summary>
+  /// Initializes a new instance of the <see cref="RequestPreProcessorBehavior{TRequest,TResponse}"/> class.
+  /// </summary>
+  /// <param name="preProcessors">Pre-processors to run, in order, before the handler</param>
+  public RequestPreProcessorBehavior(IEnumerable<IRequestPreProcessor<TRequest>> preProcessors)
+      => PreProcessors = preProcessors;
 
-    /// <inheritdoc/>
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  /// <inheritdoc/>
+  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  {
+    foreach (IRequestPreProcessor<TRequest> processor in PreProcessors)
     {
-        foreach (IRequestPreProcessor<TRequest> processor in _preProcessors)
-        {
-            await processor.Process(request, cancellationToken).ConfigureAwait(false);
-        }
-
-        return await next(cancellationToken).ConfigureAwait(false);
+      await processor.Process(request, cancellationToken).ConfigureAwait(false);
     }
+
+    return await next(cancellationToken).ConfigureAwait(false);
+  }
 }

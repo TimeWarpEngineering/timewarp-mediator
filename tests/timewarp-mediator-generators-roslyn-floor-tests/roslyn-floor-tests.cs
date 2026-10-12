@@ -7,12 +7,12 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 public sealed class RoslynFloorTests
 {
-    [Fact]
-    public void Compiler_IsTheDeclaredFloor()
-    {
-        Version? version = typeof(CSharpCompilation).Assembly.GetName().Version;
+  [Fact]
+  public void Compiler_IsTheDeclaredFloor()
+  {
+    Version? version = typeof(CSharpCompilation).Assembly.GetName().Version;
 
-        version.ShouldNotBeNull();
-        new Version(version!.Major, version.Minor).ShouldBe(new Version(4, 8));
-    }
+    version.ShouldNotBeNull();
+    new Version(version!.Major, version.Minor).ShouldBe(new Version(4, 8));
+  }
 }

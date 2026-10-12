@@ -6,24 +6,24 @@ namespace TimeWarp.Mediator.Generators.Tests.State;
 
 public sealed class ExceptionNotification : INotification
 {
-    public ExceptionNotification(string requestName, Exception exception)
-    {
-        RequestName = requestName;
-        Exception = exception;
-    }
+  public ExceptionNotification(string requestName, Exception exception)
+  {
+    RequestName = requestName;
+    Exception = exception;
+  }
 
-    public string RequestName { get; }
+  public string RequestName { get; }
 
-    public Exception Exception { get; }
+  public Exception Exception { get; }
 }
 
 public sealed class RecordingExceptionHandler : INotificationHandler<ExceptionNotification>
 {
-    public List<ExceptionNotification> Notifications { get; } = new();
+  public List<ExceptionNotification> Notifications { get; } = new();
 
-    public Task Handle(ExceptionNotification notification, CancellationToken cancellationToken)
-    {
-        Notifications.Add(notification);
-        return Task.CompletedTask;
-    }
+  public Task Handle(ExceptionNotification notification, CancellationToken cancellationToken)
+  {
+    Notifications.Add(notification);
+    return Task.CompletedTask;
+  }
 }

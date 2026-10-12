@@ -14,96 +14,96 @@ namespace TimeWarp.Mediator.Generators;
 
 internal sealed class MemberNames
 {
-    private readonly Dictionary<INamedTypeSymbol, string> Names = new(SymbolEqualityComparer.Default);
+  private readonly Dictionary<INamedTypeSymbol, string> Names = new(SymbolEqualityComparer.Default);
 
-    public MemberNames(MessageGraph graph)
+  public MemberNames(MessageGraph graph)
+  {
+    List<INamedTypeSymbol> types = new();
+    HashSet<INamedTypeSymbol> seen = new(SymbolEqualityComparer.Default);
+    foreach (RequestBinding request in graph.Requests)
     {
-        List<INamedTypeSymbol> types = new();
-        HashSet<INamedTypeSymbol> seen = new(SymbolEqualityComparer.Default);
-        foreach (RequestBinding request in graph.Requests)
-        {
-            Add(types, seen, request.RequestType);
-            Add(types, seen, request.HandlerType);
-            Add(types, seen, request.ScopeType);
-        }
-
-        foreach (NotificationBinding notification in graph.Notifications)
-        {
-            Add(types, seen, notification.NotificationType);
-            Add(types, seen, notification.ScopeType);
-            foreach (INamedTypeSymbol handler in notification.HandlerTypes)
-            {
-                Add(types, seen, handler);
-            }
-        }
-
-        types.Sort((left, right) => string.CompareOrdinal(Fq(left), Fq(right)));
-
-        Dictionary<string, int> counts = new(StringComparer.Ordinal);
-        foreach (INamedTypeSymbol type in types)
-        {
-            string sanitized = MessageGraphBuilder.Sanitize(type);
-            counts[sanitized] = counts.TryGetValue(sanitized, out int count) ? count + 1 : 1;
-        }
-
-        HashSet<string> taken = new(StringComparer.Ordinal);
-        List<INamedTypeSymbol> colliding = new();
-        foreach (INamedTypeSymbol type in types)
-        {
-            string sanitized = MessageGraphBuilder.Sanitize(type);
-            if (counts[sanitized] == 1)
-            {
-                Names[type] = sanitized;
-                taken.Add(sanitized);
-            }
-            else
-            {
-                colliding.Add(type);
-            }
-        }
-
-        foreach (INamedTypeSymbol type in colliding)
-        {
-            string candidate = MessageGraphBuilder.Sanitize(type) + "_" + StableHash(Fq(type));
-            string name = candidate;
-            int index = 1;
-            while (!taken.Add(name))
-            {
-                name = candidate + "_" + index;
-                index++;
-            }
-
-            Names[type] = name;
-        }
+      Add(types, seen, request.RequestType);
+      Add(types, seen, request.HandlerType);
+      Add(types, seen, request.ScopeType);
     }
 
-    public string For(INamedTypeSymbol type)
+    foreach (NotificationBinding notification in graph.Notifications)
     {
-        return Names.TryGetValue(type, out string? name) ? name : MessageGraphBuilder.Sanitize(type);
+      Add(types, seen, notification.NotificationType);
+      Add(types, seen, notification.ScopeType);
+      foreach (INamedTypeSymbol handler in notification.HandlerTypes)
+      {
+        Add(types, seen, handler);
+      }
     }
 
-    private static void Add(List<INamedTypeSymbol> types, HashSet<INamedTypeSymbol> seen, INamedTypeSymbol? type)
+    types.Sort((left, right) => string.CompareOrdinal(Fq(left), Fq(right)));
+
+    Dictionary<string, int> counts = new(StringComparer.Ordinal);
+    foreach (INamedTypeSymbol type in types)
     {
-        if (type is not null && seen.Add(type))
-        {
-            types.Add(type);
-        }
+      string sanitized = MessageGraphBuilder.Sanitize(type);
+      counts[sanitized] = counts.TryGetValue(sanitized, out int count) ? count + 1 : 1;
     }
 
-    private static string Fq(INamedTypeSymbol type)
+    HashSet<string> taken = new(StringComparer.Ordinal);
+    List<INamedTypeSymbol> colliding = new();
+    foreach (INamedTypeSymbol type in types)
     {
-        return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      string sanitized = MessageGraphBuilder.Sanitize(type);
+      if (counts[sanitized] == 1)
+      {
+        Names[type] = sanitized;
+        taken.Add(sanitized);
+      }
+      else
+      {
+        colliding.Add(type);
+      }
     }
 
-    private static string StableHash(string value)
+    foreach (INamedTypeSymbol type in colliding)
     {
-        uint hash = 2166136261;
-        foreach (char c in value)
-        {
-            hash ^= c;
-            hash *= 16777619;
-        }
+      string candidate = MessageGraphBuilder.Sanitize(type) + "_" + StableHash(Fq(type));
+      string name = candidate;
+      int index = 1;
+      while (!taken.Add(name))
+      {
+        name = candidate + "_" + index;
+        index++;
+      }
 
-        return hash.ToString("x8", System.Globalization.CultureInfo.InvariantCulture);
+      Names[type] = name;
     }
+  }
+
+  public string For(INamedTypeSymbol type)
+  {
+    return Names.TryGetValue(type, out string? name) ? name : MessageGraphBuilder.Sanitize(type);
+  }
+
+  private static void Add(List<INamedTypeSymbol> types, HashSet<INamedTypeSymbol> seen, INamedTypeSymbol? type)
+  {
+    if (type is not null && seen.Add(type))
+    {
+      types.Add(type);
+    }
+  }
+
+  private static string Fq(INamedTypeSymbol type)
+  {
+    return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+  }
+
+  private static string StableHash(string value)
+  {
+    uint hash = 2166136261;
+    foreach (char c in value)
+    {
+      hash ^= c;
+      hash *= 16777619;
+    }
+
+    return hash.ToString("x8", System.Globalization.CultureInfo.InvariantCulture);
+  }
 }

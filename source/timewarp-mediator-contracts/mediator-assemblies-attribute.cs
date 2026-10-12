@@ -10,17 +10,17 @@ namespace TimeWarp.Mediator;
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
 public sealed class MediatorAssembliesAttribute : Attribute
 {
-    /// <summary>
-    /// Initializes the attribute with marker types whose assemblies should be linked.
-    /// </summary>
-    /// <param name="markerTypes">Types used only to identify member assemblies. A <c>null</c> array is treated as empty.</param>
-    public MediatorAssembliesAttribute(params Type[] markerTypes)
-    {
-        MarkerTypes = markerTypes ?? Array.Empty<Type>();
-    }
+  /// <summary>
+  /// Initializes the attribute with marker types whose assemblies should be linked.
+  /// </summary>
+  /// <param name="markerTypes">Types used only to identify member assemblies. A <c>null</c> array is treated as empty.</param>
+  public MediatorAssembliesAttribute(params Type[] markerTypes)
+  {
+    MarkerTypes = markerTypes ?? Array.Empty<Type>();
+  }
 
-    /// <summary>
-    /// Marker types whose containing assemblies are members of the graph.
-    /// </summary>
-    public Type[] MarkerTypes { get; }
+  /// <summary>
+  /// Marker types whose containing assemblies are members of the graph.
+  /// </summary>
+  public Type[] MarkerTypes { get; }
 }

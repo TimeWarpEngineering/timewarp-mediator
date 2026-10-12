@@ -23,8 +23,8 @@ ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
 string reply = await sender.Send(new SmokePing("package"));
 if (reply != "package-pong")
 {
-    await Console.Error.WriteLineAsync($"Unexpected reply: {reply}");
-    return 1;
+  await Console.Error.WriteLineAsync($"Unexpected reply: {reply}");
+  return 1;
 }
 
 Console.WriteLine($"package-smoke: {reply} via {typeof(Mediator).FullName}");
@@ -34,6 +34,6 @@ public sealed record SmokePing(string Message) : IRequest<string>;
 
 public sealed class SmokePingHandler : IRequestHandler<SmokePing, string>
 {
-    public Task<string> Handle(SmokePing request, CancellationToken cancellationToken) =>
-        Task.FromResult(request.Message + "-pong");
+  public Task<string> Handle(SmokePing request, CancellationToken cancellationToken) =>
+      Task.FromResult(request.Message + "-pong");
 }

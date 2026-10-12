@@ -12,12 +12,12 @@ namespace TimeWarp.Mediator.NotificationPublishers;
 /// </summary>
 public class ForeachAwaitPublisher : INotificationPublisher
 {
-    /// <inheritdoc/>
-    public async Task Publish(IEnumerable<NotificationHandlerExecutor> handlerExecutors, INotification notification, CancellationToken cancellationToken)
+  /// <inheritdoc/>
+  public async Task Publish(IEnumerable<NotificationHandlerExecutor> handlerExecutors, INotification notification, CancellationToken cancellationToken)
+  {
+    foreach (NotificationHandlerExecutor handler in handlerExecutors)
     {
-        foreach (NotificationHandlerExecutor handler in handlerExecutors)
-        {
-            await handler.HandlerCallback(notification, cancellationToken).ConfigureAwait(false);
-        }
+      await handler.HandlerCallback(notification, cancellationToken).ConfigureAwait(false);
     }
+  }
 }

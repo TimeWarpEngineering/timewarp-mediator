@@ -11,12 +11,12 @@ public interface IRequestExceptionAction<in TRequest, in TException>
     where TRequest : notnull
     where TException : Exception
 {
-    /// <summary>
-    /// Called when the request handler throws an exception
-    /// </summary>
-    /// <param name="request">Request instance</param>
-    /// <param name="exception">The thrown exception</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>An awaitable task</returns>
-    Task Execute(TRequest request, TException exception, CancellationToken cancellationToken);
+  /// <summary>
+  /// Called when the request handler throws an exception
+  /// </summary>
+  /// <param name="request">Request instance</param>
+  /// <param name="exception">The thrown exception</param>
+  /// <param name="cancellationToken">Cancellation token</param>
+  /// <returns>An awaitable task</returns>
+  Task Execute(TRequest request, TException exception, CancellationToken cancellationToken);
 }
