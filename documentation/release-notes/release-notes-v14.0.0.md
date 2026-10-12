@@ -6,6 +6,14 @@ beta.1 to beta.4 history. **14.0.0-beta is not a drop-in for 13.0.0** (see
 
 ## Breaking changes
 
+### net10.0 minimum
+
+`TimeWarp.Mediator` and `TimeWarp.Mediator.Contracts` target `net10.0` only. The netstandard2.0
+and net6.0 assets are gone, and so is the `Microsoft.Bcl.AsyncInterfaces` dependency. Projects
+that cannot target net10.0 or newer stay on 13.x. `TimeWarp.Mediator.Generators` and
+`TimeWarp.Mediator.Analyzers` stay netstandard2.0 because Roslyn loads them inside the compiler;
+their analyzer payload does not depend on your app's target framework.
+
 ### Smaller public API in the `TimeWarp.Mediator` runtime package
 
 Types that only the runtime uses are no longer public. Code that only uses `IMediator`, `ISender`,

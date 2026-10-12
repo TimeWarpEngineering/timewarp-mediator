@@ -2,8 +2,7 @@ namespace TimeWarp.Mediator.Tests;
 
 public class TrimmingAnnotationTests
 {
-    // Matched by full name: the trimmer and NativeAOT compiler do the same, and the netstandard2.0/net6.0
-    // builds of TimeWarp.Mediator carry internal polyfills rather than the BCL types.
+    // Matched by full name: the trimmer and NativeAOT compiler do the same.
     private const string RequiresUnreferencedCode = "System.Diagnostics.CodeAnalysis.RequiresUnreferencedCodeAttribute";
     private const string RequiresDynamicCode = "System.Diagnostics.CodeAnalysis.RequiresDynamicCodeAttribute";
 
