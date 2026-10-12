@@ -29,6 +29,11 @@ internal class ObjectDetails : IComparer<ObjectDetails>
 
     public int Compare(ObjectDetails? x, ObjectDetails? y)
     {
+        if (ReferenceEquals(x, y))
+        {
+            return 0;
+        }
+
         if (x == null)
         {
             return 1;

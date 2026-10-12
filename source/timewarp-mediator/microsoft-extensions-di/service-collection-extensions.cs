@@ -22,6 +22,16 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddMediator(this IServiceCollection services, 
         Action<MediatorServiceConfiguration> configuration)
     {
+        if (services is null)
+        {
+            throw new ArgumentNullException(nameof(services));
+        }
+
+        if (configuration is null)
+        {
+            throw new ArgumentNullException(nameof(configuration));
+        }
+
         MediatorServiceConfiguration serviceConfig = new();
 
         configuration.Invoke(serviceConfig);
@@ -38,6 +48,16 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddMediator(this IServiceCollection services, 
         MediatorServiceConfiguration configuration)
     {
+        if (services is null)
+        {
+            throw new ArgumentNullException(nameof(services));
+        }
+
+        if (configuration is null)
+        {
+            throw new ArgumentNullException(nameof(configuration));
+        }
+
         if (!configuration.AssembliesToRegister.Any())
         {
             throw new ArgumentException("No assemblies found to scan. Supply at least one assembly to scan for handlers.");

@@ -19,21 +19,17 @@ internal class StreamRequestHandlerWrapperImpl<TRequest, TResponse>
     : StreamRequestHandlerWrapper<TResponse>
     where TRequest : IStreamRequest<TResponse>
 {
-    public override async IAsyncEnumerable<object?> Handle(object request, IServiceProvider serviceProvider, [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        await foreach (TResponse? item in Handle((IStreamRequest<TResponse>) request, serviceProvider, cancellationToken))
-        {
-            yield return item;
-        }
-    }
+    public override IAsyncEnumerable<object?> Handle(object request, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+        => Box(Handle((IStreamRequest<TResponse>) request, serviceProvider, cancellationToken), cancellationToken);
 
-    public override async IAsyncEnumerable<TResponse> Handle(IStreamRequest<TResponse> request, 
+    public override IAsyncEnumerable<TResponse> Handle(IStreamRequest<TResponse> request, 
         IServiceProvider serviceProvider, 
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+        CancellationToken cancellationToken)
     {
-        IAsyncEnumerable<TResponse> Handler() => serviceProvider
-            .GetRequiredService<IStreamRequestHandler<TRequest, TResponse>>()
-            .Handle((TRequest) request, cancellationToken);
+        // Resolve the handler eagerly so a missing registration surfaces from CreateStream, not the first MoveNextAsync.
+        IStreamRequestHandler<TRequest, TResponse> handler = serviceProvider.GetRequiredService<IStreamRequestHandler<TRequest, TResponse>>();
+
+        IAsyncEnumerable<TResponse> Handler() => handler.Handle((TRequest) request, cancellationToken);
 
         IAsyncEnumerable<TResponse> items = serviceProvider
             .GetServices<IStreamPipelineBehavior<TRequest, TResponse>>()
@@ -47,12 +43,18 @@ internal class StreamRequestHandlerWrapperImpl<TRequest, TResponse>
                 )
             )();
 
-        await foreach (TResponse? item in items.WithCancellation(cancellationToken) )
+        return NextWrapper(items, cancellationToken);
+    }
+
+    private static async IAsyncEnumerable<object?> Box(
+        IAsyncEnumerable<TResponse> items,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await foreach (TResponse? item in items.WithCancellation(cancellationToken).ConfigureAwait(false))
         {
             yield return item;
         }
     }
-
 
     private static async IAsyncEnumerable<T> NextWrapper<T>(
         IAsyncEnumerable<T> items,

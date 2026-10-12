@@ -58,12 +58,8 @@ public class RequestExceptionProcessorBehavior<TRequest, TResponse> : IPipelineB
                 throw;
             }
 
-            if (state.Response is null)
-            {
-                throw;
-            }
-
-            return state.Response; //cannot be null if Handled
+            // Handled is authoritative: a handler may legitimately mark the exception handled with a null response.
+            return state.Response!;
         }
     }
     private static IEnumerable<Type> GetExceptionTypes(Type? exceptionType)

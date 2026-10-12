@@ -64,4 +64,26 @@ public class NotificationPublisherTests
 
         sequentialElapsed.ShouldBeGreaterThan(parallelElapsed);
     }
+
+    [Fact]
+    public async Task Task_when_all_publisher_should_run_remaining_handlers_when_a_handler_throws_synchronously()
+    {
+        bool secondHandlerRan = false;
+        NotificationHandlerExecutor[] handlerExecutors =
+        {
+            new(new object(), (_, _) => throw new InvalidOperationException("first")),
+            new(new object(), (_, _) =>
+            {
+                secondHandlerRan = true;
+                return Task.CompletedTask;
+            }),
+            new(new object(), (_, _) => throw new InvalidOperationException("third")),
+        };
+
+        Task publishTask = new TaskWhenAllPublisher().Publish(handlerExecutors, new Notification(), CancellationToken.None);
+
+        await Should.ThrowAsync<InvalidOperationException>(publishTask);
+        secondHandlerRan.ShouldBeTrue();
+        publishTask.Exception!.InnerExceptions.Select(static exception => exception.Message).ShouldBe(new[] { "first", "third" });
+    }
 }
