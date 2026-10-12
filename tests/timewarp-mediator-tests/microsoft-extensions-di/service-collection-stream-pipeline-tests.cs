@@ -2,7 +2,7 @@
 
 namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
-public class StreamPipelineTests
+public class ServiceCollectionStreamPipelineTests
 {
     public class OuterBehavior : IStreamPipelineBehavior<StreamPing, Pong>
     {

@@ -31,30 +31,23 @@ public class PipelineMultiCallToConstructorTests
         public string? Message { get; set; }
     }
 
+    public class ConstructorCallCounter
+    {
+        private int _count;
+
+        public int Count => Volatile.Read(ref _count);
+
+        public void Increment() => Interlocked.Increment(ref _count);
+    }
+
     public class ConstructorTestHandler : IRequestHandler<ConstructorTestRequest, ConstructorTestResponse>
     {
-
-        private static volatile object _lockObject = new();
         private readonly Logger _logger;
-        private static int _constructorCallCount;
 
-        public static int ConstructorCallCount => _constructorCallCount;
-
-        public static void ResetCallCount()
-        {
-            lock (_lockObject)
-            {
-                _constructorCallCount = 0;
-            }
-        }
-
-        public ConstructorTestHandler(Logger logger)
+        public ConstructorTestHandler(Logger logger, ConstructorCallCounter counter)
         {
             _logger = logger;
-            lock (_lockObject)
-            {
-                _constructorCallCount++;
-            }
+            counter.Increment();
         }
 
         public Task<ConstructorTestResponse> Handle(ConstructorTestRequest request, CancellationToken cancellationToken)
@@ -67,13 +60,12 @@ public class PipelineMultiCallToConstructorTests
     [Fact]
     public async Task Should_not_call_constructor_multiple_times_when_using_a_pipeline()
     {
-        ConstructorTestHandler.ResetCallCount();
-        ConstructorTestHandler.ConstructorCallCount.ShouldBe(0);
-
+        ConstructorCallCounter counter = new();
         Logger output = new();
         IServiceCollection services = new ServiceCollection();
 
         services.AddSingleton(output);
+        services.AddSingleton(counter);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ConstructorTestBehavior<,>));
         services.AddMediator(cfg =>
         {
@@ -94,6 +86,6 @@ public class PipelineMultiCallToConstructorTests
             "Handler",
             "ConstructorTestBehavior after"
         });
-        ConstructorTestHandler.ConstructorCallCount.ShouldBe(1);
+        counter.Count.ShouldBe(1);
     }
 }

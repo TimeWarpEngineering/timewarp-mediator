@@ -432,31 +432,22 @@ public class PipelineTests
         });
     }
 
-    [Fact(Skip = "Lamar does not mix concrete and open generics. Use constraints instead.")]
+    // Lamar does not mix concrete and open generic registrations for one service type;
+    // Microsoft.Extensions.DependencyInjection does, in registration order.
+    [Fact]
     public async Task Should_handle_concrete_and_open_generics()
     {
         Logger output = new();
-        Container container = new(cfg =>
-        {
-            cfg.Scan(scanner =>
-            {
-                scanner.AssemblyContainingType(typeof(PublishTests));
-                scanner.IncludeNamespaceContainingType<Ping>();
-                scanner.WithDefaultConventions();
-                scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-            });
-            cfg.For<Logger>().Use(output);
+        ServiceCollection services = new();
+        services.AddSingleton(output);
+        services.AddTransient<IRequestHandler<Ping, Pong>, PingHandler>();
+        services.AddTransient<IRequestHandler<Zing, Zong>, ZingHandler>();
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(OuterBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(InnerBehavior<,>));
+        services.AddTransient<IPipelineBehavior<Ping, Pong>, ConcreteBehavior>();
+        services.AddTransient<IMediator>(static serviceProvider => new Mediator(serviceProvider));
 
-            cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(OuterBehavior<,>));
-            cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(InnerBehavior<,>));
-            cfg.For(typeof(IPipelineBehavior<Ping, Pong>)).Add(typeof(ConcreteBehavior));
-
-            cfg.For<IMediator>().Use<Mediator>();
-        });
-
-        container.GetAllInstances<IPipelineBehavior<Ping, Pong>>();
-
-        IMediator med = container.GetInstance<IMediator>();
+        IMediator med = services.BuildServiceProvider().GetRequiredService<IMediator>();
 
         Pong response = await med.Send(new Ping { Message = "Ping" });
 
