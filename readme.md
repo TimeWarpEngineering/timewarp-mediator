@@ -69,8 +69,13 @@ Aot profile: [generated-vs-legacy.md](./documentation/generated-vs-legacy.md). D
 
 ## Quick start: reflection stack
 
-**13.0.0** is the release to install when you cannot target net10.0. The 14.0.0 reflection
-package is net10.0 only:
+The 14.0.0 reflection package targets net10.0 only:
+
+```bash
+dotnet add package TimeWarp.Mediator --version 14.0.0
+```
+
+Stay on **13.0.0** when you cannot target net10.0:
 
 ```bash
 dotnet add package TimeWarp.Mediator --version 13.0.0

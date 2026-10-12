@@ -29,7 +29,7 @@ services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining<PingHandl
 string reply = await provider.GetRequiredService<ISender>().Send(new Ping());
 ```
 
-`AddMediator()` registers `IMediator`, `ISender`, `IPublisher`, and the handlers it finds. It does not register `AddGeneratedMediator()`. The reflection runtime is not trim or NativeAOT safe (IL2026 / IL3050).
+`AddMediator()` registers `IMediator`, `ISender`, `IPublisher`, and the handlers it finds. It does not register the generated mediator. The reflection runtime is not trim or NativeAOT safe (IL2026 / IL3050).
 
 ## Migration
 
@@ -38,7 +38,7 @@ string reply = await provider.GetRequiredService<ISender>().Send(new Ping());
 - From MediatR: `using MediatR;` becomes `using TimeWarp.Mediator;`, and `AddMediatR` becomes `AddMediator`.
 - From 13.x reflection to the generated stack: reference `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators`, mark handler assemblies with `[assembly: MediatorAssembly]`, and call `AddGeneratedMediator()`. Drop this package once nothing calls `AddMediator()`.
 - Generated dispatch does not run streams, pre/post processors, or the exception cascade. Stay on this package if you need those.
-- Types that only the runtime used (`ServiceFactory`, the handler wrappers, `ServiceRegistrar`) are no longer public. Call `ISender.Send`, `IPublisher.Publish`, and `AddMediator`.
+- `ServiceFactory` is removed; resolve through `IServiceProvider`. The handler wrappers and `ServiceRegistrar` are internal. Call `ISender.Send`, `IPublisher.Publish`, and `AddMediator`.
 
 Matrix and steps: [13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
 

@@ -90,8 +90,9 @@ build time.
 
 Two things this snippet does not do:
 
-- It does not publish notifications, stream a song, or run an exception handler. Those stay
+- It does not open a stream, run a pre/post processor, or run an exception handler. Those stay
   on `AddMediator()`, or you fold them into the request handler or the behavior first.
+  Notifications are fine: `Publish` runs on the generated mediator too.
 - It does not outrun martinothamar's generator. The 2026-10-12 baseline still has that `Send`
   at 8.8 ns and 24 B, against our generated `Send` at 29.9 ns and 96 B. The win against our
   own reflection `Send` (69.0 ns, 224 B) is the one the launch card quotes.

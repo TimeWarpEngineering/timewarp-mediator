@@ -65,8 +65,9 @@ not: it is annotated `RequiresUnreferencedCode` and `RequiresDynamicCode` (IL202
   `AddMediator()`, or move that work into a handler or an `IPipelineBehavior` first.
 - On the Aot and Link profiles, `[assembly: MediatorBehavior]` is not woven (TWM005), and
   there is no `AddGeneratedMediator()`. Handlers are `new Handler()` singletons.
-- `ServiceFactory`, the public handler wrappers, and `ServiceRegistrar` are no longer public.
-  Call `ISender.Send`, `IPublisher.Publish`, and `services.AddMediator(...)`.
+- `ServiceFactory` is removed; resolve through `IServiceProvider`. The handler wrappers and
+  `ServiceRegistrar` are now internal. Call `ISender.Send`, `IPublisher.Publish`, and
+  `services.AddMediator(...)`.
 - `TimeWarp.Mediator` and `TimeWarp.Mediator.Contracts` declare `Unlicense AND Apache-2.0`.
   Generators and Analyzers stay `Unlicense`. Every package packs `notice` and `unlicense`.
 

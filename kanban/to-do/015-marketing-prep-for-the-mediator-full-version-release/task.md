@@ -30,6 +30,7 @@ Prepare all marketing material for the TimeWarp Mediator full version release so
 
 - Created: 1184111 (2026-10-12)
 - Implementer: Grok session 01a13140-27e9-76b2-9cfd-0e3b7a04b48f (2026-10-13)
+- Review: Claude Code review oracle under ganda task work (2026-10-13), effort 3, roster general
 
 ## Notes
 
@@ -99,3 +100,10 @@ Ran here on 2026-10-13: pack completed successfully (layout verified, package sm
 
 **Not in scope.** No public post, no GitHub Release, no version bump to `14.0.0`, no FreezeTeam stub. The card's numbers are the recorded baseline, not a new benchmark run.
 
+### Review disposition
+
+- **Outcome:** clean. 2 rounds, effort 3, roster `general`. Final open count 0.
+- **Counts (final):** bug 1 fixed; suggestion 2 fixed; nit 1 fixed; 0 wontfix.
+- **Fixed:** M1 follow-up blog said notifications do not run on the generated mediator (they do; only streams, pre/post processors, and the exception cascade are dropped). M2 `ServiceFactory` is removed, not internal (release draft, launch blog, `TimeWarp.Mediator` readme). M3 repository readme reflection quick start now shows the 14.0.0 install with 13.0.0 as the non-net10.0 fallback. M4 `TimeWarp.Mediator` readme wording ("does not register the generated mediator").
+- **Gates after fixes:** `./bin/dev pack` passed (layout verified for all four nupkgs, package smoke `package-pong`).
+- **Artifacts:** `review/review-framework.md`, `review/round-1/` and `review/round-2/` (`general.md`, `merged.md`), `review/disposition.md`.

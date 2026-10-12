@@ -77,8 +77,8 @@ A lot. Read this before you bump a 13.0.0 host.
   request handler or an `IPipelineBehavior`, or keep `AddMediator()`.
 - **Behaviors move to an attribute.** `cfg.AddOpenBehavior(typeof(LoggingBehavior<,>))`
   becomes `[assembly: MediatorBehavior(typeof(LoggingBehavior<,>))]` on the Host profile.
-- **Some runtime types went internal.** `ServiceFactory`, the handler wrappers, and
-  `ServiceRegistrar` are no longer public. You did not need them to send a request.
+- **Some runtime types are gone or internal.** `ServiceFactory` is removed. The handler
+  wrappers and `ServiceRegistrar` are internal. You did not need them to send a request.
 - **License expression.** The reflection package and Contracts are `Unlicense AND Apache-2.0`
   because they still contain MediatR-derived code. Generators and Analyzers are Unlicense.
   `notice` and `unlicense` ship in every package.
