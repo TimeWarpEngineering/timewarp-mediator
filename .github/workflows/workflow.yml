@@ -1,40 +1,27 @@
 name: CI/CD
 
 # Thin trigger. The pipeline lives in C# — `dev workflow`.
-# push/PR: clean -> build -> test -> pack.
-# release: clean -> build -> pack -> check-version -> push (no test gate).
-# Publishing uses OIDC Trusted Publishing (no stored API key).
+# ci job (push/PR/dispatch merge): clean -> build -> test -> pack; uploads Packages-* artifact.
+# publish job (release, dispatch release/probe): release guards -> OIDC login ->
+#   clean -> build -> pack -> check-version -> push. Tests are not re-run; the
+#   guards require a successful push CI run on the tagged master commit instead.
+# Publishing uses OIDC Trusted Publishing (no stored API key). The NuGet.org
+# policy binds repo + workflow file `workflow.yml` (not job names), so keep the
+# file name stable. Actions are SHA-pinned; dependabot bumps them.
+#
+# No path filters: every master commit gets a CI run, which the release
+# green-CI guard depends on.
 on:
   push:
     branches: [ master, main ]
-    paths:
-      - 'source/**'
-      - 'tests/**'
-      - 'samples/**'
-      - 'tools/**'
-      - 'msbuild/**'
-      - '.github/workflows/**'
-      - 'Directory.Build.props'
-      - 'Directory.Packages.props'
-      - 'timewarp-mediator.slnx'
   pull_request:
     branches: [ master, main ]
-    paths:
-      - 'source/**'
-      - 'tests/**'
-      - 'samples/**'
-      - 'tools/**'
-      - 'msbuild/**'
-      - '.github/workflows/**'
-      - 'Directory.Build.props'
-      - 'Directory.Packages.props'
-      - 'timewarp-mediator.slnx'
   release:
     types: [published]
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Pipeline mode. merge = build and test only (default). release = break-glass publish; also requires confirm. probe = trusted-publishing check only (OIDC login, no build, no publish).'
+        description: 'Pipeline mode. merge = build and test only (default). release = break-glass publish; also requires confirm and must run on the release tag. probe = trusted-publishing check only (OIDC login, no build, no publish).'
         type: choice
         options:
           - merge
@@ -46,61 +33,143 @@ on:
         type: string
         default: ''
 
+permissions:
+  contents: read
+
+# The dev-cli runfile compiles against TimeWarp.Nuru, which pulls the published
+# TimeWarp.Mediator.Generators (bundling an older TimeWarp.Mediator.Analyzers with the
+# same 14.0.0.0 identity). A shared compiler server then serves that stale analyzer
+# to the in-repo generator (CS8784 TypeLoadException on a clean build). MSBuild
+# reads env vars as properties, so this disables the server for every build here.
+env:
+  UseSharedCompilation: 'false'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   ci:
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'merge')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
-      id-token: write  # Required for NuGet Trusted Publishing (OIDC)
-      actions: read    # Release mode lists CI runs and downloads their package artifacts
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0  # Full history required for SourceLink / version metadata
+          persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: |
             10.0.x
-            8.0.x
 
+      # No packages.lock.json in this repo, so setup-dotnet's built-in cache
+      # (lock-file keyed) cannot be used; key on central package versions + projects.
+      - name: Cache NuGet packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj', 'tools/dev-cli/**', 'nuget.config') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Run CI Pipeline
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow
+
+      - name: Upload Artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Packages-${{ github.run_number }}
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: ignore
+
+  publish:
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'release' || inputs.mode == 'probe'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write  # NuGet Trusted Publishing (OIDC)
+      actions: read    # Release guard lists this workflow's CI runs for the tagged commit
+
+    steps:
       - name: Validate break-glass confirmation
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm != 'release'
         run: |
           echo "::error::mode=release requires confirm=release. Refusing to run a break-glass release."
           exit 1
 
+      - name: Checkout repository
+        if: inputs.mode != 'probe'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0  # Full history: SourceLink metadata and the on-master guard
+          persist-credentials: false
+
+      - name: Release guards (tag == v+Version, on master, green CI)
+        if: inputs.mode != 'probe'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' source/Directory.Build.props | head -n 1)"
+          if [ -z "$version" ]; then
+            echo "::error::Could not read <Version> from source/Directory.Build.props."
+            exit 1
+          fi
+          expected="v$version"
+          echo "Commit: $sha  Version: $version  Expected tag: $expected"
+
+          if [ -n "$RELEASE_TAG" ] && [ "$RELEASE_TAG" != "$expected" ]; then
+            echo "::error::Release tag '$RELEASE_TAG' does not match v+Version '$expected'."
+            exit 1
+          fi
+
+          tag_sha="$(git rev-parse -q --verify "refs/tags/$expected^{commit}" || true)"
+          if [ "$tag_sha" != "$sha" ]; then
+            echo "::error::Tag $expected must exist and point at the commit being published ($sha); found '${tag_sha:-none}'. Break-glass dispatch must run with --ref $expected."
+            exit 1
+          fi
+
+          if ! git merge-base --is-ancestor "$sha" origin/master; then
+            echo "::error::Commit $sha is not on master."
+            exit 1
+          fi
+
+          green="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/workflow.yml/runs?head_sha=$sha&event=push&status=success" --jq '.total_count')"
+          if [ "$green" -lt 1 ]; then
+            echo "::error::No successful push CI run of workflow.yml for $sha. Wait for CI or re-run it, then re-run this release."
+            exit 1
+          fi
+          echo "Release guards passed ($green successful CI run(s) for $sha)."
+
+      - name: Setup .NET
+        if: inputs.mode != 'probe'
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: |
+            10.0.x
+
       - name: NuGet login (OIDC Trusted Publishing)
-        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
         id: nuget-login
-        uses: nuget/login@v1
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
         with:
           user: TimeWarp.Enterprises
 
       - name: Trusted publishing probe result
-        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
+        if: inputs.mode == 'probe'
         run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
 
-      - name: Run CI Pipeline
-        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
+      - name: Run release pipeline
+        if: inputs.mode != 'probe'
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            dotnet run --file tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          elif [ "${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release' }}" == "true" ]; then
-            dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          else
-            dotnet run --file tools/dev-cli/dev.cs -- workflow
-          fi
-
-      - name: Upload Artifacts
-        if: always() && github.event_name != 'release' && !(github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
-        uses: actions/upload-artifact@v4
-        with:
-          name: Packages-${{ github.run_number }}
-          path: artifacts/packages/*.nupkg
-          if-no-files-found: ignore
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release

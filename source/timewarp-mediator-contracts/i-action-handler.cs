@@ -11,13 +11,13 @@ namespace TimeWarp.Mediator;
 public interface IActionHandler<in TAction> : IRequestHandler<TAction>
     where TAction : IAction
 {
-    /// <summary>
-    /// Handles the action.
-    /// </summary>
-    /// <param name="request">The action.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A <see cref="ValueTask"/> representing the handler work.</returns>
-    new ValueTask Handle(TAction request, CancellationToken cancellationToken);
+  /// <summary>
+  /// Handles the action.
+  /// </summary>
+  /// <param name="request">The action.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>A <see cref="ValueTask"/> representing the handler work.</returns>
+  new ValueTask Handle(TAction request, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -27,11 +27,11 @@ public interface IActionHandler<in TAction> : IRequestHandler<TAction>
 public abstract class ActionHandler<TAction> : IActionHandler<TAction>
     where TAction : IAction
 {
-    /// <inheritdoc />
-    public abstract ValueTask Handle(TAction request, CancellationToken cancellationToken);
+  /// <inheritdoc />
+  public abstract ValueTask Handle(TAction request, CancellationToken cancellationToken);
 
-    Task IRequestHandler<TAction>.Handle(TAction request, CancellationToken cancellationToken)
-    {
-        return Handle(request, cancellationToken).AsTask();
-    }
+  Task IRequestHandler<TAction>.Handle(TAction request, CancellationToken cancellationToken)
+  {
+    return Handle(request, cancellationToken).AsTask();
+  }
 }

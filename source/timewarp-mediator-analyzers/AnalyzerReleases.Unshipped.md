@@ -4,7 +4,10 @@
 
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
-TWM001  | TimeWarp.Mediator | Error | RequestHasNoHandler
-TWM002  | TimeWarp.Mediator | Error | DuplicateHandler
-TWM003  | TimeWarp.Mediator | Error | ScopeMismatch
-TWM004  | TimeWarp.Mediator | Error | WrongScopeSend
+TWM005  | TimeWarp.Mediator | Warning | AotBehaviorNotWoven
+TWM006  | TimeWarp.Mediator | Error | AotHandlerNotConstructible
+TWM007  | TimeWarp.Mediator | Error | InaccessibleMemberType
+TWM008  | TimeWarp.Mediator | Error | MediatorRuntimeMissing
+TWM009  | TimeWarp.Mediator | Warning | UnsupportedHandlerKind
+TWM010  | TimeWarp.Mediator | Warning | InvalidBehaviorRegistration
+TWM011  | TimeWarp.Mediator | Warning | BehaviorAppliesToNoRequest

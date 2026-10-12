@@ -1,0 +1,5 @@
+<Project>
+  <!-- Deliberately does not import the repo Directory.Build.props: this project stands in for an
+       outside consumer, so it gets none of the repo's analyzers, signing, or ProjectReferences.
+       Package versions still come from the root Directory.Packages.props ("Package smoke" group). -->
+</Project>

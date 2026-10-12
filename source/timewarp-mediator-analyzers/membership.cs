@@ -8,278 +8,254 @@
 // generator package for hosts). Referenced assemblies join only with [assembly: MediatorAssembly]
 // or by being listed via MediatorAssembliesAttribute marker types. No marker → not linked.
 // Pipeline assignment is MediatorScopeAttribute (marker type), not MediatorModule's string name.
+// IsHost is the generator itself or TimeWarpMediatorAssembly=true; an attribute-only library is
+// not a host, so whole-program checks (TWM004 on interface-typed or unscoped sends) stay off there.
+// Build properties come only from GlobalOptions (MembershipOptions): CompilerVisibleProperty values
+// are global, so scanning per-tree options cost a loop over every syntax tree for nothing.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
 
 public sealed class Membership
 {
-    public const string AssemblyAttributeMetadataName = "TimeWarp.Mediator.MediatorAssemblyAttribute";
-    public const string AssembliesAttributeMetadataName = "TimeWarp.Mediator.MediatorAssembliesAttribute";
-    public const string ModuleAttributeMetadataName = "TimeWarp.Mediator.MediatorModuleAttribute";
-    public const string BehaviorAttributeMetadataName = "TimeWarp.Mediator.MediatorBehaviorAttribute";
-    public const string ScopeAttributeMetadataName = "TimeWarp.Mediator.MediatorScopeAttribute";
-    public const string MsBuildPropertyName = "build_property.TimeWarpMediatorAssembly";
-    public const string ProfilePropertyName = "build_property.TimeWarpMediatorProfile";
-    public const string NamespacePropertyName = "build_property.TimeWarpMediatorNamespace";
+  public const string AssemblyAttributeMetadataName = "TimeWarp.Mediator.MediatorAssemblyAttribute";
+  public const string AssembliesAttributeMetadataName = "TimeWarp.Mediator.MediatorAssembliesAttribute";
+  public const string ModuleAttributeMetadataName = "TimeWarp.Mediator.MediatorModuleAttribute";
+  public const string BehaviorAttributeMetadataName = "TimeWarp.Mediator.MediatorBehaviorAttribute";
+  public const string ScopeAttributeMetadataName = "TimeWarp.Mediator.MediatorScopeAttribute";
+  public const string MsBuildPropertyName = "build_property.TimeWarpMediatorAssembly";
+  public const string ProfilePropertyName = "build_property.TimeWarpMediatorProfile";
+  public const string NamespacePropertyName = "build_property.TimeWarpMediatorNamespace";
+  public const string GeneratorPropertyName = "build_property.TimeWarpMediatorGenerator";
 
-    private Membership(
-        IAssemblySymbol compilationAssembly,
-        ImmutableHashSet<IAssemblySymbol> memberAssemblies,
-        string profile,
-        string generatedNamespace)
+  private Membership(
+      IAssemblySymbol compilationAssembly,
+      ImmutableHashSet<IAssemblySymbol> memberAssemblies,
+      string profile,
+      string generatedNamespace,
+      bool isHost)
+  {
+    CompilationAssembly = compilationAssembly;
+    IsHost = isHost;
+    MemberAssemblies = memberAssemblies;
+    Profile = profile;
+    GeneratedNamespace = generatedNamespace;
+  }
+
+  public IAssemblySymbol CompilationAssembly { get; }
+
+  public ImmutableHashSet<IAssemblySymbol> MemberAssemblies { get; }
+
+  public string Profile { get; }
+
+  public string GeneratedNamespace { get; }
+
+  /// <summary>
+  /// True when this compilation runs the generator (the generator itself, or MSBuild
+  /// TimeWarpMediatorAssembly=true from the generator package), so the graph is the whole
+  /// program and the unscoped ISender is the generated Mediator.
+  /// </summary>
+  public bool IsHost { get; }
+
+  public bool Includes(ISymbol symbol)
+  {
+    IAssemblySymbol? assembly = symbol.ContainingAssembly;
+    if (assembly is null)
     {
-        CompilationAssembly = compilationAssembly;
-        MemberAssemblies = memberAssemblies;
-        Profile = profile;
-        GeneratedNamespace = generatedNamespace;
+      return false;
     }
 
-    public IAssemblySymbol CompilationAssembly { get; }
-
-    public ImmutableHashSet<IAssemblySymbol> MemberAssemblies { get; }
-
-    public string Profile { get; }
-
-    public string GeneratedNamespace { get; }
-
-    public bool Includes(ISymbol symbol)
+    foreach (IAssemblySymbol member in MemberAssemblies)
     {
-        IAssemblySymbol? assembly = symbol.ContainingAssembly;
-        if (assembly is null)
-        {
-            return false;
-        }
-
-        foreach (IAssemblySymbol member in MemberAssemblies)
-        {
-            if (SymbolEqualityComparer.Default.Equals(member, assembly))
-            {
-                return true;
-            }
-        }
-
-        return false;
+      if (SymbolEqualityComparer.Default.Equals(member, assembly))
+      {
+        return true;
+      }
     }
 
-    public static bool TryCreate(
-        Compilation compilation,
-        AnalyzerConfigOptionsProvider? optionsProvider,
-        bool currentCompilationIsHost,
-        out Membership membership)
+    return false;
+  }
+
+  public static bool TryCreate(
+      Compilation compilation,
+      MembershipOptions options,
+      bool currentCompilationIsHost,
+      CancellationToken cancellationToken,
+      out Membership membership)
+  {
+    bool attributeMember = HasAssemblyAttribute(compilation.Assembly, AssemblyAttributeMetadataName)
+        || HasAssemblyAttribute(compilation.Assembly, AssembliesAttributeMetadataName)
+        || HasModuleAttribute(compilation.Assembly, cancellationToken);
+
+    if (!currentCompilationIsHost && !options.IsMsBuildMember && !attributeMember)
     {
-        string profile = ReadProperty(optionsProvider, compilation, ProfilePropertyName) ?? "Host";
-        string generatedNamespace = ReadProperty(optionsProvider, compilation, NamespacePropertyName)
-            ?? "TimeWarp.Mediator.Generated";
+      membership = null!;
+      return false;
+    }
 
-        bool msBuildMember = IsTrue(ReadProperty(optionsProvider, compilation, MsBuildPropertyName));
-        bool attributeMember = HasAssemblyAttribute(compilation.Assembly, AssemblyAttributeMetadataName)
-            || HasAssemblyAttribute(compilation.Assembly, AssembliesAttributeMetadataName)
-            || HasModuleAttribute(compilation.Assembly);
-
-        if (!currentCompilationIsHost && !msBuildMember && !attributeMember)
-        {
-            membership = null!;
-            return false;
-        }
-
-        HashSet<IAssemblySymbol> members = new(AssemblySymbolComparer.Instance)
+    HashSet<IAssemblySymbol> members = new(AssemblySymbolComparer.Instance)
         {
             compilation.Assembly
         };
 
-        foreach (IAssemblySymbol assembly in GetReferencedAssemblies(compilation))
-        {
-            if (HasAssemblyAttribute(assembly, AssemblyAttributeMetadataName))
-            {
-                members.Add(assembly);
-            }
-        }
+    foreach (IAssemblySymbol assembly in GetReferencedAssemblies(compilation))
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      if (HasAssemblyAttribute(assembly, AssemblyAttributeMetadataName))
+      {
+        members.Add(assembly);
+      }
+    }
 
-        foreach (INamedTypeSymbol marker in GetMediatorAssembliesMarkers(compilation.Assembly))
-        {
-            if (marker.ContainingAssembly is not null)
-            {
-                members.Add(marker.ContainingAssembly);
-            }
-        }
+    foreach (INamedTypeSymbol marker in GetMediatorAssembliesMarkers(compilation.Assembly))
+    {
+      if (marker.ContainingAssembly is not null)
+      {
+        members.Add(marker.ContainingAssembly);
+      }
+    }
 
-        ImmutableHashSet<IAssemblySymbol>.Builder memberBuilder = ImmutableHashSet.CreateBuilder(AssemblySymbolComparer.Instance);
-        foreach (IAssemblySymbol member in members)
-        {
-            memberBuilder.Add(member);
-        }
+    ImmutableHashSet<IAssemblySymbol>.Builder memberBuilder = ImmutableHashSet.CreateBuilder(AssemblySymbolComparer.Instance);
+    foreach (IAssemblySymbol member in members)
+    {
+      memberBuilder.Add(member);
+    }
 
-        membership = new Membership(
-            compilation.Assembly,
-            memberBuilder.ToImmutable(),
-            profile,
-            generatedNamespace);
+    membership = new Membership(
+        compilation.Assembly,
+        memberBuilder.ToImmutable(),
+        options.Profile,
+        options.GeneratedNamespace,
+        currentCompilationIsHost || options.IsMsBuildMember);
+    return true;
+  }
+
+  public static Membership ForGenerator(Compilation compilation, MembershipOptions options, CancellationToken cancellationToken)
+  {
+    if (TryCreate(compilation, options, currentCompilationIsHost: true, cancellationToken, out Membership membership))
+    {
+      return membership;
+    }
+
+    throw new InvalidOperationException("Generator membership should always succeed for the current compilation.");
+  }
+
+  private static bool HasModuleAttribute(IAssemblySymbol assembly, CancellationToken cancellationToken)
+  {
+    foreach (INamedTypeSymbol type in EnumerateTypes(assembly.GlobalNamespace))
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      foreach (AttributeData attribute in type.GetAttributes())
+      {
+        if (attribute.AttributeClass?.ToDisplayString() == ModuleAttributeMetadataName)
+        {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static IEnumerable<INamedTypeSymbol> GetMediatorAssembliesMarkers(IAssemblySymbol assembly)
+  {
+    foreach (AttributeData attribute in assembly.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() != AssembliesAttributeMetadataName)
+      {
+        continue;
+      }
+
+      if (attribute.ConstructorArguments.Length == 0)
+      {
+        continue;
+      }
+
+      TypedConstant argument = attribute.ConstructorArguments[0];
+      if (argument.Kind == TypedConstantKind.Array)
+      {
+        foreach (TypedConstant element in argument.Values)
+        {
+          if (element.Value is INamedTypeSymbol marker)
+          {
+            yield return marker;
+          }
+        }
+      }
+      else if (argument.Value is INamedTypeSymbol single)
+      {
+        yield return single;
+      }
+    }
+  }
+
+  private static bool HasAssemblyAttribute(IAssemblySymbol assembly, string metadataName)
+  {
+    foreach (AttributeData attribute in assembly.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() == metadataName)
+      {
         return true;
+      }
     }
 
-    public static Membership ForGenerator(Compilation compilation, AnalyzerConfigOptionsProvider optionsProvider)
-    {
-        if (TryCreate(compilation, optionsProvider, currentCompilationIsHost: true, out Membership membership))
-        {
-            return membership;
-        }
+    return false;
+  }
 
-        throw new InvalidOperationException("Generator membership should always succeed for the current compilation.");
+  private static IEnumerable<IAssemblySymbol> GetReferencedAssemblies(Compilation compilation)
+  {
+    foreach (MetadataReference reference in compilation.References)
+    {
+      if (compilation.GetAssemblyOrModuleSymbol(reference) is IAssemblySymbol assembly)
+      {
+        yield return assembly;
+      }
+    }
+  }
+
+  public static IEnumerable<INamedTypeSymbol> EnumerateTypes(INamespaceSymbol namespaceSymbol)
+  {
+    foreach (INamedTypeSymbol type in namespaceSymbol.GetTypeMembers())
+    {
+      foreach (INamedTypeSymbol nested in EnumerateTypeAndNested(type))
+      {
+        yield return nested;
+      }
     }
 
-    private static bool HasModuleAttribute(IAssemblySymbol assembly)
+    foreach (INamespaceSymbol child in namespaceSymbol.GetNamespaceMembers())
     {
-        foreach (INamedTypeSymbol type in EnumerateTypes(assembly.GlobalNamespace))
-        {
-            foreach (AttributeData attribute in type.GetAttributes())
-            {
-                if (attribute.AttributeClass?.ToDisplayString() == ModuleAttributeMetadataName)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static IEnumerable<INamedTypeSymbol> GetMediatorAssembliesMarkers(IAssemblySymbol assembly)
-    {
-        foreach (AttributeData attribute in assembly.GetAttributes())
-        {
-            if (attribute.AttributeClass?.ToDisplayString() != AssembliesAttributeMetadataName)
-            {
-                continue;
-            }
-
-            if (attribute.ConstructorArguments.Length == 0)
-            {
-                continue;
-            }
-
-            TypedConstant argument = attribute.ConstructorArguments[0];
-            if (argument.Kind == TypedConstantKind.Array)
-            {
-                foreach (TypedConstant element in argument.Values)
-                {
-                    if (element.Value is INamedTypeSymbol marker)
-                    {
-                        yield return marker;
-                    }
-                }
-            }
-            else if (argument.Value is INamedTypeSymbol single)
-            {
-                yield return single;
-            }
-        }
-    }
-
-    private static bool HasAssemblyAttribute(IAssemblySymbol assembly, string metadataName)
-    {
-        foreach (AttributeData attribute in assembly.GetAttributes())
-        {
-            if (attribute.AttributeClass?.ToDisplayString() == metadataName)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static IEnumerable<IAssemblySymbol> GetReferencedAssemblies(Compilation compilation)
-    {
-        foreach (MetadataReference reference in compilation.References)
-        {
-            if (compilation.GetAssemblyOrModuleSymbol(reference) is IAssemblySymbol assembly)
-            {
-                yield return assembly;
-            }
-        }
-    }
-
-    public static IEnumerable<INamedTypeSymbol> EnumerateTypes(INamespaceSymbol namespaceSymbol)
-    {
-        foreach (INamedTypeSymbol type in namespaceSymbol.GetTypeMembers())
-        {
-            foreach (INamedTypeSymbol nested in EnumerateTypeAndNested(type))
-            {
-                yield return nested;
-            }
-        }
-
-        foreach (INamespaceSymbol child in namespaceSymbol.GetNamespaceMembers())
-        {
-            foreach (INamedTypeSymbol type in EnumerateTypes(child))
-            {
-                yield return type;
-            }
-        }
-    }
-
-    private static IEnumerable<INamedTypeSymbol> EnumerateTypeAndNested(INamedTypeSymbol type)
-    {
+      foreach (INamedTypeSymbol type in EnumerateTypes(child))
+      {
         yield return type;
-        foreach (INamedTypeSymbol nested in type.GetTypeMembers())
-        {
-            foreach (INamedTypeSymbol child in EnumerateTypeAndNested(nested))
-            {
-                yield return child;
-            }
-        }
+      }
     }
+  }
 
-    private static string? ReadProperty(
-        AnalyzerConfigOptionsProvider? optionsProvider,
-        Compilation compilation,
-        string key)
+  private static IEnumerable<INamedTypeSymbol> EnumerateTypeAndNested(INamedTypeSymbol type)
+  {
+    yield return type;
+    foreach (INamedTypeSymbol nested in type.GetTypeMembers())
     {
-        if (optionsProvider is not null
-            && optionsProvider.GlobalOptions.TryGetValue(key, out string? value)
-            && !string.IsNullOrWhiteSpace(value))
-        {
-            return value.Trim();
-        }
-
-        // Syntax trees can carry the same MSBuild-visible properties.
-        foreach (SyntaxTree tree in compilation.SyntaxTrees)
-        {
-            if (optionsProvider is null)
-            {
-                break;
-            }
-
-            if (optionsProvider.GetOptions(tree).TryGetValue(key, out string? perTree)
-                && !string.IsNullOrWhiteSpace(perTree))
-            {
-                return perTree.Trim();
-            }
-        }
-
-        return null;
+      foreach (INamedTypeSymbol child in EnumerateTypeAndNested(nested))
+      {
+        yield return child;
+      }
     }
+  }
 
-    private static bool IsTrue(string? value)
+  private sealed class AssemblySymbolComparer : IEqualityComparer<IAssemblySymbol>
+  {
+    public static readonly AssemblySymbolComparer Instance = new();
+
+    public bool Equals(IAssemblySymbol? x, IAssemblySymbol? y)
     {
-        return value is not null
-            && (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
-                || value == "1");
+      return SymbolEqualityComparer.Default.Equals(x, y);
     }
 
-    private sealed class AssemblySymbolComparer : IEqualityComparer<IAssemblySymbol>
+    public int GetHashCode(IAssemblySymbol obj)
     {
-        public static readonly AssemblySymbolComparer Instance = new();
-
-        public bool Equals(IAssemblySymbol? x, IAssemblySymbol? y)
-        {
-            return SymbolEqualityComparer.Default.Equals(x, y);
-        }
-
-        public int GetHashCode(IAssemblySymbol obj)
-        {
-            return SymbolEqualityComparer.Default.GetHashCode(obj);
-        }
+      return SymbolEqualityComparer.Default.GetHashCode(obj);
     }
+  }
 }

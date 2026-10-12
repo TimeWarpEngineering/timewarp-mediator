@@ -2,11 +2,14 @@
   <!-- Import root Directory.Build.props -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- Package metadata for NuGet publishing -->
+  <!-- Single owner of <Version> and package metadata for all four packages. -->
   <PropertyGroup Label="Package Metadata">
     <Version>14.0.0-beta.4</Version>
-    <Authors>TimeWarpEngineering</Authors>
+    <Authors>Steven T. Cramer</Authors>
+    <Product>TimeWarp Mediator</Product>
+    <Copyright>Copyright 2014-2025 Jimmy Bogard (original MediatR, Apache-2.0); 2025-2026 TimeWarp Engineering (Unlicense)</Copyright>
     <PackageProjectUrl>https://timewarp.software/projects/timewarp-mediator/</PackageProjectUrl>
+    <PackageTags>mediator;request;response;queries;commands;notifications;opensource;free;unlicense</PackageTags>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-mediator</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
@@ -14,9 +17,20 @@
     <PackageReadmeFile>readme.md</PackageReadmeFile>
   </PropertyGroup>
 
+  <PropertyGroup Label="Source Link Settings">
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
   <!-- Include common package files -->
   <ItemGroup Label="Package Content">
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="\" />
-    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="\" />
+    <!-- Each package ships its own readme (absolute links only: nuget.org cannot resolve relative ones). -->
+    <None Include="$(MSBuildProjectDirectory)/readme.md" Pack="true" PackagePath="\" />
+    <!-- Apache-2.0 section 4: redistributions of the MediatR-derived code carry the license and notice. -->
+    <None Include="$(RepositoryRoot)notice" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(RepositoryRoot)unlicense" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 </Project>

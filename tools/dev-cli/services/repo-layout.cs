@@ -5,9 +5,8 @@
 // Every clean/build/test names timewarp-mediator.slnx explicitly.
 // Packable product projects live under source/ with kebab path basenames;
 // PackageId/AssemblyName stay PascalCase (TimeWarp.Mediator*).
-// TryReadVersion mirrors CheckVersionCommand.GetVersionFromSource (xmlns then
-// bare Version) so release can assert root vs source/ Directory.Build.props
-// stay aligned.
+// The package smoke project sits outside the slnx because it restores the
+// packed nupkgs from artifacts/packages, so it can only build after pack.
 #endregion
 
 namespace DevCli;
@@ -24,32 +23,60 @@ internal static class RepoLayout
     "source/timewarp-mediator-generators/timewarp-mediator-generators.csproj"
   ];
 
+  // Every nupkg carries the Apache-2.0 notice for the MediatR-derived code and the Unlicense text.
+  private static readonly string[] LicenseEntries = ["notice", "unlicense"];
+
   internal static readonly (string PackageId, string[] RequiredEntries)[] PackageLayout =
   [
-    ("TimeWarp.Mediator.Analyzers", ["analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll"]),
+    ("TimeWarp.Mediator", ["lib/net10.0/TimeWarp.Mediator.dll", .. LicenseEntries]),
+    ("TimeWarp.Mediator.Contracts", ["lib/net10.0/TimeWarp.Mediator.Contracts.dll", .. LicenseEntries]),
+    ("TimeWarp.Mediator.Analyzers", ["analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll", .. LicenseEntries]),
     ("TimeWarp.Mediator.Generators",
     [
       "analyzers/dotnet/cs/TimeWarp.Mediator.Generators.dll",
-      "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll"
+      "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll",
+      "buildTransitive/TimeWarp.Mediator.Generators.props",
+      .. LicenseEntries
     ])
   ];
 
-  internal static string SolutionPath(string repoRoot) =>
-    Path.Combine(repoRoot, SolutionFileName);
+  // The only lib/ TFM folder a runtime package may ship (net10.0 floor). A stray
+  // or missing folder changes what consumers on other TFMs resolve.
+  internal const string LibTargetFramework = "net10.0";
 
-  // Reads <Version> from Directory.Build.props (MSBuild xmlns or bare). Null if missing.
-  internal static string? TryReadVersion(string directoryBuildPropsPath)
+  internal static readonly string[] LibPackageIds = ["TimeWarp.Mediator", "TimeWarp.Mediator.Contracts"];
+
+  internal const string PackageSmokeProject =
+    "tests/timewarp-mediator-package-smoke/timewarp-mediator-package-smoke.csproj";
+
+  // Stdout a sample must print besides exiting 0; samples not listed only need exit code 0.
+  internal static readonly Dictionary<string, string> SampleExpectedOutput = new(StringComparer.Ordinal)
   {
-    if (!File.Exists(directoryBuildPropsPath))
+    ["timewarp-mediator-examples-aot"] = "aot-pong",
+    ["timewarp-mediator-examples-named-pipelines"] = "server:hello"
+  };
+
+  internal static readonly (string Name, string Project)[] BenchmarkProjects =
+  [
+    ("comparison", "tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj"),
+    ("legacy", "tests/timewarp-mediator-benchmarks/timewarp-mediator-benchmarks.csproj")
+  ];
+
+  /// <summary>Reads the single <c>&lt;Version&gt;</c> from source/Directory.Build.props.</summary>
+  internal static string? ReadVersion(string repoRoot)
+  {
+    string propsPath = Path.Combine(repoRoot, "source", "Directory.Build.props");
+    if (!File.Exists(propsPath))
     {
       return null;
     }
 
-    string xml = File.ReadAllText(directoryBuildPropsPath);
-    XDocument document = XDocument.Parse(xml);
-    XNamespace msbuildNamespace = "http://schemas.microsoft.com/developer/msbuild/2003";
-
-    XElement? versionElement = document.Descendants(msbuildNamespace + "Version").FirstOrDefault();
-    return (versionElement ?? document.Descendants("Version").FirstOrDefault())?.Value;
+    return XDocument.Load(propsPath)
+      .Descendants("Version")
+      .Select(element => element.Value.Trim())
+      .FirstOrDefault(value => value.Length > 0);
   }
+
+  internal static string SolutionPath(string repoRoot) =>
+    Path.Combine(repoRoot, SolutionFileName);
 }

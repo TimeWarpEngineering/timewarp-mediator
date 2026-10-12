@@ -12,17 +12,17 @@ namespace TimeWarp.Mediator;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public sealed class MediatorModuleAttribute : Attribute
 {
-    /// <summary>
-    /// Initializes the attribute with a module name.
-    /// </summary>
-    /// <param name="name">Module name (for example <c>Orders</c> or a pipeline marker name).</param>
-    public MediatorModuleAttribute(string name)
-    {
-        Name = name ?? throw new ArgumentNullException(nameof(name));
-    }
+  /// <summary>
+  /// Initializes the attribute with a module name.
+  /// </summary>
+  /// <param name="name">Module name (for example <c>Orders</c> or a pipeline marker name).</param>
+  public MediatorModuleAttribute(string name)
+  {
+    Name = name ?? throw new ArgumentNullException(nameof(name));
+  }
 
-    /// <summary>
-    /// Module name.
-    /// </summary>
-    public string Name { get; }
+  /// <summary>
+  /// Module name.
+  /// </summary>
+  public string Name { get; }
 }

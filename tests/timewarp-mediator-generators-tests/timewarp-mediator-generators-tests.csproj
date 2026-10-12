@@ -1,9 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RollForward>LatestMajor</RollForward>
-    <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
@@ -16,6 +15,11 @@
     <ProjectReference Include="..\..\source\timewarp-mediator\timewarp-mediator.csproj" />
     <ProjectReference Include="..\..\source\timewarp-mediator-generators\timewarp-mediator-generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\source\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Manifest assertions parse the JSON instead of matching substrings. -->
+    <Compile Include="..\timewarp-mediator-generators-compilation-tests\manifest-document.cs" Link="manifest-document.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,24 +1,25 @@
-<!-- Modified by Steven T. Cramer -->
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Simple, unambitious mediator implementation in .NET</Description>
-    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
-    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
-    <LangVersion>10.0</LangVersion>
+    <Description>Reflection-based mediator (MediatR fork): AddMediator() registers request/response, notifications, streams, and pipeline behaviors over Microsoft.Extensions.DependencyInjection by assembly scan. The source-generated, AOT-friendly dispatcher is separate (TimeWarp.Mediator.Contracts and TimeWarp.Mediator.Generators, AddGeneratedMediator) and does not reference this package.</Description>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
     <AssemblyName>TimeWarp.Mediator</AssemblyName>
     <PackageId>TimeWarp.Mediator</PackageId>
+    <!-- Shipped package: every public member must be documented (root props suppress CS1591 for tests/samples). -->
+    <NoWarn>$(NoWarn.Replace('CS1591', ''))</NoWarn>
+    <!-- Derived from Apache-2.0 MediatR code (task 013-016); the packed notice names the Apache portion. -->
+    <PackageLicenseExpression>Unlicense AND Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IsExternalInit">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <ProjectReference Include="..\timewarp-mediator-contracts\timewarp-mediator-contracts.csproj" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Unit tests exercise ServiceRegistrar.GenerateCombinations directly; the tests project is signed with the same key. -->
+    <InternalsVisibleTo Include="timewarp-mediator-tests" Key="002400000480000094000000060200000024000052534131000400000100010029ee3e14482f72b73f8d1f24e3051de226ce883d973485e2dae7d8fb8f0c38ee6e013a3160eb788e72068d045740bae5dc494a9fc326975e0a8561b66f6a49546eaa7783b91cb39bddbfb8b33240679ece137fb46a862d526ec9759881612b738c702a0ce67dd3648eef1fcc93aed7c3effe128293eeeaab6df712ea2ed2129c" />
   </ItemGroup>
 
 </Project>

@@ -1,22 +1,14 @@
 # M2 named pipelines (`ISender<TScope>`)
 
-Source-generated per-scope senders and publishers for epic **004**. Design SSOT: `analysis/2026-06-17-source-gen-aot-rewrite-spec.md` §9.1.
+Source-generated per-scope senders and publishers (milestone M2). Design SSOT: [`design/2026-06-17-source-gen-aot-rewrite-spec.md`](design/2026-06-17-source-gen-aot-rewrite-spec.md) §9.1.
 
 Pipelines are **marker types**, not strings. Use empty types such as `ClientPipeline` /
 `ServerPipeline`. `[MediatorModule("Orders")]` does not name a pipeline.
 
 **Do not call `AddMediator()` for this stack.** Named pipelines exist only on the generated
 dispatcher: `AddGeneratedMediator()` (unscoped) and `AddGeneratedMediator<TScope>()` (one
-named pipeline). Comparison: [generated-vs-legacy.md](./generated-vs-legacy.md).
-
-**14.0.0-beta is not a drop-in for 13.0.0.** As of `14.0.0-beta.4`, named pipelines are
-proven only against the M2 golden files (`tests/timewarp-mediator-generators-tests` scoped
-pipeline tests and `samples/timewarp-mediator-examples-named-pipelines`). GitHub issue
-[#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52) stays **open**
-until a **stable 14.0.0**.
-
-A generated host still needs **Contracts + Generators** (and **Analyzers** when the generator
-is not referenced). See [generated-vs-legacy.md](./generated-vs-legacy.md#packages-for-a-generated-host).
+named pipeline). Two stacks, packages, and the not-a-drop-in status:
+[generated-vs-legacy.md](./generated-vs-legacy.md).
 
 ## What shipped
 
@@ -69,7 +61,7 @@ Sample: `samples/timewarp-mediator-examples-named-pipelines`.
 
 ## TimeWarp.State switch (later task)
 
-When TimeWarp.State moves onto this package, inject `ISender<ClientPipeline>` on the Blazor client and `ISender<ServerPipeline>` on the server. Do not share one `IMediator` and filter inside behaviors. File that switch task after 004-002 merges; do not implement it here.
+When TimeWarp.State moves onto this package, inject `ISender<ClientPipeline>` on the Blazor client and `ISender<ServerPipeline>` on the server. Do not share one `IMediator` and filter inside behaviors. That switch is tracked in TimeWarp.State, not here.
 
 ## Coexistence
 

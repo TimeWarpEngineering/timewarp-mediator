@@ -3,5 +3,5 @@ namespace TimeWarp.Mediator.Examples;
 
 public class Jing : IRequest
 {
-    public string Message { get; set; }
+  public string Message { get; set; }
 }

@@ -2,24 +2,24 @@
 
 namespace TimeWarp.Mediator.Wrappers;
 
-public abstract class NotificationHandlerWrapper
+internal abstract class NotificationHandlerWrapper
 {
-    public abstract Task Handle(INotification notification, IServiceProvider serviceFactory,
-        Func<IEnumerable<NotificationHandlerExecutor>, INotification, CancellationToken, Task> publish,
-        CancellationToken cancellationToken);
+  public abstract Task Handle(INotification notification, IServiceProvider serviceProvider,
+      Func<IEnumerable<NotificationHandlerExecutor>, INotification, CancellationToken, Task> publish,
+      CancellationToken cancellationToken);
 }
 
-public class NotificationHandlerWrapperImpl<TNotification> : NotificationHandlerWrapper
+internal class NotificationHandlerWrapperImpl<TNotification> : NotificationHandlerWrapper
     where TNotification : INotification
 {
-    public override Task Handle(INotification notification, IServiceProvider serviceFactory,
-        Func<IEnumerable<NotificationHandlerExecutor>, INotification, CancellationToken, Task> publish,
-        CancellationToken cancellationToken)
-    {
-        IEnumerable<NotificationHandlerExecutor> handlers = serviceFactory
-            .GetServices<INotificationHandler<TNotification>>()
-            .Select(static x => new NotificationHandlerExecutor(x, (theNotification, theToken) => x.Handle((TNotification)theNotification, theToken)));
+  public override Task Handle(INotification notification, IServiceProvider serviceProvider,
+      Func<IEnumerable<NotificationHandlerExecutor>, INotification, CancellationToken, Task> publish,
+      CancellationToken cancellationToken)
+  {
+    IEnumerable<NotificationHandlerExecutor> handlers = serviceProvider
+        .GetServices<INotificationHandler<TNotification>>()
+        .Select(static x => new NotificationHandlerExecutor(x, (theNotification, theToken) => x.Handle((TNotification) theNotification, theToken)));
 
-        return publish(handlers, notification, cancellationToken);
-    }
+    return publish(handlers, notification, cancellationToken);
+  }
 }

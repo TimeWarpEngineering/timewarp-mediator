@@ -7,7 +7,8 @@
     <RootNamespace>TimeWarp.Mediator.Generators</RootNamespace>
     <AssemblyName>TimeWarp.Mediator.Generators</AssemblyName>
     <PackageId>TimeWarp.Mediator.Generators</PackageId>
-    <Description>Source generator that emits a sealed Mediator, per-TScope Sender/Publisher, Send(object) switch, MediatorManifest v1, and MS.DI registration from the compile-time MessageGraph.</Description>
+    <Description>Source generator for TimeWarp.Mediator: builds the message graph at compile time and emits a sealed, reflection-free, AOT-friendly IMediator plus per-scope ISender&lt;TScope&gt;/IPublisher&lt;TScope&gt; named pipelines and AddGeneratedMediator() registration. Bundles TimeWarp.Mediator.Analyzers (TWM001-TWM004) and reports TWM005-TWM011.</Description>
+    <PackageTags>$(PackageTags);source-generator;aot</PackageTags>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
     <IncludeBuildOutput>false</IncludeBuildOutput>
@@ -26,6 +27,12 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" VersionOverride="4.8.0" PrivateAssets="all" />
     <!-- TimeWarp.SourceGenerators is removed so it does not run inside this Roslyn component. -->
     <PackageReference Remove="TimeWarp.SourceGenerators" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Incrementality tests read the TrackingNames step names. -->
+    <InternalsVisibleTo Include="timewarp-mediator-generators-compilation-tests" />
+    <InternalsVisibleTo Include="timewarp-mediator-generators-roslyn-floor-tests" />
   </ItemGroup>
 
   <ItemGroup>

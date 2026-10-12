@@ -10,20 +10,25 @@ namespace TimeWarp.Mediator.Pipeline;
 public class RequestPostProcessorBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
-    private readonly IEnumerable<IRequestPostProcessor<TRequest, TResponse>> _postProcessors;
+  private readonly IEnumerable<IRequestPostProcessor<TRequest, TResponse>> PostProcessors;
 
-    public RequestPostProcessorBehavior(IEnumerable<IRequestPostProcessor<TRequest, TResponse>> postProcessors) 
-        => _postProcessors = postProcessors;
+  /// <summary>
+  /// Initializes a new instance of the <see cref="RequestPostProcessorBehavior{TRequest,TResponse}"/> class.
+  /// </summary>
+  /// <param name="postProcessors">Post-processors to run, in order, after the handler returns</param>
+  public RequestPostProcessorBehavior(IEnumerable<IRequestPostProcessor<TRequest, TResponse>> postProcessors)
+      => PostProcessors = postProcessors;
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  /// <inheritdoc/>
+  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  {
+    TResponse? response = await next(cancellationToken).ConfigureAwait(false);
+
+    foreach (IRequestPostProcessor<TRequest, TResponse> processor in PostProcessors)
     {
-        TResponse? response = await next(cancellationToken).ConfigureAwait(false);
-
-        foreach (IRequestPostProcessor<TRequest, TResponse> processor in _postProcessors)
-        {
-            await processor.Process(request, response, cancellationToken).ConfigureAwait(false);
-        }
-
-        return response;
+      await processor.Process(request, response, cancellationToken).ConfigureAwait(false);
     }
+
+    return response;
+  }
 }

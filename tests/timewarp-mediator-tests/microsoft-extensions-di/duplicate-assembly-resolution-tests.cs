@@ -4,19 +4,19 @@ namespace TimeWarp.Mediator.Extensions.Microsoft.DependencyInjection.Tests;
 
 public class DuplicateAssemblyResolutionTests
 {
-    private readonly IServiceProvider _provider;
+  private readonly IServiceProvider ServiceProvider;
 
-    public DuplicateAssemblyResolutionTests()
-    {
-        IServiceCollection services = new ServiceCollection();
-        services.AddSingleton(new Logger());
-        services.AddMediator(cfg => cfg.RegisterServicesFromAssemblies(typeof(Ping).Assembly, typeof(Ping).Assembly));
-        _provider = services.BuildServiceProvider();
-    }
+  public DuplicateAssemblyResolutionTests()
+  {
+    IServiceCollection services = new ServiceCollection();
+    services.AddSingleton(new Logger());
+    services.AddMediator(cfg => cfg.RegisterServicesFromAssemblies(typeof(Ping).Assembly, typeof(Ping).Assembly));
+    ServiceProvider = services.BuildServiceProvider();
+  }
 
-    [Fact]
-    public void ShouldResolveNotificationHandlersOnlyOnce()
-    {
-        _provider.GetServices<INotificationHandler<Pinged>>().Count().ShouldBe(4);
-    }
+  [Fact]
+  public void ShouldResolveNotificationHandlersOnlyOnce()
+  {
+    ServiceProvider.GetServices<INotificationHandler<Pinged>>().Count().ShouldBe(4);
+  }
 }

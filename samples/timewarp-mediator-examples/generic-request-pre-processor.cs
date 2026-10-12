@@ -4,15 +4,15 @@ namespace TimeWarp.Mediator.Examples;
 
 public class GenericRequestPreProcessor<TRequest> : IRequestPreProcessor<TRequest>
 {
-    private readonly TextWriter _writer;
+  private readonly TextWriter TextWriter;
 
-    public GenericRequestPreProcessor(TextWriter writer)
-    {
-        _writer = writer;
-    }
+  public GenericRequestPreProcessor(TextWriter writer)
+  {
+    TextWriter = writer;
+  }
 
-    public Task Process(TRequest request, CancellationToken cancellationToken)
-    {
-        return _writer.WriteLineAsync("- Starting Up");
-    }
+  public Task Process(TRequest request, CancellationToken cancellationToken)
+  {
+    return TextWriter.WriteLineAsync("- Starting Up");
+  }
 }

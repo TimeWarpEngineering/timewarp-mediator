@@ -1,4 +1,8 @@
-# M1 dispatch gap (004-001)
+# M1 dispatch gap
+
+> Historical M1 snapshot. The current numbers, with commit SHA and date, are in
+> [benchmarks/comparison-baseline.md](./benchmarks/comparison-baseline.md); re-record them with
+> `./bin/dev benchmark --record`.
 
 Measured on AMD Ryzen 9 7950X3D, Ubuntu, BenchmarkDotNet 0.13.10, `.NET 10.0.11` host, 8 iterations. Project: `tests/timewarp-mediator-benchmarks-comparison`. Ping/Pong, no pipeline behaviors.
 
@@ -12,11 +16,12 @@ Measured on AMD Ryzen 9 7950X3D, Ubuntu, BenchmarkDotNet 0.13.10, `.NET 10.0.11`
 ## Honest reading
 
 - M1 generated dispatch is about **1.7× faster** and **2.3× less allocation** than this fork's reflection `Mediator`.
-- **CallSiteInlining is not a product win yet.** The prototype still resolves the handler from `IServiceProvider` on every send (OQ-B / Host profile). Skipping the `IMediator` instance hop saves ~0.7 ns. Interceptors stay out of product until that gap is real.
+- **CallSiteInlining is not a product win yet.** The prototype still resolves the handler from `IServiceProvider` on every send (Host profile). Skipping the `IMediator` instance hop saves ~0.7 ns. Interceptors stay out of product until that gap is real.
 - **martinothamar remains ~3.5× faster** on this microbenchmark. Their default path is closer to a static call with less per-send DI. Closing that gap is later work (inline weave for singleton/pure behaviors, ServiceGen for AOT, interceptors after measurement) — not asserted as done in M1.
 
 Re-run:
 
 ```bash
-DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tests/timewarp-mediator-benchmarks-comparison -c Release
+./bin/dev benchmark            # run only; results in artifacts/benchmarks/comparison
+./bin/dev benchmark --record   # also rewrite documentation/benchmarks/comparison-baseline.md
 ```
