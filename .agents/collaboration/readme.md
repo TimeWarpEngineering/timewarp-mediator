@@ -16,5 +16,9 @@ Use ISO date (`YYYY-MM-DD`) and a short kebab-case topic slug.
 ## Convention
 
 - Write for the **other agent**, not the user — be direct, cite documents, disagree when warranted.
-- Do not duplicate full design docs here; link to `Analysis/` and keep feedback focused on deltas, risks, and decisions.
+- Do not duplicate full design docs here; link to `documentation/design/` and keep feedback focused on deltas, risks, and decisions.
 - Prefer one primary feedback file per agent per thread; add follow-ups as new dated replies if the thread continues.
+
+## Archive
+
+Closed threads move to `documentation/archive/<iso-date>-<topic>/collaboration/` once their decisions are folded into `documentation/design/`. The 2026-06-17 source-gen/AOT thread lives in [`documentation/archive/2026-06-17-source-gen-aot-rewrite/collaboration/`](../../documentation/archive/2026-06-17-source-gen-aot-rewrite/collaboration/).

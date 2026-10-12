@@ -2,8 +2,8 @@
 // Build the TimeWarp.Mediator solution in Release
 #endregion
 #region Design
-// Names timewarp-mediator.slnx explicitly: the root still has both .sln and
-// .slnx, so an unadorned `dotnet build` fails MSB1011. Maps Build.ps1's
+// Names timewarp-mediator.slnx explicitly so the build never depends on which
+// project or solution files sit at the root (MSB1011). Maps Build.ps1's
 // `dotnet build $Solution -c Release`.
 #endregion
 
