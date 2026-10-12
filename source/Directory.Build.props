@@ -7,7 +7,7 @@
     <Version>14.0.0-beta.4</Version>
     <Authors>Steven T. Cramer</Authors>
     <Product>TimeWarp Mediator</Product>
-    <Copyright>Copyright Jimmy Bogard (original MediatR); TimeWarp Engineering (Unlicense)</Copyright>
+    <Copyright>Copyright 2014-2025 Jimmy Bogard (original MediatR, Apache-2.0); 2025-2026 TimeWarp Engineering (Unlicense)</Copyright>
     <PackageProjectUrl>https://timewarp.software/projects/timewarp-mediator/</PackageProjectUrl>
     <PackageTags>mediator;request;response;queries;commands;notifications;opensource;free;unlicense</PackageTags>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-mediator</RepositoryUrl>
@@ -28,5 +28,8 @@
   <ItemGroup Label="Package Content">
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="\" />
     <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="\" />
+    <!-- Apache-2.0 section 4: redistributions of the MediatR-derived code carry the license and notice. -->
+    <None Include="$(RepositoryRoot)notice" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(RepositoryRoot)unlicense" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,8 @@
 // Maps Build.ps1 pack + Assert-NupkgContains. Output is artifacts/packages
 // (repository.props), not the former Artifacts/. PackAsync deletes that folder
 // first so FindNupkg / push only see this run's nupkgs. Layout gate uses
-// NupkgLayoutCheck so a hollow Analyzers/Generators nupkg fails the command
+// NupkgLayoutCheck so a hollow Analyzers/Generators nupkg, or any nupkg missing
+// notice/unlicense, fails the command
 // the same way the PowerShell zip asserts did.
 #endregion
 
