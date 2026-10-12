@@ -1,11 +1,8 @@
-<!-- Modified by Steven T. Cramer -->
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Simple, unambitious mediator implementation in .NET</Description>
+    <Description>Reflection-based mediator (MediatR fork): AddMediator() registers request/response, notifications, streams, and pipeline behaviors over Microsoft.Extensions.DependencyInjection by assembly scan. The source-generated, AOT-friendly dispatcher is separate (TimeWarp.Mediator.Contracts and TimeWarp.Mediator.Generators, AddGeneratedMediator) and does not reference this package.</Description>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
-    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
-    <LangVersion>10.0</LangVersion>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
     <AssemblyName>TimeWarp.Mediator</AssemblyName>
     <PackageId>TimeWarp.Mediator</PackageId>

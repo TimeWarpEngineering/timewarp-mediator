@@ -7,7 +7,7 @@ This document outlines the simplified versioning and release process for the Tim
 - **Projects**: Located in `source/timewarp-mediator` and `source/timewarp-mediator-contracts`.
 - **Primary Branch**: `master`.
 - **Workflow**: `.github/workflows/workflow.yml` (jobs `ci` and `publish`).
-- **Version Configuration**: `Directory.Build.props`.
+- **Version Configuration**: `source/Directory.Build.props`.
 
 ## Versioning Strategy
 
@@ -15,7 +15,7 @@ This document outlines the simplified versioning and release process for the Tim
 Both packages share the same version number, configured in a single location.
 
 ### Source of Truth
-`<Version>` in `Directory.Build.props` (e.g., `12.4.0`) applies to both packages.
+`<Version>` in `source/Directory.Build.props` (e.g., `12.4.0`) applies to both packages.
 
 ### MinVer Configuration
 - **Tag Prefix**: `v` (e.g., `v12.5.0`)
@@ -48,7 +48,7 @@ Automatically detects alpha/beta versions and prevents accidental stable release
 ## Stable Releases
 
 ### Simple Process
-1. Update `<Version>` in `Directory.Build.props` (e.g., from `12.4.0` to `12.5.0`)
+1. Update `<Version>` in `source/Directory.Build.props` (e.g., from `12.4.0` to `12.5.0`)
 2. Move every rule row in `source/timewarp-mediator-analyzers/AnalyzerReleases.Unshipped.md` to the
    `## Release 12.5.0` section of `AnalyzerReleases.Shipped.md` (see [Analyzer release tracking](#analyzer-release-tracking))
 3. Commit and push changes
@@ -84,7 +84,7 @@ gh release create v12.5.0 --generate-notes
 2. Both packages (e.g., `12.5.0-alpha.5`) published to MyGet automatically
 
 ### Stable Release
-1. Edit `Directory.Build.props`:
+1. Edit `source/Directory.Build.props`:
    ```xml
    <Version>12.5.0</Version> <!-- Update this line -->
    ```
@@ -92,7 +92,7 @@ gh release create v12.5.0 --generate-notes
    `AnalyzerReleases.Shipped.md` (both under `source/timewarp-mediator-analyzers/`).
 3. Commit and push:
    ```bash
-   git add Directory.Build.props source/timewarp-mediator-analyzers/AnalyzerReleases.*.md
+   git add source/Directory.Build.props source/timewarp-mediator-analyzers/AnalyzerReleases.*.md
    git commit -m "Bump version to 12.5.0"
    git push origin master
    ```

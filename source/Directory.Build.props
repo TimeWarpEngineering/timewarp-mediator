@@ -2,16 +2,26 @@
   <!-- Import root Directory.Build.props -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- Package metadata for NuGet publishing -->
+  <!-- Single owner of <Version> and package metadata for all four packages. -->
   <PropertyGroup Label="Package Metadata">
     <Version>14.0.0-beta.4</Version>
-    <Authors>TimeWarpEngineering</Authors>
+    <Authors>Steven T. Cramer</Authors>
+    <Product>TimeWarp Mediator</Product>
+    <Copyright>Copyright Jimmy Bogard (original MediatR); TimeWarp Engineering (Unlicense)</Copyright>
     <PackageProjectUrl>https://timewarp.software/projects/timewarp-mediator/</PackageProjectUrl>
+    <PackageTags>mediator;request;response;queries;commands;notifications;opensource;free;unlicense</PackageTags>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-mediator</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Source Link Settings">
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <!-- Include common package files -->
