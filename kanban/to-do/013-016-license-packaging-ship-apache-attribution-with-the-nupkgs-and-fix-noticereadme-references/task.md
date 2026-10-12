@@ -19,6 +19,7 @@ The packages derive from Apache-2.0 MediatR code but ship only `PackageLicenseEx
 - [x] Decision recorded (keep attribution; see Requirements and Notes)
 - [x] Files packed; nuspec and nupkg contents inspected
 - [x] readme, notice, Copyright fixes
+- [x] Implementation review disposition (`review/disposition.md`, clean)
 - [ ] PR with merge commit
 
 ## Notes
@@ -51,6 +52,8 @@ Differences found before this task:
 - Whitespace only: separator line above the Apache text and no trailing blank line.
 
 After the fix, `diff -w` against upstream shows only the filled Appendix line and the trailing blank line.
+
+Review trail: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Effort 1, roster general, one round, disposition clean (0 open).
 
 ## Results
 
@@ -91,6 +94,15 @@ for n in artifacts/packages/*.nupkg; do echo "$n"; unzip -l "$n" | grep -E ' (no
 - Every nupkg lists `notice` and `unlicense` at the root.
 - Mediator and Contracts nuspecs show `<license type="expression">Unlicense AND Apache-2.0</license>`; Analyzers and Generators show `Unlicense`.
 
+### Implementation review
+
+- Rounds: 1. Roster: general. Effort: 1.
+- Counts (final, `review/round-1/merged.md`): bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix).
+- Disposition: clean (`review/disposition.md`). No wontfix, no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Re-verified during review: Apache body in `notice` matches `8a64581:LICENSE` except the Appendix line `Copyright 2014-2025 Jimmy Bogard`. Upstream tree has `LICENSE` only. Packed 14.0.0-beta.4 nupkgs: Mediator and Contracts license expression `Unlicense AND Apache-2.0`; Analyzers and Generators `Unlicense`. Each nupkg contains root `notice` and `unlicense` byte-identical to the repo files, plus the `lib/net10.0` or `analyzers/dotnet/cs` assemblies the layout gate requires.
+
 ## Session
 
 - Created: 686431 (2026-10-11)
+- Review: Grok session `01a12ffd-0563-7712-8e91-bbf01237d17c` (2026-10-12)
