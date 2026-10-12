@@ -28,6 +28,8 @@ Package metadata and the version live in several files that can drift. Parent re
 
 Parent: 013.
 
+Review trail: `review/` (effort 1, general). Disposition is clean — `review/disposition.md`.
+
 ## Results
 
 ### Decisions
@@ -53,6 +55,10 @@ Parent: 013.
 - Rewrote all four `<Description>`s. TimeWarp.Mediator no longer uses the MediatR tagline and now mentions
   `AddMediator` vs the generated `AddGeneratedMediator`.
 - `documentation/overview.md` now points version bumps at `source/Directory.Build.props`.
+- Review corrected three metadata sentences before disposition (see Review below): the runtime
+  description no longer says the generated mediator builds on this package; `source-generator` and
+  `aot` tags are only on TimeWarp.Mediator.Generators; the generator description names analyzer
+  diagnostics TWM001–TWM004 and generator diagnostics TWM005–TWM011.
 
 ### Verification
 
@@ -67,6 +73,30 @@ Parent: 013.
   `projectUrl https://timewarp.software/projects/timewarp-mediator/`, `license Unlicense`, `icon logo.png`,
   `readme readme.md`, `repository type=git url=https://github.com/TimeWarpEngineering/timewarp-mediator` with commit,
   and the new descriptions.
+- Review fix: `ganda repo audit` passes all checks again. `./bin/dev pack` succeeded (analyzer layout asserts passed). Repacked nuspecs:
+  TimeWarp.Mediator description states `AddGeneratedMediator()` does not reference this package and
+  its tags omit `source-generator` and `aot`; Generators tags include both and the description
+  reports TWM001–TWM004 (analyzers) and TWM005–TWM011 (generator).
+
+### Review
+
+Effort 1. Roster: general. Session: Grok `01a12fe0-802e-79d3-9b10-c6a7253e84ad` (2026-10-12).
+
+Rounds: 2. Round 1 open counts were 2 bugs and 1 suggestion. Round 2 is the final ledger:
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 2 | 0 |
+| suggestion | 0 | 1 | 0 |
+| nit | 0 | 0 | 0 |
+
+Disposition: **clean**. No wontfix. No escalation.
+
+- M1 (bug, fixed): runtime description no longer claims the generated mediator builds on `TimeWarp.Mediator`.
+- M2 (bug, fixed): `source-generator` and `aot` tags are only on TimeWarp.Mediator.Generators.
+- M3 (suggestion, fixed): generator description matches `documentation/diagnostics.md` (TWM001–TWM004 bundled analyzers, TWM005–TWM011 reported here).
+
+Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -90,3 +120,4 @@ dotnet msbuild source/timewarp-mediator-contracts/timewarp-mediator-contracts.cs
 ## Session
 
 - Created: 686431 (2026-10-11)
+- Review: Grok session 01a12fe0-802e-79d3-9b10-c6a7253e84ad (2026-10-12)
