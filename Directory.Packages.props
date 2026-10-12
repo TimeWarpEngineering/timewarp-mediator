@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <!-- Central Package Management - package versions are pinned from discovered references -->
   <PropertyGroup>
@@ -23,8 +23,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Dev CLI">
-    <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.79" />
-    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0-beta.79" />
+    <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.80" />
+    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0-beta.80" />
     <PackageVersion Include="TimeWarp.Amuru" Version="2.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="2.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Terminal" Version="1.0.2" />
