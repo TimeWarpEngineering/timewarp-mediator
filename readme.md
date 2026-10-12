@@ -67,6 +67,13 @@ Supports request/response, commands, queries, notifications and events, synchron
 
 Examples in the [wiki](https://github.com/jbogard/MediatR/wiki).
 
+## Target framework
+
+The 14.x packages that ship runtime code (`TimeWarp.Mediator`, `TimeWarp.Mediator.Contracts`)
+target **net10.0 only**. There is no netstandard2.0, net6.0 or net8.0 asset. Stay on 13.x if you
+cannot move to net10.0 or newer. `TimeWarp.Mediator.Generators` and `TimeWarp.Mediator.Analyzers`
+stay netstandard2.0 because they run inside the compiler, not in your app.
+
 ## Installing the reflection stack (`AddMediator`)
 
 NuGet **13.0.0** is the last published reflection line. Install
@@ -108,6 +115,8 @@ Do **not** add only `TimeWarp.Mediator` and call `AddMediator()` expecting this 
 **.NET SDK 8.0.100** or later, or **Visual Studio 2022 17.8** or later (or a Rider/MSBuild that
 ships Roslyn 4.8+). On an older compiler the generator does not load (CS9057) and no mediator is
 emitted. CI runs the generator compilation tests against 4.8.0 as well as the current compiler.
+Because `TimeWarp.Mediator.Contracts` targets net10.0, a host project in practice needs
+**.NET SDK 10.0.100** or later, which already ships a newer compiler.
 
 ## Using Contracts-Only Package
 

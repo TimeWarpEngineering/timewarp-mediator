@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>Reflection-based mediator (MediatR fork): AddMediator() registers request/response, notifications, streams, and pipeline behaviors over Microsoft.Extensions.DependencyInjection by assembly scan. The source-generated, AOT-friendly dispatcher is separate (TimeWarp.Mediator.Contracts and TimeWarp.Mediator.Generators, AddGeneratedMediator) and does not reference this package.</Description>
-    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
     <AssemblyName>TimeWarp.Mediator</AssemblyName>
     <PackageId>TimeWarp.Mediator</PackageId>
@@ -11,12 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IsExternalInit">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <ProjectReference Include="..\timewarp-mediator-contracts\timewarp-mediator-contracts.csproj" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
 

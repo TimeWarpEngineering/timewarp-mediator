@@ -68,7 +68,6 @@ jobs:
         with:
           dotnet-version: |
             10.0.x
-            8.0.x
 
       # No packages.lock.json in this repo, so setup-dotnet's built-in cache
       # (lock-file keyed) cannot be used; key on central package versions + projects.
@@ -158,7 +157,6 @@ jobs:
         with:
           dotnet-version: |
             10.0.x
-            8.0.x
 
       - name: NuGet login (OIDC Trusted Publishing)
         id: nuget-login

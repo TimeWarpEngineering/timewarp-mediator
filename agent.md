@@ -76,17 +76,17 @@ Tests are organized by feature area and include extensive coverage of:
 ## Build Configuration
 
 ### Target Frameworks
-- .NET Standard 2.0 (broad compatibility)
-- .NET 6.0 (modern features)
+- `TimeWarp.Mediator` and `TimeWarp.Mediator.Contracts`: `net10.0` only (14.x floor; consumers on older runtimes stay on 13.x)
+- `TimeWarp.Mediator.Generators` and `TimeWarp.Mediator.Analyzers`: `netstandard2.0` (Roslyn loads them inside the compiler process, including .NET Framework MSBuild and Visual Studio hosts)
+- Tests, benchmarks and samples: `net10.0`
 
 ### Key Dependencies
 - Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12
-- Microsoft.Bcl.AsyncInterfaces 10.0.12 (for .NET Standard 2.0)
 - Microsoft.CodeAnalysis.CSharp 4.8.0 floor for the shipped analyzers/generators (`VersionOverride`)
 
 ### Build Properties (Directory.Build.props)
 - Treats warnings as errors
-- C# 10.0 language version
+- No repo-wide `LangVersion` pin: `net10.0` projects use the SDK default (C# 14); the netstandard2.0 Roslyn projects set `latest`. Generator-emitted code stays conservative so consumers on older language versions still compile it.
 - Source linking enabled
 - Strong name signing with `timewarp-mediator.snk`
 

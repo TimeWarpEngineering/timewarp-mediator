@@ -130,7 +130,7 @@ internal static class HostCompiler
             {
                 string fileName = Path.GetFileName(path);
                 if (fileName.StartsWith("System.", StringComparison.Ordinal)
-                    || fileName is "mscorlib.dll" or "netstandard.dll" or "Microsoft.Bcl.AsyncInterfaces.dll")
+                    || fileName is "mscorlib.dll" or "netstandard.dll")
                 {
                     references.Add(MetadataReference.CreateFromFile(path));
                 }

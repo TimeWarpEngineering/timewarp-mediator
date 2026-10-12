@@ -15,6 +15,13 @@ register the source-generated mediator. TimeWarp.State and TimeWarp.Nuru must ca
 `AddMediator()` does not prefer, wrap, or fall through to the generated type. That shim is
 deferred (see [m1-generated-mediator.md](./m1-generated-mediator.md) deferred table).
 
+## Target framework
+
+14.x requires **net10.0 or newer** for both stacks: `TimeWarp.Mediator` (reflection) and
+`TimeWarp.Mediator.Contracts` (generated) target `net10.0` only. 13.0.0 is the line for
+netstandard2.0 and net6.0 consumers. The Generators and Analyzers packages stay netstandard2.0
+because Roslyn loads them inside the compiler process; that does not change the consumer floor.
+
 ## Trimming and NativeAOT
 
 The reflection runtime (`TimeWarp.Mediator`) is **not** trim or NativeAOT safe. It scans
