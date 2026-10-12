@@ -1,28 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
   <Import Project="$(MSBuildThisFileDirectory)msbuild/repository.props" />
-  <!-- Modified by Steven T. Cramer -->
-  <!-- Set common properties regarding assembly information and nuget packages -->
+  <!-- Repo-wide build settings. Package metadata and <Version> live in source/Directory.Build.props
+       (the shared dev CLI release / check-version commands read <Version> from there). -->
   <PropertyGroup>
-    <Authors>Steven T. Cramer</Authors>
-    <Product>TimeWarp Mediator</Product>
-    <Copyright>Copyright Jimmy Bogard (original MediatR); TimeWarp Engineering (Unlicense)</Copyright>
-    <PackageProjectUrl>https://github.com/TimeWarpEngineering/timewarp-mediator</PackageProjectUrl>
-    <PackageTags>mediator;request;response;queries;commands;notifications;opensource;free;unlicense</PackageTags>
-    <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-mediator.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
-    <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <PackageIcon>logo.png</PackageIcon>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <Deterministic>true</Deterministic>
-
-    <!-- Unified versioning for all packages -->
-    <Version>14.0.0-beta.4</Version>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,13 +1,11 @@
-<!-- Modified by Steven T. Cramer -->
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Contracts package for requests, responses, and notifications</Description>
+    <Description>Contract-only package for TimeWarp.Mediator: IRequest, ICommand, IQuery, INotification, IStreamRequest, their handler and pipeline-behavior interfaces, ISender/IPublisher/IMediator, and the scope/module attributes the source generator reads. Reference it from message libraries without depending on a dispatcher.</Description>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
     <AssemblyName>TimeWarp.Mediator.Contracts</AssemblyName>
     <PackageId>TimeWarp.Mediator.Contracts</PackageId>
-    <LangVersion>10.0</LangVersion>
     <!-- Shipped package: every public member must be documented (root props suppress CS1591 for tests/samples). -->
     <NoWarn>$(NoWarn.Replace('CS1591', ''))</NoWarn>
   </PropertyGroup>

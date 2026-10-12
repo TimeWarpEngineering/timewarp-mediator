@@ -1,11 +1,8 @@
-<!-- Modified by Steven T. Cramer -->
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Simple, unambitious mediator implementation in .NET</Description>
+    <Description>Runtime for TimeWarp.Mediator: the reflection-based MediatR-fork dispatcher (AddMediator) plus the registration and pipeline infrastructure the source-generated mediator (AddGeneratedMediator, from TimeWarp.Mediator.Generators) builds on. Request/response, notifications, streams, and pipeline behaviors over Microsoft.Extensions.DependencyInjection.</Description>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
-    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
-    <LangVersion>10.0</LangVersion>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
     <AssemblyName>TimeWarp.Mediator</AssemblyName>
     <PackageId>TimeWarp.Mediator</PackageId>
