@@ -36,6 +36,14 @@ on:
 permissions:
   contents: read
 
+# The dev-cli runfile compiles against TimeWarp.Nuru, which pulls the published
+# TimeWarp.Mediator.Generators (bundling an older TimeWarp.Mediator.Analyzers with the
+# same 14.0.0.0 identity). A shared compiler server then serves that stale analyzer
+# to the in-repo generator (CS8784 TypeLoadException on a clean build). MSBuild
+# reads env vars as properties, so this disables the server for every build here.
+env:
+  UseSharedCompilation: 'false'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
