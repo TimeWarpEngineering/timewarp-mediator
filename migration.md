@@ -117,7 +117,8 @@ This is useful for debugging and verifying your pipeline configuration.
 
 ### License Change
 
-TimeWarp.Mediator is released under The Unlicense, making it freely available for any use without attribution requirements. The original MediatR code by Jimmy Bogard was licensed under Apache 2.0. See the NOTICE file for details.
+TimeWarp.Mediator 13.x is released under The Unlicense. Code derived from MediatR by Jimmy Bogard
+stays under Apache 2.0, so redistributions still carry the NOTICE file.
 
 ### Migration Script Example
 
@@ -192,10 +193,14 @@ named pipelines, switch the host to `AddGeneratedMediator()`.
 | Handler discovery | runtime assembly scan | compile time, member assemblies only (`[assembly: MediatorAssembly]`) | compile time |
 | Missing or duplicate handler | runtime exception | build error (**TWM001** / **TWM002**) | build error |
 | Container support | `Microsoft.Extensions.DependencyInjection`; other containers through their `IServiceCollection` / `IServiceProvider` adapters (see `samples/`) | registers into `IServiceCollection`; any container that consumes it | none: handlers are `new Handler()` singletons in static fields |
-| Handler lifetime | transient | transient | process-wide singleton |
+| Handler lifetime | transient | scoped | process-wide singleton |
 | Trimming / NativeAOT | no (IL2026 / IL3050) | trim and NativeAOT safe | trim and NativeAOT safe, no `IServiceProvider` |
 | `GetPipelineInfo()` | yes | no; inspect `MediatorManifest.Json` | no |
 | Target | net10.0 (14.x); 13.0.0 also covers netstandard2.0 / net6.0 | net10.0 | net10.0 |
+
+On the Host profile, `AddGeneratedMediator()` registers the mediator, sender, and publisher as
+transient and registers handlers and pipeline behaviors as scoped. Reflection scanned handlers
+are transient.
 
 If you need streams, pre/post processors, or the exception cascade, stay on `AddMediator()`, or
 move that logic into a request handler or an `IPipelineBehavior` first.
@@ -211,8 +216,8 @@ move that logic into a request handler or an `IPipelineBehavior` first.
    `[assembly: MediatorAssembly]` to every library whose handlers, requests, or behaviors the
    host should dispatch. See [Membership](./documentation/generated-vs-legacy.md#membership).
 3. **Behaviors.** Replace `cfg.AddBehavior` / `cfg.AddOpenBehavior` with
-   `[assembly: MediatorBehavior(typeof(MyBehavior<,>))]`. The optional `Scope` argument is in the same
-   section.
+   `[assembly: MediatorBehavior(typeof(MyBehavior<,>))]`. The optional `Scope` argument is under
+   [Membership](./documentation/generated-vs-legacy.md#membership).
 4. **Registration.** Replace `services.AddMediator(cfg => ...)` with
    `services.AddGeneratedMediator()` in the host project. The generated extension is `internal`,
    so call it from the host itself, not from a shared library.

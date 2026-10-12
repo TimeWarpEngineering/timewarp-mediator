@@ -31,7 +31,9 @@ dotnet add package TimeWarp.Mediator.Analyzers --prerelease
 [assembly: MediatorAssembly]
 ```
 
-Requires Roslyn 4.8 or later (.NET SDK 8.0.100 or Visual Studio 2022 17.8).
+Requires Roslyn 4.8 or later (.NET SDK 8.0.100 or Visual Studio 2022 17.8). In practice the
+library needs .NET SDK 10.0.100, because the install above also references Contracts, which
+targets net10.0.
 
 ## Documentation
 
@@ -43,6 +45,4 @@ Requires Roslyn 4.8 or later (.NET SDK 8.0.100 or Visual Studio 2022 17.8).
 
 ## License
 
-Released under The Unlicense. Contains code derived from
-[MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard under Apache 2.0; the `notice`
-and `unlicense` files ship in this package.
+Released under The Unlicense. The `notice` and `unlicense` files ship in this package.

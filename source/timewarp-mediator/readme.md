@@ -12,8 +12,15 @@ TimeWarp Mediator has **two independent dispatchers**: the reflection runtime
 
 ## Install
 
-**13.0.0** is the last stable reflection line and also targets netstandard2.0 and net6.0. 14.x
-targets net10.0 only.
+This package is the 14.x reflection runtime and targets **net10.0** only. While 14.0.0 is in
+prerelease, add `--prerelease`:
+
+```bash
+dotnet add package TimeWarp.Mediator --prerelease
+```
+
+**13.0.0** is the last stable reflection line and also targets netstandard2.0 and net6.0. Stay
+on it when you cannot move to net10.0:
 
 ```bash
 dotnet add package TimeWarp.Mediator --version 13.0.0
@@ -46,6 +53,6 @@ for those hosts.
 
 ## License
 
-Released under The Unlicense. Contains code derived from
-[MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard under Apache 2.0; the `notice`
-and `unlicense` files ship in this package.
+Licensed as `Unlicense AND Apache-2.0`. The Apache-2.0 terms cover code derived from
+[MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard; the `notice` and `unlicense`
+files ship in this package.

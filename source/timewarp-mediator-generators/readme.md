@@ -52,6 +52,4 @@ or later. In practice the host needs .NET SDK 10.0.100, because Contracts target
 
 ## License
 
-Released under The Unlicense. Contains code derived from
-[MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard under Apache 2.0; the `notice`
-and `unlicense` files ship in this package.
+Released under The Unlicense. The `notice` and `unlicense` files ship in this package.

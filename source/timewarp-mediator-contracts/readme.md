@@ -56,6 +56,6 @@ Targets net10.0.
 
 ## License
 
-Released under The Unlicense. Contains code derived from
-[MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard under Apache 2.0; the `notice`
-and `unlicense` files ship in this package.
+Licensed as `Unlicense AND Apache-2.0`. The Apache-2.0 terms cover code derived from
+[MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard; the `notice` and `unlicense`
+files ship in this package.
