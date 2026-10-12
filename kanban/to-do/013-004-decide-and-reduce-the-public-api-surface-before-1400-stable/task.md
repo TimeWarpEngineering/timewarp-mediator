@@ -25,11 +25,14 @@ Implementation types in TimeWarp.Mediator are public and cannot change later wit
 - [x] Remove or obsolete `ServiceFactory`; fix stale comment and `service-factory-tests.cs` name
 - [x] Rename `serviceFactory` parameter
 - [x] Release-notes entry; `./bin/dev workflow` green
+- [x] Implementation review disposition (`review/disposition.md`, clean)
 - [ ] PR with merge commit (host open-pr node)
 
 ## Notes
 
 Parent: 013. Breaking change; the final list needs maintainer sign-off, but the direction (minimize) is decided.
+
+Review trail: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Effort 1, roster general, one round, disposition clean (0 open).
 
 ### Consumer inventory (2026-10-11, local master checkouts)
 
@@ -73,6 +76,7 @@ Expect no output from the loop.
 
 - Created: 686431 (2026-10-11)
 - Implement (2026-10-12): internalized wrappers + registrar, removed `ServiceFactory`, release notes added.
+- Review: Grok session `01a12ed7-1122-7ca0-8548-9c99ad6445b3` (2026-10-12). Effort 1, general only.
 
 ## Results
 
@@ -124,4 +128,12 @@ Expect:
 - The test prints `removed`.
 - The filtered tests pass, including the `ServiceRegistrar.GenerateCombinations` cap tests, which reach the internal registrar through `InternalsVisibleTo`.
 - The consumer inventory loop in Notes prints nothing.
+
+### Review
+
+- Rounds: 1. Roster: general. Effort: 1.
+- Counts (final, `review/round-1/merged.md`): bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix).
+- Disposition: clean (`review/disposition.md`). No wontfix, no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Re-verified during review: `InternalsVisibleTo` public key matches `timewarp-mediator.snk`. `dotnet build tests/timewarp-mediator-tests/timewarp-mediator-tests.csproj -c Release` and `dotnet build samples/timewarp-mediator-examples-windsor/timewarp-mediator-examples-windsor.csproj -c Release` succeeded. `dotnet test tests/timewarp-mediator-tests/timewarp-mediator-tests.csproj -c Release --filter "FullyQualifiedName~GenericRequestHandlerTests|FullyQualifiedName~MissingHandlerTests"` — Passed 26, Failed 0, Skipped 0.
 
