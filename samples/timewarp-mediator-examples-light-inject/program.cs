@@ -18,12 +18,25 @@ class Program
         serviceContainer.Register<IMediator, Mediator>();            
         serviceContainer.RegisterInstance<TextWriter>(writer);
 
-        serviceContainer.RegisterAssembly(typeof(Ping).GetTypeInfo().Assembly, (serviceType, implementingType) =>
-            serviceType.IsConstructedGenericType &&
-            (
-                serviceType.GetGenericTypeDefinition() == typeof(IRequestHandler<,>) ||
-                serviceType.GetGenericTypeDefinition() == typeof(INotificationHandler<>)
-            ));
+        foreach (Type implementingType in typeof(Ping).GetTypeInfo().Assembly.GetTypes()
+            .Where(type => type.IsClass && !type.IsAbstract && !type.IsGenericTypeDefinition))
+        {
+            foreach (Type serviceType in implementingType.GetInterfaces().Where(type =>
+                type.IsConstructedGenericType &&
+                (
+                    type.GetGenericTypeDefinition() == typeof(IRequestHandler<,>) ||
+                    type.GetGenericTypeDefinition() == typeof(IRequestHandler<>) ||
+                    type.GetGenericTypeDefinition() == typeof(INotificationHandler<>)
+                )))
+            {
+                // Notification handlers are many per service type, so each needs its own name;
+                // request handlers stay the unnamed default the mediator resolves.
+                if (serviceType.GetGenericTypeDefinition() == typeof(INotificationHandler<>))
+                    serviceContainer.Register(serviceType, implementingType, implementingType.FullName);
+                else
+                    serviceContainer.Register(serviceType, implementingType);
+            }
+        }
                     
         serviceContainer.RegisterOrdered(typeof(IPipelineBehavior<,>),
             new[]

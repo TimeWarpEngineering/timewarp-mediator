@@ -8,7 +8,12 @@
 // NupkgLayoutCheck so a hollow Analyzers/Generators nupkg, or any nupkg missing
 // notice/unlicense, fails the command
 // the same way the PowerShell zip asserts did. NupkgReadmeCheck then requires
-// the package's own readme.md with only absolute links.
+// the package's own readme.md with only absolute links. The runtime packages
+// must ship exactly one lib/ TFM folder (RepoLayout.LibTargetFramework).
+// Last, the package smoke project restores Contracts + Generators from
+// artifacts/packages into a throwaway packages folder (the version is not
+// bumped per build, so the global cache could hold a stale nupkg of the same
+// version), then builds and runs as an outside consumer would.
 #endregion
 
 namespace DevCli.Commands;
@@ -47,6 +52,11 @@ public sealed class PackCommand : ICommand<Unit>
       }
 
       if (!AssertPackageLayout())
+      {
+        return Unit.Value;
+      }
+
+      if (!await RunPackageSmokeAsync())
       {
         return Unit.Value;
       }
@@ -134,9 +144,70 @@ public sealed class PackCommand : ICommand<Unit>
           return false;
         }
 
+        if (RepoLayout.LibPackageIds.Contains(packageId, StringComparer.Ordinal))
+        {
+          string[] libFolders = FindLibTargetFrameworks(nupkgPath);
+          if (libFolders is not [RepoLayout.LibTargetFramework])
+          {
+            Terminal.WriteErrorLine(
+              $"{Path.GetFileName(nupkgPath)} lib/ folders are [{string.Join(", ", libFolders)}], expected [{RepoLayout.LibTargetFramework}]".Red());
+            Environment.ExitCode = 1;
+            return false;
+          }
+        }
+
         Terminal.WriteLine($"Package layout verified: {Path.GetFileName(nupkgPath)}");
       }
 
+      return true;
+    }
+
+    private static string[] FindLibTargetFrameworks(string nupkgPath)
+    {
+      using ZipArchive archive = ZipFile.OpenRead(nupkgPath);
+      return archive.Entries
+        .Select(entry => entry.FullName.Split('/'))
+        .Where(parts => parts.Length > 2 && parts[0] == "lib")
+        .Select(parts => parts[1])
+        .Distinct(StringComparer.Ordinal)
+        .OrderBy(folder => folder, StringComparer.Ordinal)
+        .ToArray();
+    }
+
+    private async Task<bool> RunPackageSmokeAsync()
+    {
+      string? version = RepoLayout.ReadVersion(RepoRoot);
+      if (version is null)
+      {
+        Terminal.WriteErrorLine("Could not read <Version> from source/Directory.Build.props.".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      string packagesPath = Path.Combine(RepoRoot, "artifacts", "package-smoke", "packages");
+      if (Directory.Exists(packagesPath))
+      {
+        Directory.Delete(packagesPath, true);
+      }
+
+      Terminal.WriteLine($"\nRunning package smoke against {version} from artifacts/packages...");
+      CommandOutput output = await DotNet.Run()
+        .WithProject(Path.Combine(RepoRoot, RepoLayout.PackageSmokeProject))
+        .WithConfiguration("Release")
+        .WithProperty("TimeWarpMediatorVersion", version)
+        .WithProperty("RestorePackagesPath", packagesPath)
+        .WithNoValidation()
+        .CaptureAsync(Ct);
+
+      if (output.ExitCode != 0)
+      {
+        Terminal.WriteErrorLine(output.Combined);
+        Terminal.WriteErrorLine("Package smoke failed: the packed nupkgs do not build or run in a clean consumer.".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      Terminal.WriteLine(output.Stdout.Trim());
       return true;
     }
 

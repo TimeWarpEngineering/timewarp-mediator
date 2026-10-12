@@ -17,7 +17,7 @@ internal static class Program
 
         ContainerBuilder builder = new();
 
-        builder.RegisterAssemblyTypes(typeof(IMediator).GetTypeInfo().Assembly).AsImplementedInterfaces();
+        builder.RegisterAssemblyTypes(typeof(Mediator).GetTypeInfo().Assembly).AsImplementedInterfaces();
 
         Type[] mediatorOpenTypes = new[]
         {

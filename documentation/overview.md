@@ -22,6 +22,13 @@ Each package packs its own `source/<project>/readme.md` as the nuget.org readme;
 fails when that readme's first heading is not the package id or it contains a relative link
 (nuget.org cannot resolve those). The repository `readme.md` is the GitHub page only.
 
+`dev pack` also requires `TimeWarp.Mediator` and `TimeWarp.Mediator.Contracts` to ship exactly one
+`lib/net10.0/` folder and the Generators nupkg to ship `buildTransitive/TimeWarp.Mediator.Generators.props`.
+It then runs the package smoke, `tests/timewarp-mediator-package-smoke`: a consumer project outside
+the solution that restores Contracts and Generators from `artifacts/packages` (into a throwaway
+packages folder, never the global cache), builds, and sends one request through the generated
+mediator. A broken buildTransitive props or TFM folder fails here instead of after publishing.
+
 ## Versioning
 
 - **One source of truth:** `<Version>` in `source/Directory.Build.props` (for example
@@ -44,7 +51,7 @@ pre-installed `./bin/dev`.
 
 | Trigger | Job | What runs |
 |---|---|---|
-| push to `master`, pull request to `master` | `ci` | `dev workflow`: clean → build → test → pack. Uploads `Packages-<run number>`. |
+| push to `master`, pull request to `master` | `ci` | `dev workflow`: clean → build → test → verify-samples (runs every sample) → pack (layout gate and package smoke). Uploads `Packages-<run number>`. |
 | `workflow_dispatch` with `mode=merge` (default) | `ci` | Same as above. Never publishes. |
 | GitHub Release published | `publish` | Release guards → OIDC login → `dev workflow --mode release`: clean → build → pack → check-version → push. |
 | `workflow_dispatch` with `mode=release` and `confirm=release` | `publish` | Break-glass. Same as a release; see below. |

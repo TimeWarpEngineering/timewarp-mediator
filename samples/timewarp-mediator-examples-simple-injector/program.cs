@@ -22,7 +22,7 @@ internal static class Program
             .AddSimpleInjector(container);
 
         Assembly[] assemblies = GetAssemblies().ToArray();
-        container.RegisterSingleton<IMediator, Mediator>();
+        container.RegisterSingleton<IMediator>(() => new Mediator(container));
         container.Register(typeof(IRequestHandler<,>), assemblies);
 
         RegisterHandlers(container, typeof(INotificationHandler<>), assemblies);
@@ -71,7 +71,7 @@ internal static class Program
 
     private static IEnumerable<Assembly> GetAssemblies()
     {
-        yield return typeof(IMediator).GetTypeInfo().Assembly;
+        yield return typeof(Mediator).GetTypeInfo().Assembly;
         yield return typeof(Ping).GetTypeInfo().Assembly;
     }
 }

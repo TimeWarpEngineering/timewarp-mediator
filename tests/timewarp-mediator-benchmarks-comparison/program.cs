@@ -1,1 +1,1 @@
-BenchmarkRunner.Run<DispatchBenchmarks>();
+BenchmarkSwitcher.FromAssembly(typeof(DispatchBenchmarks).Assembly).Run(args);

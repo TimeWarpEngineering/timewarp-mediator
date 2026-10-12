@@ -203,3 +203,6 @@ Full M2 notes: [m2-named-pipelines.md](./m2-named-pipelines.md). Sample:
 - [m2-named-pipelines.md](./m2-named-pipelines.md) — `ISender<TScope>` / `IPublisher<TScope>`
 - [migration.md](../migration.md) — MediatR → TimeWarp.Mediator 13.x, and 13.x reflection → 14.x generated
 - [diagnostics.md](./diagnostics.md) — TWM001–TWM011
+- [m1-benchmark-gap.md](./m1-benchmark-gap.md) — legacy vs generated vs martinothamar dispatch cost;
+  the recorded baseline (commit SHA, date, host) is [benchmarks/comparison-baseline.md](./benchmarks/comparison-baseline.md)
+- [samples/readme.md](../samples/readme.md) — which samples use which stack

@@ -19,9 +19,10 @@ dotnet run --file tools/dev-cli/dev.cs -- self-install
 |---|---|
 | `./bin/dev build [--clean] [--quiet]` | Build `timewarp-mediator.slnx` |
 | `./bin/dev test [--no-build] [--quiet]` | Run the test suite |
-| `./bin/dev pack [--no-build]` | Pack the four packages to `artifacts/packages` and assert the nupkg layout (analyzer DLLs, `notice`, `unlicense`, and the package's own `readme.md` with absolute links only) |
-| `./bin/dev verify-samples` | Rebuild every `samples/**/*.csproj` |
-| `./bin/dev workflow [--mode pr\|merge\|release]` | CI pipeline: clean → build → test → pack. Release mode: clean → build → pack → check-version → push |
+| `./bin/dev pack [--no-build]` | Pack the four packages to `artifacts/packages`, assert the nupkg layout (analyzer DLLs, buildTransitive props, a single `lib/net10.0` folder, `notice`, `unlicense`, and the package's own `readme.md` with absolute links only), then build and run the package smoke consumer against those nupkgs |
+| `./bin/dev verify-samples [--no-build]` | Build every `samples/**/*.csproj`, then run each Exe sample and require exit code 0 (aot and named-pipelines also check their output) |
+| `./bin/dev benchmark [--project comparison\|legacy] [--filter <glob>] [--record]` | Run BenchmarkDotNet; `--record` rewrites `documentation/benchmarks/<project>-baseline.md` with commit SHA and date |
+| `./bin/dev workflow [--mode pr\|merge\|release]` | CI pipeline: clean → build → test → verify-samples → pack. Release mode: clean → build → pack → check-version → push |
 | `./bin/dev check-version [--strict]` | Fail if `<Version>` is already published on nuget.org |
 | `./bin/dev release [--dry-run]` | Tag `v<Version>` and create the GitHub Release |
 | `./bin/dev clean` | Clean the solution and build artifacts |
@@ -67,11 +68,12 @@ and on the generated Host profile; the Aot and Link profiles do not weave behavi
 - `timewarp-mediator-generators-compilation-tests`: generator incrementality and compilation tests
 - `timewarp-mediator-generators-roslyn-floor-tests`: compiles against Microsoft.CodeAnalysis.CSharp 4.8.0
 - `timewarp-mediator-analyzers-tests`: TWM analyzer tests
-- `timewarp-mediator-benchmarks`, `timewarp-mediator-benchmarks-comparison`: BenchmarkDotNet
+- `timewarp-mediator-benchmarks`, `timewarp-mediator-benchmarks-comparison`: BenchmarkDotNet (`./bin/dev benchmark`)
+- `timewarp-mediator-package-smoke`: outside-consumer smoke over the packed nupkgs; not in the slnx, run by `dev pack`
 
-`samples/` holds one project per DI container (Autofac, DryIoc, Lamar, LightInject,
-SimpleInjector, Stashbox, Windsor, ASP.NET Core) plus the AOT, named-pipelines and
-publish-strategies samples.
+`samples/` holds the generated-stack samples (AOT, named pipelines) and the legacy reflection
+samples: one per DI container (Autofac, DryIoc, Lamar, LightInject, SimpleInjector, Stashbox,
+Windsor, Microsoft DI) plus publish strategies. See `samples/readme.md`.
 
 ## Build Configuration
 

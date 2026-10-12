@@ -2,8 +2,11 @@
 // Mode-aware CI/CD pipeline for TimeWarp.Mediator
 #endregion
 #region Design
-// PR/merge: clean -> build -> test -> pack (analyzer layout gate; artifacts upload).
-// Release:  clean -> build -> pack -> check-version -> push (no test gate).
+// PR/merge: clean -> build -> test -> verify-samples -> pack (samples run from
+//           the build output; pack gates the nupkg layout and runs the package
+//           smoke; artifacts upload).
+// Release:  clean -> build -> pack -> check-version -> push (no test gate; pack
+//           still runs the layout gate and package smoke).
 // <Version> lives only in source/Directory.Build.props (read by pack and by the
 // shared check-version/release commands), so there is nothing to drift. Handlers are invoked directly so CI does not need a
 // pre-installed ./bin/dev. CI passes the OIDC key via NUGET_API_KEY env (never
@@ -94,7 +97,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
 
     private async Task RunPrAsync()
     {
-      Terminal.WriteLine("Pipeline: clean -> build -> test -> pack\n");
+      Terminal.WriteLine("Pipeline: clean -> build -> test -> verify-samples -> pack\n");
       Environment.ExitCode = 0;
 
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct)))
@@ -108,6 +111,11 @@ public sealed class WorkflowCommand : ICommand<Unit>
       }
 
       if (!await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand { NoBuild = true }, Ct)))
+      {
+        return;
+      }
+
+      if (!await RunStepAsync("Verify Samples", new VerifySamplesCommand.Handler(Terminal).Handle(new VerifySamplesCommand { NoBuild = true }, Ct)))
       {
         return;
       }
