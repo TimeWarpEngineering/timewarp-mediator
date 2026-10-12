@@ -11,12 +11,16 @@ namespace TimeWarp.Mediator.Pipeline;
 public class RequestExceptionActionProcessorBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
+    // Static on the closed generic, so each entry is keyed by (TRequest, TResponse, exception type).
+    private static readonly ConcurrentDictionary<Type, (Type EnumerableActionType, MethodInfo ExecuteMethod)> _actionReflectionCache = new();
     private readonly IServiceProvider _serviceProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestExceptionActionProcessorBehavior{TRequest,TResponse}"/> class.
     /// </summary>
     /// <param name="serviceProvider">Service provider used to resolve the <see cref="IRequestExceptionAction{TRequest,TException}"/> instances for each exception type</param>
+    [RequiresUnreferencedCode(TrimmingMessages.UnreferencedCode)]
+    [RequiresDynamicCode(TrimmingMessages.DynamicCode)]
     public RequestExceptionActionProcessorBehavior(IServiceProvider serviceProvider) => _serviceProvider = serviceProvider;
 
     /// <inheritdoc/>
@@ -66,8 +70,7 @@ public class RequestExceptionActionProcessorBehavior<TRequest, TResponse> : IPip
 
     private IEnumerable<(Type ExceptionType, object Action)> GetActionsForException(Type exceptionType, TRequest request)
     {
-        Type exceptionActionInterfaceType = typeof(IRequestExceptionAction<,>).MakeGenericType(typeof(TRequest), exceptionType);
-        Type enumerableExceptionActionInterfaceType = typeof(IEnumerable<>).MakeGenericType(exceptionActionInterfaceType);
+        Type enumerableExceptionActionInterfaceType = GetActionReflection(exceptionType).EnumerableActionType;
 
         IEnumerable<object> actionsForException = (IEnumerable<object>)_serviceProvider.GetRequiredService(enumerableExceptionActionInterfaceType);
 
@@ -75,15 +78,18 @@ public class RequestExceptionActionProcessorBehavior<TRequest, TResponse> : IPip
             .Select(action => (exceptionType, action));
     }
 
-    private static MethodInfo GetMethodInfoForAction(Type exceptionType)
-    {
-        Type exceptionActionInterfaceType = typeof(IRequestExceptionAction<,>).MakeGenericType(typeof(TRequest), exceptionType);
+    private static MethodInfo GetMethodInfoForAction(Type exceptionType) => GetActionReflection(exceptionType).ExecuteMethod;
 
-        MethodInfo actionMethodInfo =
-            exceptionActionInterfaceType.GetMethod(nameof(IRequestExceptionAction<TRequest, Exception>.Execute))
-            ?? throw new InvalidOperationException(
-                $"Could not find method {nameof(IRequestExceptionAction<TRequest, Exception>.Execute)} on type {exceptionActionInterfaceType}");
+    private static (Type EnumerableActionType, MethodInfo ExecuteMethod) GetActionReflection(Type exceptionType) =>
+        _actionReflectionCache.GetOrAdd(exceptionType, static exceptionType =>
+        {
+            Type exceptionActionInterfaceType = typeof(IRequestExceptionAction<,>).MakeGenericType(typeof(TRequest), exceptionType);
 
-        return actionMethodInfo;
-    }
+            MethodInfo actionMethodInfo =
+                exceptionActionInterfaceType.GetMethod(nameof(IRequestExceptionAction<TRequest, Exception>.Execute))
+                ?? throw new InvalidOperationException(
+                    $"Could not find method {nameof(IRequestExceptionAction<TRequest, Exception>.Execute)} on type {exceptionActionInterfaceType}");
+
+            return (typeof(IEnumerable<>).MakeGenericType(exceptionActionInterfaceType), actionMethodInfo);
+        });
 }

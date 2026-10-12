@@ -11,12 +11,16 @@ namespace TimeWarp.Mediator.Pipeline;
 public class RequestExceptionProcessorBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
+    // Static on the closed generic, so each entry is keyed by (TRequest, TResponse, exception type).
+    private static readonly ConcurrentDictionary<Type, (Type EnumerableHandlerType, MethodInfo HandleMethod)> _handlerReflectionCache = new();
     private readonly IServiceProvider _serviceProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestExceptionProcessorBehavior{TRequest,TResponse}"/> class.
     /// </summary>
     /// <param name="serviceProvider">Service provider used to resolve the <see cref="IRequestExceptionHandler{TRequest,TResponse,TException}"/> instances for each exception type</param>
+    [RequiresUnreferencedCode(TrimmingMessages.UnreferencedCode)]
+    [RequiresDynamicCode(TrimmingMessages.DynamicCode)]
     public RequestExceptionProcessorBehavior(IServiceProvider serviceProvider) => _serviceProvider = serviceProvider;
 
     /// <inheritdoc/>
@@ -78,8 +82,7 @@ public class RequestExceptionProcessorBehavior<TRequest, TResponse> : IPipelineB
 
     private IEnumerable<(Type ExceptionType, object Handler)> GetHandlersForException(Type exceptionType, TRequest request)
     {
-        Type exceptionHandlerInterfaceType = typeof(IRequestExceptionHandler<,,>).MakeGenericType(typeof(TRequest), typeof(TResponse), exceptionType);
-        Type enumerableExceptionHandlerInterfaceType = typeof(IEnumerable<>).MakeGenericType(exceptionHandlerInterfaceType);
+        Type enumerableExceptionHandlerInterfaceType = GetHandlerReflection(exceptionType).EnumerableHandlerType;
 
         IEnumerable<object> exceptionHandlers = (IEnumerable<object>) _serviceProvider.GetRequiredService(enumerableExceptionHandlerInterfaceType);
 
@@ -87,13 +90,16 @@ public class RequestExceptionProcessorBehavior<TRequest, TResponse> : IPipelineB
             .Select(handler => (exceptionType, action: handler));
     }
 
-    private static MethodInfo GetMethodInfoForHandler(Type exceptionType)
-    {
-        Type exceptionHandlerInterfaceType = typeof(IRequestExceptionHandler<,,>).MakeGenericType(typeof(TRequest), typeof(TResponse), exceptionType);
+    private static MethodInfo GetMethodInfoForHandler(Type exceptionType) => GetHandlerReflection(exceptionType).HandleMethod;
 
-        MethodInfo handleMethodInfo = exceptionHandlerInterfaceType.GetMethod(nameof(IRequestExceptionHandler<TRequest, TResponse, Exception>.Handle))
-                           ?? throw new InvalidOperationException($"Could not find method {nameof(IRequestExceptionHandler<TRequest, TResponse, Exception>.Handle)} on type {exceptionHandlerInterfaceType}");
+    private static (Type EnumerableHandlerType, MethodInfo HandleMethod) GetHandlerReflection(Type exceptionType) =>
+        _handlerReflectionCache.GetOrAdd(exceptionType, static exceptionType =>
+        {
+            Type exceptionHandlerInterfaceType = typeof(IRequestExceptionHandler<,,>).MakeGenericType(typeof(TRequest), typeof(TResponse), exceptionType);
 
-        return handleMethodInfo;
-    }
+            MethodInfo handleMethodInfo = exceptionHandlerInterfaceType.GetMethod(nameof(IRequestExceptionHandler<TRequest, TResponse, Exception>.Handle))
+                               ?? throw new InvalidOperationException($"Could not find method {nameof(IRequestExceptionHandler<TRequest, TResponse, Exception>.Handle)} on type {exceptionHandlerInterfaceType}");
+
+            return (typeof(IEnumerable<>).MakeGenericType(exceptionHandlerInterfaceType), handleMethodInfo);
+        });
 }
