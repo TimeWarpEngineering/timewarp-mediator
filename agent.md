@@ -91,8 +91,9 @@ publish-strategies samples.
 - `timewarp-mediator.snk` is committed on purpose: a strong-name key is an assembly identity,
   not a secret (same convention as MediatR). Of the four packages, `TimeWarp.Mediator` and
   `TimeWarp.Mediator.Contracts` are strong-named; Analyzers and Generators set
-  `SignAssembly=false` because Roslyn loads them in-process. Tests are signed with the same key
-  so `InternalsVisibleTo` works.
+  `SignAssembly=false` because Roslyn loads them in-process. The test tree turns signing off
+  (`tests/Directory.Build.props`); only `timewarp-mediator-tests` signs with this key so
+  `TimeWarp.Mediator` can grant it `InternalsVisibleTo`.
 - `source/Directory.Build.props`: the single `<Version>` and the package metadata for all four packages.
 - No repo-wide `LangVersion` pin: `net10.0` projects use the SDK default (C# 14); the netstandard2.0 Roslyn projects set `latest`. Generator-emitted code stays conservative so consumers on older language versions still compile it.
 
