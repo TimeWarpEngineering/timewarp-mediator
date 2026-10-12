@@ -6,7 +6,7 @@ This document outlines the simplified versioning and release process for the Tim
 
 - **Projects**: Located in `source/timewarp-mediator` and `source/timewarp-mediator-contracts`.
 - **Primary Branch**: `master`.
-- **Workflow**: `.github/workflows/ci-cd.yml`.
+- **Workflow**: `.github/workflows/workflow.yml` (jobs `ci` and `publish`).
 - **Version Configuration**: `Directory.Build.props`.
 
 ## Versioning Strategy
@@ -67,7 +67,17 @@ gh release create v12.5.0 --generate-notes
 
 ### Setup
 1. Configure `MYGET_TIMEWARP_MEDIATOR_CI_API_KEY` in GitHub Secrets (MyGet CI feed)
-2. NuGet.org releases use **Trusted Publishing (OIDC)** — no long-lived `NUGET_API_KEY` secret. The `build-and-publish` job in `ci-cd.yml` exchanges a GitHub OIDC token via `nuget/login@v1` (owner `TimeWarp.Enterprises`) when a GitHub Release is published. Ensure the NuGet.org trusted-publishing policy for this repo targets workflow `ci-cd.yml`.
+2. NuGet.org releases use **Trusted Publishing (OIDC)** — no long-lived `NUGET_API_KEY` secret. Only the
+   `publish` job in `workflow.yml` holds `id-token: write`; it runs on a published GitHub Release (or the
+   break-glass / probe `workflow_dispatch` modes), exchanges a GitHub OIDC token via `NuGet/login` (owner
+   `TimeWarp.Enterprises`), and hands the key to `dev workflow --mode release` through the `NUGET_API_KEY`
+   environment variable. The NuGet.org policy binds the repo and workflow file `workflow.yml` (not job
+   names). Check it with `gh workflow run workflow.yml -f mode=probe`.
+3. Before pushing, the `publish` job refuses unless the release tag equals `v` + `<Version>` from
+   `source/Directory.Build.props`, the tag points at the checked-out commit, that commit is on `master`, and
+   it has a successful `push` CI run of `workflow.yml`. Tests are not re-run in the publish job; that green
+   CI run is the test gate. Break-glass dispatch (`mode=release`, `confirm=release`) must run with
+   `--ref v<Version>`.
 
 ### CI Prereleases
 1. Push to `master`
