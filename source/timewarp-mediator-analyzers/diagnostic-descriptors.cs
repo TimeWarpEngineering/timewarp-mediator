@@ -56,10 +56,10 @@ internal static class DiagnosticDescriptors
 
     internal static readonly DiagnosticDescriptor AotHandlerNotConstructible = new(
         id: "TWM006",
-        title: "Aot handler has no accessible parameterless constructor",
-        messageFormat: "Handler '{0}' needs an accessible parameterless constructor under the '{1}' profile",
+        title: "Aot handler is not constructible with new()",
+        messageFormat: "Handler '{0}' cannot be created with 'new()' under the '{1}' profile",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "The Aot/Link profile creates each handler once with 'new Handler()' into a static readonly ServiceGen field (a process-wide singleton). Handlers cannot take constructor dependencies in that profile.");
+        description: "The Aot/Link profile creates each handler once with 'new Handler()' into a static readonly ServiceGen field (a process-wide singleton). That call needs an accessible constructor with no required arguments. Required members must be set by that constructor (SetsRequiredMembers).");
 }

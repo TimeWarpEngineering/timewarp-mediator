@@ -45,9 +45,11 @@ The generated path (`AddGeneratedMediator()` from `TimeWarp.Mediator.Contracts` 
 - **Handlers are process-wide singletons.** Each handler is created once with `new Handler()`
   into a `static readonly` field and shared by every `Mediator` instance and every thread. Keep
   Aot handlers stateless (or thread-safe).
-- **Handlers need an accessible parameterless constructor** (optional parameters are fine).
-  A handler with required constructor parameters, or only a private constructor, is **TWM006**
-  (error) at the handler. Use the Host profile when handlers take DI dependencies.
+- **Handlers must be constructible with `new Handler()`.** An accessible parameterless
+  constructor is enough (optional parameters are fine). A handler with required constructor
+  parameters, only a private constructor, or a `required` member that constructor does not set
+  (`[SetsRequiredMembers]`) is **TWM006** (error) at the handler. Use the Host profile when
+  handlers take DI dependencies.
 - **`[assembly: MediatorBehavior]` is not woven.** Each registered behavior that would close
   over a request is **TWM005** (warning) at the attribute, and `MediatorManifest.Json` lists
   `"behaviors":[]` for every request so the manifest matches the emitted pipeline. Validation,

@@ -83,6 +83,44 @@ public sealed class AotProfileTests
         host.Diagnostics.ShouldNotContain(d => d.Id == "TWM006");
     }
 
+    [Theory]
+    [InlineData("Aot")]
+    [InlineData("Link")]
+    public void HandlerWithRequiredMember_ReportsTwm006AndNoCs9035(string profile)
+    {
+        HostCompilation host = HostCompiler.Compile("AotRequired" + profile, RequiredMemberSource, profile);
+
+        Diagnostic[] errors = Errors(host);
+        errors.Select(d => d.Id).OrderBy(id => id, StringComparer.Ordinal)
+            .ShouldBe(new[] { "TWM006", "TWM006" });
+        string[] flagged = errors
+            .Select(d => d.Location.SourceTree!.GetText().ToString(d.Location.SourceSpan))
+            .OrderBy(n => n, StringComparer.Ordinal)
+            .ToArray();
+        flagged.ShouldBe(new[] { "DerivedRequiredHandler", "RequiredMemberHandler" });
+        errors.ShouldAllBe(d => d.GetMessage().Contains(profile));
+    }
+
+    [Fact]
+    public void HandlerWithRequiredMember_IsFineUnderHost()
+    {
+        HostCompilation host = HostCompiler.Compile("HostRequired", RequiredMemberSource, "Host");
+
+        Errors(host).ShouldBeEmpty();
+        host.Diagnostics.ShouldNotContain(d => d.Id == "TWM006");
+    }
+
+    [Theory]
+    [InlineData("Aot")]
+    [InlineData("Link")]
+    public void HandlerWithSetsRequiredMembers_IsConstructible(string profile)
+    {
+        HostCompilation host = HostCompiler.Compile("AotSetsRequired" + profile, SetsRequiredMembersSource, profile);
+
+        Errors(host).ShouldBeEmpty();
+        host.Diagnostics.ShouldNotContain(d => d.Id == "TWM006");
+    }
+
     private static Diagnostic[] Errors(HostCompilation host)
     {
         return host.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
@@ -128,11 +166,8 @@ namespace Pipes
     public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
         where TRequest : notnull
     {
-        public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
-        {
-            TResponse response = await next(cancellationToken);
-            return response;
-        }
+        public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+            => throw new System.InvalidOperationException(""behavior ran"");
     }
 }
 ";
@@ -203,6 +238,71 @@ namespace Ctors
         }
 
         public Task Handle(Note notification, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+}
+";
+
+    private const string RequiredMemberSource = @"
+using System.Threading;
+using System.Threading.Tasks;
+using TimeWarp.Mediator;
+
+[assembly: MediatorAssembly]
+
+namespace Required
+{
+    public sealed class Ping : IRequest<string>
+    {
+    }
+
+    public sealed class RequiredMemberHandler : IRequestHandler<Ping, string>
+    {
+        public required string Name { get; init; }
+
+        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(Name);
+    }
+
+    public class RequiredBase
+    {
+        public required string Name { get; init; }
+    }
+
+    public sealed class DerivedPing : IRequest<string>
+    {
+    }
+
+    public sealed class DerivedRequiredHandler : RequiredBase, IRequestHandler<DerivedPing, string>
+    {
+        public Task<string> Handle(DerivedPing request, CancellationToken cancellationToken) => Task.FromResult(Name);
+    }
+}
+";
+
+    private const string SetsRequiredMembersSource = @"
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
+using TimeWarp.Mediator;
+
+[assembly: MediatorAssembly]
+
+namespace Sets
+{
+    public sealed class Ping : IRequest<string>
+    {
+    }
+
+    public sealed class SetsRequiredHandler : IRequestHandler<Ping, string>
+    {
+        public required string Name { get; init; }
+
+        [SetsRequiredMembers]
+        public SetsRequiredHandler()
+        {
+            Name = ""set"";
+        }
+
+        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(Name);
     }
 }
 ";

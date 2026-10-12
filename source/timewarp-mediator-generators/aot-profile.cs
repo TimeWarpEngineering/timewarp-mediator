@@ -9,7 +9,9 @@
 // The Aot manifest lists no behaviors, so it matches the emitted Dispatch_* bodies.
 // TWM005 is one warning per registered behavior that closes for at least one request, placed on
 // the [assembly: MediatorBehavior] attribute when it is in this compilation.
-// TWM006 handlers get a 'default!' ServiceGen field so TWM006 is the only error, not CS7036.
+// TWM006 handlers get a 'default!' ServiceGen field so TWM006 is the only error, not CS7036
+// or CS9035. A required member counts as unconstructible unless the zero-argument constructor
+// is marked SetsRequiredMembers.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -101,7 +103,8 @@ internal sealed class AotProfile
             return false;
         }
 
-        if (handler.IsValueType)
+        bool hasRequiredMembers = HasRequiredMembers(handler);
+        if (handler.IsValueType && !hasRequiredMembers)
         {
             return true;
         }
@@ -109,7 +112,40 @@ internal sealed class AotProfile
         foreach (IMethodSymbol constructor in handler.InstanceConstructors)
         {
             if (constructor.Parameters.All(p => p.IsOptional || p.IsParams)
-                && compilation.IsSymbolAccessibleWithin(constructor, compilation.Assembly))
+                && compilation.IsSymbolAccessibleWithin(constructor, compilation.Assembly)
+                && (!hasRequiredMembers || SetsRequiredMembers(constructor)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasRequiredMembers(INamedTypeSymbol handler)
+    {
+        for (INamedTypeSymbol? current = handler;
+            current is not null && current.SpecialType != SpecialType.System_Object;
+            current = current.BaseType)
+        {
+            foreach (ISymbol member in current.GetMembers())
+            {
+                if (member is IFieldSymbol { IsRequired: true } or IPropertySymbol { IsRequired: true })
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool SetsRequiredMembers(IMethodSymbol constructor)
+    {
+        foreach (AttributeData attribute in constructor.GetAttributes())
+        {
+            if (attribute.AttributeClass?.ToDisplayString()
+                == "System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute")
             {
                 return true;
             }
