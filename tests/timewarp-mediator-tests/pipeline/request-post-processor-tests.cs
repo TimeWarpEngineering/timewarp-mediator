@@ -39,12 +39,12 @@ public class RequestPostProcessorTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-          scanner.AddAllTypesOf(typeof(IRequestPostProcessor<,>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+            scanner.AddAllTypesOf(typeof(IRequestPostProcessor<,>));
+          });
       cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestPostProcessorBehavior<,>));
       cfg.For<IMediator>().Use<Mediator>();
     });

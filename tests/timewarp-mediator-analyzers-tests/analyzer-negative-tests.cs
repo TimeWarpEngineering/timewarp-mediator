@@ -42,7 +42,7 @@ public class AnalyzerNegativeTests
   [Fact]
   public async Task Twm001_EachOrphan_IsReportedAtItsOwnDeclaration()
   {
-    const string Source =
+    const string source =
         Usings +
         """
             public sealed class First : IRequest<int> { }
@@ -57,7 +57,7 @@ public class AnalyzerNegativeTests
             }
             """;
 
-    Diagnostic[] diagnostics = (await AnalyzerTestHelper.GetDiagnosticsAsync(Source))
+    Diagnostic[] diagnostics = (await AnalyzerTestHelper.GetDiagnosticsAsync(source))
         .OrderBy(d => d.Location.SourceSpan.Start)
         .ToArray();
 
@@ -69,14 +69,14 @@ public class AnalyzerNegativeTests
   [Fact]
   public async Task MediatorModule_MakesTheDeclaringLibraryAMember()
   {
-    const string Source =
+    const string source =
         """
             using TimeWarp.Mediator;
             [MediatorModule("Orders")]
             public sealed class Orphan : IRequest<int> { }
             """;
 
-    Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(Source)).ShouldHaveSingleItem();
+    Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source)).ShouldHaveSingleItem();
 
     diagnostic.Id.ShouldBe("TWM001");
     AnalyzerTestHelper.LocatedText(diagnostic).ShouldBe("Orphan");
@@ -85,7 +85,7 @@ public class AnalyzerNegativeTests
   [Fact]
   public async Task Twm004_IsReportedAtEachWrongSendOnly()
   {
-    const string Source =
+    const string source =
         Usings +
         """
             public sealed class ClientPipeline { }
@@ -116,7 +116,7 @@ public class AnalyzerNegativeTests
             }
             """;
 
-    Diagnostic[] diagnostics = (await AnalyzerTestHelper.GetDiagnosticsAsync(Source))
+    Diagnostic[] diagnostics = (await AnalyzerTestHelper.GetDiagnosticsAsync(source))
         .OrderBy(d => d.Location.SourceSpan.Start)
         .ToArray();
 

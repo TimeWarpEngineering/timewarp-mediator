@@ -18,12 +18,12 @@ class Program
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType<Ping>();
-          scanner.ConnectImplementationsToTypesClosing(typeof(IRequestHandler<,>));
-          scanner.ConnectImplementationsToTypesClosing(typeof(INotificationHandler<>));
-          scanner.ConnectImplementationsToTypesClosing(typeof(IRequestExceptionAction<,>));
-          scanner.ConnectImplementationsToTypesClosing(typeof(IRequestExceptionHandler<,,>));
-        });
+            scanner.AssemblyContainingType<Ping>();
+            scanner.ConnectImplementationsToTypesClosing(typeof(IRequestHandler<,>));
+            scanner.ConnectImplementationsToTypesClosing(typeof(INotificationHandler<>));
+            scanner.ConnectImplementationsToTypesClosing(typeof(IRequestExceptionAction<,>));
+            scanner.ConnectImplementationsToTypesClosing(typeof(IRequestExceptionHandler<,,>));
+          });
 
       //Pipeline
       cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestExceptionProcessorBehavior<,>));

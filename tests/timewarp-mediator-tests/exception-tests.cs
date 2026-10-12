@@ -132,11 +132,11 @@ public class ExceptionTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(NullPing));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(NullPing));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
     IMediator med = container.GetInstance<IMediator>();
@@ -153,11 +153,11 @@ public class ExceptionTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(VoidNullPing));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(VoidNullPing));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
     IMediator med = container.GetInstance<IMediator>();
@@ -174,11 +174,11 @@ public class ExceptionTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(NullPinged));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(NullPinged));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
     IMediator med = container.GetInstance<IMediator>();
@@ -195,11 +195,11 @@ public class ExceptionTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(NullPinged));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(NullPinged));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
     IMediator med = container.GetInstance<IMediator>();
@@ -216,11 +216,11 @@ public class ExceptionTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(NullPinged));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(NullPinged));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
     IMediator med = container.GetInstance<IMediator>();
@@ -250,12 +250,12 @@ public class ExceptionTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(NullPinged));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-          scanner.AddAllTypesOf(typeof(IRequestHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(NullPinged));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+            scanner.AddAllTypesOf(typeof(IRequestHandler<>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
     IMediator med = container.GetInstance<IMediator>();
@@ -272,11 +272,11 @@ public class ExceptionTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(NullPinged));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(NullPinged));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
     IMediator med = container.GetInstance<IMediator>();
@@ -311,12 +311,12 @@ public class ExceptionTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(NullPinged));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-          scanner.AddAllTypesOf(typeof(IRequestHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(NullPinged));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+            scanner.AddAllTypesOf(typeof(IRequestHandler<>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
     IMediator med = container.GetInstance<IMediator>();

@@ -30,11 +30,11 @@ public class CreateStreamTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(CreateStreamTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(CreateStreamTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
 
@@ -62,11 +62,11 @@ public class CreateStreamTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(CreateStreamTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(CreateStreamTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
 
@@ -95,11 +95,11 @@ public class CreateStreamTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(CreateStreamTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(CreateStreamTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
+          });
       cfg.For<ISender>().Use<Mediator>();
     });
 

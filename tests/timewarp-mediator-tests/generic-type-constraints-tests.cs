@@ -84,13 +84,13 @@ public class GenericTypeConstraintsTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(GenericTypeConstraintsTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.IncludeNamespaceContainingType<Jing>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-          scanner.AddAllTypesOf(typeof(IRequestHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(GenericTypeConstraintsTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.IncludeNamespaceContainingType<Jing>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+            scanner.AddAllTypesOf(typeof(IRequestHandler<>));
+          });
       cfg.For<IMediator>().Use<Mediator>();
     });
 

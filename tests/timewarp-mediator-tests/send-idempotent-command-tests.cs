@@ -55,12 +55,12 @@ public class SendIdempotentCommandTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(SendIdempotentCommandTests));
-          scanner.IncludeNamespaceContainingType<Upsert>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-          scanner.AddAllTypesOf(typeof(IRequestHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(SendIdempotentCommandTests));
+            scanner.IncludeNamespaceContainingType<Upsert>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+            scanner.AddAllTypesOf(typeof(IRequestHandler<>));
+          });
       cfg.For<TextWriter>().Use(writer);
       cfg.For<IMediator>().Use<Mediator>();
     });

@@ -80,14 +80,14 @@ public class HandlerBindingTests
   [Fact]
   public void Manifest_ListsEachBinding()
   {
-    const string Bindings = "TimeWarp.Mediator.Generators.Tests.Bindings.";
+    const string bindings = "TimeWarp.Mediator.Generators.Tests.Bindings.";
     ManifestDocument manifest = ManifestDocument.Parse(MediatorManifest.Json);
-    manifest.Request(Bindings + "GetOrderCount").Handler.ShouldBe(Bindings + "OrderHandler");
-    manifest.Request(Bindings + "GetOrderLabel").Handler.ShouldBe(Bindings + "OrderHandler");
-    manifest.Request(Bindings + "ArchiveOrder").Handler.ShouldBe(Bindings + "OrderHandler");
-    manifest.Notification(Bindings + "OrderShipped").Handlers.ShouldBe(new[] { Bindings + "OrderHandler" });
-    manifest.Notification(Bindings + "InvoicePaid").Handlers.ShouldBe(new[] { Bindings + "AuditedInvoiceHandler" });
-    manifest.Requests.Select(r => r.Handler).ShouldNotContain(Bindings + "AuditedInvoiceHandler");
+    manifest.Request(bindings + "GetOrderCount").Handler.ShouldBe(bindings + "OrderHandler");
+    manifest.Request(bindings + "GetOrderLabel").Handler.ShouldBe(bindings + "OrderHandler");
+    manifest.Request(bindings + "ArchiveOrder").Handler.ShouldBe(bindings + "OrderHandler");
+    manifest.Notification(bindings + "OrderShipped").Handlers.ShouldBe(new[] { bindings + "OrderHandler" });
+    manifest.Notification(bindings + "InvoicePaid").Handlers.ShouldBe(new[] { bindings + "AuditedInvoiceHandler" });
+    manifest.Requests.Select(r => r.Handler).ShouldNotContain(bindings + "AuditedInvoiceHandler");
   }
 
   private static ServiceProvider CreateProvider()

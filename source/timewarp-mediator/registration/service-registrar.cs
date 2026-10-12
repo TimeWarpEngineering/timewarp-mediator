@@ -318,10 +318,10 @@ internal static class ServiceRegistrar
       IEnumerable<(Type Service, Type Implementation)> registrationTypes = concreteRequests
           .Select(concreteRequest => GetConcreteRegistrationTypes(openRequestInterface, concreteRequest, concretion));
 
-      foreach ((Type? Service, Type? Implementation) in registrationTypes)
+      foreach ((Type? service, Type? implementation) in registrationTypes)
       {
         cancellationToken.ThrowIfCancellationRequested();
-        services.AddTransient(Service, Implementation);
+        services.AddTransient(service, implementation);
       }
     }
   }

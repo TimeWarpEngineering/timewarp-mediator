@@ -49,11 +49,11 @@ public class PublishTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(INotificationHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(INotificationHandler<>));
+          });
       cfg.For<TextWriter>().Use(writer);
       cfg.For<IMediator>().Use<Mediator>();
     });
@@ -77,11 +77,11 @@ public class PublishTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(INotificationHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(INotificationHandler<>));
+          });
       cfg.For<TextWriter>().Use(writer);
       cfg.For<IMediator>().Use<Mediator>();
     });
@@ -136,11 +136,11 @@ public class PublishTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(INotificationHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(INotificationHandler<>));
+          });
       cfg.For<TextWriter>().Use(writer);
       cfg.For<IMediator>().Use<SequentialMediator>();
     });
@@ -165,11 +165,11 @@ public class PublishTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(INotificationHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(INotificationHandler<>));
+          });
       cfg.For<TextWriter>().Use(writer);
       cfg.For<INotificationPublisher>().Use(publisher);
       cfg.For<IMediator>().Use<Mediator>();
@@ -195,11 +195,11 @@ public class PublishTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(INotificationHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(INotificationHandler<>));
+          });
       cfg.For<TextWriter>().Use(writer);
       cfg.For<IMediator>().Use<SequentialMediator>();
     });
@@ -225,11 +225,11 @@ public class PublishTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(INotificationHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(INotificationHandler<>));
+          });
       cfg.For<TextWriter>().Use(writer);
       cfg.For<IPublisher>().Use<Mediator>();
     });

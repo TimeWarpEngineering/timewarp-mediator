@@ -192,11 +192,11 @@ public class StreamPipelineTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
+          });
       cfg.For<Logger>().Use(output);
       cfg.For<IStreamPipelineBehavior<Ping, Pong>>().Add<OuterBehavior>();
       cfg.For<IStreamPipelineBehavior<Ping, Pong>>().Add<InnerBehavior>();
@@ -228,11 +228,11 @@ public class StreamPipelineTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
+          });
       cfg.For<Logger>().Use(output);
 
       cfg.For(typeof(IStreamPipelineBehavior<,>)).Add(typeof(OuterBehavior<,>));
@@ -266,11 +266,11 @@ public class StreamPipelineTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
+          });
       cfg.For<Logger>().Use(output);
 
       cfg.For(typeof(IStreamPipelineBehavior<,>)).Add(typeof(OuterBehavior<,>));

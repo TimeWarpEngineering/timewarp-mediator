@@ -884,14 +884,14 @@ public class ServiceCollectionPipelineTests
   {
     public FooRequestHandler(IBlogger<FooRequestHandler> logger)
     {
-      this.logger = logger;
+      Blogger = logger;
     }
 
-    readonly IBlogger<FooRequestHandler> logger;
+    readonly IBlogger<FooRequestHandler> Blogger;
 
     public Task Handle(FooRequest request, CancellationToken cancellationToken)
     {
-      logger.Messages.Add("Invoked Handler");
+      Blogger.Messages.Add("Invoked Handler");
       return Task.CompletedTask;
     }
   }
@@ -900,14 +900,14 @@ public class ServiceCollectionPipelineTests
   {
     public ClosedBehavior(IBlogger<ClosedBehavior> logger)
     {
-      this.logger = logger;
+      Blogger = logger;
     }
 
-    readonly IBlogger<ClosedBehavior> logger;
+    readonly IBlogger<ClosedBehavior> Blogger;
 
     public Task<Unit> Handle(FooRequest request, RequestHandlerDelegate<Unit> next, CancellationToken cancellationToken)
     {
-      logger.Messages.Add("Invoked Closed Behavior");
+      Blogger.Messages.Add("Invoked Closed Behavior");
       return next();
     }
   }
@@ -917,14 +917,14 @@ public class ServiceCollectionPipelineTests
   {
     public Open2Behavior(IBlogger<Open2Behavior<TRequest, TResponse>> logger)
     {
-      this.logger = logger;
+      Blogger = logger;
     }
 
-    readonly IBlogger<Open2Behavior<TRequest, TResponse>> logger;
+    readonly IBlogger<Open2Behavior<TRequest, TResponse>> Blogger;
 
     public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-      logger.Messages.Add("Invoked Open Behavior");
+      Blogger.Messages.Add("Invoked Open Behavior");
       return next();
     }
   }
@@ -971,14 +971,14 @@ public class ServiceCollectionPipelineTests
   {
     public OpenBehaviorMultipleRegistration0(IBlogger<OpenBehaviorMultipleRegistration0<TRequest, TResponse>> logger)
     {
-      this.logger = logger;
+      Blogger = logger;
     }
 
-    readonly IBlogger<OpenBehaviorMultipleRegistration0<TRequest, TResponse>> logger;
+    readonly IBlogger<OpenBehaviorMultipleRegistration0<TRequest, TResponse>> Blogger;
 
     public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-      logger.Messages.Add("Invoked OpenBehaviorMultipleRegistration0");
+      Blogger.Messages.Add("Invoked OpenBehaviorMultipleRegistration0");
       return next();
     }
   }
@@ -987,14 +987,14 @@ public class ServiceCollectionPipelineTests
   {
     public OpenBehaviorMultipleRegistration1(IBlogger<OpenBehaviorMultipleRegistration1<TRequest, TResponse>> logger)
     {
-      this.logger = logger;
+      Blogger = logger;
     }
 
-    readonly IBlogger<OpenBehaviorMultipleRegistration1<TRequest, TResponse>> logger;
+    readonly IBlogger<OpenBehaviorMultipleRegistration1<TRequest, TResponse>> Blogger;
 
     public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-      logger.Messages.Add("Invoked OpenBehaviorMultipleRegistration1");
+      Blogger.Messages.Add("Invoked OpenBehaviorMultipleRegistration1");
       return next();
     }
   }
@@ -1003,14 +1003,14 @@ public class ServiceCollectionPipelineTests
   {
     public OpenBehaviorMultipleRegistration2(IBlogger<OpenBehaviorMultipleRegistration2<TRequest, TResponse>> logger)
     {
-      this.logger = logger;
+      Blogger = logger;
     }
 
-    readonly IBlogger<OpenBehaviorMultipleRegistration2<TRequest, TResponse>> logger;
+    readonly IBlogger<OpenBehaviorMultipleRegistration2<TRequest, TResponse>> Blogger;
 
     public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-      logger.Messages.Add("Invoked OpenBehaviorMultipleRegistration2");
+      Blogger.Messages.Add("Invoked OpenBehaviorMultipleRegistration2");
       return next();
     }
   }

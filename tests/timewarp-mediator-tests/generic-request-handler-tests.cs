@@ -93,9 +93,9 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
     {
       services.AddMediator(cfg =>
           {
-          cfg.RegisterServicesFromAssembly(assembly);
-          cfg.RegisterGenericHandlers = true;
-        });
+            cfg.RegisterServicesFromAssembly(assembly);
+            cfg.RegisterGenericHandlers = true;
+          });
     })
     .Message.ShouldContain("One of the generic type parameter's count of types that can close exceeds the maximum length allowed");
   }
@@ -112,9 +112,9 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
     {
       services.AddMediator(cfg =>
           {
-          cfg.RegisterServicesFromAssembly(assembly);
-          cfg.RegisterGenericHandlers = true;
-        });
+            cfg.RegisterServicesFromAssembly(assembly);
+            cfg.RegisterGenericHandlers = true;
+          });
     })
     .Message.ShouldContain("The total number of generic type registrations exceeds the maximum allowed");
   }
@@ -131,9 +131,9 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
     {
       services.AddMediator(cfg =>
           {
-          cfg.RegisterServicesFromAssembly(assembly);
-          cfg.RegisterGenericHandlers = true;
-        });
+            cfg.RegisterServicesFromAssembly(assembly);
+            cfg.RegisterGenericHandlers = true;
+          });
     })
     .Message.ShouldContain("The number of generic type parameters exceeds the maximum allowed");
   }
@@ -150,13 +150,13 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
     {
       services.AddMediator(cfg =>
           {
-          cfg.MaxGenericTypeParameters = 0;
-          cfg.MaxGenericTypeRegistrations = 0;
-          cfg.MaxTypesClosing = 0;
-          cfg.RegistrationTimeout = 1000;
-          cfg.RegisterGenericHandlers = true;
-          cfg.RegisterServicesFromAssembly(assembly);
-        });
+            cfg.MaxGenericTypeParameters = 0;
+            cfg.MaxGenericTypeRegistrations = 0;
+            cfg.MaxTypesClosing = 0;
+            cfg.RegistrationTimeout = 1000;
+            cfg.RegisterGenericHandlers = true;
+            cfg.RegisterServicesFromAssembly(assembly);
+          });
     })
     .Message.ShouldBe("The generic handler registration process timed out.");
   }
@@ -172,10 +172,10 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
     {
       services.AddMediator(cfg =>
           {
-          cfg.RegistrationTimeout = 0;
-          cfg.RegisterGenericHandlers = true;
-          cfg.RegisterServicesFromAssembly(dynamicAssembly);
-        });
+            cfg.RegistrationTimeout = 0;
+            cfg.RegisterGenericHandlers = true;
+            cfg.RegisterServicesFromAssembly(dynamicAssembly);
+          });
     });
   }
 
@@ -249,10 +249,10 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
     {
       services.AddMediator(cfg =>
           {
-          cfg.RegisterGenericHandlers = true;
-          cfg.RegisterServicesFromAssemblyContaining<ClosedRequestGenericHandler<object>>();
-          cfg.TypeEvaluator = type => type == typeof(ClosedRequestGenericHandler<>);
-        });
+            cfg.RegisterGenericHandlers = true;
+            cfg.RegisterServicesFromAssemblyContaining<ClosedRequestGenericHandler<object>>();
+            cfg.TypeEvaluator = type => type == typeof(ClosedRequestGenericHandler<>);
+          });
     });
 
     services.ShouldNotContain(descriptor => descriptor.ServiceType == typeof(IRequestHandler<ClosedRequest, string>));
@@ -267,9 +267,9 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
     {
       services.AddMediator(cfg =>
           {
-          cfg.RegisterServicesFromAssemblyContaining<MultiRequestHandler>();
-          cfg.TypeEvaluator = type => type == typeof(MultiRequestHandler) || type == typeof(FirstMultiRequestHandler);
-        });
+            cfg.RegisterServicesFromAssemblyContaining<MultiRequestHandler>();
+            cfg.TypeEvaluator = type => type == typeof(MultiRequestHandler) || type == typeof(FirstMultiRequestHandler);
+          });
     });
 
     services.ShouldContain(descriptor =>

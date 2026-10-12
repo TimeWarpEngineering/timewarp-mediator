@@ -29,12 +29,12 @@ public class SendVoidInterfaceTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-          scanner.AddAllTypesOf(typeof(IRequestHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+            scanner.AddAllTypesOf(typeof(IRequestHandler<>));
+          });
       cfg.For<TextWriter>().Use(writer);
       cfg.For<IMediator>().Use<Mediator>();
     });

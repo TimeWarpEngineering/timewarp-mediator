@@ -33,7 +33,7 @@ public class SendScopeAnalyzerTests
   [Fact]
   public async Task Twm003_NotificationHandlerInAnotherPipeline_IsError()
   {
-    const string Source =
+    const string source =
         """
             using System.Threading;
             using System.Threading.Tasks;
@@ -50,7 +50,7 @@ public class SendScopeAnalyzerTests
             }
             """;
 
-    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(source);
     Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
     diagnostic.Id.ShouldBe("TWM003");
     diagnostic.GetMessage().ShouldContain("message 'Note'");
@@ -59,7 +59,7 @@ public class SendScopeAnalyzerTests
   [Fact]
   public async Task Twm003_OnlyOneSideScoped_IsClean()
   {
-    const string Source =
+    const string source =
         """
             using System.Threading;
             using System.Threading.Tasks;
@@ -80,7 +80,7 @@ public class SendScopeAnalyzerTests
             }
             """;
 
-    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(source);
     diagnostics.ShouldBeEmpty();
   }
 

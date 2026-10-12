@@ -46,12 +46,12 @@ public class StreamPipelineBehaviorTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Sing>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
-          scanner.AddAllTypesOf(typeof(IStreamPipelineBehavior<,>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Sing>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IStreamRequestHandler<,>));
+            scanner.AddAllTypesOf(typeof(IStreamPipelineBehavior<,>));
+          });
       cfg.For(typeof(IStreamPipelineBehavior<,>)).Add(typeof(SingSongPipelineBehavior));
       cfg.For<IMediator>().Use<Mediator>();
     });

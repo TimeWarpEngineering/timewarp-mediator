@@ -9,14 +9,14 @@ public class RequestHandlerAnalyzerTests
   [Fact]
   public async Task Twm001_RequestWithNoHandler_IsError()
   {
-    const string Source =
+    const string source =
         """
             using TimeWarp.Mediator;
             [assembly: MediatorAssembly]
             public sealed class Orphan : IRequest<int> { }
             """;
 
-    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(source);
     Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
     diagnostic.Id.ShouldBe("TWM001");
     diagnostic.GetMessage().ShouldBe("Request 'Orphan' has no handler");
@@ -26,19 +26,19 @@ public class RequestHandlerAnalyzerTests
   [Fact]
   public async Task GeneratorHost_LeavesTwm001ToTheGenerator()
   {
-    const string Source =
+    const string source =
         """
             using TimeWarp.Mediator;
             public sealed class Orphan : IRequest<int> { }
             """;
 
-    (await AnalyzerTestHelper.GetDiagnosticsAsync(Source, isHost: true, generatorHost: true)).ShouldBeEmpty();
+    (await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true, generatorHost: true)).ShouldBeEmpty();
   }
 
   [Fact]
   public async Task Twm002_DuplicateHandler_IsError()
   {
-    const string Source =
+    const string source =
         """
             using System.Threading;
             using System.Threading.Tasks;
@@ -55,7 +55,7 @@ public class RequestHandlerAnalyzerTests
             }
             """;
 
-    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(source);
     Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
     diagnostic.Id.ShouldBe("TWM002");
     diagnostic.GetMessage().ShouldBe("Request 'Ping' has multiple handlers: PingHandlerA, PingHandlerB");
@@ -65,20 +65,20 @@ public class RequestHandlerAnalyzerTests
   [Fact]
   public async Task NoMembership_DoesNotDiagnose()
   {
-    const string Source =
+    const string source =
         """
             using TimeWarp.Mediator;
             public sealed class Orphan : IRequest<int> { }
             """;
 
-    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(source);
     diagnostics.ShouldBeEmpty();
   }
 
   [Fact]
   public async Task HandlerPresent_IsClean()
   {
-    const string Source =
+    const string source =
         """
             using System.Threading;
             using System.Threading.Tasks;
@@ -91,14 +91,14 @@ public class RequestHandlerAnalyzerTests
             }
             """;
 
-    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(source);
     diagnostics.ShouldBeEmpty();
   }
 
   [Fact]
   public async Task Twm003_HandlerAndRequestDifferentScopes_IsError()
   {
-    const string Source =
+    const string source =
         """
             using System.Threading;
             using System.Threading.Tasks;
@@ -115,7 +115,7 @@ public class RequestHandlerAnalyzerTests
             }
             """;
 
-    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(source);
     Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
     diagnostic.Id.ShouldBe("TWM003");
     diagnostic.GetMessage().ShouldBe("Handler 'PingHandler' is assigned to pipeline 'ServerPipeline' but message 'Ping' is assigned to pipeline 'ClientPipeline'");
@@ -125,7 +125,7 @@ public class RequestHandlerAnalyzerTests
   [Fact]
   public async Task Twm004_WrongScopeSend_IsError()
   {
-    const string Source =
+    const string source =
         """
             using System.Threading;
             using System.Threading.Tasks;
@@ -156,7 +156,7 @@ public class RequestHandlerAnalyzerTests
             }
             """;
 
-    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(Source);
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(source);
     Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
     diagnostic.Id.ShouldBe("TWM004");
     diagnostic.GetMessage().ShouldBe("Request 'ServerPing' belongs to pipeline 'ServerPipeline' and cannot be sent through 'ISender<ClientPipeline>'");

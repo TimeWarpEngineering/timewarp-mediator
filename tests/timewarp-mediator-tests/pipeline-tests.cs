@@ -242,11 +242,11 @@ public class PipelineTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+          });
       cfg.For<Logger>().Use(output);
       cfg.For<IPipelineBehavior<Ping, Pong>>().Add<OuterBehavior>();
       cfg.For<IPipelineBehavior<Ping, Pong>>().Add<InnerBehavior>();
@@ -277,11 +277,11 @@ public class PipelineTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<>));
+          });
       cfg.For<Logger>().Use(output);
       cfg.For<IPipelineBehavior<VoidPing, Unit>>().Add<OuterVoidBehavior>();
       cfg.For<IPipelineBehavior<VoidPing, Unit>>().Add<InnerVoidBehavior>();
@@ -310,11 +310,11 @@ public class PipelineTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+          });
       cfg.For<Logger>().Use(output);
 
       cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(OuterBehavior<,>));
@@ -347,12 +347,12 @@ public class PipelineTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-          scanner.AddAllTypesOf(typeof(IRequestHandler<>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+            scanner.AddAllTypesOf(typeof(IRequestHandler<>));
+          });
       cfg.For<Logger>().Use(output);
 
       cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(OuterBehavior<,>));
@@ -383,11 +383,11 @@ public class PipelineTests
     {
       cfg.Scan(scanner =>
           {
-          scanner.AssemblyContainingType(typeof(PublishTests));
-          scanner.IncludeNamespaceContainingType<Ping>();
-          scanner.WithDefaultConventions();
-          scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
-        });
+            scanner.AssemblyContainingType(typeof(PublishTests));
+            scanner.IncludeNamespaceContainingType<Ping>();
+            scanner.WithDefaultConventions();
+            scanner.AddAllTypesOf(typeof(IRequestHandler<,>));
+          });
       cfg.For<Logger>().Use(output);
 
       cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(OuterBehavior<,>));
