@@ -27,7 +27,8 @@
   <!-- Include common package files -->
   <ItemGroup Label="Package Content">
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="\" />
-    <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="\" />
+    <!-- Each package ships its own readme (absolute links only: nuget.org cannot resolve relative ones). -->
+    <None Include="$(MSBuildProjectDirectory)/readme.md" Pack="true" PackagePath="\" />
     <!-- Apache-2.0 section 4: redistributions of the MediatR-derived code carry the license and notice. -->
     <None Include="$(RepositoryRoot)notice" Pack="true" PackagePath="\" Visible="false" />
     <None Include="$(RepositoryRoot)unlicense" Pack="true" PackagePath="\" Visible="false" />

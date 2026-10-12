@@ -19,7 +19,7 @@ dotnet run --file tools/dev-cli/dev.cs -- self-install
 |---|---|
 | `./bin/dev build [--clean] [--quiet]` | Build `timewarp-mediator.slnx` |
 | `./bin/dev test [--no-build] [--quiet]` | Run the test suite |
-| `./bin/dev pack [--no-build]` | Pack the four packages to `artifacts/packages` and assert the nupkg layout (analyzer DLLs, `notice`, `unlicense`) |
+| `./bin/dev pack [--no-build]` | Pack the four packages to `artifacts/packages` and assert the nupkg layout (analyzer DLLs, `notice`, `unlicense`, and the package's own `readme.md` with absolute links only) |
 | `./bin/dev verify-samples` | Rebuild every `samples/**/*.csproj` |
 | `./bin/dev workflow [--mode pr\|merge\|release]` | CI pipeline: clean → build → test → pack. Release mode: clean → build → pack → check-version → push |
 | `./bin/dev check-version [--strict]` | Fail if `<Version>` is already published on nuget.org |

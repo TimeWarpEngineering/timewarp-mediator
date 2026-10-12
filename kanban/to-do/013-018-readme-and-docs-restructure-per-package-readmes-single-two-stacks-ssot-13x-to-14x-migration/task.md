@@ -18,10 +18,10 @@
 
 ## Checklist
 
-- [ ] Package readme strategy decided and implemented; `./bin/dev pack` nuspec check
-- [ ] Two-stacks SSOT and pointers
-- [ ] 13.x to 14.x migration section
-- [ ] Nits and badge
+- [x] Package readme strategy decided and implemented; `./bin/dev pack` nuspec check
+- [x] Two-stacks SSOT and pointers
+- [x] 13.x to 14.x migration section
+- [x] Nits and badge
 - [ ] PR with merge commit
 
 ## Notes
@@ -31,3 +31,58 @@ Parent: 013. Coordinate with the release-process doc task to avoid overlapping e
 ## Session
 
 - Created: 686431 (2026-10-11)
+- 2026-10-12: implemented under `ganda task work` (implement oracle).
+
+## Results
+
+**Readme strategy: per-package readmes.** Each packable project has its own
+`source/<project>/readme.md` (package-specific top section, absolute github.com links only, no
+version literals). `source/Directory.Build.props` packs `$(MSBuildProjectDirectory)/readme.md`
+instead of the repository readme. The root `readme.md` is now the GitHub page only.
+
+**Pack gate.** New `tools/dev-cli/services/nupkg-readme-check.cs`; `dev pack` fails when a
+nupkg has no `readme.md`, its first heading is not `# <PackageId>`, or it has a relative link.
+
+**Two-stacks SSOT.** `documentation/generated-vs-legacy.md` owns the two-stacks block,
+packages table, membership table and named-pipeline snippet; readme, m1, m2 and migration keep
+a short pointer. Version literals (`14.0.0-beta.4`) removed from readme, SSOT, m1 and m2 header
+text; install snippets use `dotnet add package ... --prerelease`. Historical "shipped in
+beta.N" bullets in m1 stay (they are facts, not current-version claims).
+
+**Migration.** `migration.md` now has two sections: MediatR → 13.x (unchanged content,
+headings demoted, "full API compatibility" scoped to 13.x) and a new
+"13.x reflection to 14.x generated" section with a feature matrix (streams, exception cascade,
+pre/post processors, behaviors, named pipelines, container support, lifetime, AOT, target)
+and migration steps.
+
+**Nits.** Stray `)` removed; "full API compatibility" no longer contradicts "not a drop-in";
+duplicate intro paragraph and upstream MediatR badges removed; CI badge uses
+`actions/workflows/workflow.yml/badge.svg` (workflow is named `CI/CD`); `IIdempotent` usage
+example added to the readme; internal ids (004-001, 004-002, 013-010, OQ-B, Nuru 444, epic
+005) removed from m1, m2 and m1-benchmark-gap. Also corrected the SSOT Analyzers row
+(generator adds TWM005–TWM011, not only TWM005/TWM006). `agent.md` and `overview.md` describe
+the new readme gate.
+
+Verification: `dev build --clean`, `dev test` green; `dev pack` green with the readme gate;
+negative check (relative link injected into the Contracts readme) fails pack; relative links
+and anchors in readme/migration/documentation resolve; `ganda repo audit` passes.
+
+Note: a first `dev build` failed with CS8784 (generator TypeLoadException on
+`MembershipOptions`) from a stale compiler server; `dotnet build-server shutdown` and a clean
+build fixed it. Not related to this change.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+dotnet run --file tools/dev-cli/dev.cs -- pack
+unzip -p artifacts/packages/TimeWarp.Mediator.Generators.*[0-9].nupkg readme.md | head -3
+grep -n "13.x reflection to 14.x generated" migration.md
+grep -rn "14.0.0-beta.4\|004-00\|OQ-B\|Nuru 444" readme.md documentation/m1-*.md documentation/m2-*.md documentation/generated-vs-legacy.md
+```
+
+**Expect:** pack ends with `Pack completed successfully!` and prints
+`Package layout verified` for all four nupkgs; the Generators nupkg readme starts with
+`# TimeWarp.Mediator.Generators`; migration.md has the 13.x → 14.x heading; the final grep
+prints nothing.

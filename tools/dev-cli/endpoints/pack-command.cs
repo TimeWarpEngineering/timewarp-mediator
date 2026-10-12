@@ -7,7 +7,8 @@
 // first so FindNupkg / push only see this run's nupkgs. Layout gate uses
 // NupkgLayoutCheck so a hollow Analyzers/Generators nupkg, or any nupkg missing
 // notice/unlicense, fails the command
-// the same way the PowerShell zip asserts did.
+// the same way the PowerShell zip asserts did. NupkgReadmeCheck then requires
+// the package's own readme.md with only absolute links.
 #endregion
 
 namespace DevCli.Commands;
@@ -121,6 +122,14 @@ public sealed class PackCommand : ICommand<Unit>
         if (missing.Count > 0)
         {
           Terminal.WriteErrorLine($"{Path.GetFileName(nupkgPath)} is missing: {string.Join(", ", missing)}".Red());
+          Environment.ExitCode = 1;
+          return false;
+        }
+
+        IReadOnlyList<string> readmeProblems = NupkgReadmeCheck.FindProblems(nupkgPath, packageId);
+        if (readmeProblems.Count > 0)
+        {
+          Terminal.WriteErrorLine($"{Path.GetFileName(nupkgPath)}: {string.Join("; ", readmeProblems)}".Red());
           Environment.ExitCode = 1;
           return false;
         }
