@@ -31,6 +31,8 @@ Root-level leftovers and small config defects. Parent review task 013, findings 
 
 Parent: 013.
 
+Review trail: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md` (clean, two rounds, general, effort 2).
+
 ## Results
 
 - B-6 / D-8: `git rm` of `file-mapping.csv`, `files-to-modify.txt`, `files-to-modify-filtered.txt`, `original-fork-files.txt`.
@@ -38,8 +40,16 @@ Parent: 013.
 - D-9: the orphan blip moved to `documentation/archive/posts/blips/`.
 - B-14: `.gitattributes` drops `core.eol crlf` and every `merge=union` line (csproj/vbproj/fsproj/dbproj/sln), adds `*.snk binary`. `build-command.cs` Design comment no longer claims a .sln exists. `skills/.gitkeep` kept: it is the TimeWarp convention scaffold and `ganda repo audit` directory-structure passes with it.
 - B-17: `nuget.config` has no BOM, `<clear />`, and a `packageSourceMapping` of `*` to nuget.org.
-- B-18: agent.md Build Properties notes the snk is an intentional public identity key, that only Mediator and Contracts (of the four packages) are strong-named, and that tests share the key for `InternalsVisibleTo`.
+- B-18: agent.md Build Properties notes the snk is an intentional public identity key, that only Mediator and Contracts (of the four packages) are strong-named, and that only `timewarp-mediator-tests` signs with that key (`tests/Directory.Build.props` turns signing off) so `TimeWarp.Mediator` can grant `InternalsVisibleTo`.
 - Gates: `ganda repo audit` clean; `./bin/dev build --clean` and `./bin/dev test` pass (a stale VBCSCompiler server first served an old Analyzers DLL; `dotnet build-server shutdown` cleared it).
+
+### Review
+
+- Rounds: 2. Roster: general. Effort: 2 (by-diff, 678 lines).
+- Round 1 counts: suggestion 1 open. No bugs, no nits.
+- Round 2 counts: suggestion 0 open / 1 fixed. No wontfix.
+- Disposition: clean. M1 (`agent.md` snk note named the whole test tree as signed; only `timewarp-mediator-tests` is).
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -59,3 +69,4 @@ Expect: every `ls` of a removed path reports "No such file"; `documentation/desi
 ## Session
 
 - Created: 686431 (2026-10-11)
+- Review: Grok `01a1302a-bd57-7e33-ae63-6cb21c134225` (2026-10-12)
