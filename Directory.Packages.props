@@ -15,6 +15,13 @@
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.11" />
   </ItemGroup>
 
+  <!-- tests/timewarp-mediator-package-smoke only: dev pack passes TimeWarpMediatorVersion (the
+       <Version> it just packed), so these resolve to the local nupkgs and nothing else sees them. -->
+  <ItemGroup Label="Package smoke" Condition="'$(TimeWarpMediatorVersion)' != ''">
+    <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="[$(TimeWarpMediatorVersion)]" />
+    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="[$(TimeWarpMediatorVersion)]" />
+  </ItemGroup>
+
   <ItemGroup Label="Dev CLI">
     <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.79" />
     <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0-beta.79" />
