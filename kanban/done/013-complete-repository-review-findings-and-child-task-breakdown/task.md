@@ -28,9 +28,16 @@ Full reviewer reports with file:line evidence live in `review/`:
 - [x] Spot-verify every bug-severity finding against source (C-1, C-3, C-9, C-22, G-3, G-5, G-6, G-7, B-4/D-6 confirmed; B-7/B-9 workflow lines confirmed)
 - [x] File findings in this kitchen
 - [x] Create child tasks 013-001 .. 013-022 and publish them to origin-home to-do
-- [ ] All children merged; parent `done --publish`
+- [x] All children merged; parent `done --publish`
 
 ## Results
+
+### Outcome (2026-10-12)
+
+- All 22 children implemented and merged onto `feature/013-review` via `ganda task work-set --parent 013` (implementer-claude; review by implementer-opencode for 013-001/002, implementer-grok for 013-003 onward after OpenCode hit its usage limit). Child PRs #73-#94.
+- `feature/013-review` merged to master as PR #95 (merge commit `6fcdb67`, 462 files, +22,619 / -12,654, CI green).
+- Consumer acceptance (recorded in 013-015): State, Architecture, and Nuru build with 0 errors against the packed nupkgs. 013-004 touched only the runtime package, which none of them references.
+- Walk incidents filed on ganda: 377 (`--into` branch not verified before the walk), 381 (oracle launcher carries the first child's task id across the set).
 
 ### Baseline
 
