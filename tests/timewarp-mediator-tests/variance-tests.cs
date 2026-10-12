@@ -1,9 +1,13 @@
 namespace TimeWarp.Mediator.Tests;
 
 /// <summary>
-/// Dispatch through C# generic variance on the reflection runtime: <c>INotificationHandler&lt;in T&gt;</c>
-/// and <c>IRequestHandler&lt;in TRequest, TResponse&gt;</c> are contravariant, so a handler for a base
-/// message also handles a derived one.
+/// Reflection-runtime variance. For notifications, the registrar adds every scanned handler
+/// assignable to a closed <c>INotificationHandler&lt;T&gt;</c> that some scanned handler
+/// implements. A derived notification reaches base and interface handlers when a handler for
+/// that derived type is scanned with them, and is not delivered when only base handlers are
+/// scanned. For requests, the registrar keeps a single exact match and does not bind a base
+/// handler to a derived request. The derived-request test registers that closed interface
+/// itself, which compiles because <c>TRequest</c> is contravariant.
 /// </summary>
 public class VarianceTests
 {
@@ -99,7 +103,8 @@ public class VarianceTests
             cfg.TypeEvaluator = ScannedTypes.Contains;
         });
 
-        // Contravariance: the base-request handler satisfies the derived request's handler interface.
+        // The registrar does not map IRequestHandler<Greeting, string> onto FormalGreeting.
+        // Registering the closed interface is legal because TRequest is contravariant.
         services.AddTransient<IRequestHandler<FormalGreeting, string>, GreetingHandler>();
 
         return (services.BuildServiceProvider().GetRequiredService<IMediator>(), log);
@@ -157,7 +162,7 @@ public class VarianceTests
     }
 
     [Fact]
-    public async Task Send_derived_request_should_use_contravariant_base_handler()
+    public async Task Send_explicitly_registered_derived_request_handler_should_see_runtime_type()
     {
         (IMediator mediator, _) = BuildMediator();
 
