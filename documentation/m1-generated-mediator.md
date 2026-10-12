@@ -25,6 +25,7 @@ a **stable 14.0.0**.
 
 - `TimeWarp.Mediator.Analyzers` — TWM001 (request with no handler), TWM002 (duplicate handler). Safe on a library that does **not** run the generator. The library must opt in with `[assembly: MediatorAssembly]`.
 - `TimeWarp.Mediator.Generators` — emits `internal sealed TimeWarp.Mediator.Generated.Mediator : IMediator`, monomorphic `Send`, `Send(object)` switch, `MediatorManifest` v1 (embedded JSON const; source generators cannot write a loose `mediator.manifest.json`), and `AddGeneratedMediator()` (Host profile). Profile `Aot` uses ServiceGen static fields (handlers are process-wide singletons and must be constructible with `new Handler()`, else **TWM006**; `required` members need `[SetsRequiredMembers]`) and does **not** weave `[assembly: MediatorBehavior]` into `Dispatch_*`: each such behavior is **TWM005** and the Aot manifest lists no behaviors (Host/State is the scoped pipeline path). See [generated-vs-legacy.md](./generated-vs-legacy.md#aot--link-profile-limits).
+- Generator diagnostics (013-010): shapes the generated mediator cannot emit are diagnostics, not compile errors inside `.g.cs`. **TWM007** an inaccessible member-assembly type, including a pipeline scope marker (no `InternalsVisibleTo`), **TWM008** missing Contracts or (Host) MS.DI abstractions — nothing is generated, **TWM009** stream/processor/exception handler kinds that are ignored, **TWM010**/**TWM011** `[MediatorBehavior]` entries that are not pipeline behaviors or close over no request. See [diagnostics.md](./diagnostics.md).
 - Contracts: `IAction` / `IActionHandler` / `ActionHandler` (`ValueTask`), `ICommand` / `IQuery` + handlers, membership attributes, `NoHandlerException`.
 - Contracts (14.0.0-beta.2): `IIdempotent` marker, `IIdempotentCommand` / `IIdempotentCommand<T>` (`: ICommand…, IIdempotent`) + `IIdempotentCommandHandler<>` / `IIdempotentCommandHandler<,>`. `IQuery<T>` now implements `IIdempotent`. Dispatch is identical to `ICommand`; idempotency-key enforcement and a dedup store are out of scope.
 - Generator (14.0.0-beta.3, [#68](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/68)): `IRequestHandler<T, Unit>` dispatches as a response-returning request (only `IRequestHandler<T>` is void), and array / other non-named responses (`IQuery<T[]>`) are discovered and close pipeline behaviors.
@@ -73,8 +74,9 @@ Hosts that reference the generator package get `TimeWarpMediatorAssembly=true` f
 | `ISender<TScope>` / `IPublisher<TScope>` named pipelines | **004-002** — see [m2-named-pipelines.md](./m2-named-pipelines.md) |
 | Call-site interceptors as default dispatch | after M2; CallSiteInlining is measured only |
 | Call-graph pruning / WASM-mini `Send(object)` strip | later profile |
-| Streams (`CreateStream`) | later; generated Mediator throws `NotSupportedException` |
-| Typed exception cascade (`IRequestExceptionHandler`) | later |
+| Streams (`CreateStream`, `IStreamRequestHandler`, `IStreamPipelineBehavior`) | later; generated Mediator throws `NotSupportedException` and member-assembly stream handlers are **TWM009** |
+| Pre/post processors (`IRequestPreProcessor`, `IRequestPostProcessor`) | later; member-assembly processors are **TWM009** |
+| Typed exception cascade (`IRequestExceptionHandler`, `IRequestExceptionAction`) | later; member-assembly exception handlers/actions are **TWM009** |
 | TimeWarp.State NuGet switch | file after this milestone merges |
 | TimeWarp.ServiceGen (Nuru 444) | not on this epic's critical path |
 | `AddMediator()` auto-preferring the generated type | later coexistence polish; M1 uses `AddGeneratedMediator()` |

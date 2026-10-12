@@ -433,12 +433,12 @@ internal static class MediatorEmitter
     {
         builder.AppendLine("    public global::System.Collections.Generic.IAsyncEnumerable<TResponse> CreateStream<TResponse>(global::TimeWarp.Mediator.IStreamRequest<TResponse> request, global::System.Threading.CancellationToken cancellationToken = default)");
         builder.AppendLine("    {");
-        builder.AppendLine("        throw new global::System.NotSupportedException(\"Stream dispatch is deferred past M1 (004-001). Named pipelines (004-002) do not add streams.\");");
+        builder.AppendLine("        throw new global::System.NotSupportedException(\"The generated mediator does not dispatch stream requests. Use the reflection-based TimeWarp.Mediator runtime (AddMediator) for IStreamRequest handlers.\");");
         builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    public global::System.Collections.Generic.IAsyncEnumerable<object?> CreateStream(object request, global::System.Threading.CancellationToken cancellationToken = default)");
         builder.AppendLine("    {");
-        builder.AppendLine("        throw new global::System.NotSupportedException(\"Stream dispatch is deferred past M1 (004-001). Named pipelines (004-002) do not add streams.\");");
+        builder.AppendLine("        throw new global::System.NotSupportedException(\"The generated mediator does not dispatch stream requests. Use the reflection-based TimeWarp.Mediator runtime (AddMediator) for IStreamRequest handlers.\");");
         builder.AppendLine("    }");
         builder.AppendLine();
     }

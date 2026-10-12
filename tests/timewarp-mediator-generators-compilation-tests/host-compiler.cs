@@ -24,10 +24,20 @@ internal static class HostCompiler
         string profile = "Host",
         params MetadataReference[] hostReferences)
     {
+        return CompileWithReferences(assemblyName, source, profile, GetBaseReferences().Concat(hostReferences));
+    }
+
+    // Exact reference set, for hosts that are missing Contracts or the MS.DI abstractions.
+    internal static HostCompilation CompileWithReferences(
+        string assemblyName,
+        string source,
+        string profile,
+        IEnumerable<MetadataReference> references)
+    {
         CSharpCompilation compilation = CSharpCompilation.Create(
             assemblyName,
             syntaxTrees: new[] { CSharpSyntaxTree.ParseText(source, ParseOptions) },
-            references: GetBaseReferences().Concat(hostReferences),
+            references: references,
             options: CompilationOptions);
 
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
@@ -48,7 +58,29 @@ internal static class HostCompiler
         return new HostCompilation(output, generatorDiagnostics.AddRange(output.GetDiagnostics()));
     }
 
+    // A member assembly compiled without the generator, as a referenced library project would be.
+    internal static MetadataReference CompileLibrary(string assemblyName, string source)
+    {
+        CSharpCompilation compilation = CSharpCompilation.Create(
+            assemblyName,
+            syntaxTrees: new[] { CSharpSyntaxTree.ParseText(source, ParseOptions) },
+            references: GetBaseReferences(),
+            options: CompilationOptions);
+        using MemoryStream stream = new();
+        EmitResult result = compilation.Emit(stream);
+        result.Success.ShouldBeTrue(string.Join(Environment.NewLine, result.Diagnostics));
+        return MetadataReference.CreateFromImage(stream.ToArray());
+    }
+
     internal static IEnumerable<MetadataReference> GetBaseReferences()
+    {
+        List<MetadataReference> references = GetSystemReferences();
+        references.Add(MetadataReference.CreateFromFile(typeof(IMediator).Assembly.Location));
+        references.Add(MetadataReference.CreateFromFile(typeof(Microsoft.Extensions.DependencyInjection.IServiceCollection).Assembly.Location));
+        return references;
+    }
+
+    internal static List<MetadataReference> GetSystemReferences()
     {
         List<MetadataReference> references = new();
         string? trusted = AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
@@ -65,8 +97,6 @@ internal static class HostCompiler
             }
         }
 
-        references.Add(MetadataReference.CreateFromFile(typeof(IMediator).Assembly.Location));
-        references.Add(MetadataReference.CreateFromFile(typeof(Microsoft.Extensions.DependencyInjection.IServiceCollection).Assembly.Location));
         return references;
     }
 

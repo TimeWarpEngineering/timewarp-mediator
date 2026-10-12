@@ -18,6 +18,14 @@
 // Void dispatch comes from matching IRequestHandler<T>, never from TResponse == Unit: an explicit
 // IRequestHandler<T, Unit> returns Task<Unit> and must be registered as the two-arity interface.
 // Responses are ITypeSymbol so arrays and other non-named types (T[]) bind like named ones.
+// A handler, message, response, behavior, or pipeline scope marker the host cannot access
+// (internal in a referenced member without InternalsVisibleTo) is not bound and is TWM007,
+// never CS0122 in generated code; its message is then not TWM001. Generated senders and
+// publishers name that marker. Handler kinds the generated mediator ignores are TWM009, and
+// [MediatorBehavior] entries that are not pipeline behaviors or close over no request are
+// TWM010/TWM011. Those land in GeneratorDiagnostics so the analyzer-only package stays TWM001–TWM004.
+// Diagnostic locations are limited to this compilation's syntax trees: analyzers and generators
+// may not report into another project's source.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
@@ -33,6 +41,17 @@ public static class MessageGraphBuilder
     private const string Notification0 = "TimeWarp.Mediator.INotification";
     private const string UnitTypeName = "TimeWarp.Mediator.Unit";
 
+    // Handler kinds the generated mediator does not dispatch (TWM009).
+    private static readonly string[] UnsupportedHandlerKinds =
+    {
+        "TimeWarp.Mediator.IStreamRequestHandler`2",
+        "TimeWarp.Mediator.IStreamPipelineBehavior`2",
+        "TimeWarp.Mediator.Pipeline.IRequestPreProcessor`1",
+        "TimeWarp.Mediator.Pipeline.IRequestPostProcessor`2",
+        "TimeWarp.Mediator.Pipeline.IRequestExceptionHandler`3",
+        "TimeWarp.Mediator.Pipeline.IRequestExceptionAction`2",
+    };
+
     public static MessageGraph Build(Compilation compilation, Membership membership)
     {
         INamedTypeSymbol? requestHandler1 = compilation.GetTypeByMetadataName(RequestHandler1);
@@ -43,8 +62,16 @@ public static class MessageGraphBuilder
         INamedTypeSymbol? request1 = compilation.GetTypeByMetadataName(Request1);
         INamedTypeSymbol? notification0 = compilation.GetTypeByMetadataName(Notification0);
         INamedTypeSymbol? unitType = compilation.GetTypeByMetadataName(UnitTypeName);
+        ImmutableArray<INamedTypeSymbol> unsupportedKinds = UnsupportedHandlerKinds
+            .Select(compilation.GetTypeByMetadataName)
+            .Where(kind => kind is not null)
+            .Select(kind => kind!)
+            .ToImmutableArray();
 
         List<Diagnostic> diagnostics = new();
+        List<Diagnostic> generatorDiagnostics = new();
+        AccessGuard access = new(compilation, generatorDiagnostics);
+        HashSet<INamedTypeSymbol> droppedMessages = new(SymbolEqualityComparer.Default);
         Dictionary<INamedTypeSymbol, List<INamedTypeSymbol>> handlersByRequest =
             new(SymbolEqualityComparer.Default);
         Dictionary<INamedTypeSymbol, ITypeSymbol> responseByRequest =
@@ -63,10 +90,17 @@ public static class MessageGraphBuilder
                     continue;
                 }
 
-                CollectRequest(type, request0, request1, requests);
+                CollectRequest(compilation, type, request0, request1, requests);
+                ReportUnsupportedKinds(compilation, type, unsupportedKinds, generatorDiagnostics);
 
                 foreach (RequestHandlerMatch match in GetRequestHandlers(type, requestHandler1, requestHandler2, unitType, membership))
                 {
+                    if (!access.Allows(type) || !access.Allows(match.RequestType) || !access.Allows(match.ResponseType))
+                    {
+                        droppedMessages.Add(match.RequestType);
+                        continue;
+                    }
+
                     if (!handlersByRequest.TryGetValue(match.RequestType, out List<INamedTypeSymbol>? list))
                     {
                         list = new List<INamedTypeSymbol>();
@@ -85,6 +119,11 @@ public static class MessageGraphBuilder
 
                 foreach (INamedTypeSymbol notificationType in GetNotificationHandlers(type, notificationHandler1, membership))
                 {
+                    if (!access.Allows(type) || !access.Allows(notificationType))
+                    {
+                        continue;
+                    }
+
                     if (!handlersByNotification.TryGetValue(notificationType, out List<INamedTypeSymbol>? list))
                     {
                         list = new List<INamedTypeSymbol>();
@@ -106,7 +145,13 @@ public static class MessageGraphBuilder
             SortByDisplayName(list);
         }
 
-        ImmutableArray<BehaviorRegistration> behaviors = DiscoverBehaviors(membership, pipelineBehavior2);
+        ImmutableArray<BehaviorRegistration> behaviors = DiscoverBehaviors(
+            compilation,
+            membership,
+            pipelineBehavior2,
+            access,
+            generatorDiagnostics);
+        HashSet<BehaviorRegistration> wovenBehaviors = new();
 
         foreach (INamedTypeSymbol requestType in requests)
         {
@@ -115,7 +160,7 @@ public static class MessageGraphBuilder
                 continue;
             }
 
-            if (!membership.Includes(requestType))
+            if (!membership.Includes(requestType) || droppedMessages.Contains(requestType))
             {
                 continue;
             }
@@ -128,7 +173,7 @@ public static class MessageGraphBuilder
                 diagnostics.Add(
                     Diagnostic.Create(
                         DiagnosticDescriptors.RequestHasNoHandler,
-                        GetSourceLocation(requestType),
+                        GetSourceLocation(compilation, requestType),
                         requestType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
             }
             else if (handlerCount > 1 && handlerList is not null)
@@ -139,7 +184,7 @@ public static class MessageGraphBuilder
                 diagnostics.Add(
                     Diagnostic.Create(
                         DiagnosticDescriptors.DuplicateHandler,
-                        GetSourceLocation(handlerList[1]),
+                        GetSourceLocation(compilation, handlerList[1]),
                         requestType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
                         names));
             }
@@ -160,28 +205,21 @@ public static class MessageGraphBuilder
 
             INamedTypeSymbol? handlerScope = ResolveScope(handlerType);
             INamedTypeSymbol? requestScope = ResolveScope(requestType);
-            if (handlerScope is not null
-                && requestScope is not null
-                && !SymbolEqualityComparer.Default.Equals(handlerScope, requestScope))
-            {
-                diagnostics.Add(
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.ScopeMismatch,
-                        GetSourceLocation(handlerType),
-                        handlerType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-                        handlerScope.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-                        requestType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-                        requestScope.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
-            }
+            ReportScopeMismatch(compilation, handlerType, handlerScope, requestType, requestScope, diagnostics);
 
             INamedTypeSymbol? scopeType = handlerScope ?? requestScope;
+            if (!PipelineScopeAllowed(access, scopeType))
+            {
+                continue;
+            }
 
             ImmutableArray<INamedTypeSymbol> closedBehaviors = CloseBehaviors(
                 behaviors,
                 requestType,
                 responseType,
                 pipelineBehavior2,
-                scopeType);
+                scopeType,
+                wovenBehaviors);
 
             requestBindings.Add(
                 new RequestBinding(
@@ -193,13 +231,36 @@ public static class MessageGraphBuilder
                     scopeType));
         }
 
+        foreach (BehaviorRegistration registration in behaviors)
+        {
+            if (wovenBehaviors.Contains(registration))
+            {
+                continue;
+            }
+
+            generatorDiagnostics.Add(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.BehaviorAppliesToNoRequest,
+                    registration.Location,
+                    registration.BehaviorType.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                    registration.ScopeType?.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) ?? "unscoped"));
+        }
+
         ImmutableArray<NotificationBinding>.Builder notificationBindings = ImmutableArray.CreateBuilder<NotificationBinding>();
         List<NotificationGroup> groupedNotifications = new();
         foreach (KeyValuePair<INamedTypeSymbol, List<INamedTypeSymbol>> pair in handlersByNotification)
         {
+            INamedTypeSymbol? notificationScope = ResolveScope(pair.Key);
             foreach (INamedTypeSymbol handler in pair.Value)
             {
-                INamedTypeSymbol? scopeType = ResolveScope(handler) ?? ResolveScope(pair.Key);
+                INamedTypeSymbol? handlerScope = ResolveScope(handler);
+                ReportScopeMismatch(compilation, handler, handlerScope, pair.Key, notificationScope, diagnostics);
+                INamedTypeSymbol? scopeType = handlerScope ?? notificationScope;
+                if (!PipelineScopeAllowed(access, scopeType))
+                {
+                    continue;
+                }
+
                 NotificationGroup? bucket = null;
                 foreach (NotificationGroup candidate in groupedNotifications)
                 {
@@ -236,16 +297,83 @@ public static class MessageGraphBuilder
             requestBindings.ToImmutable(),
             notificationBindings.ToImmutable(),
             diagnostics.ToImmutableArray(),
+            generatorDiagnostics.ToImmutableArray(),
             membership);
     }
 
+    private static void ReportScopeMismatch(
+        Compilation compilation,
+        INamedTypeSymbol handlerType,
+        INamedTypeSymbol? handlerScope,
+        INamedTypeSymbol messageType,
+        INamedTypeSymbol? messageScope,
+        List<Diagnostic> diagnostics)
+    {
+        if (handlerScope is null
+            || messageScope is null
+            || SymbolEqualityComparer.Default.Equals(handlerScope, messageScope))
+        {
+            return;
+        }
+
+        diagnostics.Add(
+            Diagnostic.Create(
+                DiagnosticDescriptors.ScopeMismatch,
+                GetSourceLocation(compilation, handlerType),
+                handlerType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                handlerScope.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                messageType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                messageScope.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+    }
+
+    // The emitted pipeline names this marker. An inaccessible marker is TWM007 and is left unbound.
+    private static bool PipelineScopeAllowed(AccessGuard access, INamedTypeSymbol? scopeType)
+    {
+        return scopeType is null || access.Allows(scopeType);
+    }
+
+    // One TWM009 per class and ignored interface definition (a class handling two stream requests is one warning).
+    private static void ReportUnsupportedKinds(
+        Compilation compilation,
+        INamedTypeSymbol type,
+        ImmutableArray<INamedTypeSymbol> unsupportedKinds,
+        List<Diagnostic> generatorDiagnostics)
+    {
+        if (unsupportedKinds.IsEmpty || type.TypeKind != TypeKind.Class || type.IsAbstract)
+        {
+            return;
+        }
+
+        foreach (INamedTypeSymbol kind in unsupportedKinds)
+        {
+            if (!type.AllInterfaces.Any(iface => SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, kind)))
+            {
+                continue;
+            }
+
+            generatorDiagnostics.Add(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.UnsupportedHandlerKind,
+                    GetSourceLocation(compilation, type),
+                    type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                    kind.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+        }
+    }
+
     private static void CollectRequest(
+        Compilation compilation,
         INamedTypeSymbol type,
         INamedTypeSymbol? request0,
         INamedTypeSymbol? request1,
         HashSet<INamedTypeSymbol> requests)
     {
         if (type.TypeKind is not (TypeKind.Class or TypeKind.Struct) || type.IsAbstract || type.Arity > 0)
+        {
+            return;
+        }
+
+        // An inaccessible request cannot appear in generated code; its handler reports TWM007.
+        if (!compilation.IsSymbolAccessibleWithin(type, compilation.Assembly))
         {
             return;
         }
@@ -352,8 +480,11 @@ public static class MessageGraphBuilder
     }
 
     private static ImmutableArray<BehaviorRegistration> DiscoverBehaviors(
+        Compilation compilation,
         Membership membership,
-        INamedTypeSymbol? pipelineBehavior2)
+        INamedTypeSymbol? pipelineBehavior2,
+        AccessGuard access,
+        List<Diagnostic> generatorDiagnostics)
     {
         List<BehaviorRegistration> list = new();
         int sourceIndex = 0;
@@ -391,13 +522,25 @@ public static class MessageGraphBuilder
                     }
                 }
 
+                Location location = GetAttributeLocation(compilation, attribute);
+                INamedTypeSymbol definition = behaviorType.OriginalDefinition;
                 if (pipelineBehavior2 is not null && !ImplementsGeneric(behaviorType, pipelineBehavior2)
-                    && !ImplementsGeneric(behaviorType.OriginalDefinition, pipelineBehavior2))
+                    && !ImplementsGeneric(definition, pipelineBehavior2))
+                {
+                    generatorDiagnostics.Add(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.InvalidBehaviorRegistration,
+                            location,
+                            definition.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                    continue;
+                }
+
+                if (!access.Allows(definition))
                 {
                     continue;
                 }
 
-                list.Add(new BehaviorRegistration(behaviorType, order, sourceIndex, scopeType));
+                list.Add(new BehaviorRegistration(behaviorType, order, sourceIndex, scopeType, location));
                 sourceIndex++;
             }
         }
@@ -413,7 +556,8 @@ public static class MessageGraphBuilder
         INamedTypeSymbol requestType,
         ITypeSymbol responseType,
         INamedTypeSymbol? pipelineBehavior2,
-        INamedTypeSymbol? requestScope)
+        INamedTypeSymbol? requestScope,
+        HashSet<BehaviorRegistration> wovenBehaviors)
     {
         ImmutableArray<INamedTypeSymbol>.Builder builder = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
         foreach (BehaviorRegistration registration in behaviors)
@@ -427,6 +571,7 @@ public static class MessageGraphBuilder
             if (closed is not null)
             {
                 builder.Add(closed);
+                wovenBehaviors.Add(registration);
             }
         }
 
@@ -685,17 +830,25 @@ public static class MessageGraphBuilder
         return false;
     }
 
-    private static Location GetSourceLocation(ISymbol symbol)
+    private static Location GetSourceLocation(Compilation compilation, ISymbol symbol)
     {
         foreach (Location location in symbol.Locations)
         {
-            if (location.IsInSource)
+            if (location.IsInSource && compilation.ContainsSyntaxTree(location.SourceTree!))
             {
                 return location;
             }
         }
 
         return Location.None;
+    }
+
+    private static Location GetAttributeLocation(Compilation compilation, AttributeData attribute)
+    {
+        SyntaxReference? reference = attribute.ApplicationSyntaxReference;
+        return reference is not null && compilation.ContainsSyntaxTree(reference.SyntaxTree)
+            ? reference.GetSyntax().GetLocation()
+            : Location.None;
     }
 
     public static string Sanitize(INamedTypeSymbol type)
@@ -731,6 +884,69 @@ public static class MessageGraphBuilder
         public ITypeSymbol ResponseType { get; }
 
         public bool IsVoid { get; }
+    }
+
+    // Reports TWM007 once per inaccessible type and says whether a type may appear in generated code.
+    private sealed class AccessGuard
+    {
+        private readonly Compilation Compilation;
+        private readonly List<Diagnostic> Diagnostics;
+        private readonly HashSet<ITypeSymbol> Reported = new(SymbolEqualityComparer.Default);
+
+        public AccessGuard(Compilation compilation, List<Diagnostic> diagnostics)
+        {
+            Compilation = compilation;
+            Diagnostics = diagnostics;
+        }
+
+        public bool Allows(ITypeSymbol type)
+        {
+            ITypeSymbol? inaccessible = FindInaccessible(type);
+            if (inaccessible is null)
+            {
+                return true;
+            }
+
+            if (Reported.Add(inaccessible))
+            {
+                Diagnostics.Add(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.InaccessibleMemberType,
+                        GetSourceLocation(Compilation, inaccessible),
+                        inaccessible.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                        inaccessible.ContainingAssembly?.Name ?? string.Empty,
+                        Compilation.AssemblyName ?? string.Empty));
+            }
+
+            return false;
+        }
+
+        private ITypeSymbol? FindInaccessible(ITypeSymbol type)
+        {
+            if (type is IArrayTypeSymbol array)
+            {
+                return FindInaccessible(array.ElementType);
+            }
+
+            if (type is INamedTypeSymbol named)
+            {
+                foreach (ITypeSymbol argument in named.TypeArguments)
+                {
+                    ITypeSymbol? inner = FindInaccessible(argument);
+                    if (inner is not null)
+                    {
+                        return inner;
+                    }
+                }
+
+                INamedTypeSymbol definition = named.OriginalDefinition;
+                return Compilation.IsSymbolAccessibleWithin(definition, Compilation.Assembly) ? null : definition;
+            }
+
+            return type is ITypeParameterSymbol || Compilation.IsSymbolAccessibleWithin(type, Compilation.Assembly)
+                ? null
+                : type;
+        }
     }
 
     private sealed class NotificationGroup
