@@ -2,25 +2,25 @@
 
 namespace TimeWarp.Mediator.Wrappers;
 
-public abstract class RequestHandlerBase
+internal abstract class RequestHandlerBase
 {
     public abstract Task<object?> Handle(object request, IServiceProvider serviceProvider,
         CancellationToken cancellationToken);
 }
 
-public abstract class RequestHandlerWrapper<TResponse> : RequestHandlerBase
+internal abstract class RequestHandlerWrapper<TResponse> : RequestHandlerBase
 {
     public abstract Task<TResponse> Handle(IRequest<TResponse> request, IServiceProvider serviceProvider,
         CancellationToken cancellationToken);
 }
 
-public abstract class RequestHandlerWrapper : RequestHandlerBase
+internal abstract class RequestHandlerWrapper : RequestHandlerBase
 {
     public abstract Task<Unit> Handle(IRequest request, IServiceProvider serviceProvider,
         CancellationToken cancellationToken);
 }
 
-public class RequestHandlerWrapperImpl<TRequest, TResponse> : RequestHandlerWrapper<TResponse>
+internal class RequestHandlerWrapperImpl<TRequest, TResponse> : RequestHandlerWrapper<TResponse>
     where TRequest : IRequest<TResponse>
 {
     public override async Task<object?> Handle(object request, IServiceProvider serviceProvider,
@@ -41,7 +41,7 @@ public class RequestHandlerWrapperImpl<TRequest, TResponse> : RequestHandlerWrap
     }
 }
 
-public class RequestHandlerWrapperImpl<TRequest> : RequestHandlerWrapper
+internal class RequestHandlerWrapperImpl<TRequest> : RequestHandlerWrapper
     where TRequest : IRequest
 {
     public override async Task<object?> Handle(object request, IServiceProvider serviceProvider,

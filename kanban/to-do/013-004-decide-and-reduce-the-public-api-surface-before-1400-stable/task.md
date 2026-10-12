@@ -20,11 +20,12 @@ Implementation types in TimeWarp.Mediator are public and cannot change later wit
 
 ## Checklist
 
-- [ ] Inventory references to each candidate type across source, tests, samples, generators
-- [ ] Internalize wrappers and registrar (or record why not)
-- [ ] Remove or obsolete `ServiceFactory`; fix stale comment and `service-factory-tests.cs` name
-- [ ] Rename `serviceFactory` parameter
-- [ ] Release-notes entry; `./bin/dev workflow` green; PR with merge commit
+- [x] Inventory references to each candidate type across source, tests, samples, generators
+- [x] Internalize wrappers and registrar (or record why not)
+- [x] Remove or obsolete `ServiceFactory`; fix stale comment and `service-factory-tests.cs` name
+- [x] Rename `serviceFactory` parameter
+- [x] Release-notes entry; `./bin/dev workflow` green
+- [ ] PR with merge commit (host open-pr node)
 
 ## Notes
 
@@ -71,3 +72,56 @@ Expect no output from the loop.
 ## Session
 
 - Created: 686431 (2026-10-11)
+- Implement (2026-10-12): internalized wrappers + registrar, removed `ServiceFactory`, release notes added.
+
+## Results
+
+### Inventory (2026-10-12, this branch)
+
+- Wrappers (`RequestHandlerBase`, `RequestHandlerWrapper*`, `NotificationHandlerWrapper*`): used only by `mediator.cs` private fields/locals. No use in Generators, Analyzers, Contracts, tests, or samples.
+- `ServiceRegistrar`: used by `ServiceCollectionExtensions.AddMediator` and by `generic-request-handler-tests.cs` (`GenerateCombinations` cap tests).
+- `ServiceFactory`: no library use. Only the Windsor sample used it, as a Windsor-side resolver delegate unrelated to `Mediator` (which takes `IServiceProvider`).
+- Consumer re-run against current masters (state 3fb65048, architecture 41c20d085, nuru c3bb5952): the inventory loop prints nothing. None of the three references the `TimeWarp.Mediator` runtime package. Nuru's three `TimeWarp.Mediator` hits in props files are `<Using Include=...>` namespace imports, not package references.
+
+### Changes
+
+- `wrappers/request-handler-wrapper.cs`, `wrappers/notification-handler-wrapper.cs`: all types now `internal`, which matches the stream wrappers. The `serviceFactory` parameter is renamed `serviceProvider`.
+- `registration/service-registrar.cs`: `ServiceRegistrar` is now `internal static`. The stale "ServiceFactory/IMediator" TryAdd comment is fixed.
+- `service-factory.cs` deleted (the type is removed, not `[Obsolete]`; this is still a beta).
+- Windsor sample: declares its own `internal delegate object ServiceFactory(Type)` in `samples/timewarp-mediator-examples-windsor/service-factory.cs`.
+- `InternalsVisibleTo` to `timewarp-mediator-tests` (with the public key) in `timewarp-mediator.csproj`. The tests project is now signed with `timewarp-mediator.snk`, which `InternalsVisibleTo` from a strong-named assembly requires.
+- `tests/.../service-factory-tests.cs` renamed with `git mv` to `missing-handler-tests.cs` (`MissingHandlerTests`).
+- `documentation/release-notes/release-notes-v14.0.0.md`: a breaking-changes table listing each type that was removed or internalized, with its replacement. 013-017 should extend this file instead of starting a new 14.0.0 note.
+
+### Kept public (with reason)
+
+These are reachable from consumer-facing signatures or configuration:
+- `NotificationHandlerExecutor`: used in `INotificationPublisher.Publish` and `Mediator.PublishCore`.
+- `ForeachAwaitPublisher` and `TaskWhenAllPublisher`: values for `MediatorServiceConfiguration.NotificationPublisher`.
+- `MediatorServiceConfiguration`, `OpenBehavior`, `RequestExceptionActionProcessorStrategy`.
+- `RequestExceptionHandlerState<T>`: appears in the `IRequestExceptionHandler` signature.
+- The four built-in behaviors: non-MS-DI containers register them by hand (Windsor and other samples).
+
+### Consumer acceptance build
+
+Not run as a separate local-feed build. Every changed file is in the `TimeWarp.Mediator` runtime package, which none of State, Architecture, or Nuru references. Contracts, Generators, and Analyzers are byte-for-byte unaffected by this diff. Packing under the same `14.0.0-beta.4` version would also resolve from the NuGet cache, so the consumer build would not exercise these packages. The consumer grep above is the effective acceptance check.
+
+### How to validate
+
+Smoke:
+
+```bash
+./bin/dev workflow
+grep -nE '^(public|internal)[a-z ]* class' source/timewarp-mediator/wrappers/*.cs source/timewarp-mediator/registration/*.cs
+test ! -e source/timewarp-mediator/service-factory.cs && echo removed
+dotnet test tests/timewarp-mediator-tests/timewarp-mediator-tests.csproj -c Release --filter "FullyQualifiedName~GenericRequestHandlerTests|FullyQualifiedName~MissingHandlerTests"
+```
+
+Expect:
+
+- `Pipeline SUCCEEDED`, with timewarp-mediator-tests at 195 passed and 2 skipped.
+- Every listed wrapper and registrar type begins with `internal`.
+- The test prints `removed`.
+- The filtered tests pass, including the `ServiceRegistrar.GenerateCombinations` cap tests, which reach the internal registrar through `InternalsVisibleTo`.
+- The consumer inventory loop in Notes prints nothing.
+
