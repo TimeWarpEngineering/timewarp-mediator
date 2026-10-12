@@ -15,6 +15,27 @@ register the source-generated mediator. TimeWarp.State and TimeWarp.Nuru must ca
 `AddMediator()` does not prefer, wrap, or fall through to the generated type. That shim is
 deferred (see [m1-generated-mediator.md](./m1-generated-mediator.md) deferred table).
 
+## Trimming and NativeAOT
+
+The reflection runtime (`TimeWarp.Mediator`) is **not** trim or NativeAOT safe. It scans
+assemblies, closes generic wrapper and handler types with `MakeGenericType`, creates them with
+`Activator.CreateInstance`, and invokes exception handlers and actions through `MethodInfo`.
+
+The reflection entry points carry `[RequiresUnreferencedCode]` and `[RequiresDynamicCode]`:
+
+- `services.AddMediator(...)` (both overloads)
+- the `Mediator` constructors
+- the `RequestExceptionProcessorBehavior<,>` and `RequestExceptionActionProcessorBehavior<,>` constructors
+
+A host that publishes with `PublishTrimmed` or `PublishAot` (or sets `IsAotCompatible`) gets
+**IL2026** / **IL3050** at each call site. Do not suppress them: switch the host to the
+generated path.
+
+The generated path (`AddGeneratedMediator()` from `TimeWarp.Mediator.Contracts` +
+`TimeWarp.Mediator.Generators`) is trim and NativeAOT safe. It does not reference the
+`TimeWarp.Mediator` assembly. `samples/timewarp-mediator-examples-aot` publishes with
+`PublishAot`, `IsAotCompatible`, and the trim/AOT analyzers on, with no IL2026/IL3050 `NoWarn`.
+
 ## 14.0.0-beta is not a drop-in for 13.0.0
 
 As of `14.0.0-beta.4`, the generated stack is proven only against the M1/M2 golden files in

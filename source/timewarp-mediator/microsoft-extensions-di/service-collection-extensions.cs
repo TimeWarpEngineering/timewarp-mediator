@@ -7,6 +7,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// - Scans for handler interface implementations and registers them as <see cref="ServiceLifetime.Transient"/>
 /// - Registers <see cref="IMediator"/>, <see cref="ISender"/>, and <see cref="IPublisher"/> under <see cref="MediatorServiceConfiguration.Lifetime"/>
 /// - Registers <see cref="RequestPreProcessorBehavior{TRequest,TResponse}"/> and <see cref="RequestPostProcessorBehavior{TRequest,TResponse}"/> when pre- or post-processors are configured
+/// The reflection runtime is not trim or NativeAOT safe; use the source-generated <c>AddGeneratedMediator()</c> for those hosts.
 /// After calling AddMediator you can use the container to resolve an <see cref="IMediator"/> instance.
 /// Other <see cref="IPipelineBehavior{TRequest,TResponse}"/> implementations are not scanned; register them through
 /// <see cref="MediatorServiceConfiguration.AddBehavior(Type, ServiceLifetime)"/> or <see cref="MediatorServiceConfiguration.AddOpenBehavior(Type, ServiceLifetime)"/>.
@@ -19,6 +20,8 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection</param>
     /// <param name="configuration">The action used to configure the options</param>
     /// <returns>Service collection</returns>
+    [RequiresUnreferencedCode(TrimmingMessages.UnreferencedCode)]
+    [RequiresDynamicCode(TrimmingMessages.DynamicCode)]
     public static IServiceCollection AddMediator(this IServiceCollection services, 
         Action<MediatorServiceConfiguration> configuration)
     {
@@ -45,6 +48,8 @@ public static class ServiceCollectionExtensions
     /// <param name="services">Service collection</param>
     /// <param name="configuration">Configuration options</param>
     /// <returns>Service collection</returns>
+    [RequiresUnreferencedCode(TrimmingMessages.UnreferencedCode)]
+    [RequiresDynamicCode(TrimmingMessages.DynamicCode)]
     public static IServiceCollection AddMediator(this IServiceCollection services, 
         MediatorServiceConfiguration configuration)
     {

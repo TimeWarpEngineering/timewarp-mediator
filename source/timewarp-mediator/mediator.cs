@@ -5,6 +5,7 @@ namespace TimeWarp.Mediator;
 /// <summary>
 /// Legacy reflection dispatcher (MakeGenericType + wrapper caches). Prefer the source-generated
 /// <c>TimeWarp.Mediator.Generated.Mediator</c> from TimeWarp.Mediator.Generators when present.
+/// Not trim or NativeAOT safe.
 /// </summary>
 public class Mediator : IMediator
 {
@@ -23,6 +24,8 @@ public class Mediator : IMediator
     /// Initializes a new instance of the <see cref="Mediator"/> class.
     /// </summary>
     /// <param name="serviceProvider">Service provider. Can be a scoped or root provider</param>
+    [RequiresUnreferencedCode(TrimmingMessages.UnreferencedCode)]
+    [RequiresDynamicCode(TrimmingMessages.DynamicCode)]
     public Mediator(IServiceProvider serviceProvider) 
         : this(serviceProvider, new ForeachAwaitPublisher()) { }
 
@@ -31,6 +34,8 @@ public class Mediator : IMediator
     /// </summary>
     /// <param name="serviceProvider">Service provider. Can be a scoped or root provider</param>
     /// <param name="publisher">Notification publisher. Defaults to <see cref="ForeachAwaitPublisher"/>.</param>
+    [RequiresUnreferencedCode(TrimmingMessages.UnreferencedCode)]
+    [RequiresDynamicCode(TrimmingMessages.DynamicCode)]
     public Mediator(IServiceProvider serviceProvider, INotificationPublisher publisher)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
