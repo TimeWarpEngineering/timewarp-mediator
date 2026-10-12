@@ -10,11 +10,13 @@ public sealed class MessageGraph
         ImmutableArray<RequestBinding> requests,
         ImmutableArray<NotificationBinding> notifications,
         ImmutableArray<Diagnostic> diagnostics,
+        ImmutableArray<Diagnostic> generatorDiagnostics,
         Membership membership)
     {
         Requests = requests;
         Notifications = notifications;
         Diagnostics = diagnostics;
+        GeneratorDiagnostics = generatorDiagnostics;
         Membership = membership;
     }
 
@@ -22,7 +24,15 @@ public sealed class MessageGraph
 
     public ImmutableArray<NotificationBinding> Notifications { get; }
 
+    /// <summary>
+    /// TWM001–TWM003: reported by both the analyzer and the generator.
+    /// </summary>
     public ImmutableArray<Diagnostic> Diagnostics { get; }
+
+    /// <summary>
+    /// TWM007, TWM009–TWM011: shapes the generated mediator drops. Reported by the generator only.
+    /// </summary>
+    public ImmutableArray<Diagnostic> GeneratorDiagnostics { get; }
 
     public Membership Membership { get; }
 
@@ -89,12 +99,18 @@ public sealed class NotificationBinding
 
 public sealed class BehaviorRegistration
 {
-    public BehaviorRegistration(INamedTypeSymbol behaviorType, int order, int sourceIndex, INamedTypeSymbol? scopeType)
+    public BehaviorRegistration(
+        INamedTypeSymbol behaviorType,
+        int order,
+        int sourceIndex,
+        INamedTypeSymbol? scopeType,
+        Location location)
     {
         BehaviorType = behaviorType;
         Order = order;
         SourceIndex = sourceIndex;
         ScopeType = scopeType;
+        Location = location;
     }
 
     public INamedTypeSymbol BehaviorType { get; }
@@ -107,4 +123,9 @@ public sealed class BehaviorRegistration
     /// Pipeline marker type, or null for the unscoped default pipeline.
     /// </summary>
     public INamedTypeSymbol? ScopeType { get; }
+
+    /// <summary>
+    /// The [assembly: MediatorBehavior] attribute when it is in this compilation, else Location.None.
+    /// </summary>
+    public Location Location { get; }
 }

@@ -8,6 +8,8 @@
 // generator package for hosts). Referenced assemblies join only with [assembly: MediatorAssembly]
 // or by being listed via MediatorAssembliesAttribute marker types. No marker → not linked.
 // Pipeline assignment is MediatorScopeAttribute (marker type), not MediatorModule's string name.
+// IsHost is the generator itself or TimeWarpMediatorAssembly=true; an attribute-only library is
+// not a host, so whole-program checks (TWM004 on interface-typed or unscoped sends) stay off there.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
@@ -27,9 +29,11 @@ public sealed class Membership
         IAssemblySymbol compilationAssembly,
         ImmutableHashSet<IAssemblySymbol> memberAssemblies,
         string profile,
-        string generatedNamespace)
+        string generatedNamespace,
+        bool isHost)
     {
         CompilationAssembly = compilationAssembly;
+        IsHost = isHost;
         MemberAssemblies = memberAssemblies;
         Profile = profile;
         GeneratedNamespace = generatedNamespace;
@@ -42,6 +46,13 @@ public sealed class Membership
     public string Profile { get; }
 
     public string GeneratedNamespace { get; }
+
+    /// <summary>
+    /// True when this compilation runs the generator (the generator itself, or MSBuild
+    /// TimeWarpMediatorAssembly=true from the generator package), so the graph is the whole
+    /// program and the unscoped ISender is the generated Mediator.
+    /// </summary>
+    public bool IsHost { get; }
 
     public bool Includes(ISymbol symbol)
     {
@@ -114,7 +125,8 @@ public sealed class Membership
             compilation.Assembly,
             memberBuilder.ToImmutable(),
             profile,
-            generatedNamespace);
+            generatedNamespace,
+            currentCompilationIsHost || msBuildMember);
         return true;
     }
 
