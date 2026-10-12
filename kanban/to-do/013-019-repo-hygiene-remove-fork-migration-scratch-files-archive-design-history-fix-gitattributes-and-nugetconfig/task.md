@@ -70,3 +70,4 @@ Expect: every `ls` of a removed path reports "No such file"; `documentation/desi
 
 - Created: 686431 (2026-10-11)
 - Review: Grok `01a1302a-bd57-7e33-ae63-6cb21c134225` (2026-10-12)
+- Review oracle: review by implementer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-12T12:57:45Z
