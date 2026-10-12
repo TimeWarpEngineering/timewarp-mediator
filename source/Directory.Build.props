@@ -9,7 +9,7 @@
     <Product>TimeWarp Mediator</Product>
     <Copyright>Copyright Jimmy Bogard (original MediatR); TimeWarp Engineering (Unlicense)</Copyright>
     <PackageProjectUrl>https://timewarp.software/projects/timewarp-mediator/</PackageProjectUrl>
-    <PackageTags>mediator;request;response;queries;commands;notifications;source-generator;aot;opensource;free;unlicense</PackageTags>
+    <PackageTags>mediator;request;response;queries;commands;notifications;opensource;free;unlicense</PackageTags>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-mediator</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>

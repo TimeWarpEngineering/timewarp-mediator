@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Runtime for TimeWarp.Mediator: the reflection-based MediatR-fork dispatcher (AddMediator) plus the registration and pipeline infrastructure the source-generated mediator (AddGeneratedMediator, from TimeWarp.Mediator.Generators) builds on. Request/response, notifications, streams, and pipeline behaviors over Microsoft.Extensions.DependencyInjection.</Description>
+    <Description>Reflection-based mediator (MediatR fork): AddMediator() registers request/response, notifications, streams, and pipeline behaviors over Microsoft.Extensions.DependencyInjection by assembly scan. The source-generated, AOT-friendly dispatcher is separate (TimeWarp.Mediator.Contracts and TimeWarp.Mediator.Generators, AddGeneratedMediator) and does not reference this package.</Description>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
     <AssemblyName>TimeWarp.Mediator</AssemblyName>
