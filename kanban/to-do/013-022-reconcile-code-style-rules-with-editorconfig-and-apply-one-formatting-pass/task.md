@@ -73,7 +73,31 @@ checks." Note: if the build reports CS8784 `TypeLoadException ... MembershipOpti
 compiler server is serving an analyzer DLL from another worktree. Run `dotnet build-server shutdown`
 and rebuild.
 
+Whitespace and the new naming rules, after the review fix:
+
+```bash
+dotnet format whitespace --folder --include source/ tests/ samples/ --verify-no-changes
+dotnet format style timewarp-mediator.slnx --diagnostics IDE1006 --verify-no-changes
+```
+
+Expect: both commands exit 0.
+
+### Review
+
+- Rounds: 2. Roster: general. Effort: 3 (by-diff; 26726 lines).
+- Round 1 counts: bug 2 open. Round 2 counts: bug 2 fixed. Final open count: 0.
+- Disposition: **clean**. No wontfix, no escalation.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
+Round 1 found the whitespace pass still dirty on 13 files, and IDE1006 violations against the new
+naming rules (six `logger` fields, one PascalCase deconstruction in `service-registrar.cs`, and
+method-local consts). Those are fixed on this task. `dotnet format whitespace --verify-no-changes`
+and `dotnet format style --diagnostics IDE1006 --verify-no-changes` both exit 0. Release tests:
+analyzers 43, generators 40 (after `dotnet build-server shutdown`), compilation 85, Roslyn-floor 86,
+mediator 211. All passed.
+
 ## Session
 
 - Created: 686431 (2026-10-11)
 - Implemented: 2026-10-12 (format pass, field renames, decision recorded; workflow + audit green)
+- Review: Grok `01a13066-9a08-75d3-b180-e15c0ff7481b` (2026-10-12)
