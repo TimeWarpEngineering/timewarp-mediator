@@ -32,6 +32,7 @@ Parent: 013. Coordinate with the release-process doc task to avoid overlapping e
 
 - Created: 686431 (2026-10-11)
 - 2026-10-12: implemented under `ganda task work` (implement oracle).
+- Review: Grok `01a1301c-afcd-76a3-8ca5-e705fcdc5fdd` (2026-10-12)
 
 ## Results
 
@@ -71,6 +72,14 @@ Note: a first `dev build` failed with CS8784 (generator TypeLoadException on
 `MembershipOptions`) from a stale compiler server; `dotnet build-server shutdown` and a clean
 build fixed it. Not related to this change.
 
+### Review
+
+- Rounds: 2. Roster: general. Effort: 3 (by-diff, 851 lines).
+- Round 1 counts: bug 2 open, suggestion 4 open, nit 1 open.
+- Round 2 counts: bug 0 open / 2 fixed, suggestion 0 open / 4 fixed, nit 0 open / 1 fixed. No wontfix.
+- Disposition: clean. M1 (Host handler lifetime is scoped), M2 (14.x Mediator readme installs with `--prerelease`), M3 (Mediator and Contracts license expression), M4 (beta.4 DI extension is Host-only), M5 (13.x license paragraph keeps the Apache notice), M6 (Analyzers readme SDK 10 floor), M7 (migration step 3 links Membership).
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke:**
@@ -79,10 +88,11 @@ build fixed it. Not related to this change.
 dotnet run --file tools/dev-cli/dev.cs -- pack
 unzip -p artifacts/packages/TimeWarp.Mediator.Generators.*[0-9].nupkg readme.md | head -3
 grep -n "13.x reflection to 14.x generated" migration.md
-grep -rn "As of .14.0.0\|Version=\"14\|004-00\|OQ-B\|Nuru 444" readme.md source/*/readme.md documentation/m1-*.md documentation/m2-*.md documentation/generated-vs-legacy.md
+grep -n "| Handler lifetime | transient | scoped | process-wide singleton |" migration.md
+grep -rn "As of .14.0.0\|Version=\"14\|004-00\|OQ-B\|Nuru 444\|without attribution requirements" readme.md source/*/readme.md documentation/m1-*.md documentation/m2-*.md documentation/generated-vs-legacy.md migration.md
 ```
 
 **Expect:** pack ends with `Pack completed successfully!` and prints
 `Package layout verified` for all four nupkgs; the Generators nupkg readme starts with
-`# TimeWarp.Mediator.Generators`; migration.md has the 13.x → 14.x heading; the final grep
-prints nothing.
+`# TimeWarp.Mediator.Generators`; migration.md has the 13.x → 14.x heading and the Host
+handler-lifetime cell `scoped`; the final grep prints nothing.
