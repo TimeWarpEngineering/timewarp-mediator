@@ -79,7 +79,7 @@ build fixed it. Not related to this change.
 dotnet run --file tools/dev-cli/dev.cs -- pack
 unzip -p artifacts/packages/TimeWarp.Mediator.Generators.*[0-9].nupkg readme.md | head -3
 grep -n "13.x reflection to 14.x generated" migration.md
-grep -rn "14.0.0-beta.4\|004-00\|OQ-B\|Nuru 444" readme.md documentation/m1-*.md documentation/m2-*.md documentation/generated-vs-legacy.md
+grep -rn "As of .14.0.0\|Version=\"14\|004-00\|OQ-B\|Nuru 444" readme.md source/*/readme.md documentation/m1-*.md documentation/m2-*.md documentation/generated-vs-legacy.md
 ```
 
 **Expect:** pack ends with `Pack completed successfully!` and prints
