@@ -1,5 +1,9 @@
 # Generated vs reflection `AddMediator`
 
+This page is the single source for the "two stacks" story: which registration gives which
+dispatcher, which packages each needs, membership, and named pipelines. Other pages link here
+instead of repeating it.
+
 This repository ships **two independent dispatchers**. Calling `AddMediator()` does **not**
 register the source-generated mediator. TimeWarp.State and TimeWarp.Nuru must call
 `AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()` to get the compile-time graph.
@@ -14,6 +18,9 @@ register the source-generated mediator. TimeWarp.State and TimeWarp.Nuru must ca
 
 `AddMediator()` does not prefer, wrap, or fall through to the generated type. That shim is
 deferred (see [m1-generated-mediator.md](./m1-generated-mediator.md) deferred table).
+
+Moving a 13.x host to the generated stack, and what it does not support yet:
+[migration.md](../migration.md#13x-reflection-to-14x-generated).
 
 ## Target framework
 
@@ -64,8 +71,8 @@ The generated path (`AddGeneratedMediator()` from `TimeWarp.Mediator.Contracts` 
 
 ## 14.0.0-beta is not a drop-in for 13.0.0
 
-As of `14.0.0-beta.4`, the generated stack is proven only against the M1/M2 golden files in
-this repo:
+During the 14.0.0 prereleases, the generated stack is proven only against the M1/M2 golden
+files in this repo:
 
 - Generator tests (`tests/timewarp-mediator-generators-tests`), including State-shaped
   `IncrementActionSet` + `StateTransactionBehavior`
@@ -75,30 +82,32 @@ this repo:
 
 It is **not** an API-compatible upgrade of NuGet **13.0.0** (the last published reflection
 line). Do not bump a 13.0.0 host to 14.0.0-beta and keep `AddMediator(...)` expecting
-source-gen, AOT-clean dispatch, or named pipelines. `<Version>` in this tree is
-`14.0.0-beta.4`. nuget.org serves that as a **prerelease**; **13.0.0** remains the last
-stable reflection line.
+source-gen, AOT-clean dispatch, or named pipelines. nuget.org serves every 14.0.0 beta as a
+**prerelease**; **13.0.0** remains the last stable reflection line.
 
 GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52)
 stays **open** until a **stable 14.0.0**. This beta does not close that issue.
 
-Per-beta changes (beta.1 to beta.4 and unreleased work) are in the
+Per-beta changes and unreleased work are in the
 [14.0.0 release notes](./release-notes/release-notes-v14.0.0.md).
 
 ## Packages for a generated host
 
-```xml
-<ItemGroup>
-  <PackageReference Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.4" />
-  <PackageReference Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.4" />
-</ItemGroup>
+Use the same version for every TimeWarp.Mediator package. While 14.0.0 is in prerelease, add
+`--prerelease` to pick the latest beta:
+
+```bash
+dotnet add package TimeWarp.Mediator.Contracts --prerelease
+dotnet add package TimeWarp.Mediator.Generators --prerelease
+# library-only (no generator):
+dotnet add package TimeWarp.Mediator.Analyzers --prerelease
 ```
 
 | Package | Role |
 |---------|------|
 | `TimeWarp.Mediator.Contracts` | `IRequest` / `ISender` / `ISender<TScope>` / membership attributes. Required at compile and runtime. |
 | `TimeWarp.Mediator.Generators` | Source generator + `buildTransitive` props. Development dependency; emits `AddGeneratedMediator` into `Microsoft.Extensions.DependencyInjection`. Packs `TimeWarp.Mediator.Analyzers.dll` next to the generator. |
-| `TimeWarp.Mediator.Analyzers` | TWM001–TWM004 (the generator adds TWM005/TWM006 under the Aot/Link profile). Add this package **when the generator is not referenced** (a contracts/library project that should fail the build on a missing handler without emitting a mediator). |
+| `TimeWarp.Mediator.Analyzers` | TWM001–TWM004 (the generator adds TWM005–TWM011; see [diagnostics.md](./diagnostics.md)). Add this package **when the generator is not referenced** (a contracts/library project that should fail the build on a missing handler without emitting a mediator). |
 | `TimeWarp.Mediator` | Reflection runtime and `AddMediator()`. Not required for a generated-only host. |
 
 The Generators nupkg is `DevelopmentDependency` and suppresses package dependencies, so
@@ -192,4 +201,5 @@ Full M2 notes: [m2-named-pipelines.md](./m2-named-pipelines.md). Sample:
 
 - [m1-generated-mediator.md](./m1-generated-mediator.md) — generated dispatcher, analyzers, AOT sample
 - [m2-named-pipelines.md](./m2-named-pipelines.md) — `ISender<TScope>` / `IPublisher<TScope>`
-- [migration.md](../migration.md) — MediatR → TimeWarp.Mediator **13.x reflection** rename
+- [migration.md](../migration.md) — MediatR → TimeWarp.Mediator 13.x, and 13.x reflection → 14.x generated
+- [diagnostics.md](./diagnostics.md) — TWM001–TWM011

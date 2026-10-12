@@ -18,6 +18,9 @@ All four packages share one version and are packed together by `dev pack`:
 
 `dev pack` writes them to `artifacts/packages` and fails if the Analyzers or Generators nupkg has
 no analyzer DLL under `analyzers/dotnet/cs`, or if any nupkg is missing `notice` or `unlicense`.
+Each package packs its own `source/<project>/readme.md` as the nuget.org readme; `dev pack` also
+fails when that readme's first heading is not the package id or it contains a relative link
+(nuget.org cannot resolve those). The repository `readme.md` is the GitHub page only.
 
 ## Versioning
 
