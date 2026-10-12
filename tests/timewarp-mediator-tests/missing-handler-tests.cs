@@ -2,7 +2,7 @@
 
 namespace TimeWarp.Mediator.Tests;
 
-public class ServiceFactoryTests
+public class MissingHandlerTests
 {
     public class Ping : IRequest<Pong>
     {
