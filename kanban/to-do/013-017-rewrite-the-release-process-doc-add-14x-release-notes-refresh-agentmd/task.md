@@ -19,16 +19,20 @@
 - [x] overview.md rewritten and verified against workflow.yml and dev-cli
 - [x] release-notes folder with v13 and v14.0.0-beta notes
 - [x] agent.md refreshed
+- [x] Implementation review: round 2 clean (M1–M4 fixed)
 - [ ] PR with merge commit
 
 ## Notes
 
 Parent: 013.
 
+Review trail: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md` (clean, two rounds, general, effort 2).
+
 ## Session
 
 - Created: 686431 (2026-10-11)
 - Implementer: claude (ganda task work, 2026-10-12)
+- Review: Grok `01a13008-1f8a-78f2-a86b-e35ce86f7320` (2026-10-12)
 
 ## Results
 
@@ -51,6 +55,14 @@ Parent: 013.
   kebab-case test project list, warnings-as-errors scoped (tests/samples opt out), release pointer.
 - Checked: `./bin/dev check-version` refuses 14.0.0-beta.4 as already published (matches doc);
   `./bin/dev release --dry-run` runs its guards (refused on dirty tree, as documented).
+
+### Review
+
+- Rounds: 2. Roster: general. Effort: 2 (by-diff, 511 lines).
+- Round 1 counts: bug 1 open, suggestion 2 open, nit 1 open.
+- Round 2 counts: bug 0 open / 1 fixed, suggestion 0 open / 2 fixed, nit 0 open / 1 fixed. No wontfix.
+- Disposition: clean. M1 (`agent.md` streams are reflection-only), M2 (beta.4 DI extension is Host-only), M3 (unreleased license expression and trim annotations), M4 (dropped "no dependencies").
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
