@@ -21,16 +21,20 @@
 - [x] Local-name fix with tests
 - [x] Collision-safe member names with test
 - [x] Doc the variance decision in `documentation/m1-generated-mediator.md`
+- [x] Implementation review disposition (clean, round 1, general)
 - [x] `./bin/dev workflow` green (PR with merge commit is the host open-pr node)
 
 ## Notes
 
 Parent: 013.
 
+Review: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Effort 2, roster general, 1 round, disposition clean (no findings).
+
 ## Session
 
 - Created: 686431 (2026-10-11)
 - 2026-10-12: implement oracle (Claude Opus 5.5) — G-5/G-6/G-15 fixed, tests added, workflow green.
+- Review: grok session `01a12f23-5fd4-73c0-899b-f5666f67b7c1` (2026-10-12)
 
 ## Results
 
@@ -40,6 +44,13 @@ Parent: 013.
 - **Docs:** new section "Type switch and notification variance" in `documentation/m1-generated-mediator.md`. The emitter Design region is updated.
 - **Tests:** `tests/timewarp-mediator-generators-compilation-tests/type-switch-tests.cs` has 10 cases (Host + Aot compile, plus Aot runtime via a collectible ALC): base-before-derived request, derived/interface/unbound notification delivery, keyword-named messages (`Request`, `Object`, `Lock`, `Params`, `Base`, `Notification`, `Event`), and colliding `A.B_C` / `A_B.C` requests, notifications and handlers. All 10 fail on the previous emitter and pass now.
 - **Environment note:** a long-lived shared VBCSCompiler server on this machine kept an older `TimeWarp.Mediator.Analyzers` loaded, which caused spurious TWM001/TWM002 errors in `timewarp-mediator-generators-tests`. `dotnet build-server shutdown` did not clear it. `UseSharedCompilation=false ./bin/dev workflow` is green: 20 + 40 + 6 + 201 tests passed and the package layout was verified. CI runs clean.
+
+### Review
+
+- Rounds: 1. Roster: general. Effort: 2 (by-diff; no specialist axes).
+- Final counts: bug 0, suggestion 0, nit 0, open 0, fixed 0, wontfix 0.
+- Disposition: clean. No exceptions and no escalations.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
