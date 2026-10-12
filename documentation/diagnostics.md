@@ -67,9 +67,9 @@ and the manifest omits them. Use the Host profile for cross-cutting behaviors.
 ## TWM007
 
 **Member assembly type is not accessible from the host.** A handler, request, response,
-notification, or behavior in a referenced member assembly is `internal` (or otherwise
-inaccessible) and the host has no `InternalsVisibleTo`. Generated code would be `CS0122`, so the
-type is not bound and its request is not also TWM001. Make the type public, or add
+notification, behavior, or pipeline scope marker in a referenced member assembly is `internal`
+(or otherwise inaccessible) and the host has no `InternalsVisibleTo`. Generated code would be
+`CS0122`, so the type is not bound and its request is not also TWM001. Make the type public, or add
 `[assembly: InternalsVisibleTo("HostAssembly")]` to the member assembly.
 
 ## TWM008

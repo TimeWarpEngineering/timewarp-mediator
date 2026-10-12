@@ -18,9 +18,10 @@
 // Void dispatch comes from matching IRequestHandler<T>, never from TResponse == Unit: an explicit
 // IRequestHandler<T, Unit> returns Task<Unit> and must be registered as the two-arity interface.
 // Responses are ITypeSymbol so arrays and other non-named types (T[]) bind like named ones.
-// A handler, message, response, or behavior the host cannot access (internal in a referenced
-// member without InternalsVisibleTo) is not bound and is TWM007, never CS0122 in generated code;
-// its message is then not TWM001. Handler kinds the generated mediator ignores are TWM009, and
+// A handler, message, response, behavior, or pipeline scope marker the host cannot access
+// (internal in a referenced member without InternalsVisibleTo) is not bound and is TWM007,
+// never CS0122 in generated code; its message is then not TWM001. Generated senders and
+// publishers name that marker. Handler kinds the generated mediator ignores are TWM009, and
 // [MediatorBehavior] entries that are not pipeline behaviors or close over no request are
 // TWM010/TWM011. Those land in GeneratorDiagnostics so the analyzer-only package stays TWM001–TWM004.
 // Diagnostic locations are limited to this compilation's syntax trees: analyzers and generators
@@ -207,6 +208,10 @@ public static class MessageGraphBuilder
             ReportScopeMismatch(compilation, handlerType, handlerScope, requestType, requestScope, diagnostics);
 
             INamedTypeSymbol? scopeType = handlerScope ?? requestScope;
+            if (!PipelineScopeAllowed(access, scopeType))
+            {
+                continue;
+            }
 
             ImmutableArray<INamedTypeSymbol> closedBehaviors = CloseBehaviors(
                 behaviors,
@@ -251,6 +256,11 @@ public static class MessageGraphBuilder
                 INamedTypeSymbol? handlerScope = ResolveScope(handler);
                 ReportScopeMismatch(compilation, handler, handlerScope, pair.Key, notificationScope, diagnostics);
                 INamedTypeSymbol? scopeType = handlerScope ?? notificationScope;
+                if (!PipelineScopeAllowed(access, scopeType))
+                {
+                    continue;
+                }
+
                 NotificationGroup? bucket = null;
                 foreach (NotificationGroup candidate in groupedNotifications)
                 {
@@ -314,6 +324,12 @@ public static class MessageGraphBuilder
                 handlerScope.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
                 messageType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
                 messageScope.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+    }
+
+    // The emitted pipeline names this marker. An inaccessible marker is TWM007 and is left unbound.
+    private static bool PipelineScopeAllowed(AccessGuard access, INamedTypeSymbol? scopeType)
+    {
+        return scopeType is null || access.Allows(scopeType);
     }
 
     // One TWM009 per class and ignored interface definition (a class handling two stream requests is one warning).

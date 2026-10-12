@@ -88,7 +88,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "The generated mediator names every handler, request, response, notification, and behavior type directly. A type the host cannot see (internal without InternalsVisibleTo) would be CS0122 in generated code, so it is not bound.",
+        description: "The generated mediator names every handler, request, response, notification, behavior, and pipeline scope marker directly. A type the host cannot see (internal without InternalsVisibleTo) would be CS0122 in generated code, so it is not bound.",
         helpLinkUri: HelpLink("TWM007"));
 
     internal static readonly DiagnosticDescriptor MediatorRuntimeMissing = new(

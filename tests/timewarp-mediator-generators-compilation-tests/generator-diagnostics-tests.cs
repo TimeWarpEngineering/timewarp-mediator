@@ -37,6 +37,46 @@ public sealed class GeneratorDiagnosticsTests
         ManifestJson(host).ShouldContain("Members.HiddenHandler");
     }
 
+    [Fact]
+    public void InternalScopeMarkerInMemberAssembly_IsTwm007_NotCs0122()
+    {
+        MetadataReference member = HostCompiler.CompileLibrary("ScopedMember", InternalScopeSource);
+
+        HostCompilation host = HostCompiler.Compile("ScopeHost", "namespace App { public sealed class Program { } }", "Host", member);
+
+        host.Diagnostics.ShouldNotContain(d => d.Id == "CS0122" || d.Id == "TWM001");
+        Diagnostic error = Errors(host).ShouldHaveSingleItem();
+        error.Id.ShouldBe("TWM007");
+        error.GetMessage().ShouldContain("Members.HiddenPipeline");
+        error.GetMessage().ShouldContain("InternalsVisibleTo(\"ScopeHost\")");
+        string manifest = ManifestJson(host);
+        manifest.ShouldNotContain("PayHandler");
+        manifest.ShouldNotContain("PaidHandler");
+    }
+
+    [Fact]
+    public void InternalScopeMarkerWithInternalsVisibleTo_IsBound()
+    {
+        MetadataReference member = HostCompiler.CompileLibrary(
+            "VisibleScopeMember",
+            InternalScopeSource.Replace(
+                "[assembly: MediatorAssembly]",
+                "[assembly: MediatorAssembly]\n[assembly: System.Runtime.CompilerServices.InternalsVisibleTo(\"VisibleScopeHost\")]"));
+
+        HostCompilation host = HostCompiler.Compile(
+            "VisibleScopeHost",
+            "namespace App { public sealed class Program { } }",
+            "Host",
+            member);
+
+        Errors(host).ShouldBeEmpty();
+        host.Diagnostics.ShouldNotContain(d => d.Id == "CS0122");
+        string manifest = ManifestJson(host);
+        manifest.ShouldContain("Members.PayHandler");
+        manifest.ShouldContain("Members.PaidHandler");
+        manifest.ShouldContain("Members.HiddenPipeline");
+    }
+
     [Theory]
     [InlineData("Host")]
     [InlineData("Aot")]
@@ -221,6 +261,40 @@ namespace Members
     internal sealed class HiddenHandler : IRequestHandler<Hidden, int>
     {
         public Task<int> Handle(Hidden request, CancellationToken cancellationToken) => Task.FromResult(1);
+    }
+}
+";
+
+    private const string InternalScopeSource = @"
+using System.Threading;
+using System.Threading.Tasks;
+using TimeWarp.Mediator;
+
+[assembly: MediatorAssembly]
+[assembly: MediatorScope(typeof(Members.HiddenPipeline))]
+
+namespace Members
+{
+    internal sealed class HiddenPipeline
+    {
+    }
+
+    public sealed class Pay : IRequest<int>
+    {
+    }
+
+    public sealed class PayHandler : IRequestHandler<Pay, int>
+    {
+        public Task<int> Handle(Pay request, CancellationToken cancellationToken) => Task.FromResult(1);
+    }
+
+    public sealed class Paid : INotification
+    {
+    }
+
+    public sealed class PaidHandler : INotificationHandler<Paid>
+    {
+        public Task Handle(Paid notification, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }
 ";
