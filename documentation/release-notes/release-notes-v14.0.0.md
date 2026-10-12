@@ -4,6 +4,11 @@
 file collects the changes across the 14.0.0 betas, newest first. GitHub Releases carry the
 generated per-tag notes.
 
+The unpublished GitHub Release body for the stable tag is
+[github-release-v14.0.0-draft.md](./github-release-v14.0.0-draft.md). Do not publish it until
+14.0.0 is on nuget.org and Steven has approved the post. `dev release` still generates its own
+notes; replace that body with the draft.
+
 > **14.0.0-beta is not a drop-in for 13.0.0.** The 14.0.0 line adds a second, source-generated
 > dispatcher (`AddGeneratedMediator()`). It is proven only against the golden files, tests and
 > samples in this repository. Do not bump a 13.0.0 host to 14.0.0-beta and keep
