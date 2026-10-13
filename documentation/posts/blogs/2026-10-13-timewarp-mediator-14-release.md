@@ -95,6 +95,3 @@ dotnet add package TimeWarp.Mediator.Generators --version 14.0.0
 ```
 
 Repository: https://github.com/TimeWarpEngineering/timewarp-mediator
-
-A follow-up, two to five days after this post, walks one behavior across the break. It is
-drafted beside this file as `2026-xx-xx-timewarp-mediator-14-follow-up.md`.
