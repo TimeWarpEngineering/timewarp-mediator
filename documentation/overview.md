@@ -141,8 +141,7 @@ header.
 Release headers must parse as `System.Version` (RS2007 rejects `## Release 14.0.0-beta.1`), so a
 prerelease files its rows under its target version: every 14.0.0 beta adds to `## Release 14.0.0`
 and notes the beta in the Notes column (`RequestHasNoHandler, shipped in 14.0.0-beta.1`). Create the
-section if it does not exist yet. TWM001–TWM004 shipped in 14.0.0-beta.1; TWM005–TWM011 move at the
-next release.
+section if it does not exist yet. TWM001–TWM004 shipped in 14.0.0-beta.1; TWM005–TWM011 shipped in 14.0.0-beta.5.
 
 ## Local commands
 

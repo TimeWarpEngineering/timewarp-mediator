@@ -13,3 +13,10 @@ TWM001  | TimeWarp.Mediator | Error | RequestHasNoHandler, shipped in 14.0.0-bet
 TWM002  | TimeWarp.Mediator | Error | DuplicateHandler, shipped in 14.0.0-beta.1
 TWM003  | TimeWarp.Mediator | Error | ScopeMismatch, shipped in 14.0.0-beta.1
 TWM004  | TimeWarp.Mediator | Error | WrongScopeSend, shipped in 14.0.0-beta.1
+TWM005  | TimeWarp.Mediator | Warning | AotBehaviorNotWoven, shipped in 14.0.0-beta.5
+TWM006  | TimeWarp.Mediator | Error | AotHandlerNotConstructible, shipped in 14.0.0-beta.5
+TWM007  | TimeWarp.Mediator | Error | InaccessibleMemberType, shipped in 14.0.0-beta.5
+TWM008  | TimeWarp.Mediator | Error | MediatorRuntimeMissing, shipped in 14.0.0-beta.5
+TWM009  | TimeWarp.Mediator | Warning | UnsupportedHandlerKind, shipped in 14.0.0-beta.5
+TWM010  | TimeWarp.Mediator | Warning | InvalidBehaviorRegistration, shipped in 14.0.0-beta.5
+TWM011  | TimeWarp.Mediator | Warning | BehaviorAppliesToNoRequest, shipped in 14.0.0-beta.5

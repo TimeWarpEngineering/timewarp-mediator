@@ -18,9 +18,9 @@ notes; replace that body with the draft.
 > [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52) stays open until a
 > stable 14.0.0.
 
-## Unreleased (next 14.0.0 beta)
+## 14.0.0-beta.5
 
-Merged on `master` after 14.0.0-beta.4 and not yet published.
+Published 2026-10-13. Everything merged on `master` after 14.0.0-beta.4, including the 22 children of the repository review (kanban 013, PR #95).
 
 ### Breaking changes
 
