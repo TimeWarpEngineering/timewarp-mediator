@@ -1,22 +1,37 @@
 # TimeWarp.Mediator 14.0.0 release notes
 
-14.0.0 is in beta on nuget.org as a prerelease; **13.0.0** is still the last stable release. This
-file collects the changes across the 14.0.0 betas, newest first. GitHub Releases carry the
-generated per-tag notes.
+14.0.0 is the stable release of the 14.x line on nuget.org; it supersedes **13.0.0**. This file
+collects the changes across the 14.0.0 betas, newest first. GitHub Releases carry the generated
+per-tag notes.
 
 The unpublished GitHub Release body for the stable tag is
 [github-release-v14.0.0-draft.md](./github-release-v14.0.0-draft.md). Do not publish it until
 14.0.0 is on nuget.org and Steven has approved the post. `dev release` still generates its own
 notes; replace that body with the draft.
 
-> **14.0.0-beta is not a drop-in for 13.0.0.** The 14.0.0 line adds a second, source-generated
-> dispatcher (`AddGeneratedMediator()`). It is proven only against the golden files, tests and
-> samples in this repository. Do not bump a 13.0.0 host to 14.0.0-beta and keep
+> **14.0.0 is not a drop-in for 13.0.0.** The 14.0.0 line adds a second, source-generated
+> dispatcher (`AddGeneratedMediator()`). Do not bump a 13.0.0 host to 14.0.0 and keep
 > `AddMediator(...)` expecting source generation, AOT-clean dispatch or named pipelines; those
 > need `AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()`. See
-> [generated-vs-legacy.md](../generated-vs-legacy.md). Issue
-> [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52) stays open until a
-> stable 14.0.0.
+> [generated-vs-legacy.md](../generated-vs-legacy.md) and
+> [migration.md](../../migration.md#13x-reflection-to-14x-generated).
+
+## 14.0.0
+
+The stable is **14.0.0-beta.5 unchanged**: no source, package or analyzer change landed after
+beta.5. The same four packages (`TimeWarp.Mediator.Contracts`, `TimeWarp.Mediator`,
+`TimeWarp.Mediator.Generators`, `TimeWarp.Mediator.Analyzers`) ship at `14.0.0`.
+
+- Dogfooded on beta.5 by timewarp-state, timewarp-architecture and timewarp-nuru: zero
+  TWM005–TWM011, nothing filed back.
+- Issues [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52),
+  [#63](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/63),
+  [#64](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/64) and
+  [#65](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/65) are closed.
+- Docs only: the repository adds the [tw-mediator agent skill](../../skills/tw-mediator/SKILL.md)
+  (not packed), and the readmes and guides drop the "prerelease" install wording.
+- Analyzer release tracking is unchanged: TWM001–TWM011 sit under `## Release 14.0.0` in
+  `AnalyzerReleases.Shipped.md`.
 
 ## 14.0.0-beta.5
 

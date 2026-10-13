@@ -32,11 +32,11 @@ mediator. A broken buildTransitive props or TFM folder fails here instead of aft
 ## Versioning
 
 - **One source of truth:** `<Version>` in `source/Directory.Build.props` (for example
-  `14.0.0-beta.4`). The root `Directory.Build.props` holds build settings only. Nothing derives
+  `14.0.0`). The root `Directory.Build.props` holds build settings only. Nothing derives
   the version from git tags.
 - **Tags follow the version:** a release is tagged `v` + `<Version>` (for example
-  `v14.0.0-beta.4`). Nobody types the tag by hand; `dev release` creates it from the props file.
-- **Prereleases are real releases.** Each `14.0.0-beta.N` goes through the same bump and release
+  `v14.0.0`). Nobody types the tag by hand; `dev release` creates it from the props file.
+- **Prereleases are real releases.** Each prerelease (for example `14.0.0-beta.N`) goes through the same bump and release
   flow and is published to nuget.org as a prerelease. CI builds on `master` are not published
   anywhere; their packages are only uploaded as a `Packages-<run number>` workflow artifact.
 - `dev check-version` compares `<Version>` with what nuget.org already serves for the four

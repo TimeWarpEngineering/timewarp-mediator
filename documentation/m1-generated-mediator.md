@@ -2,7 +2,7 @@
 
 Source-generated dispatcher, analyzer, and State-shaped golden file (milestone M1). Design SSOT: [`design/2026-06-17-source-gen-aot-rewrite-spec.md`](design/2026-06-17-source-gen-aot-rewrite-spec.md) §14.
 
-**Do not call `AddMediator()` for this stack**, and 14.0.0-beta is not a drop-in for 13.0.0.
+**Do not call `AddMediator()` for this stack**, and 14.0.0 is not a drop-in for 13.0.0.
 Two stacks, packages for a generated host, and membership:
 [generated-vs-legacy.md](./generated-vs-legacy.md).
 

@@ -69,10 +69,10 @@ The generated path (`AddGeneratedMediator()` from `TimeWarp.Mediator.Contracts` 
   `"behaviors":[]` for every request so the manifest matches the emitted pipeline. Validation,
   transaction, and logging behaviors need the Host profile.
 
-## 14.0.0-beta is not a drop-in for 13.0.0
+## 14.0.0 is not a drop-in for 13.0.0
 
-During the 14.0.0 prereleases, the generated stack is proven only against the M1/M2 golden
-files in this repo:
+The generated stack is proven against the M1/M2 golden files in this repo and against the
+14.0.0-beta.5 dogfoods (timewarp-state, timewarp-architecture, timewarp-nuru):
 
 - Generator tests (`tests/timewarp-mediator-generators-tests`), including State-shaped
   `IncrementActionSet` + `StateTransactionBehavior`
@@ -80,27 +80,23 @@ files in this repo:
 - AOT sample `samples/timewarp-mediator-examples-aot` (ServiceGen static fields; no
   `AddMediator`)
 
-It is **not** an API-compatible upgrade of NuGet **13.0.0** (the last published reflection
-line). Do not bump a 13.0.0 host to 14.0.0-beta and keep `AddMediator(...)` expecting
-source-gen, AOT-clean dispatch, or named pipelines. nuget.org serves every 14.0.0 beta as a
-**prerelease**; **13.0.0** remains the last stable reflection line.
+It is **not** an API-compatible upgrade of NuGet **13.0.0** (the last 13.x reflection
+release). Do not bump a 13.0.0 host to 14.0.0 and keep `AddMediator(...)` expecting
+source-gen, AOT-clean dispatch, or named pipelines. **13.0.0** stays the line for consumers
+that cannot target net10.0.
 
-GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52)
-stays **open** until a **stable 14.0.0**. This beta does not close that issue.
-
-Per-beta changes and unreleased work are in the
+Changes per beta are in the
 [14.0.0 release notes](./release-notes/release-notes-v14.0.0.md).
 
 ## Packages for a generated host
 
-Use the same version for every TimeWarp.Mediator package. While 14.0.0 is in prerelease, add
-`--prerelease` to pick the latest beta:
+Use the same version for every TimeWarp.Mediator package:
 
 ```bash
-dotnet add package TimeWarp.Mediator.Contracts --prerelease
-dotnet add package TimeWarp.Mediator.Generators --prerelease
+dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0
+dotnet add package TimeWarp.Mediator.Generators --version 14.0.0
 # library-only (no generator):
-dotnet add package TimeWarp.Mediator.Analyzers --prerelease
+dotnet add package TimeWarp.Mediator.Analyzers --version 14.0.0
 ```
 
 | Package | Role |

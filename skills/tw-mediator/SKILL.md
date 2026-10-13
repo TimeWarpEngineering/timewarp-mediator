@@ -65,8 +65,6 @@ Contracts with it, so reference both.
 </ItemGroup>
 ```
 
-Until 14.0.0 is on nuget.org, use the latest `14.0.0-beta.N`.
-
 ### Membership
 
 A project that references Generators is a graph member automatically

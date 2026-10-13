@@ -43,7 +43,6 @@ dotnet add package TimeWarp.Mediator.Generators --version 14.0.0
 ```
 
 Those lines are the 14.0.0 stable install, which is what the packed package readmes describe.
-Until 14.0.0 is on nuget.org, `--prerelease` still selects the 14.0.0 beta line.
 
 ```csharp
 public sealed class Ping : IRequest<string>

@@ -41,12 +41,12 @@ waits for Steven's OK; nothing in that pack is part of this task's gate).
 
 ## Checklist
 
-- [ ] 018 merged: `skills/tw-mediator/SKILL.md` on master and linked from the readme
-- [ ] Confirm no code change landed on master since v14.0.0-beta.5 that needs a release-note line
-- [ ] Version bump to 14.0.0
-- [ ] Release notes: `## 14.0.0` section added, intro flipped from "in beta" to stable; prerelease wording elsewhere flipped
-- [ ] Analyzer release tracking unchanged and validating (RS2000-RS2008)
-- [ ] `./bin/dev workflow` green locally
+- [x] 018 merged: `skills/tw-mediator/SKILL.md` on master and linked from the readme
+- [x] Confirm no code change landed on master since v14.0.0-beta.5 that needs a release-note line
+- [x] Version bump to 14.0.0
+- [x] Release notes: `## 14.0.0` section added, intro flipped from "in beta" to stable; prerelease wording elsewhere flipped
+- [x] Analyzer release tracking unchanged and validating (RS2000-RS2008)
+- [x] `./bin/dev workflow` green locally
 - [ ] PR merged (merge commit), push CI green
 - [ ] `dev release --dry-run` clean; `dev release` tags v14.0.0 and the publish job pushes all packages
 - [ ] nuget.org shows 14.0.0 for Contracts, Mediator, Generators, Analyzers
@@ -56,6 +56,9 @@ waits for Steven's OK; nothing in that pack is part of this task's gate).
 ## Session
 
 - Created: 1736118 (2026-10-13)
+- 2026-10-13 implement (ganda task work, Claude Opus 5.5): version bump, release notes, prerelease wording
+  flipped, `dev workflow --mode pr` green, `dev check-version --strict` and `ganda repo audit` pass.
+  Remaining (post-merge, operator): merge PR, push CI, `dev release`, nuget.org check, Nuru 489 comment.
 
 ## Notes
 
@@ -64,3 +67,45 @@ waits for Steven's OK; nothing in that pack is part of this task's gate).
 - Marketing: task 015 launch pack (blog, posts, GitHub Release body draft). Publishing it is Steven's call, after this task.
 - `dev release` refuses on dirty tree, out-of-sync master, existing tag, version already on nuget.org, or no green CI on HEAD.
 - Releases: https://github.com/TimeWarpEngineering/timewarp-mediator/releases
+
+## Results
+
+### Implementation (PR stage)
+
+- `source/Directory.Build.props`: `<Version>14.0.0</Version>`.
+- `git diff v14.0.0-beta.5..master` outside `kanban/`: only `skills/tw-mediator/SKILL.md` and the readme
+  pointer (task 018). No source, package or analyzer change, so the `## 14.0.0` release-notes section says the
+  stable is beta.5 unchanged.
+- `documentation/release-notes/release-notes-v14.0.0.md`: intro now says 14.0.0 is stable and supersedes 13.0.0;
+  new `## 14.0.0` section at the top; per-beta sections kept. The GitHub Release draft is unchanged.
+- Prerelease wording flipped in `readme.md`, `skills/tw-mediator/SKILL.md`, `documentation/generated-vs-legacy.md`
+  (heading, #52-open paragraph, `--prerelease` installs → `--version 14.0.0`), `documentation/m1-generated-mediator.md`,
+  `documentation/overview.md` (version/tag examples).
+- Analyzer release tracking untouched: Unshipped is header-only, TWM rows under `## Release 14.0.0` in Shipped.
+- `./bin/dev workflow --mode pr`: Pipeline SUCCEEDED (build, tests, verify-samples, pack + layout check +
+  package smoke on 14.0.0 nupkgs). The first run failed with CS8784 (`TypeLoadException` for
+  `MembershipOptions` in Analyzers 14.0.0.0): a stale analyzer assembly in the shared compiler server,
+  because beta.5 and 14.0.0 both have assembly version 14.0.0.0. `dotnet build-server shutdown` fixed it.
+  The same can happen on any machine that built an older 14.0.0 beta.
+- `./bin/dev check-version --strict`: 14.0.0 is new (latest on nuget.org is 14.0.0-beta.5).
+- `ganda repo audit`: passes.
+
+Still open after this node (host/operator): PR merge with a merge commit, push CI on the merge commit,
+`dev release --dry-run` / `dev release`, nuget.org flat-index check, timewarp-nuru 489 comment.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet build-server shutdown
+./bin/dev workflow --mode pr
+./bin/dev check-version --strict
+ls artifacts/packages
+grep -rn -- "--prerelease\|14.0.0-beta is not" readme.md skills documentation/*.md
+```
+
+Expect: `Pipeline SUCCEEDED` (package smoke prints `package-pong`); check-version reports
+`Version in source: 14.0.0` and "safe to release"; `artifacts/packages` holds four
+`*.14.0.0.nupkg` plus `TimeWarp.Mediator.14.0.0.snupkg` and `TimeWarp.Mediator.Contracts.14.0.0.snupkg`;
+the grep prints nothing.
