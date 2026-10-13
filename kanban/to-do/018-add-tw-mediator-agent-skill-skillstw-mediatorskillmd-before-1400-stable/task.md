@@ -53,10 +53,12 @@ The skill is repo-only; it is not packed into any nupkg and does not change the 
 
 - Created: 1774055 (2026-10-13)
 - 2026-10-13: implementer (ganda task work) wrote skill + readme paragraph; samples compiled; workflow + audit green.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T12:36:11Z
+- Review oracle: Grok session `01a13543-65d3-7a02-bd6a-f600ef005ce9` (2026-10-13). Effort 2, roster: general. Artifacts under `review/`.
 
 ## Results
 
-- `skills/tw-mediator/SKILL.md`: 288 lines, frontmatter `name: tw-mediator` + `description:` (same shape as tw-nuru).
+- `skills/tw-mediator/SKILL.md`: 289 lines, frontmatter `name: tw-mediator` + `description:` (same shape as tw-nuru).
   Sections in the required order: which dispatcher, minimal host (CPM packages, membership, request/handler/send,
   notifications, behaviors, named pipelines), profiles, TWM001-TWM011 table, gotchas, 13.x to 14.0 migration
   pointers. Detail stays in generated-vs-legacy.md, diagnostics.md, m2-named-pipelines.md, migration.md and the
@@ -80,6 +82,11 @@ The skill is repo-only; it is not packed into any nupkg and does not change the 
   CS8784 `TypeLoadException ... MembershipOptions`. `dotnet build-server shutdown` clears it.
 - Deliberately left out: reflection-stack registration detail (the readme covers `AddMediator` and the
   container samples), idempotency contracts beyond a one-line mention, benchmarks.
+- Review: 2 rounds, roster general, effort 2 (by-diff, 352 lines). Round 1 raised 2 bugs and 1 suggestion, all open. Round 2 fixed all three; 0 open, 0 wontfix, no new findings. Disposition: **clean**. No exceptions and no escalation.
+  - M1 (bug): membership gotcha. An unmarked library is omitted. When its requests are outside the graph the host build stays clean and `Send` throws `NoHandlerException`. TWM001 only when the request is already in a member assembly.
+  - M2 (bug): TWM008. Contracts is required in every profile. Aot is only the escape for a missing Host-profile MS.DI Abstractions reference.
+  - M3 (suggestion): Link bullet no longer says call-site inlining is reserved.
+  - Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -93,7 +100,7 @@ grep -n "For AI agents" readme.md
 ganda repo audit
 ```
 
-Expect: 288 lines (inside the 250-350 target); frontmatter shows `name: tw-mediator` and a `description:`;
+Expect: 289 lines (inside the 250-350 target); frontmatter shows `name: tw-mediator` and a `description:`;
 readme links `skills/tw-mediator/SKILL.md`; workflow ends `Pipeline SUCCEEDED`; audit reports
 `Repository passes all audit checks.` To recheck the samples, paste the section 2 snippets into a net10.0
 console project that references Contracts + Generators 14.0.0-beta.5 and run it (run
@@ -106,3 +113,4 @@ console project that references Contracts + Generators 14.0.0-beta.5 and run it 
 - Sources: readme.md, source/*/readme.md, documentation/generated-vs-legacy.md, documentation/diagnostics.md,
   documentation/m2-named-pipelines.md, documentation/release-notes/release-notes-v14.0.0.md.
 - Launch pack (task 015) and the GitHub Release draft should link the skill once it exists.
+- Review trail: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/disposition.md`. Outcome clean (2026-10-13).
