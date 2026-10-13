@@ -13,7 +13,9 @@ public class DispatchBenchmarks
   private IMediator LegacyMediator = null!;
   private TimeWarp.Mediator.Generated.Mediator GeneratedMediator = null!;
   private IServiceProvider GeneratedScope = null!;
+  private ISender GeneratedSender = null!;
   private global::Mediator.IMediator MartinothamarMediator = null!;
+  private readonly Nop NopRequest = new();
   private readonly Ping Request = new() { Message = "hi" };
   private readonly MartinPing MartinRequest = new() { Message = "hi" };
 
@@ -30,6 +32,8 @@ public class DispatchBenchmarks
     GeneratedScope = generatedServices.BuildServiceProvider().CreateScope().ServiceProvider;
     GeneratedMediator = GeneratedScope.GetRequiredService<TimeWarp.Mediator.Generated.Mediator>();
 
+    GeneratedSender = GeneratedScope.GetRequiredService<ISender>();
+
     ServiceCollection martinServices = new();
     martinServices.AddMediator();
     MartinothamarMediator = martinServices.BuildServiceProvider().GetRequiredService<Mediator.IMediator>();
@@ -45,6 +49,30 @@ public class DispatchBenchmarks
   public ValueTask<Pong> TimeWarpGeneratedMonomorphicSend()
   {
     return GeneratedMediator.Send(Request);
+  }
+
+  [Benchmark]
+  public Task<Pong> TimeWarpGeneratedInterfaceSend()
+  {
+    return GeneratedSender.Send(Request);
+  }
+
+  [Benchmark]
+  public Task<object?> TimeWarpGeneratedObjectSend()
+  {
+    return GeneratedSender.Send((object)Request);
+  }
+
+  [Benchmark]
+  public Task TimeWarpGeneratedInterfaceSendUnit()
+  {
+    return GeneratedSender.Send(NopRequest);
+  }
+
+  [Benchmark]
+  public ValueTask<Unit> TimeWarpGeneratedMonomorphicSendUnit()
+  {
+    return GeneratedMediator.Send(NopRequest);
   }
 
   [Benchmark]

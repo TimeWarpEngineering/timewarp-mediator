@@ -23,3 +23,15 @@ public sealed class PingHandler : IRequestHandler<Ping, Pong>
     return Task.FromResult(new Pong { Message = request.Message });
   }
 }
+
+public sealed class Nop : IRequest
+{
+}
+
+public sealed class NopHandler : IRequestHandler<Nop>
+{
+  public Task Handle(Nop request, CancellationToken cancellationToken)
+  {
+    return Task.CompletedTask;
+  }
+}
