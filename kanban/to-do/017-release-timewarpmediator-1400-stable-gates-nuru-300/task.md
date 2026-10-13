@@ -17,6 +17,10 @@ prerelease dependency (NU5104). Nuru 3.0.0 is blocked on this release.
 Follows `documentation/overview.md` "Cutting a release". Marketing launch pack is task 015 (drafted, unpublished,
 waits for Steven's OK; nothing in that pack is part of this task's gate).
 
+## Depends on
+
+- 018 (tw-mediator agent skill: `skills/tw-mediator/SKILL.md` + readme pointer must be on master before the version bump PR, so the launch pack and GitHub Release can link it)
+
 ## Requirements
 
 - `<Version>` in `source/Directory.Build.props` is `14.0.0`.
@@ -37,6 +41,7 @@ waits for Steven's OK; nothing in that pack is part of this task's gate).
 
 ## Checklist
 
+- [ ] 018 merged: `skills/tw-mediator/SKILL.md` on master and linked from the readme
 - [ ] Confirm no code change landed on master since v14.0.0-beta.5 that needs a release-note line
 - [ ] Version bump to 14.0.0
 - [ ] Release notes: `## 14.0.0` section added, intro flipped from "in beta" to stable; prerelease wording elsewhere flipped
@@ -54,6 +59,7 @@ waits for Steven's OK; nothing in that pack is part of this task's gate).
 
 ## Notes
 
+- Upstream: 018 (agent skill). Maintainer decision 2026-10-13: the skill gates stable so agents have a concise entry point on launch day.
 - Downstream: timewarp-nuru 489 → Nuru 3.0.0. timewarp-state 119 and timewarp-architecture 342 are done on beta.5.
 - Marketing: task 015 launch pack (blog, posts, GitHub Release body draft). Publishing it is Steven's call, after this task.
 - `dev release` refuses on dirty tree, out-of-sync master, existing tag, version already on nuget.org, or no green CI on HEAD.
