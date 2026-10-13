@@ -49,8 +49,8 @@ waits for Steven's OK; nothing in that pack is part of this task's gate).
 - [x] `./bin/dev workflow` green locally
 - [x] PR merged (merge commit), push CI green
 - [x] `dev release --dry-run` clean; `dev release` tags v14.0.0 and the publish job pushes all packages
-- [ ] nuget.org shows 14.0.0 for Contracts, Mediator, Generators, Analyzers
-- [ ] timewarp-nuru 489 notified
+- [x] nuget.org shows 14.0.0 for Contracts, Mediator, Generators, Analyzers (flat index, 14:02 UTC 2026-10-13)
+- [x] timewarp-nuru 489 notified (Unblocked section on its task branch, commit f3035b73; lands by PR since that branch carries doc edits)
 - [x] Results recorded (PR, merge commit, CI runs, Release URL, publish run)
 
 ## Session
@@ -130,5 +130,5 @@ the grep prints nothing.
   still unpublished and waits for Steven).
 - Publish run 38408409563 succeeded 13:53 UTC: `TimeWarp.Mediator.Contracts`, `TimeWarp.Mediator`, `TimeWarp.Mediator.Generators`,
   `TimeWarp.Mediator.Analyzers` 14.0.0 nupkgs plus the Contracts and Mediator snupkgs, six "Your package was pushed".
-- nuget.org flat index: see the checklist tick above for when all four showed `14.0.0`.
+- nuget.org flat index listed `14.0.0` for all four packages at 14:02 UTC (about nine minutes after the push).
 - Downstream: timewarp-nuru 489 updated with the release (Nuru bumps `Directory.Packages.props` to 14.0.0 and ships 3.0.0 without NU5104).
