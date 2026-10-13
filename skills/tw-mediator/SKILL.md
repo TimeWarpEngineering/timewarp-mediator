@@ -191,8 +191,7 @@ Set with `<TimeWarpMediatorProfile>` in the host project. Default is `Host`.
   (namespace `TimeWarp.Mediator.Generated`); handlers are `new Handler()` process-wide
   singletons in static fields, so keep them stateless. Behaviors are **not woven** (TWM005);
   handlers need an accessible parameterless constructor (TWM006).
-- **Link**: today emits the same as Aot (same limits, same diagnostics). Reserved for call-site
-  inlining.
+- **Link**: today emits the same as Aot (same limits, same diagnostics).
 
 ```xml
 <TimeWarpMediatorProfile>Aot</TimeWarpMediatorProfile>
@@ -223,7 +222,7 @@ All are errors unless marked warning. Full text:
 | TWM005 (warning) | Behavior not woven under Aot/Link | Use the Host profile, or drop the behavior |
 | TWM006 | Aot/Link handler not constructible with `new()` | Add an accessible parameterless ctor (`[SetsRequiredMembers]` for `required` members), or use Host |
 | TWM007 | Member-assembly type is `internal` / inaccessible from the host | Make it public, or `[assembly: InternalsVisibleTo("Host")]` in the member |
-| TWM008 | Contracts or MS.DI Abstractions not referenced; nothing generated | Add the reference, or set the profile to `Aot` |
+| TWM008 | Contracts or, on Host, MS.DI Abstractions not referenced; nothing generated | Add Contracts. For the MS.DI gap, add Abstractions, or set the profile to `Aot` when the host does not use MS.DI |
 | TWM009 (warning) | Stream handler, pre/post processor or exception handler/action is never called | Use `AddMediator()`, or move the logic into a handler or `IPipelineBehavior` |
 | TWM010 (warning) | `[MediatorBehavior]` type is not an `IPipelineBehavior<,>` | Fix the type or remove the registration |
 | TWM011 (warning) | Behavior's constraints match no request in its pipeline | Fix the constraints or `Scope`, or remove it |
@@ -261,8 +260,10 @@ In a generator host the generator reports TWM001-TWM003; in a library the Analyz
   Roslyn 4.8+ (CS9057 on older compilers).
 - **Streams are reflection-only.** `IStreamRequest<>` / `CreateStream` throw
   `NotSupportedException` on the generated mediator (TWM009). Keep `AddMediator()` for them.
-- **Membership is opt-in.** Handlers in a library without `[assembly: MediatorAssembly]` are
-  invisible to the host graph: the symptom is TWM001 on the request, not a runtime error.
+- **Membership is opt-in.** A library without `[assembly: MediatorAssembly]` is left out of the
+  host graph. When its request types are outside the graph too, the host build stays clean and
+  `Send` throws `NoHandlerException`. TWM001 fires only when the request type is already in a
+  member assembly and no member handler binds it.
 - **`Send(object)`** of a request from another pipeline compiles and throws
   `NoHandlerException` at runtime; prefer typed `Send`.
 
