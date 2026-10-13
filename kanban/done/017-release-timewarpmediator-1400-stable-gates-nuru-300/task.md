@@ -47,15 +47,16 @@ waits for Steven's OK; nothing in that pack is part of this task's gate).
 - [x] Release notes: `## 14.0.0` section added, intro flipped from "in beta" to stable; prerelease wording elsewhere flipped
 - [x] Analyzer release tracking unchanged and validating (RS2000-RS2008)
 - [x] `./bin/dev workflow` green locally
-- [ ] PR merged (merge commit), push CI green
-- [ ] `dev release --dry-run` clean; `dev release` tags v14.0.0 and the publish job pushes all packages
-- [ ] nuget.org shows 14.0.0 for Contracts, Mediator, Generators, Analyzers
-- [ ] timewarp-nuru 489 notified
-- [ ] Results recorded (PR, merge commit, CI runs, Release URL, publish run)
+- [x] PR merged (merge commit), push CI green
+- [x] `dev release --dry-run` clean; `dev release` tags v14.0.0 and the publish job pushes all packages
+- [x] nuget.org shows 14.0.0 for Contracts, Mediator, Generators, Analyzers (flat index, 14:02 UTC 2026-10-13)
+- [x] timewarp-nuru 489 notified (Unblocked section on its task branch, commit f3035b73; lands by PR since that branch carries doc edits)
+- [x] Results recorded (PR, merge commit, CI runs, Release URL, publish run)
 
 ## Session
 
 - Created: 1736118 (2026-10-13)
+- Release cut: Claude (timewarp-mediator cockpit session 2142087), 2026-10-13
 - 2026-10-13 implement (ganda task work, Claude Opus 5.5): version bump, release notes, prerelease wording
   flipped, `dev workflow --mode pr` green, `dev check-version --strict` and `ganda repo audit` pass.
   Remaining (post-merge, operator): merge PR, push CI, `dev release`, nuget.org check, Nuru 489 comment.
@@ -120,3 +121,14 @@ Expect: `Pipeline SUCCEEDED` (package smoke prints `package-pong`); check-versio
 `Version in source: 14.0.0` and "safe to release"; `artifacts/packages` holds four
 `*.14.0.0.nupkg` plus `TimeWarp.Mediator.14.0.0.snupkg` and `TimeWarp.Mediator.Contracts.14.0.0.snupkg`;
 the grep prints nothing.
+
+### Release outcome (2026-10-13, Claude from the mediator cockpit session)
+
+- PR #101 merged to master as `96e3e42` (merge commit) via `ganda pr merge 101 --task-id 017`; push CI run 38408024637 green.
+- `./bin/dev release --dry-run`: all seven guards passed. `./bin/dev release`: tag `v14.0.0` at `96e3e42`, GitHub Release
+  https://github.com/TimeWarpEngineering/timewarp-mediator/releases/tag/v14.0.0 (generated notes; the task 015 draft body is
+  still unpublished and waits for Steven).
+- Publish run 38408409563 succeeded 13:53 UTC: `TimeWarp.Mediator.Contracts`, `TimeWarp.Mediator`, `TimeWarp.Mediator.Generators`,
+  `TimeWarp.Mediator.Analyzers` 14.0.0 nupkgs plus the Contracts and Mediator snupkgs, six "Your package was pushed".
+- nuget.org flat index listed `14.0.0` for all four packages at 14:02 UTC (about nine minutes after the push).
+- Downstream: timewarp-nuru 489 updated with the release (Nuru bumps `Directory.Packages.props` to 14.0.0 and ships 3.0.0 without NU5104).
