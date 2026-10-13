@@ -24,9 +24,17 @@ Follows `documentation/overview.md` "Cutting a release".
 - [x] Analyzer release tracking rows moved (TWM005-TWM011)
 - [x] Release notes section retitled; overview analyzer-tracking note updated
 - [x] Build/pack green locally (RS2000-RS2008 release tracking validates)
-- [ ] PR merged (merge commit), push CI green
-- [ ] `dev release --dry-run` clean; `dev release` tags v14.0.0-beta.5 and the publish job pushes all four packages
-- [ ] nuget.org shows 14.0.0-beta.5 for Contracts, Mediator, Generators, Analyzers
+- [x] PR merged (merge commit), push CI green
+- [x] `dev release --dry-run` clean; `dev release` tags v14.0.0-beta.5 and the publish job pushes all four packages
+- [x] nuget.org shows 14.0.0-beta.5 for Contracts, Mediator, Generators, Analyzers
+
+## Results
+
+- PR #99 merged to master as `d63df17` (merge commit); push CI run 38362984651 green.
+- `./bin/dev release`: tag `v14.0.0-beta.5` at `d63df17`, GitHub Release
+  https://github.com/TimeWarpEngineering/timewarp-mediator/releases/tag/v14.0.0-beta.5.
+- Publish run 38363268473 succeeded 2026-10-13 07:33 UTC: Contracts, Mediator, Generators, Analyzers nupkgs and the
+  two snupkgs all returned "Your package was pushed". nuget.org indexing was still catching up at close.
 
 ## Session
 
