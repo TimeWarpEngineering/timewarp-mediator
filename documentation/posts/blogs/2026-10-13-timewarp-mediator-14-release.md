@@ -1,14 +1,5 @@
 # TimeWarp Mediator 14.0: The Rewrite That Pays You Back
 
-Unpublished draft. Do not put this on thefreezeteam.com until Steven says so, and not before
-`TimeWarp.Mediator` 14.0.0 is on nuget.org. The filename date stays `2026-xx-xx` until release
-day. Intended URL, once the month and day replace `xx`:
-
-https://thefreezeteam.com/posts/steven-t-cramer/2026/xx/2026-xx-xx-timewarp-mediator-14-release
-
-Cover and social image: `documentation/posts/assets/timewarp-mediator-14-card.png` (1200×675).
-Use it as the blog `Image:`, the Open Graph image, and the X and Nostr attachment.
-
 13.0.0 corrected the spelling and the license. 14.0.0 is a different dispatcher. The reflection
 `AddMediator()` you already call is still here, and it still does not register the
 source-generated mediator. The generated one is the path that pays the rewrite back: a
@@ -95,6 +86,8 @@ Diagnostics TWM001–TWM011 are listed in
 [diagnostics.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md).
 
 ## Install
+
+NuGet: https://www.nuget.org/packages/TimeWarp.Mediator/14.0.0
 
 ```bash
 dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0
