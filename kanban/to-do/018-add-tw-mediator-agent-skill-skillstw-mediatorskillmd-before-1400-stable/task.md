@@ -41,17 +41,63 @@ The skill is repo-only; it is not packed into any nupkg and does not change the 
 
 ## Checklist
 
-- [ ] `skills/tw-mediator/SKILL.md` written per the six sections above
-- [ ] Code samples compiled against the pinned Mediator version
-- [ ] Readme "For AI agents" paragraph added
-- [ ] `ganda agents sync` distributes `tw-mediator` (or reason recorded)
-- [ ] `./bin/dev workflow` green; `ganda repo audit` clean
+- [x] `skills/tw-mediator/SKILL.md` written per the six sections above
+- [x] Code samples compiled against the pinned Mediator version
+- [x] Readme "For AI agents" paragraph added
+- [x] `ganda agents sync` distributes `tw-mediator` (or reason recorded)
+- [x] `./bin/dev workflow` green; `ganda repo audit` clean
 - [ ] PR merged (merge commit)
-- [ ] Results: line count, where samples were compiled, anything deliberately left out
+- [x] Results: line count, where samples were compiled, anything deliberately left out
 
 ## Session
 
 - Created: 1774055 (2026-10-13)
+- 2026-10-13: implementer (ganda task work) wrote skill + readme paragraph; samples compiled; workflow + audit green.
+
+## Results
+
+- `skills/tw-mediator/SKILL.md`: 288 lines, frontmatter `name: tw-mediator` + `description:` (same shape as tw-nuru).
+  Sections in the required order: which dispatcher, minimal host (CPM packages, membership, request/handler/send,
+  notifications, behaviors, named pipelines), profiles, TWM001-TWM011 table, gotchas, 13.x to 14.0 migration
+  pointers. Detail stays in generated-vs-legacy.md, diagnostics.md, m2-named-pipelines.md, migration.md and the
+  14.0.0 release notes, which the skill links by absolute GitHub URL (the skill is copied out of the repo by sync).
+- `readme.md`: "For AI agents" paragraph under Documentation, mirroring Nuru's. `skills/.gitkeep` removed.
+- Samples compiled and run against **14.0.0-beta.5 from nuget.org** (the version master pins) in a scratch
+  CPM project outside the repo (`/tmp/tw-mediator-skill-check`, TreatWarningsAsErrors on): one Host-profile
+  program with request + handler + `ISender.Send`, `INotification` + `IPublisher.Publish`, an unscoped
+  `[assembly: MediatorBehavior]`, and a `ClientPipeline` named pipeline with a scoped behavior (output
+  `-> Ping / hi pong / email for order 42 / client stamp / client pong`); a second Aot-profile program with
+  `new Mediator()` (`aot pong`), rerun with `TimeWarpMediatorNamespace=My.App.Mediation` (`aot pong`).
+  Not compiled: the `extern alias` snippet (two-host friend setup is a csproj/alias fragment, not a program).
+- Distribution: `ganda agents sync` does **not** carry skills; it only syncs the global preferences file
+  (`ganda agents targets` lists the AGENTS.md/CLAUDE.md targets). Skills ship through `ganda skills`; tw-nuru is
+  registered there from the timewarp-nuru master worktree. After this PR merges, the operator runs
+  `ganda skills add tw-mediator worktree://github.com/TimeWarpEngineering/timewarp-mediator/master/skills/tw-mediator`
+  then `ganda skills sync`. Not registered from the task worktree because that path disappears at `worktree gc`.
+- `./bin/dev workflow --mode pr`: green (build, test, verify-samples, pack + package smoke). `ganda repo audit`: clean.
+- Gotcha hit while verifying (repo-dev only, left out of the skill): building against the nuget beta.5 analyzers and
+  then the in-repo generator of the same assembly version in one compiler-server session fails with
+  CS8784 `TypeLoadException ... MembershipOptions`. `dotnet build-server shutdown` clears it.
+- Deliberately left out: reflection-stack registration detail (the readme covers `AddMediator` and the
+  container samples), idempotency contracts beyond a one-line mention, benchmarks.
+
+### How to validate
+
+Smoke:
+
+```bash
+wc -l skills/tw-mediator/SKILL.md
+head -4 skills/tw-mediator/SKILL.md
+grep -n "For AI agents" readme.md
+./bin/dev workflow --mode pr
+ganda repo audit
+```
+
+Expect: 288 lines (inside the 250-350 target); frontmatter shows `name: tw-mediator` and a `description:`;
+readme links `skills/tw-mediator/SKILL.md`; workflow ends `Pipeline SUCCEEDED`; audit reports
+`Repository passes all audit checks.` To recheck the samples, paste the section 2 snippets into a net10.0
+console project that references Contracts + Generators 14.0.0-beta.5 and run it (run
+`dotnet build-server shutdown` first if you just built the repo).
 
 ## Notes
 

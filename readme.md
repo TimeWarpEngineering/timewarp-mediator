@@ -184,6 +184,12 @@ public sealed class RetryIdempotentBehavior<TRequest, TResponse> : IPipelineBeha
 - Release notes: [14.0.0](./documentation/release-notes/release-notes-v14.0.0.md),
   [13.0.0](./documentation/release-notes/release-notes-v13.0.0.md)
 
+**For AI agents:** Load the built-in [Mediator skill](skills/tw-mediator/SKILL.md) for:
+- Choosing the generated or reflection dispatcher
+- A minimal generated host: requests, notifications, behaviors and named pipelines
+- Profiles (Host, Aot, Link) and TWM001–TWM011 fixes
+- Known gotchas and 13.x to 14.0 migration pointers
+
 ## About this fork
 
 TimeWarp Mediator started as a fork of MediatR to correct the spelling to "Mediator", release
