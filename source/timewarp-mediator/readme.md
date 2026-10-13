@@ -1,58 +1,54 @@
 # TimeWarp.Mediator
 
-The reflection dispatcher for [TimeWarp Mediator](https://github.com/TimeWarpEngineering/timewarp-mediator):
-a fork of [MediatR](https://github.com/jbogard/MediatR) with `AddMediator()`, assembly scanning,
-pipeline behaviors, pre/post processors, streams, and the exception cascade.
-
-TimeWarp Mediator has **two independent dispatchers**: the reflection runtime
-(`AddMediator()`, package `TimeWarp.Mediator`) and the source-generated mediator
-(`AddGeneratedMediator()`, packages `TimeWarp.Mediator.Contracts` + `TimeWarp.Mediator.Generators`).
-`AddMediator()` does not register the generated mediator, and 14.0.0-beta is not a drop-in for
-13.0.0. See [Generated vs reflection](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md).
+The reflection dispatcher for TimeWarp Mediator 14.0: assembly scanning, pipeline behaviors, streams, pre/post processors, and the exception cascade. It is the MediatR-shaped API. It is not the source-generated mediator.
 
 ## Install
 
-This package is the 14.x reflection runtime and targets **net10.0** only. While 14.0.0 is in
-prerelease, add `--prerelease`:
-
 ```bash
-dotnet add package TimeWarp.Mediator --prerelease
+dotnet add package TimeWarp.Mediator --version 14.0.0
 ```
 
-**13.0.0** is the last stable reflection line and also targets netstandard2.0 and net6.0. Stay
-on it when you cannot move to net10.0:
+14.0.0 targets net10.0 only. Stay on 13.0.0 when you cannot:
 
 ```bash
 dotnet add package TimeWarp.Mediator --version 13.0.0
 ```
 
-## Use
+## Example
 
 ```csharp
-services.AddMediator(cfg =>
+public sealed class Ping : IRequest<string> { }
+
+public sealed class PingHandler : IRequestHandler<Ping, string>
 {
-  cfg.RegisterServicesFromAssemblyContaining<Startup>();
-  cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
-});
+  public Task<string> Handle(Ping request, CancellationToken cancellationToken) =>
+    Task.FromResult("Pong");
+}
+
+services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining<PingHandler>());
+string reply = await provider.GetRequiredService<ISender>().Send(new Ping());
 ```
 
-`AddMediator()` registers `IMediator`, `ISender`, `IPublisher` and every handler it finds with
-`Microsoft.Extensions.DependencyInjection`. Coming from MediatR: replace `using MediatR;` with
-`using TimeWarp.Mediator;` and `AddMediatR` with `AddMediator`.
+`AddMediator()` registers `IMediator`, `ISender`, `IPublisher`, and the handlers it finds. It does not register the generated mediator. The reflection runtime is not trim or NativeAOT safe (IL2026 / IL3050).
 
-The reflection runtime is not trim or NativeAOT safe (IL2026 / IL3050). Use the generated stack
-for those hosts.
+## Migration
+
+14.0.0 is not a drop-in for 13.0.0, and neither stack is a drop-in for the other.
+
+- From MediatR: `using MediatR;` becomes `using TimeWarp.Mediator;`, and `AddMediatR` becomes `AddMediator`.
+- From 13.x reflection to the generated stack: reference `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators`, mark handler assemblies with `[assembly: MediatorAssembly]`, and call `AddGeneratedMediator()`. Drop this package once nothing calls `AddMediator()`.
+- Generated dispatch does not run streams, pre/post processors, or the exception cascade. Stay on this package if you need those.
+- `ServiceFactory` is removed; resolve through `IServiceProvider`. The handler wrappers and `ServiceRegistrar` are internal. Call `ISender.Send`, `IPublisher.Publish`, and `AddMediator`.
+
+Matrix and steps: [13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
 
 ## Documentation
 
 - [Repository readme](https://github.com/TimeWarpEngineering/timewarp-mediator#readme)
-- [Generated vs reflection: two stacks, packages, membership, named pipelines](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md)
-- [Migration: MediatR to 13.x, and 13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md)
+- [Generated vs reflection](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md)
 - [Diagnostics TWM001–TWM011](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md)
 - [Release notes](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/release-notes/release-notes-v14.0.0.md)
 
 ## License
 
-Licensed as `Unlicense AND Apache-2.0`. The Apache-2.0 terms cover code derived from
-[MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard; the `notice` and `unlicense`
-files ship in this package.
+Licensed as `Unlicense AND Apache-2.0`. The Apache-2.0 terms cover code derived from [MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard. The `notice` and `unlicense` files ship in this package.

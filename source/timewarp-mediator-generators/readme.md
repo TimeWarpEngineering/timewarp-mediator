@@ -1,54 +1,49 @@
 # TimeWarp.Mediator.Generators
 
-Source generator for [TimeWarp Mediator](https://github.com/TimeWarpEngineering/timewarp-mediator).
-It builds the message graph at compile time and emits an `internal sealed Mediator`, per-pipeline
-senders and publishers, and `AddGeneratedMediator()`. The analyzers (TWM001–TWM004) ship inside
-this package; the generator adds TWM005–TWM011.
-
-TimeWarp Mediator has **two independent dispatchers**: the reflection runtime
-(`AddMediator()`, package `TimeWarp.Mediator`) and the source-generated mediator
-(`AddGeneratedMediator()`, packages `TimeWarp.Mediator.Contracts` + `TimeWarp.Mediator.Generators`).
-`AddMediator()` does not register the generated mediator, and 14.0.0-beta is not a drop-in for
-13.0.0. See [Generated vs reflection](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md).
+Source generator for TimeWarp Mediator 14.0. It emits an internal mediator so `Send` is a direct call: less time, fewer bytes, and a trim and NativeAOT safe path.
 
 ## Install
 
-Add Contracts and Generators to the host project, at the same version. Generators is a
-development dependency and does not bring Contracts with it.
-
 ```bash
-dotnet add package TimeWarp.Mediator.Contracts --prerelease
-dotnet add package TimeWarp.Mediator.Generators --prerelease
+dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0
+dotnet add package TimeWarp.Mediator.Generators --version 14.0.0
 ```
 
-## Use
+Generators does not bring Contracts with it. Keep both on 14.0.0. This package bundles the analyzers (TWM001–TWM004) and adds TWM005–TWM011.
+
+## Example
 
 ```csharp
-services.AddGeneratedMediator();                    // unscoped IMediator / ISender / IPublisher
-services.AddGeneratedMediator<ClientPipeline>();    // named pipeline ISender<ClientPipeline>
+public sealed class Ping : IRequest<string> { }
+
+public sealed class PingHandler : IRequestHandler<Ping, string>
+{
+  public Task<string> Handle(Ping request, CancellationToken cancellationToken) =>
+    Task.FromResult("Pong");
+}
+
+services.AddGeneratedMediator();
+string reply = await provider.GetRequiredService<ISender>().Send(new Ping());
 ```
 
-The host referencing this package is a graph member automatically. Libraries whose handlers
-the host should dispatch add `[assembly: MediatorAssembly]`. Pipeline behaviors are registered
-with `[assembly: MediatorBehavior(typeof(MyBehavior<,>))]`. Streams, pre/post processors and
-the exception cascade are not dispatched (TWM009); see the
-[13.x to 14.x feature matrix](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
+The host that references this package is a graph member. A library opts in with `[assembly: MediatorAssembly]`. Register a pipeline behavior with `[assembly: MediatorBehavior(typeof(MyBehavior<,>))]`. Set `<TimeWarpMediatorProfile>Aot</TimeWarpMediatorProfile>` for dispatch with no `IServiceProvider` (handlers are `new Handler()` singletons, and behaviors are not woven).
 
-Set `<TimeWarpMediatorProfile>Aot</TimeWarpMediatorProfile>` for NativeAOT dispatch without
-`IServiceProvider`.
+## Migration
 
-## Requirements
+14.0.0 is not a drop-in for 13.0.0.
 
-Built against Microsoft.CodeAnalysis.CSharp 4.8.0: .NET SDK 8.0.100 or Visual Studio 2022 17.8
-or later. In practice the host needs .NET SDK 10.0.100, because Contracts targets net10.0.
+- `AddMediator()` does not register this generator's mediator. Replace it with `AddGeneratedMediator()` in the host.
+- Contracts targets net10.0. The generator itself is netstandard2.0 because Roslyn loads it. You need Roslyn 4.8 or later, and in practice the .NET 10 SDK, because Contracts targets net10.0.
+- Streams, pre/post processors, and the exception cascade are not dispatched (TWM009). Keep `AddMediator()` if you still need them.
+- A missing or duplicate handler is a build error (TWM001, TWM002), not a runtime exception.
+
+Matrix and steps: [13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
 
 ## Documentation
 
 - [Repository readme](https://github.com/TimeWarpEngineering/timewarp-mediator#readme)
-- [Generated vs reflection: two stacks, packages, membership, named pipelines](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md)
-- [Migration: MediatR to 13.x, and 13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md)
+- [Generated vs reflection](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md)
 - [Diagnostics TWM001–TWM011](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md)
-- [Release notes](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/release-notes/release-notes-v14.0.0.md)
 
 ## License
 

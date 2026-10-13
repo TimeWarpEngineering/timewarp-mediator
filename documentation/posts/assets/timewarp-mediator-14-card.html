@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>TimeWarp Mediator 14.0</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 1200px;
+      height: 675px;
+      overflow: hidden;
+      background: #f4f7fb;
+      color: #102046;
+      font-family: "Liberation Sans", "Nimbus Sans", sans-serif;
+    }
+
+    .card {
+      box-sizing: border-box;
+      width: 1200px;
+      height: 675px;
+      padding: 48px 64px 40px 78px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 16px;
+      background: linear-gradient(180deg, #243e9c 0%, #6d35d4 100%);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    header img {
+      width: 84px;
+      height: 84px;
+      object-fit: contain;
+    }
+
+    .kicker {
+      font-size: 22px;
+      letter-spacing: 0.16em;
+      font-weight: 700;
+      color: #3a4d7a;
+    }
+
+    .version {
+      font-size: 54px;
+      line-height: 1;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    h1 {
+      margin: 28px 0 0;
+      font-size: 52px;
+      line-height: 1.15;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .stats {
+      margin-top: 36px;
+      display: flex;
+      align-items: stretch;
+      gap: 22px;
+    }
+
+    .stat {
+      flex: 1;
+      background: #ffffff;
+      border: 1px solid #d5deee;
+      border-radius: 18px;
+      padding: 22px 28px 20px;
+    }
+
+    .stat.accent {
+      background: #14245a;
+      color: #f4f7fb;
+      border-color: #14245a;
+    }
+
+    .label {
+      font-size: 20px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #52648d;
+    }
+
+    .accent .label { color: #c5d2f5; }
+
+    .num {
+      font-size: 64px;
+      line-height: 1.05;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .sub {
+      font-size: 28px;
+      margin-top: 4px;
+      color: #3a4d7a;
+    }
+
+    .accent .sub { color: #d6e0ff; }
+
+    .arrow {
+      align-self: center;
+      font-size: 42px;
+      color: #6d35d4;
+      font-weight: 700;
+    }
+
+    footer {
+      margin-top: auto;
+    }
+
+    .ratio {
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .src {
+      margin-top: 6px;
+      font-size: 18px;
+      color: #52648d;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <header>
+      <img src="../../../assets/logo.png" alt="">
+      <div>
+        <div class="kicker">TIMEWARP MEDIATOR</div>
+        <div class="version">14.0</div>
+      </div>
+    </header>
+    <h1>The Rewrite That Pays You Back</h1>
+    <div class="stats">
+      <div class="stat">
+        <div class="label">Reflection Send</div>
+        <div class="num">69.0 ns</div>
+        <div class="sub">224 B</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="stat accent">
+        <div class="label">Generated Send</div>
+        <div class="num">29.9 ns</div>
+        <div class="sub">96 B</div>
+      </div>
+    </div>
+    <footer>
+      <div class="ratio">0.43× time · 0.43× bytes · trim and NativeAOT safe</div>
+      <div class="src">Comparison baseline 2026-10-12 · Ryzen 9 7950X3D · .NET 10 · Ping/Pong, no behaviors</div>
+    </footer>
+  </div>
+</body>
+</html>

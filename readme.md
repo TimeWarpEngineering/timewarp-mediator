@@ -5,9 +5,9 @@ TimeWarp Mediator
 [![NuGet](https://img.shields.io/nuget/v/TimeWarp.Mediator.svg)](https://www.nuget.org/packages/TimeWarp.Mediator)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/TimeWarp.Mediator.svg)](https://www.nuget.org/packages/TimeWarp.Mediator)
 
-In-process messaging for .NET: request/response, commands, queries, notifications and events,
-synchronous and async, dispatched via C# generic variance. TimeWarp Mediator is a fork of
-[MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard.
+TimeWarp Mediator 14.0: the rewrite that pays you back. In-process messaging for .NET, now with a
+source-generated dispatcher beside the reflection one. The generated path is trim and NativeAOT
+safe. This project is a fork of [MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard.
 
 ## Packages
 
@@ -22,7 +22,7 @@ synchronous and async, dispatched via C# generic variance. TimeWarp Mediator is 
 
 This repository ships **two independent dispatchers**: reflection `AddMediator()` and the
 source-generated `AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()`. Calling
-`AddMediator()` does not register the generated mediator, and **14.0.0-beta is not a drop-in
+`AddMediator()` does not register the generated mediator, and **14.0.0 is not a drop-in
 for 13.0.0**. Read [generated-vs-legacy.md](./documentation/generated-vs-legacy.md) before you
 pick one.
 
@@ -35,13 +35,15 @@ netstandard2.0 because they run inside the compiler; they need Roslyn 4.8 or lat
 
 ## Quick start: generated stack
 
-While 14.0.0 is in prerelease, add `--prerelease` to get the latest beta. Keep every
-TimeWarp.Mediator package on the same version.
+Keep every TimeWarp.Mediator package on the same version.
 
 ```bash
-dotnet add package TimeWarp.Mediator.Contracts --prerelease
-dotnet add package TimeWarp.Mediator.Generators --prerelease
+dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0
+dotnet add package TimeWarp.Mediator.Generators --version 14.0.0
 ```
+
+Those lines are the 14.0.0 stable install, which is what the packed package readmes describe.
+Until 14.0.0 is on nuget.org, `--prerelease` still selects the 14.0.0 beta line.
 
 ```csharp
 public sealed class Ping : IRequest<string>
@@ -67,7 +69,13 @@ Aot profile: [generated-vs-legacy.md](./documentation/generated-vs-legacy.md). D
 
 ## Quick start: reflection stack
 
-NuGet **13.0.0** is the last stable reflection line:
+The 14.0.0 reflection package targets net10.0 only:
+
+```bash
+dotnet add package TimeWarp.Mediator --version 14.0.0
+```
+
+Stay on **13.0.0** when you cannot target net10.0:
 
 ```bash
 dotnet add package TimeWarp.Mediator --version 13.0.0

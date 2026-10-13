@@ -1,7 +1,6 @@
 # TimeWarp.Mediator.Analyzers
 
-Roslyn analyzers for [TimeWarp Mediator](https://github.com/TimeWarpEngineering/timewarp-mediator)
-libraries that do **not** run the source generator.
+Roslyn analyzers for TimeWarp Mediator 14.0 libraries that declare requests and handlers and do not run the source generator.
 
 | Id | Summary |
 |----|---------|
@@ -10,38 +9,42 @@ libraries that do **not** run the source generator.
 | TWM003 | Handler and message belong to different pipelines |
 | TWM004 | Request is not a member of this sender pipeline |
 
-TimeWarp Mediator has **two independent dispatchers**: the reflection runtime
-(`AddMediator()`, package `TimeWarp.Mediator`) and the source-generated mediator
-(`AddGeneratedMediator()`, packages `TimeWarp.Mediator.Contracts` + `TimeWarp.Mediator.Generators`).
-`AddMediator()` does not register the generated mediator, and 14.0.0-beta is not a drop-in for
-13.0.0. See [Generated vs reflection](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md).
+A project that references `TimeWarp.Mediator.Generators` already gets these analyzers. Do not add both.
 
-## When to add this package
-
-A project that references `TimeWarp.Mediator.Generators` already gets these analyzers; do not
-add both. Add this package to a library that holds requests and handlers for a generated host,
-so it fails its own build on a missing or duplicate handler:
+## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator.Contracts --prerelease
-dotnet add package TimeWarp.Mediator.Analyzers --prerelease
+dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0
+dotnet add package TimeWarp.Mediator.Analyzers --version 14.0.0
 ```
+
+## Example
 
 ```csharp
 [assembly: MediatorAssembly]
+
+public sealed class Ping : IRequest<string> { }
+
+public sealed class PingHandler : IRequestHandler<Ping, string>
+{
+  public Task<string> Handle(Ping request, CancellationToken cancellationToken) =>
+    Task.FromResult("Pong");
+}
 ```
 
-Requires Roslyn 4.8 or later (.NET SDK 8.0.100 or Visual Studio 2022 17.8). In practice the
-library needs .NET SDK 10.0.100, because the install above also references Contracts, which
-targets net10.0.
+Requires Roslyn 4.8 or later (.NET SDK 8.0.100 or Visual Studio 2022 17.8). Contracts targets net10.0, so the library project needs the .NET 10 SDK.
+
+## Migration
+
+14.0.0 is not a drop-in for 13.0.0. These analyzers do not register a mediator. The host that dispatches the messages in this library references `TimeWarp.Mediator.Generators` and calls `AddGeneratedMediator()`. A missing handler fails that host's build (TWM001) even when this package is absent. Add this package so the library fails its own build first.
+
+Matrix and steps: [13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
 
 ## Documentation
 
 - [Repository readme](https://github.com/TimeWarpEngineering/timewarp-mediator#readme)
-- [Generated vs reflection: two stacks, packages, membership, named pipelines](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md)
-- [Migration: MediatR to 13.x, and 13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md)
+- [Generated vs reflection](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md)
 - [Diagnostics TWM001–TWM011](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md)
-- [Release notes](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/release-notes/release-notes-v14.0.0.md)
 
 ## License
 
