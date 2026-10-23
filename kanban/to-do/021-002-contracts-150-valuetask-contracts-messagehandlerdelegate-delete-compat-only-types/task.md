@@ -98,7 +98,16 @@ ganda repo audit
 
 **Not in scope:** emitting `[assembly: GeneratedMediator(typeof(Mediator))]`, the non-boxing dispatcher, and deleting the reflection runtime (021-003 and 021-004). State, Architecture, and Nuru signature updates wait on `15.0.0-beta.1`.
 
+### Review
+
+- Round 1 (2026-10-23): one general reviewer at effort 3. `./bin/dev workflow` was re-run and printed `Pipeline SUCCEEDED`.
+- Counts: bug 0. Suggestion: 1 open (M1). Nit: 1 open (M2), 1 wontfix (M3, deferred to 021-007).
+- No disposition yet. A fix pass is needed for M1 (test that a behavior's replacement request reaches the handler on both dispatchers) and M2 (`Unit.ValueTask` XML comment).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
 ## Session
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
 - Implementation: grok 01a16902-d58d-7201-b302-322c8e278bd4 (2026-10-23)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T14:28:49Z
+- Review oracle round 1: general reviewer (claude-opus-5-5), effort 3, session id not exposed. Result: fix pass needed for M1, M2 (2026-10-23)
