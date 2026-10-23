@@ -38,6 +38,7 @@ Deliverable: `documentation/design/2026-10-13-15.0-breaking-redesign-review.md`.
 - Created: 2408358 (2026-10-13)
 - 2026-10-13: research fan-out (four read-only surveys), review written; interface-path benchmark measured (65 ns / 240 B through `ISender` vs 30 ns / 96 B concrete) and added to the comparison project.
 - 2026-10-23: maintainer signed off D1–D6 (yes to all). Child tasks 021-001 .. 021-007 created and published to the to-do column; see the child table below.
+- 2026-10-23: PR #105 opened against master (review, kitchen, benchmarks, audit baseline); origin/master merged in so the child kitchens sit beside the parent.
 
 ## Child tasks
 
