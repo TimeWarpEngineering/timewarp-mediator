@@ -5,9 +5,10 @@
 #region Design
 // JSON stays the single serialized manifest. The same static type exposes Request entries so a
 // host can read kind, response, scope, and the ordered behavior list without parsing JSON.
-// Kind precedence matches Nuru's string matcher: Query, then IdempotentCommand, then Command,
-// then Action, otherwise Request. Aot/Link does not weave behaviors (TWM005), so every request
-// lists an empty behavior array in that profile.
+// Requests and each entry's Behaviors are ReadOnlyCollection wrappers over private arrays, so a
+// cast cannot mutate the process-wide manifest. Kind precedence matches Nuru's string matcher:
+// Query, then IdempotentCommand, then Command, then Action, otherwise Request. Aot/Link does
+// not weave behaviors (TWM005), so every request lists an empty behavior list in that profile.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -128,6 +129,9 @@ internal static class ManifestEmitter
 
   private static void EmitRequestEntries(StringBuilder builder, MessageGraph graph)
   {
+    builder.AppendLine("    private static readonly global::System.Collections.Generic.IReadOnlyList<string> NoBehaviors =");
+    builder.AppendLine("        new global::System.Collections.ObjectModel.ReadOnlyCollection<string>(global::System.Array.Empty<string>());");
+    builder.AppendLine();
     builder.AppendLine("    private static readonly RequestEntry[] RequestEntries =");
     builder.AppendLine("    [");
     for (int i = 0; i < graph.Requests.Length; i++)
@@ -148,11 +152,11 @@ internal static class ManifestEmitter
 
       if (graph.IsAotProfile || request.ClosedBehaviors.Length == 0)
       {
-        builder.Append("global::System.Array.Empty<string>()");
+        builder.Append("NoBehaviors");
       }
       else
       {
-        builder.Append("new string[] { ");
+        builder.Append("new global::System.Collections.ObjectModel.ReadOnlyCollection<string>(new string[] { ");
         for (int b = 0; b < request.ClosedBehaviors.Length; b++)
         {
           if (b > 0)
@@ -163,7 +167,7 @@ internal static class ManifestEmitter
           builder.Append(CSharpString(request.ClosedBehaviors[b].ToDisplayString()));
         }
 
-        builder.Append(" }");
+        builder.Append(" })");
       }
 
       builder.Append(')');
@@ -177,7 +181,10 @@ internal static class ManifestEmitter
 
     builder.AppendLine("    ];");
     builder.AppendLine();
-    builder.AppendLine("    public static global::System.Collections.Generic.IReadOnlyList<RequestEntry> Requests => RequestEntries;");
+    builder.AppendLine("    private static readonly global::System.Collections.ObjectModel.ReadOnlyCollection<RequestEntry> RequestList =");
+    builder.AppendLine("        new global::System.Collections.ObjectModel.ReadOnlyCollection<RequestEntry>(RequestEntries);");
+    builder.AppendLine();
+    builder.AppendLine("    public static global::System.Collections.Generic.IReadOnlyList<RequestEntry> Requests => RequestList;");
     builder.AppendLine();
     builder.AppendLine("    public static RequestEntry Request(string requestType)");
     builder.AppendLine("    {");
@@ -194,7 +201,7 @@ internal static class ManifestEmitter
     builder.AppendLine();
     builder.AppendLine("    public readonly struct RequestEntry");
     builder.AppendLine("    {");
-    builder.AppendLine("        public RequestEntry(string request, string response, string kind, string? scope, string[] behaviors)");
+    builder.AppendLine("        public RequestEntry(string request, string response, string kind, string? scope, global::System.Collections.Generic.IReadOnlyList<string> behaviors)");
     builder.AppendLine("        {");
     builder.AppendLine("            Request = request;");
     builder.AppendLine("            Response = response;");
@@ -211,7 +218,7 @@ internal static class ManifestEmitter
     builder.AppendLine();
     builder.AppendLine("        public string? Scope { get; }");
     builder.AppendLine();
-    builder.AppendLine("        public string[] Behaviors { get; }");
+    builder.AppendLine("        public global::System.Collections.Generic.IReadOnlyList<string> Behaviors { get; }");
     builder.AppendLine("    }");
   }
 

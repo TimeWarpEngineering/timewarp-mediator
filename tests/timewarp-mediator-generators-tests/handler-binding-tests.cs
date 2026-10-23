@@ -81,7 +81,7 @@ public class HandlerBindingTests
   }
 
   [Fact]
-  public async Task CachedHandler_StaysInsideTheScope()
+  public async Task ScopedHandler_StaysInsideTheScope()
   {
     ServiceCollection services = new();
     services.AddGeneratedMediator();

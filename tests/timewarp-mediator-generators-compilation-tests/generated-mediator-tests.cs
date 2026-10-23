@@ -24,9 +24,12 @@ public sealed class GeneratedMediatorTests
             .Where(tree => tree.FilePath.Contains(".g.cs", StringComparison.Ordinal))
             .Select(tree => tree.GetText().ToString()));
     generated.ShouldContain("Unsafe.As<");
+    generated.ShouldContain("typeof(TResponse) == typeof(");
+    generated.ShouldContain("AdaptResponse<");
     generated.ShouldNotContain("SendCore");
-    generated.ShouldContain("private static readonly global::TimeWarp.Mediator.MessageHandlerDelegate<");
-    generated.ShouldContain("[assembly: global::TimeWarp.Mediator.GeneratedMediatorAttribute(typeof(");
+    generated.ShouldNotContain("ThreadStatic");
+    generated.ShouldContain("private readonly global::TimeWarp.Mediator.MessageHandlerDelegate<");
+    generated.ShouldContain("[assembly: global::TimeWarp.Mediator.GeneratedMediatorAttribute(typeof(global::");
     string registration = host.Compilation.SyntaxTrees
         .Single(tree => tree.FilePath.Contains("MediatorServiceCollectionExtensions.g.cs", StringComparison.Ordinal))
         .GetText()
@@ -34,6 +37,7 @@ public sealed class GeneratedMediatorTests
     registration.ShouldNotContain("IRequestHandler");
     registration.ShouldNotContain("IPipelineBehavior");
     registration.ShouldNotContain("INotificationHandler");
+    registration.ShouldContain(".Chain_");
     registration.ShouldContain("namespace TimeWarp.Mediator.Generated;");
     registration.ShouldContain("class TimeWarpMediatorGeneratedServiceCollectionExtensions");
     host.Manifest().Request("App.Ping").Kind.ShouldBe("Request");

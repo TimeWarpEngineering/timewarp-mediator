@@ -45,6 +45,13 @@ Migration page: under `using static TimeWarp.Mediator.Unit`, `Unit.ValueTask` do
 `System.Threading.Tasks.ValueTask`. Tell callers to use the qualified names `Unit.Value` and
 `Unit.ValueTask`. From 021-002 review M2.
 
+Migration page: typed `Send` and `Dispatch_*` return the handler `ValueTask` directly. A null
+argument, `NoHandlerException`, and a handler that throws before returning a `ValueTask` leave
+`Send` as a thrown exception. A handler that returns a faulted or canceled `ValueTask` stays
+faulted; `Send` does not throw that fault synchronously. 14.x `async` `Send` captured synchronous
+throws in the returned task. Callers that project `Send` inside `Enumerable.Select` (for example
+`Task.WhenAll`) must not assume a synchronous failure is captured. From 021-003 review M4.
+
 ## Session
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)

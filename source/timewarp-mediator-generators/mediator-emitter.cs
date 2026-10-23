@@ -9,25 +9,28 @@
 // TWM005/TWM006 for what that drops or cannot construct. CallSiteInlining prototype is the public
 // static Dispatch_* method the interceptors would target.
 // Send<TResponse> and Send<TRequest> (void) are type switches. Each arm returns the Dispatch_*
-// ValueTask. Response arms reinterpret ValueTask<TConcrete> as ValueTask<TResponse> with
-// Unsafe.As: the arm is reachable only when that request's response type is TResponse, and
-// covariant IRequest<out T> conversions stay within reference types, which share one ValueTask
-// layout. Void arms adapt ValueTask<Unit> to ValueTask without boxing. Send(object) and
-// Publish(object) are the only paths that erase the message to object.
-// With behaviors, Dispatch_* runs a chain of static MessageHandlerDelegate fields. Each step
-// resolves its service from a thread-static scope that Invoke sets for the synchronous descent
-// and restores afterwards (reentrant Send of the same request included). Behaviors call next
-// before their first incomplete await, which is when the next step resolves. A behavior that
-// calls next only after an await on another thread does not see that slot.
-// No behaviors: Dispatch_* returns the handler ValueTask directly. Host profile caches the
-// resolved handler in thread-static slots keyed by scope, so a repeat send does not call
-// GetRequiredService. A different scope on that thread resolves again.
+// ValueTask. Unsafe.As reinterprets ValueTask<TConcrete> as ValueTask<TResponse> only when those
+// types are equal. A covariant IRequest<out T>, or a request that implements two IRequest<>
+// closures, awaits the concrete ValueTask and casts; a mismatch throws InvalidCastException.
+// Void arms adapt ValueTask<Unit> to ValueTask. A completed fault or cancellation stays faulted.
+// Send(object) and Publish(object) are the only paths that erase the message to object.
+// A null argument, NoHandlerException, and a handler that throws before it returns a ValueTask
+// leave Send as a thrown exception. That exception is not captured in the returned task.
+// With behaviors, Dispatch_* resolves a scoped Chain_* and invokes it. The chain creates its
+// MessageHandlerDelegate steps once per scope. Each step resolves from that instance, so a
+// behavior may await before next and two scopes may send the same request together.
+// No behaviors: the dispatcher resolves a scoped HandlerCache once and reuses it. That makes
+// the no-behavior path effectively scoped, including a handler whose registration is transient.
+// Disposing the scope disposes the cache, and the next send throws ObjectDisposedException.
+// Nothing is stored in a thread-static slot. Static Dispatch_* still resolves from the scope
+// so a call site can pass the provider without the dispatcher instance.
 // Publish<TNotification> type-tests the typed value and awaits each assignable handler
 // sequentially. It does not cast to object. Publish(object) keeps that cast for late-bound hosts.
 // Registration is an internal extension class in the host generated namespace. The class name is
 // the namespace with '.' removed plus ServiceCollectionExtensions. It registers the dispatcher,
-// scoped sender/publisher, and concrete handlers and behaviors. Handler and behavior interfaces
-// are not registered; MediatorManifest carries that graph.
+// scoped sender/publisher, concrete handlers and behaviors, a chain per request that has
+// behaviors, and HandlerCache when a request has none. Handler and behavior interfaces are not
+// registered; MediatorManifest carries that graph.
 // Unscoped Mediator is the default pipeline (no [MediatorScope]). Each TScope gets its own
 // Sender and Publisher with a disjoint type switch — no runtime "is this my message?" filter.
 // Every emitted type is internal in every profile: each host emits the same type names, so
@@ -133,7 +136,7 @@ internal static class MediatorEmitter
     builder.AppendLine();
     if (className == "Mediator")
     {
-      builder.Append("[assembly: global::TimeWarp.Mediator.GeneratedMediatorAttribute(typeof(");
+      builder.Append("[assembly: global::TimeWarp.Mediator.GeneratedMediatorAttribute(typeof(global::");
       builder.Append(ns).AppendLine(".Mediator))]");
       builder.AppendLine();
     }
@@ -151,6 +154,11 @@ internal static class MediatorEmitter
     if (!aot)
     {
       builder.AppendLine("    private readonly global::System.IServiceProvider ServiceProvider;");
+      if (HasUnchainedRequest(requests))
+      {
+        builder.AppendLine("    private HandlerCache? CachedHandlers;");
+      }
+
       builder.AppendLine();
       builder.Append("    public ").Append(className).AppendLine("(global::System.IServiceProvider serviceProvider)");
       builder.AppendLine("    {");
@@ -194,6 +202,16 @@ internal static class MediatorEmitter
       if (HasUnitRequest(requests))
       {
         EmitUnitAdapters(builder);
+      }
+
+      if (HasResponseRequest(requests))
+      {
+        EmitResponseAdapter(builder);
+      }
+
+      if (!aot && HasUnchainedRequest(requests))
+      {
+        EmitHandlerCache(builder, names, requests);
       }
     }
 
@@ -314,11 +332,16 @@ internal static class MediatorEmitter
       builder.Append("            case ").Append(Fq(request.RequestType)).Append(' ').Append(local).AppendLine(":");
       builder.AppendLine("            {");
       builder.Append("                global::System.Threading.Tasks.ValueTask<").Append(responseType).Append("> pending = ");
-      AppendDispatchCall(builder, names, request, aot, local);
+      AppendInstanceCall(builder, names, request, aot, local);
       builder.AppendLine(";");
-      builder.Append("                return global::System.Runtime.CompilerServices.Unsafe.As<global::System.Threading.Tasks.ValueTask<");
+      builder.Append("                if (typeof(TResponse) == typeof(").Append(responseType).AppendLine("))");
+      builder.AppendLine("                {");
+      builder.Append("                    return global::System.Runtime.CompilerServices.Unsafe.As<global::System.Threading.Tasks.ValueTask<");
       builder.Append(responseType).Append(">, global::System.Threading.Tasks.ValueTask<TResponse>>(ref pending);");
       builder.AppendLine();
+      builder.AppendLine("                }");
+      builder.AppendLine();
+      builder.Append("                return AdaptResponse<").Append(responseType).AppendLine(", TResponse>(pending);");
       builder.AppendLine("            }");
       index++;
     }
@@ -345,7 +368,7 @@ internal static class MediatorEmitter
       builder.Append("            case ").Append(Fq(request.RequestType)).Append(' ').Append(local).AppendLine(":");
       builder.AppendLine("            {");
       builder.Append("                global::System.Threading.Tasks.ValueTask<global::TimeWarp.Mediator.Unit> pending = ");
-      AppendDispatchCall(builder, names, request, aot, local);
+      AppendInstanceCall(builder, names, request, aot, local);
       builder.AppendLine(";");
       builder.AppendLine("                return AsVoid(pending);");
       builder.AppendLine("            }");
@@ -355,6 +378,31 @@ internal static class MediatorEmitter
     builder.AppendLine("            default:");
     builder.AppendLine("                throw new global::TimeWarp.Mediator.NoHandlerException(request.GetType());");
     builder.AppendLine("        }");
+  }
+
+  private static void AppendInstanceCall(StringBuilder builder, MemberNames names, RequestBinding request, bool aot, string requestLocal)
+  {
+    if (!aot && request.ClosedBehaviors.Length == 0)
+    {
+      if (request.IsUnitResponse)
+      {
+        builder.Append("AdaptUnit(LiveCache().");
+      }
+      else
+      {
+        builder.Append("LiveCache().");
+      }
+
+      builder.Append(names.For(request.HandlerType)).Append(".Handle(").Append(requestLocal).Append(", cancellationToken)");
+      if (request.IsUnitResponse)
+      {
+        builder.Append(')');
+      }
+
+      return;
+    }
+
+    AppendDispatchCall(builder, names, request, aot, requestLocal);
   }
 
   private static void AppendDispatchCall(StringBuilder builder, MemberNames names, RequestBinding request, bool aot, string requestLocal)
@@ -409,18 +457,13 @@ internal static class MediatorEmitter
     {
       string requestType = Fq(request.RequestType);
       string responseType = Fq(request.ResponseType);
-      string dispatch = "Dispatch_" + names.For(request.RequestType);
       builder.Append("    public global::System.Threading.Tasks.ValueTask<").Append(responseType).Append("> Send(");
       builder.Append(requestType).AppendLine(" request, global::System.Threading.CancellationToken cancellationToken = default)");
       builder.AppendLine("    {");
       EmitRequestNullGuard(builder, request.RequestType);
-      builder.Append("        return ").Append(dispatch).Append('(');
-      if (!aot)
-      {
-        builder.Append("ServiceProvider, ");
-      }
-
-      builder.AppendLine("request, cancellationToken);");
+      builder.Append("        return ");
+      AppendInstanceCall(builder, names, request, aot, "request");
+      builder.AppendLine(";");
       builder.AppendLine("    }");
       builder.AppendLine();
     }
@@ -452,15 +495,10 @@ internal static class MediatorEmitter
     foreach (INamedTypeSymbol requestType in TypeOrder.MostDerivedFirst(firstByType.Keys))
     {
       string local = "r" + index;
-      string dispatch = "Dispatch_" + names.For(firstByType[requestType].RequestType);
       builder.Append("            case ").Append(Fq(requestType)).Append(' ').Append(local).AppendLine(":");
-      builder.Append("                return Box(").Append(dispatch).Append('(');
-      if (!aot)
-      {
-        builder.Append("ServiceProvider, ");
-      }
-
-      builder.Append(local).AppendLine(", cancellationToken));");
+      builder.Append("                return Box(");
+      AppendInstanceCall(builder, names, firstByType[requestType], aot, local);
+      builder.AppendLine(");");
       index++;
     }
 
@@ -657,30 +695,11 @@ internal static class MediatorEmitter
       EmitRequestNullGuard(builder, request.RequestType);
       if (chain)
       {
-        builder.Append("        return Chain_").Append(names.For(request.RequestType)).AppendLine(".Invoke(scope, request, cancellationToken);");
+        builder.Append("        return global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<");
+        builder.Append(ChainClassName(names, request)).AppendLine(">(scope).Invoke(request, cancellationToken);");
         builder.AppendLine("    }");
         builder.AppendLine();
         EmitChain(builder, names, request);
-      }
-      else if (!aot && !request.HandlerType.IsValueType)
-      {
-        string resolve = "Resolve_" + names.For(request.RequestType);
-        builder.Append("        return ");
-        if (request.IsUnitResponse)
-        {
-          builder.Append("AdaptUnit(");
-        }
-
-        builder.Append(resolve).Append("(scope).Handle(request, cancellationToken)");
-        if (request.IsUnitResponse)
-        {
-          builder.Append(')');
-        }
-
-        builder.AppendLine(";");
-        builder.AppendLine("    }");
-        builder.AppendLine();
-        EmitHandlerCache(builder, names, request, resolve);
       }
       else
       {
@@ -700,38 +719,46 @@ internal static class MediatorEmitter
     }
   }
 
+  private static string ChainClassName(MemberNames names, RequestBinding request)
+  {
+    return "Chain_" + names.For(request.RequestType);
+  }
+
   private static void EmitChain(StringBuilder builder, MemberNames names, RequestBinding request)
   {
     string requestType = Fq(request.RequestType);
     string responseType = Fq(request.ResponseType);
-    string chain = "Chain_" + names.For(request.RequestType);
+    string chain = ChainClassName(names, request);
     string delegateType = "global::TimeWarp.Mediator.MessageHandlerDelegate<" + requestType + ", " + responseType + ">";
     int steps = request.ClosedBehaviors.Length + 1;
-    builder.Append("    private static class ").AppendLine(chain);
+    builder.Append("    internal sealed class ").AppendLine(chain);
     builder.AppendLine("    {");
-    builder.AppendLine("        [global::System.ThreadStatic]");
-    builder.AppendLine("        private static global::System.IServiceProvider? Scope;");
-    builder.AppendLine();
+    builder.AppendLine("        private readonly global::System.IServiceProvider Scope;");
     for (int step = 0; step < steps; step++)
     {
-      builder.Append("        private static readonly ").Append(delegateType).Append(" Next").Append(step);
-      builder.Append(" = Step").Append(step).AppendLine(";");
+      builder.Append("        private readonly ").Append(delegateType).Append(" Next").Append(step).AppendLine(";");
     }
 
     builder.AppendLine();
-    builder.Append("        internal static global::System.Threading.Tasks.ValueTask<").Append(responseType).Append("> Invoke(");
-    builder.Append("global::System.IServiceProvider scope, ").Append(requestType).AppendLine(" request, global::System.Threading.CancellationToken cancellationToken)");
+    builder.Append("        public ").Append(chain).AppendLine("(global::System.IServiceProvider scope)");
     builder.AppendLine("        {");
-    builder.AppendLine("            global::System.IServiceProvider? previous = Scope;");
+    builder.AppendLine("            if (scope is null)");
+    builder.AppendLine("            {");
+    builder.AppendLine("                throw new global::System.ArgumentNullException(nameof(scope));");
+    builder.AppendLine("            }");
+    builder.AppendLine();
     builder.AppendLine("            Scope = scope;");
-    builder.AppendLine("            try");
-    builder.AppendLine("            {");
-    builder.AppendLine("                return Next0(request, cancellationToken);");
-    builder.AppendLine("            }");
-    builder.AppendLine("            finally");
-    builder.AppendLine("            {");
-    builder.AppendLine("                Scope = previous;");
-    builder.AppendLine("            }");
+    for (int step = 0; step < steps; step++)
+    {
+      builder.Append("            Next").Append(step).Append(" = Step").Append(step).AppendLine(";");
+    }
+
+    builder.AppendLine("        }");
+    builder.AppendLine();
+    builder.Append("        internal global::System.Threading.Tasks.ValueTask<").Append(responseType).Append("> Invoke(");
+    builder.Append(requestType).AppendLine(" request, global::System.Threading.CancellationToken cancellationToken)");
+    builder.AppendLine("        {");
+    builder.AppendLine("            return Next0(request, cancellationToken);");
     builder.AppendLine("        }");
     builder.AppendLine();
     for (int step = 0; step < steps; step++)
@@ -740,13 +767,12 @@ internal static class MediatorEmitter
       INamedTypeSymbol service = terminal ? request.HandlerType : request.ClosedBehaviors[step];
       string serviceType = Fq(service);
       string variable = terminal ? "handler" : "behavior";
-      builder.Append("        private static global::System.Threading.Tasks.ValueTask<").Append(responseType).Append("> Step").Append(step).Append('(');
+      builder.Append("        private global::System.Threading.Tasks.ValueTask<").Append(responseType).Append("> Step").Append(step).Append('(');
       builder.Append(requestType).AppendLine(" request, global::System.Threading.CancellationToken cancellationToken)");
       builder.AppendLine("        {");
-      builder.AppendLine("            global::System.IServiceProvider scope = Scope!;");
       builder.Append("            ").Append(serviceType).Append(' ').Append(variable).Append(" = ");
       builder.Append("global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<");
-      builder.Append(serviceType).AppendLine(">(scope);");
+      builder.Append(serviceType).AppendLine(">(Scope);");
       if (terminal && request.IsUnitResponse)
       {
         builder.Append("            return AdaptUnit(").Append(variable).AppendLine(".Handle(request, cancellationToken));");
@@ -764,32 +790,6 @@ internal static class MediatorEmitter
       builder.AppendLine();
     }
 
-    builder.AppendLine("    }");
-    builder.AppendLine();
-  }
-
-  private static void EmitHandlerCache(StringBuilder builder, MemberNames names, RequestBinding request, string resolve)
-  {
-    string handlerType = Fq(request.HandlerType);
-    string slot = names.For(request.RequestType);
-    builder.AppendLine("    [global::System.ThreadStatic]");
-    builder.Append("    private static global::System.IServiceProvider? CachedScope_").Append(slot).AppendLine(";");
-    builder.AppendLine("    [global::System.ThreadStatic]");
-    builder.Append("    private static ").Append(handlerType).Append("? CachedHandler_").Append(slot).AppendLine(";");
-    builder.AppendLine();
-    builder.Append("    private static ").Append(handlerType).Append(' ').Append(resolve).AppendLine("(global::System.IServiceProvider scope)");
-    builder.AppendLine("    {");
-    builder.Append("        if (global::System.Object.ReferenceEquals(CachedScope_").Append(slot).AppendLine(", scope))");
-    builder.AppendLine("        {");
-    builder.Append("            return CachedHandler_").Append(slot).AppendLine("!;");
-    builder.AppendLine("        }");
-    builder.AppendLine();
-    builder.Append("        ").Append(handlerType).Append(" resolved = ");
-    builder.Append("global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<");
-    builder.Append(handlerType).AppendLine(">(scope);");
-    builder.Append("        CachedScope_").Append(slot).AppendLine(" = scope;");
-    builder.Append("        CachedHandler_").Append(slot).AppendLine(" = resolved;");
-    builder.AppendLine("        return resolved;");
     builder.AppendLine("    }");
     builder.AppendLine();
   }
@@ -826,12 +826,6 @@ internal static class MediatorEmitter
     builder.AppendLine("            return new global::System.Threading.Tasks.ValueTask<global::TimeWarp.Mediator.Unit>(global::TimeWarp.Mediator.Unit.Value);");
     builder.AppendLine("        }");
     builder.AppendLine();
-    builder.AppendLine("        if (pending.IsCompleted)");
-    builder.AppendLine("        {");
-    builder.AppendLine("            pending.GetAwaiter().GetResult();");
-    builder.AppendLine("            return new global::System.Threading.Tasks.ValueTask<global::TimeWarp.Mediator.Unit>(global::TimeWarp.Mediator.Unit.Value);");
-    builder.AppendLine("        }");
-    builder.AppendLine();
     builder.AppendLine("        return AwaitUnit(pending);");
     builder.AppendLine("    }");
     builder.AppendLine();
@@ -844,12 +838,6 @@ internal static class MediatorEmitter
     builder.AppendLine("    private static global::System.Threading.Tasks.ValueTask AsVoid<T>(global::System.Threading.Tasks.ValueTask<T> pending)");
     builder.AppendLine("    {");
     builder.AppendLine("        if (pending.IsCompletedSuccessfully)");
-    builder.AppendLine("        {");
-    builder.AppendLine("            pending.GetAwaiter().GetResult();");
-    builder.AppendLine("            return default;");
-    builder.AppendLine("        }");
-    builder.AppendLine();
-    builder.AppendLine("        if (pending.IsCompleted)");
     builder.AppendLine("        {");
     builder.AppendLine("            pending.GetAwaiter().GetResult();");
     builder.AppendLine("            return default;");
@@ -877,6 +865,118 @@ internal static class MediatorEmitter
     return false;
   }
 
+  private static bool HasResponseRequest(List<RequestBinding> requests)
+  {
+    foreach (RequestBinding request in requests)
+    {
+      if (!request.IsUnitResponse)
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static bool HasUnchainedRequest(List<RequestBinding> requests)
+  {
+    foreach (RequestBinding request in requests)
+    {
+      if (request.ClosedBehaviors.Length == 0)
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static void EmitHandlerCache(StringBuilder builder, MemberNames names, List<RequestBinding> requests)
+  {
+    List<INamedTypeSymbol> handlers = new();
+    HashSet<INamedTypeSymbol> seen = new(SymbolEqualityComparer.Default);
+    foreach (RequestBinding request in requests)
+    {
+      if (request.ClosedBehaviors.Length == 0 && seen.Add(request.HandlerType))
+      {
+        handlers.Add(request.HandlerType);
+      }
+    }
+
+    builder.AppendLine();
+    builder.AppendLine("    private HandlerCache LiveCache()");
+    builder.AppendLine("    {");
+    builder.AppendLine("        HandlerCache? cache = CachedHandlers;");
+    builder.AppendLine("        if (cache is null)");
+    builder.AppendLine("        {");
+    builder.AppendLine("            cache = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<HandlerCache>(ServiceProvider);");
+    builder.AppendLine("            CachedHandlers = cache;");
+    builder.AppendLine("        }");
+    builder.AppendLine();
+    builder.AppendLine("        cache.EnsureAlive();");
+    builder.AppendLine("        return cache;");
+    builder.AppendLine("    }");
+    builder.AppendLine();
+    builder.AppendLine("    internal sealed class HandlerCache : global::System.IDisposable");
+    builder.AppendLine("    {");
+    foreach (INamedTypeSymbol handler in handlers)
+    {
+      builder.Append("        internal readonly ").Append(Fq(handler)).Append(' ').Append(names.For(handler)).AppendLine(";");
+    }
+
+    builder.AppendLine("        private volatile bool Disposed;");
+    builder.AppendLine();
+    builder.AppendLine("        public HandlerCache(global::System.IServiceProvider scope)");
+    builder.AppendLine("        {");
+    builder.AppendLine("            if (scope is null)");
+    builder.AppendLine("            {");
+    builder.AppendLine("                throw new global::System.ArgumentNullException(nameof(scope));");
+    builder.AppendLine("            }");
+    builder.AppendLine();
+    foreach (INamedTypeSymbol handler in handlers)
+    {
+      builder.Append("            ").Append(names.For(handler)).Append(" = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<");
+      builder.Append(Fq(handler)).AppendLine(">(scope);");
+    }
+
+    builder.AppendLine("        }");
+    builder.AppendLine();
+    builder.AppendLine("        internal void EnsureAlive()");
+    builder.AppendLine("        {");
+    builder.AppendLine("            if (Disposed)");
+    builder.AppendLine("            {");
+    builder.AppendLine("                throw new global::System.ObjectDisposedException(\"IServiceProvider\");");
+    builder.AppendLine("            }");
+    builder.AppendLine("        }");
+    builder.AppendLine();
+    builder.AppendLine("        public void Dispose()");
+    builder.AppendLine("        {");
+    builder.AppendLine("            Disposed = true;");
+    builder.AppendLine("        }");
+    builder.AppendLine("    }");
+  }
+
+  private static void EmitResponseAdapter(StringBuilder builder)
+  {
+    builder.AppendLine();
+    builder.AppendLine("    private static async global::System.Threading.Tasks.ValueTask<TResponse> AdaptResponse<TConcrete, TResponse>(global::System.Threading.Tasks.ValueTask<TConcrete> pending)");
+    builder.AppendLine("    {");
+    builder.AppendLine("        TConcrete result = await pending.ConfigureAwait(false);");
+    builder.AppendLine("        object? boxed = result;");
+    builder.AppendLine("        if (boxed is TResponse typed)");
+    builder.AppendLine("        {");
+    builder.AppendLine("            return typed;");
+    builder.AppendLine("        }");
+    builder.AppendLine();
+    builder.AppendLine("        if (boxed is null && default(TResponse) is null)");
+    builder.AppendLine("        {");
+    builder.AppendLine("            return default!;");
+    builder.AppendLine("        }");
+    builder.AppendLine();
+    builder.AppendLine("        throw new global::System.InvalidCastException();");
+    builder.AppendLine("    }");
+  }
+
   private static string EmitRegistration(MessageGraph graph, MemberNames names)
   {
     string ns = graph.Membership.GeneratedNamespace;
@@ -901,7 +1001,7 @@ internal static class MediatorEmitter
     builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<global::TimeWarp.Mediator.ISender>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(ns).AppendLine(".Mediator>(sp));");
     builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<global::TimeWarp.Mediator.IPublisher>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(ns).AppendLine(".Mediator>(sp));");
 
-    EmitHandlerRegistrations(builder, RequestsFor(graph, scope: null), NotificationsFor(graph, scope: null));
+    EmitHandlerRegistrations(builder, names, ns + ".Mediator", RequestsFor(graph, scope: null), NotificationsFor(graph, scope: null));
 
     builder.AppendLine("        return services;");
     builder.AppendLine("    }");
@@ -942,7 +1042,7 @@ internal static class MediatorEmitter
         builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<global::TimeWarp.Mediator.ISender<").Append(Fq(scope)).Append(">>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(senderType).AppendLine(">(sp));");
         builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<").Append(publisherType).AppendLine(">(services);");
         builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<global::TimeWarp.Mediator.IPublisher<").Append(Fq(scope)).Append(">>(services, static sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<").Append(publisherType).AppendLine(">(sp));");
-        EmitHandlerRegistrations(builder, RequestsFor(graph, scope), NotificationsFor(graph, scope));
+        EmitHandlerRegistrations(builder, names, ns + ".Sender_" + suffix, RequestsFor(graph, scope), NotificationsFor(graph, scope));
         builder.AppendLine("    }");
       }
     }
@@ -953,10 +1053,13 @@ internal static class MediatorEmitter
 
   private static void EmitHandlerRegistrations(
       StringBuilder builder,
+      MemberNames names,
+      string dispatcherType,
       List<RequestBinding> requests,
       List<NotificationBinding> notifications)
   {
     HashSet<string> registered = new();
+    bool unchained = false;
     foreach (RequestBinding request in requests)
     {
       string handlerType = Fq(request.HandlerType);
@@ -975,6 +1078,23 @@ internal static class MediatorEmitter
 
         builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<").Append(behaviorType).AppendLine(">(services);");
       }
+
+      if (request.ClosedBehaviors.Length == 0)
+      {
+        unchained = true;
+        continue;
+      }
+
+      string chainType = dispatcherType + "." + ChainClassName(names, request);
+      if (registered.Add(chainType))
+      {
+        builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::").Append(chainType).AppendLine(">(services);");
+      }
+    }
+
+    if (unchained)
+    {
+      builder.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddScoped<global::").Append(dispatcherType).AppendLine(".HandlerCache>(services);");
     }
 
     foreach (NotificationBinding notification in notifications)

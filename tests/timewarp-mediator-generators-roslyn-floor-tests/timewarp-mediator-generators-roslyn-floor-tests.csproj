@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" VersionOverride="4.8.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <!-- TimeWarp.SourceGenerators is removed so it does not run inside this test host. -->
     <PackageReference Remove="TimeWarp.SourceGenerators" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
