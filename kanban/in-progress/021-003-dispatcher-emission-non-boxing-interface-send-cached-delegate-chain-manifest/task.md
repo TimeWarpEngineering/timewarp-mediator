@@ -84,6 +84,7 @@ Acceptance criteria:
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
 - Round 2: Blocked — open M8
+- Round 3: Done — M8 fixed, 0 open, disposition clean
 ## Notes
 
 Parent: 021. Depends on: 021-002 (contracts). Review sections 3 (F2, F4, F7, F12, F13), 4
@@ -100,6 +101,7 @@ Parent: 021. Depends on: 021-002 (contracts). Review sections 3 (F2, F4, F7, F12
 - 2026-10-24: fix pass for review round 1. Covariant send awaits and casts, behavior chains are scoped, and the no-behavior path reuses a scoped HandlerCache after per-send resolve measured about 24 ns. `ganda repo audit` passed with no fixes.
 - Review oracle round 2 (2026-10-24): claude (claude-opus-5-5), effort 3, roster general, session not reported. M1–M7 fixed, new M8 open; fix pass requested.
 - 2026-10-24: fix pass for review round 2. Each no-behavior handler slot is filled on the first send of that request. `ganda repo audit` passed with no fixes. `./bin/dev workflow` exited 0. Comparison baseline re-recorded from clean commit `c5e4a3a`.
+- Review oracle round 3 (2026-10-24): claude (claude-opus-5-5), effort 1, roster general, session not reported. M8 fixed, no new findings; disposition clean.
 
 ## Results
 
@@ -128,6 +130,12 @@ Ran 2026-10-24: `./bin/dev workflow` (mode Pr) exited 0. Tests passed (generator
 
 Round 1 (effort 3, roster general) left M1–M7 open. The first fix pass implements them.
 
-Round 2 (effort 3, roster general) reviewed the fix-pass delta `231ed4e..91058b9`. M1–M7 are fixed. M8 was open: the `HandlerCache` constructor resolved every no-behavior handler on the first send in a scope. This fix pass fills each slot on the first send of that request. `UnresolvableHandler_DoesNotBlockTheOtherRequest` covers a graph of two no-behavior requests where one dependency is unregistered. Round 3 has not run.
+Round 2 (effort 3, roster general) reviewed the fix-pass delta `231ed4e..91058b9`. M1–M7 are fixed. M8 was open: the `HandlerCache` constructor resolved every no-behavior handler on the first send in a scope. This fix pass fills each slot on the first send of that request. `UnresolvableHandler_DoesNotBlockTheOtherRequest` covers a graph of two no-behavior requests where one dependency is unregistered.
 
-Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md` (live ledger).
+Round 3 (effort 1, roster general) reviewed the fix-pass delta `885e8d2..e69c39d`. It confirmed M8 is fixed, raised no new findings, and reran the compilation (88) and generator (49) tests, which passed.
+
+Final counts: bug 3 fixed, suggestion 2 fixed, nit 3 fixed. Open 0, wontfix 0.
+
+**Disposition: clean** (3 rounds, every raised finding fixed, no escalations).
+
+Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md` (final ledger), `review/disposition.md`.
