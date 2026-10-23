@@ -30,13 +30,32 @@ Deliverable: `documentation/design/2026-10-13-15.0-breaking-redesign-review.md`.
 - [x] Read contracts, generator emitter, generator pipeline, spec, benchmark baseline
 - [x] Measure the `ISender` interface dispatch path (benchmark additions in `tests/timewarp-mediator-benchmarks-comparison`)
 - [x] Write the review with ranked findings, target architecture, deletions, consumer impact, decisions, child-task plan
-- [ ] Maintainer sign-off on decisions D1–D6
-- [ ] Create child tasks 021-001 .. 021-007 via `ganda kanban reserve --parent 021` after sign-off
+- [x] Maintainer sign-off on decisions D1–D6 (2026-10-23: yes to all)
+- [x] Create child tasks 021-001 .. 021-007 via `ganda kanban reserve --parent 021` after sign-off (2026-10-23)
 
 ## Session
 
 - Created: 2408358 (2026-10-13)
 - 2026-10-13: research fan-out (four read-only surveys), review written; interface-path benchmark measured (65 ns / 240 B through `ISender` vs 30 ns / 96 B concrete) and added to the comparison project.
+- 2026-10-23: maintainer signed off D1–D6 (yes to all). Child tasks 021-001 .. 021-007 created and published to the to-do column; see the child table below.
+
+## Child tasks
+
+Decisions D1–D6 accepted as recommended on 2026-10-23. Children run in this order; 021-004,
+021-005 and 021-006 may proceed in parallel once 021-003 has merged.
+
+| Id | Title | Depends on | Findings |
+|---|---|---|---|
+| 021-001 | Benchmarks first: interface-path and pipeline baselines with a regression gate | none | F2, F17 |
+| 021-002 | Contracts 15.0: ValueTask contracts, MessageHandlerDelegate, delete compat-only types | 021-001 | F3, F4, F5, F6, F8, F10, F18; D2, D3, D6 |
+| 021-003 | Dispatcher emission: non-boxing interface Send, cached delegate chain, manifest | 021-002 | F2, F4, F7, F12, F13 |
+| 021-004 | Delete the reflection runtime package, its tests, samples and signing | 021-003 | F1, F16; D1 |
+| 021-005 | Profiles and packaging: one emission, two packages, SDK-10 Roslyn floor | 021-004 | F11, F14, F15; D4, D5 |
+| 021-006 | Generator incrementality: syntax-provider candidates and a Cached assertion | 021-003 | F9 |
+| 021-007 | Docs and release notes for 15.0: one architecture page, migration guide, skill update | 021-002..006 | F1 (docs), section 6 |
+
+Consumer dogfood tasks (TimeWarp.State, TimeWarp.Architecture, TimeWarp.Nuru) are created in
+their own repos once `15.0.0-beta.1` packs from a local feed; they gate the beta push.
 
 ## Notes
 
