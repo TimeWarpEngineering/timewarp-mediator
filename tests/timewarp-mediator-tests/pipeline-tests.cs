@@ -229,6 +229,49 @@ public class PipelineTests
     }
   }
 
+  public class ReplacementRequest : IRequest<string>
+  {
+    public string Marker { get; set; } = string.Empty;
+  }
+
+  public class ReplacementRequestHandler : IRequestHandler<ReplacementRequest, string>
+  {
+    public static ReplacementRequest? Received { get; set; }
+
+    public ValueTask<string> Handle(ReplacementRequest request, CancellationToken cancellationToken)
+    {
+      Received = request;
+      return ValueTask.FromResult(request.Marker);
+    }
+  }
+
+  public class ReplacingBehavior : IPipelineBehavior<ReplacementRequest, string>
+  {
+    public static ReplacementRequest Replacement { get; } = new() { Marker = "replaced" };
+
+    public ValueTask<string> Handle(
+      ReplacementRequest request,
+      MessageHandlerDelegate<ReplacementRequest, string> next,
+      CancellationToken cancellationToken)
+    {
+      return next(Replacement, cancellationToken);
+    }
+  }
+
+  public class ObservingBehavior : IPipelineBehavior<ReplacementRequest, string>
+  {
+    public static ReplacementRequest? Seen { get; set; }
+
+    public ValueTask<string> Handle(
+      ReplacementRequest request,
+      MessageHandlerDelegate<ReplacementRequest, string> next,
+      CancellationToken cancellationToken)
+    {
+      Seen = request;
+      return next(request, cancellationToken);
+    }
+  }
+
   public class Logger
   {
     public IList<string> Messages { get; } = new List<string>();
@@ -478,5 +521,55 @@ public class PipelineTests
             "Inner generic after",
             "Outer generic after",
         });
+  }
+
+  [Fact]
+  public async Task Should_forward_replacement_request_to_handler()
+  {
+    ReplacementRequestHandler.Received = null;
+    ReplacementRequest original = new() { Marker = "original" };
+    using ServiceProvider provider = BuildReplacementMediator(cfg =>
+    {
+      cfg.AddBehavior<ReplacingBehavior>();
+    });
+    IMediator mediator = provider.GetRequiredService<IMediator>();
+
+    string marker = await mediator.Send(original);
+
+    marker.ShouldBe("replaced");
+    ReplacementRequestHandler.Received.ShouldBeSameAs(ReplacingBehavior.Replacement);
+    ReplacementRequestHandler.Received.ShouldNotBeSameAs(original);
+  }
+
+  [Fact]
+  public async Task Should_forward_replacement_request_through_behavior_chain()
+  {
+    ReplacementRequestHandler.Received = null;
+    ObservingBehavior.Seen = null;
+    ReplacementRequest original = new() { Marker = "original" };
+    using ServiceProvider provider = BuildReplacementMediator(cfg =>
+    {
+      cfg.AddBehavior<ReplacingBehavior>();
+      cfg.AddBehavior<ObservingBehavior>();
+    });
+    IMediator mediator = provider.GetRequiredService<IMediator>();
+
+    string marker = await mediator.Send(original);
+
+    marker.ShouldBe("replaced");
+    ObservingBehavior.Seen.ShouldBeSameAs(ReplacingBehavior.Replacement);
+    ReplacementRequestHandler.Received.ShouldBeSameAs(ReplacingBehavior.Replacement);
+    ReplacementRequestHandler.Received.ShouldNotBeSameAs(original);
+  }
+
+  private static ServiceProvider BuildReplacementMediator(Action<MediatorServiceConfiguration> configure)
+  {
+    ServiceCollection services = new();
+    services.AddMediator(cfg =>
+    {
+      cfg.RegisterServicesFromAssembly(typeof(PipelineTests).Assembly);
+      configure(cfg);
+    });
+    return services.BuildServiceProvider();
   }
 }

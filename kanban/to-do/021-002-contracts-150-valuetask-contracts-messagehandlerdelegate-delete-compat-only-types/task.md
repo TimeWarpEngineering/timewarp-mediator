@@ -38,6 +38,8 @@ Parent review task 021, findings F3, F4, F5, F6, F8, F10, F18; decisions D2, D3,
 
 Make the contracts package `ValueTask`-native and delete the MediatR-compat types that 15.0 does not dispatch. The generator must emit code that compiles against that surface. The non-boxing dispatcher, cached delegate chain, and manifest redesign stay on 021-003.
 
+Round-1 review still requires two product fixes. A behavior must be able to call `next` with a different request instance, and that instance must be the one the handler runs, on the generated dispatcher and on the reflection dispatcher. The generated case includes a two-behavior chain so the nested delegate is on the path. `Unit.ValueTask` documentation must say that `using static TimeWarp.Mediator.Unit` does not hide `System.Threading.Tasks.Task`, does shadow `System.Threading.Tasks.ValueTask`, and that callers should use the qualified names `Unit.Value` and `Unit.ValueTask`. The same sentence belongs in 021-007's notes for the migration page.
+
 Acceptance criteria:
 
 - `IRequestHandler<,>`, `IRequestHandler<>`, `INotificationHandler<>`, `IPipelineBehavior<,>`, `ISender`, `ISender<TScope>`, `IPublisher`, `IPublisher<TScope>`, and `IMediator` expose only `ValueTask` or `ValueTask<T>` members.
@@ -50,6 +52,9 @@ Acceptance criteria:
 - Surviving MediatR-derived files keep the Steven T. Cramer notice. New files do not get it. The package license expression stays `Unlicense AND Apache-2.0`.
 - Generator emission, analyzers, golden/dispatch tests, and in-repo handlers compile and pass against the new contracts. `migration.md` and XML docs no longer describe the removed members.
 - `./bin/dev workflow` is green.
+- A generated `[assembly: MediatorBehavior]` behavior can call `next(replacement, cancellationToken)` and the handler receives `replacement`. A second behavior inside that one receives `replacement` too, so the nested delegate is covered.
+- A reflection behavior registered with `AddBehavior` in `pipeline-tests.cs` can do the same, including through a two-behavior chain.
+- `Unit.ValueTask` XML docs describe the `using static` shadow, and 021-007 notes tell the migration page to say the same.
 
 ## Checklist
 
@@ -61,7 +66,13 @@ Acceptance criteria:
 - [x] Generator, analyzers, golden files and tests updated and green
 - [x] Apache notices preserved on derived files
 - [x] `./bin/dev workflow` green
+- [x] M1: replacement request reaches the handler on both dispatchers
+- [x] M2: `Unit.ValueTask` comment and 021-007 migration note
 - [ ] PR with merge commit
+
+## Review
+
+- Round 1: open M1, M2 implemented in the fix pass. Round 2 has not run. M3 stays wontfix on 021-007.
 
 ## Notes
 
@@ -91,18 +102,20 @@ ganda repo audit
 **Expect**
 
 - `./bin/dev workflow` runs `clean -> build -> test -> verify-samples -> pack`, exits 0, and prints `Pipeline SUCCEEDED`.
-- Tests pass with failed 0: generators 40, analyzers 42, roslyn-floor 83, compilation 82, mediator 181.
+- Tests pass with failed 0: generators 42, analyzers 42, roslyn-floor 83, compilation 82, mediator 183.
 - `Samples verified successfully!` for the 11 executable samples.
 - Pack produces `TimeWarp.Mediator.14.0.0.nupkg`, `TimeWarp.Mediator.Contracts.14.0.0.nupkg`, `TimeWarp.Mediator.Analyzers.14.0.0.nupkg`, and `TimeWarp.Mediator.Generators.14.0.0.nupkg`. Package smoke prints `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`.
 - `ganda repo audit` exits 0.
 
 **Not in scope:** emitting `[assembly: GeneratedMediator(typeof(Mediator))]`, the non-boxing dispatcher, and deleting the reflection runtime (021-003 and 021-004). State, Architecture, and Nuru signature updates wait on `15.0.0-beta.1`.
 
+The fix pass covers round-1 M1 and M2. Generated `ReplacementPipeline` has one behavior that calls `next` with a different request, and a two-behavior chain whose inner behavior and handler both receive that instance. Reflection tests in `pipeline-tests.cs` register the same shape with `AddBehavior`. `Unit.ValueTask` docs say `using static TimeWarp.Mediator.Unit` does not hide `Task`, does shadow `ValueTask`, and that callers should use `Unit.Value` and `Unit.ValueTask`. The same sentence is in 021-007's notes. M3 stays deferred to 021-007.
+
 ### Review
 
 - Round 1 (2026-10-23): one general reviewer at effort 3. `./bin/dev workflow` was re-run and printed `Pipeline SUCCEEDED`.
-- Counts: bug 0. Suggestion: 1 open (M1). Nit: 1 open (M2), 1 wontfix (M3, deferred to 021-007).
-- No disposition yet. A fix pass is needed for M1 (test that a behavior's replacement request reaches the handler on both dispatchers) and M2 (`Unit.ValueTask` XML comment).
+- Counts at merge: bug 0. Suggestion: 1 open (M1). Nit: 1 open (M2), 1 wontfix (M3, deferred to 021-007).
+- Fix pass implemented M1 and M2. Round 2 has not run.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ## Session
@@ -111,3 +124,5 @@ ganda repo audit
 - Implementation: grok 01a16902-d58d-7201-b302-322c8e278bd4 (2026-10-23)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T14:28:49Z
 - Review oracle round 1: general reviewer (claude-opus-5-5), effort 3, session id not exposed. Result: fix pass needed for M1, M2 (2026-10-23)
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T14:35:37Z
+- Implement-fix-2: implemented by implementer-grok (grok, model grok-4.7), session 01a16930-56db-70c3-8fa2-210ae4899e92 (2026-10-23). M1 and M2 addressed. `./bin/dev workflow` printed `Pipeline SUCCEEDED`. `ganda repo audit` passed.

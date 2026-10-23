@@ -16,7 +16,10 @@ public readonly struct Unit : IEquatable<Unit>
 
   /// <summary>
   /// Cached completed task of <see cref="Value"/>.
-  /// Named so <c>using static TimeWarp.Mediator.Unit</c> does not hide <see cref="System.Threading.Tasks.Task"/>.
+  /// Under <c>using static TimeWarp.Mediator.Unit</c> this name does not hide
+  /// <see cref="System.Threading.Tasks.Task"/> (the removed <c>Unit.Task</c> property did).
+  /// It does shadow <see cref="System.Threading.Tasks.ValueTask"/>.
+  /// Prefer the qualified names <c>Unit.Value</c> and <c>Unit.ValueTask</c>.
   /// </summary>
   public static System.Threading.Tasks.ValueTask<Unit> ValueTask { get; } = new(Instance);
 

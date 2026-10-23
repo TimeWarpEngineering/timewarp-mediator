@@ -40,6 +40,11 @@ Parent: 021. Depends on: 021-002 through 021-006 (documents the final shapes). L
 before `15.0.0-beta.1`; the consumer dogfood tasks (State, Architecture, Nuru) live in their
 own repos and gate the beta push.
 
+Migration page: under `using static TimeWarp.Mediator.Unit`, `Unit.ValueTask` does not hide
+`System.Threading.Tasks.Task` (the removed `Unit.Task` property did). It does shadow
+`System.Threading.Tasks.ValueTask`. Tell callers to use the qualified names `Unit.Value` and
+`Unit.ValueTask`. From 021-002 review M2.
+
 ## Session
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
