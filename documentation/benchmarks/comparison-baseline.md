@@ -3,7 +3,7 @@
 Recorded by `./bin/dev benchmark --project comparison --record`. Do not edit by hand; re-record instead.
 
 - Project: `tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj`
-- Commit: `280a84289f7665ff9312fd607ad6d9894622be84`
+- Commit: `1c7f2b0d3a30403fa04b6c6721c736a8c67fa99c` (working tree had uncommitted changes)
 - Date (UTC): 2026-10-23
 
 ## MediatorBenchmarks.DispatchBenchmarks
@@ -19,21 +19,21 @@ AMD Ryzen 9 7950X3D 4.19GHz, 1 CPU, 32 logical and 16 physical cores
 IterationCount=8  WarmupCount=3  
 
 ```
-| Method                               | Mean      | Error     | StdDev    | Ratio | RatioSD | Gen0   | Allocated | Alloc Ratio |
-|------------------------------------- |----------:|----------:|----------:|------:|--------:|-------:|----------:|------------:|
-| TimeWarpLegacyMakeGenericType        |  70.29 ns |  6.088 ns |  2.703 ns |  1.00 |    0.05 | 0.0041 |     208 B |        1.00 |
-| TimeWarpGeneratedMonomorphicSend     |  27.00 ns |  0.501 ns |  0.179 ns |  0.38 |    0.01 | 0.0005 |      24 B |        0.12 |
-| TimeWarpGeneratedInterfaceSend       |  66.89 ns | 14.227 ns |  6.317 ns |  0.95 |    0.09 | 0.0019 |      96 B |        0.46 |
-| TimeWarpGeneratedObjectSend          |  36.86 ns |  1.230 ns |  0.546 ns |  0.53 |    0.02 | 0.0019 |      96 B |        0.46 |
-| TimeWarpGeneratedInterfaceSendUnit   |  42.42 ns |  1.538 ns |  0.805 ns |  0.60 |    0.02 | 0.0005 |      24 B |        0.12 |
-| TimeWarpGeneratedMonomorphicSendUnit |  25.39 ns |  0.680 ns |  0.302 ns |  0.36 |    0.01 |      - |         - |        0.00 |
-| TimeWarpCallSiteInliningPrototype    |  25.06 ns |  0.360 ns |  0.188 ns |  0.36 |    0.01 | 0.0005 |      24 B |        0.12 |
-| TimeWarpGeneratedScopedSend          |  50.78 ns |  6.424 ns |  2.852 ns |  0.72 |    0.05 | 0.0005 |      24 B |        0.12 |
-| TimeWarpGeneratedInterfacePublish    |  31.20 ns |  1.406 ns |  0.736 ns |  0.44 |    0.02 |      - |         - |        0.00 |
-| TimeWarpGeneratedScopedPublish       |  33.90 ns |  5.683 ns |  2.972 ns |  0.48 |    0.04 |      - |         - |        0.00 |
-| TimeWarpGeneratedStatePipeline       | 213.10 ns | 61.099 ns | 31.956 ns |  3.04 |    0.44 | 0.0052 |     272 B |        1.31 |
-| TimeWarpGeneratedArchitectureSend    | 125.08 ns | 23.728 ns | 12.410 ns |  1.78 |    0.18 | 0.0029 |     144 B |        0.69 |
-| MartinothamarGenerated               |  11.06 ns |  3.027 ns |  1.583 ns |  0.16 |    0.02 | 0.0005 |      24 B |        0.12 |
+| Method                               | Mean       | Error      | StdDev    | Ratio | RatioSD | Gen0   | Allocated | Alloc Ratio |
+|------------------------------------- |-----------:|-----------:|----------:|------:|--------:|-------:|----------:|------------:|
+| TimeWarpLegacyMakeGenericType        |  57.157 ns |  2.1646 ns | 0.9611 ns |  1.00 |    0.02 | 0.0041 |     208 B |        1.00 |
+| TimeWarpGeneratedMonomorphicSend     |   6.030 ns |  0.2216 ns | 0.1159 ns |  0.11 |    0.00 | 0.0005 |      24 B |        0.12 |
+| TimeWarpGeneratedInterfaceSend       |   9.731 ns |  0.3028 ns | 0.1584 ns |  0.17 |    0.00 | 0.0005 |      24 B |        0.12 |
+| TimeWarpGeneratedObjectSend          |  16.940 ns |  0.4986 ns | 0.2214 ns |  0.30 |    0.01 | 0.0019 |      96 B |        0.46 |
+| TimeWarpGeneratedInterfaceSendUnit   |  11.765 ns |  0.1140 ns | 0.0596 ns |  0.21 |    0.00 |      - |         - |        0.00 |
+| TimeWarpGeneratedMonomorphicSendUnit |   4.876 ns |  0.0866 ns | 0.0385 ns |  0.09 |    0.00 |      - |         - |        0.00 |
+| TimeWarpCallSiteInliningPrototype    |   5.779 ns |  0.0541 ns | 0.0240 ns |  0.10 |    0.00 | 0.0005 |      24 B |        0.12 |
+| TimeWarpGeneratedScopedSend          |  14.403 ns |  0.1544 ns | 0.0808 ns |  0.25 |    0.00 | 0.0005 |      24 B |        0.12 |
+| TimeWarpGeneratedInterfacePublish    |  20.570 ns |  0.2405 ns | 0.1258 ns |  0.36 |    0.01 |      - |         - |        0.00 |
+| TimeWarpGeneratedScopedPublish       |  21.440 ns |  2.9941 ns | 1.3294 ns |  0.38 |    0.02 |      - |         - |        0.00 |
+| TimeWarpGeneratedStatePipeline       | 141.016 ns | 14.2245 ns | 7.4397 ns |  2.47 |    0.13 |      - |         - |        0.00 |
+| TimeWarpGeneratedArchitectureSend    |  67.039 ns |  0.7598 ns | 0.3374 ns |  1.17 |    0.02 | 0.0005 |      24 B |        0.12 |
+| MartinothamarGenerated               |   8.670 ns |  0.0924 ns | 0.0483 ns |  0.15 |    0.00 | 0.0005 |      24 B |        0.12 |
 
 ## Regression gate
 

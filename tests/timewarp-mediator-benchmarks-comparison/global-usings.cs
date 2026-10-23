@@ -10,3 +10,4 @@ global using BenchmarkDotNet.Running;
 global using MartinothamarBenchmarks;
 global using MediatorBenchmarks;
 global using Microsoft.Extensions.DependencyInjection;
+global using TimeWarp.Mediator.Generated;

@@ -15,15 +15,15 @@ public class IdempotentCommandTests
   }
 
   [Fact]
-  public void AddGeneratedMediator_RegistersIdempotentCommandHandlers()
+  public void AddGeneratedMediator_RegistersConcreteIdempotentHandlersOnly()
   {
     using ServiceProvider provider = CreateProvider();
     using IServiceScope scope = provider.CreateScope();
 
-    scope.ServiceProvider.GetService<IRequestHandler<UpsertSetting, string>>()
-        .ShouldBeOfType<UpsertSettingHandler>();
-    scope.ServiceProvider.GetService<IRequestHandler<ResetSetting>>()
-        .ShouldBeOfType<ResetSettingHandler>();
+    scope.ServiceProvider.GetRequiredService<UpsertSettingHandler>().ShouldBeOfType<UpsertSettingHandler>();
+    scope.ServiceProvider.GetRequiredService<ResetSettingHandler>().ShouldBeOfType<ResetSettingHandler>();
+    scope.ServiceProvider.GetService<IRequestHandler<UpsertSetting, string>>().ShouldBeNull();
+    scope.ServiceProvider.GetService<IRequestHandler<ResetSetting>>().ShouldBeNull();
   }
 
   [Fact]
@@ -85,10 +85,13 @@ public class IdempotentCommandTests
     ManifestDocument manifest = ManifestDocument.Parse(MediatorManifest.Json);
     ManifestRequest upsert = manifest.Request("TimeWarp.Mediator.Generators.Tests.Idempotency.UpsertSetting");
     upsert.Response.ShouldBe("string");
+    upsert.Kind.ShouldBe("IdempotentCommand");
     upsert.Handler.ShouldBe("TimeWarp.Mediator.Generators.Tests.Idempotency.UpsertSettingHandler");
     ManifestRequest reset = manifest.Request("TimeWarp.Mediator.Generators.Tests.Idempotency.ResetSetting");
     reset.Response.ShouldBe("TimeWarp.Mediator.Unit");
+    reset.Kind.ShouldBe("IdempotentCommand");
     reset.Handler.ShouldBe("TimeWarp.Mediator.Generators.Tests.Idempotency.ResetSettingHandler");
+    manifest.Request("TimeWarp.Mediator.Generators.Tests.Idempotency.GetSetting").Kind.ShouldBe("Query");
   }
 
   private static ServiceProvider CreateProvider()

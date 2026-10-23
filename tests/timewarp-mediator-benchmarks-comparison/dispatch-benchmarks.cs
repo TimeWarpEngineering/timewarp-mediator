@@ -65,9 +65,9 @@ public class DispatchBenchmarks
   }
 
   [Benchmark]
-  public Task<Pong> TimeWarpGeneratedInterfaceSend()
+  public ValueTask<Pong> TimeWarpGeneratedInterfaceSend()
   {
-    return GeneratedSender.Send(Request).AsTask();
+    return GeneratedSender.Send(Request);
   }
 
   [Benchmark]
@@ -77,9 +77,9 @@ public class DispatchBenchmarks
   }
 
   [Benchmark]
-  public Task TimeWarpGeneratedInterfaceSendUnit()
+  public ValueTask TimeWarpGeneratedInterfaceSendUnit()
   {
-    return GeneratedSender.Send(NopRequest).AsTask();
+    return GeneratedSender.Send(NopRequest);
   }
 
   [Benchmark]

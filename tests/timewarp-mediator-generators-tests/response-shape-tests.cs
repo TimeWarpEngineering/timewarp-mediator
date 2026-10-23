@@ -8,15 +8,15 @@ using GeneratedMediator = TimeWarp.Mediator.Generated.Mediator;
 public class ResponseShapeTests
 {
   [Fact]
-  public void AddGeneratedMediator_RegistersExplicitUnitHandlerAsTwoArityInterface()
+  public void AddGeneratedMediator_RegistersConcreteHandlersOnly()
   {
     using ServiceProvider provider = CreateProvider();
     using IServiceScope scope = provider.CreateScope();
 
-    scope.ServiceProvider.GetService<IRequestHandler<CreateWidget, Unit>>()
-        .ShouldBeOfType<CreateWidgetHandler>();
-    scope.ServiceProvider.GetService<IRequestHandler<ArchiveWidget>>()
-        .ShouldBeOfType<ArchiveWidgetHandler>();
+    scope.ServiceProvider.GetRequiredService<CreateWidgetHandler>().ShouldBeOfType<CreateWidgetHandler>();
+    scope.ServiceProvider.GetRequiredService<ArchiveWidgetHandler>().ShouldBeOfType<ArchiveWidgetHandler>();
+    scope.ServiceProvider.GetService<IRequestHandler<CreateWidget, Unit>>().ShouldBeNull();
+    scope.ServiceProvider.GetService<IRequestHandler<ArchiveWidget>>().ShouldBeNull();
   }
 
   [Fact]
@@ -62,8 +62,8 @@ public class ResponseShapeTests
     GeneratedMediator generated = scope.ServiceProvider.GetRequiredService<GeneratedMediator>();
     ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
 
-    scope.ServiceProvider.GetService<IRequestHandler<SearchWidgets, string[]>>()
-        .ShouldBeOfType<SearchWidgetsHandler>();
+    scope.ServiceProvider.GetRequiredService<SearchWidgetsHandler>().ShouldBeOfType<SearchWidgetsHandler>();
+    scope.ServiceProvider.GetService<IRequestHandler<SearchWidgets, string[]>>().ShouldBeNull();
 
     string[] direct = await generated.Send(new SearchWidgets { Prefix = "w" });
     string[] viaSender = await sender.Send(new SearchWidgets { Prefix = "x" });
@@ -106,9 +106,8 @@ public class ResponseShapeTests
             "inner-after",
             "outer-after",
         });
-    scope.ServiceProvider.GetServices<IPipelineBehavior<SearchWidgets, string[]>>()
-        .Select(b => b.GetType())
-        .ShouldContain(typeof(SearchWidgetsAuditBehavior));
+    scope.ServiceProvider.GetRequiredService<SearchWidgetsAuditBehavior>().ShouldBeOfType<SearchWidgetsAuditBehavior>();
+    scope.ServiceProvider.GetService<IPipelineBehavior<SearchWidgets, string[]>>().ShouldBeNull();
   }
 
   [Fact]
@@ -133,11 +132,15 @@ public class ResponseShapeTests
     ManifestDocument manifest = ManifestDocument.Parse(MediatorManifest.Json);
     ManifestRequest search = manifest.Request("TimeWarp.Mediator.Generators.Tests.Responses.SearchWidgets");
     search.Response.ShouldBe("string[]");
+    search.Kind.ShouldBe("Query");
     search.Behaviors.ShouldContain("TimeWarp.Mediator.Generators.Tests.Responses.SearchWidgetsAuditBehavior");
-    manifest.Request("TimeWarp.Mediator.Generators.Tests.Responses.ListWidgets").Response
-        .ShouldBe("System.Collections.Generic.List<string>");
-    manifest.Request("TimeWarp.Mediator.Generators.Tests.Responses.CreateWidget").Response
-        .ShouldBe("TimeWarp.Mediator.Unit");
+    ManifestRequest list = manifest.Request("TimeWarp.Mediator.Generators.Tests.Responses.ListWidgets");
+    list.Response.ShouldBe("System.Collections.Generic.List<string>");
+    list.Kind.ShouldBe("Query");
+    ManifestRequest create = manifest.Request("TimeWarp.Mediator.Generators.Tests.Responses.CreateWidget");
+    create.Response.ShouldBe("TimeWarp.Mediator.Unit");
+    create.Kind.ShouldBe("Command");
+    manifest.Request("TimeWarp.Mediator.Generators.Tests.Responses.ArchiveWidget").Kind.ShouldBe("Command");
   }
 
   private static ServiceProvider CreateProvider()
