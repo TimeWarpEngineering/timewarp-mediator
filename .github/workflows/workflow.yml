@@ -15,7 +15,7 @@ on:
   push:
     branches: [ master, main ]
   pull_request:
-    branches: [ master, main ]
+    branches: [ master, main, 'feature/**']
   release:
     types: [published]
   workflow_dispatch:
