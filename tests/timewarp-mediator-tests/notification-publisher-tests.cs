@@ -70,7 +70,7 @@ public class NotificationPublisherTests
 
     public FirstHandler(HandlerGate gate) => HandlerGate = gate;
 
-    public Task Handle(Notification notification, CancellationToken cancellationToken) => HandlerGate.Run("first");
+    public ValueTask Handle(Notification notification, CancellationToken cancellationToken) => new(HandlerGate.Run("first"));
   }
 
   public class SecondHandler : INotificationHandler<Notification>
@@ -79,7 +79,7 @@ public class NotificationPublisherTests
 
     public SecondHandler(HandlerGate gate) => HandlerGate = gate;
 
-    public Task Handle(Notification notification, CancellationToken cancellationToken) => HandlerGate.Run("second");
+    public ValueTask Handle(Notification notification, CancellationToken cancellationToken) => new(HandlerGate.Run("second"));
   }
 
   private static (IMediator Mediator, HandlerGate Gate) BuildMediator(Type? notificationPublisherType)
@@ -165,7 +165,7 @@ public class NotificationPublisherTests
   {
     (IMediator mediator, HandlerGate gate) = BuildMediator(notificationPublisherType: null);
 
-    await ShouldRunSequentially(mediator.Publish(new Notification()), gate);
+    await ShouldRunSequentially(mediator.Publish(new Notification()).AsTask(), gate);
   }
 
   [Fact]
@@ -173,7 +173,7 @@ public class NotificationPublisherTests
   {
     (IMediator mediator, HandlerGate gate) = BuildMediator(typeof(TaskWhenAllPublisher));
 
-    await ShouldRunConcurrently(mediator.Publish(new Notification()), gate);
+    await ShouldRunConcurrently(mediator.Publish(new Notification()).AsTask(), gate);
   }
 
   [Fact]

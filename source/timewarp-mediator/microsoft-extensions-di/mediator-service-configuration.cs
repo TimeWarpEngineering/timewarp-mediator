@@ -46,11 +46,6 @@ public class MediatorServiceConfiguration
   public List<ServiceDescriptor> BehaviorsToRegister { get; } = new();
 
   /// <summary>
-  /// List of stream behaviors to register in specific order
-  /// </summary>
-  public List<ServiceDescriptor> StreamBehaviorsToRegister { get; } = new();
-
-  /// <summary>
   /// List of request pre processors to register in specific order
   /// </summary>
   public List<ServiceDescriptor> RequestPreProcessorsToRegister { get; } = new();
@@ -228,71 +223,6 @@ public class MediatorServiceConfiguration
 
     return this;
   }
-
-  /// <summary>
-  /// Register a closed stream behavior type
-  /// </summary>
-  /// <typeparam name="TServiceType">Closed stream behavior interface type</typeparam>
-  /// <typeparam name="TImplementationType">Closed stream behavior implementation type</typeparam>
-  /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
-  /// <returns>This</returns>
-  public MediatorServiceConfiguration AddStreamBehavior<TServiceType, TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
-      => AddStreamBehavior(typeof(TServiceType), typeof(TImplementationType), serviceLifetime);
-
-  /// <summary>
-  /// Register a closed stream behavior type
-  /// </summary>
-  /// <param name="serviceType">Closed stream behavior interface type</param>
-  /// <param name="implementationType">Closed stream behavior implementation type</param>
-  /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
-  /// <returns>This</returns>
-  public MediatorServiceConfiguration AddStreamBehavior(Type serviceType, Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
-  {
-    StreamBehaviorsToRegister.Add(new ServiceDescriptor(serviceType, implementationType, serviceLifetime));
-
-    return this;
-  }
-
-  /// <summary>
-  /// Register a closed stream behavior type against all <see cref="IStreamPipelineBehavior{TRequest,TResponse}"/> implementations
-  /// </summary>
-  /// <typeparam name="TImplementationType">Closed stream behavior implementation type</typeparam>
-  /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
-  /// <returns>This</returns>
-  public MediatorServiceConfiguration AddStreamBehavior<TImplementationType>(ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
-      => AddStreamBehavior(typeof(TImplementationType), serviceLifetime);
-
-  /// <summary>
-  /// Register a closed stream behavior type against all <see cref="IStreamPipelineBehavior{TRequest,TResponse}"/> implementations
-  /// </summary>
-  /// <param name="implementationType">Closed stream behavior implementation type</param>
-  /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
-  /// <returns>This</returns>
-  public MediatorServiceConfiguration AddStreamBehavior(Type implementationType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
-  {
-    List<Type> implementedGenericInterfaces = ThrowIfNull(implementationType, nameof(implementationType)).FindInterfacesThatClose(typeof(IStreamPipelineBehavior<,>)).ToList();
-
-    if (implementedGenericInterfaces.Count == 0)
-    {
-      throw new InvalidOperationException($"{implementationType.Name} must implement {typeof(IStreamPipelineBehavior<,>).FullName}");
-    }
-
-    foreach (Type implementedBehaviorType in implementedGenericInterfaces)
-    {
-      StreamBehaviorsToRegister.Add(new ServiceDescriptor(implementedBehaviorType, implementationType, serviceLifetime));
-    }
-
-    return this;
-  }
-
-  /// <summary>
-  /// Registers an open stream behavior type against the <see cref="IStreamPipelineBehavior{TRequest,TResponse}"/> open generic interface type
-  /// </summary>
-  /// <param name="openBehaviorType">An open generic stream behavior type</param>
-  /// <param name="serviceLifetime">Optional service lifetime, defaults to <see cref="ServiceLifetime.Transient"/>.</param>
-  /// <returns>This</returns>
-  public MediatorServiceConfiguration AddOpenStreamBehavior(Type openBehaviorType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
-      => AddOpenGeneric(openBehaviorType, typeof(IStreamPipelineBehavior<,>), StreamBehaviorsToRegister, serviceLifetime);
 
   /// <summary>
   /// Register a closed request pre processor type

@@ -18,9 +18,9 @@ public class PublishTests
       TextWriter = writer;
     }
 
-    public Task Handle(Ping notification, CancellationToken cancellationToken)
+    public ValueTask Handle(Ping notification, CancellationToken cancellationToken)
     {
-      return TextWriter.WriteLineAsync(notification.Message + " Pong");
+      return new ValueTask(TextWriter.WriteLineAsync(notification.Message + " Pong"));
     }
   }
 
@@ -33,9 +33,9 @@ public class PublishTests
       TextWriter = writer;
     }
 
-    public Task Handle(Ping notification, CancellationToken cancellationToken)
+    public ValueTask Handle(Ping notification, CancellationToken cancellationToken)
     {
-      return TextWriter.WriteLineAsync(notification.Message + " Pung");
+      return new ValueTask(TextWriter.WriteLineAsync(notification.Message + " Pung"));
     }
   }
 

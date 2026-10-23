@@ -1,5 +1,9 @@
 #region Purpose
-// CQRS query marker and handler used by TimeWarp.Architecture nested IQuery types.
+// CQRS query marker used by TimeWarp.Architecture nested query types.
+#endregion
+
+#region Design
+// Marker only. Handlers implement IRequestHandler. IIdempotent is data for tooling, not a dispatch rule.
 #endregion
 
 namespace TimeWarp.Mediator;
@@ -13,15 +17,5 @@ namespace TimeWarp.Mediator;
 /// </remarks>
 /// <typeparam name="TResponse">Response type.</typeparam>
 public interface IQuery<out TResponse> : IRequest<TResponse>, IIdempotent
-{
-}
-
-/// <summary>
-/// Handles a query.
-/// </summary>
-/// <typeparam name="TQuery">Query type.</typeparam>
-/// <typeparam name="TResponse">Response type.</typeparam>
-public interface IQueryHandler<in TQuery, TResponse> : IRequestHandler<TQuery, TResponse>
-    where TQuery : IQuery<TResponse>
 {
 }

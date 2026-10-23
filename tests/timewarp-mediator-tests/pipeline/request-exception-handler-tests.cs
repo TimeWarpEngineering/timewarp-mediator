@@ -23,7 +23,7 @@ public class RequestExceptionHandlerTests
 
   public class PingHandler : IRequestHandler<Ping, Pong>
   {
-    public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
+    public ValueTask<Pong> Handle(Ping request, CancellationToken cancellationToken)
     {
       throw new PingException(request.Message);
     }
@@ -182,7 +182,7 @@ public class RequestExceptionHandlerTests
 
     Pong? response = await behavior.Handle(
         new Ping { Message = "Ping" },
-        _ => throw new PingException("Ping"),
+        (_, _) => throw new PingException("Ping"),
         CancellationToken.None);
 
     response.ShouldBeNull();

@@ -4,19 +4,18 @@ namespace TimeWarp.Mediator.Tests;
 
 public class GenericTypeConstraintsTests
 {
-  public interface IGenericTypeRequestHandlerTestClass<TRequest> where TRequest : IBaseRequest
+  public interface IGenericTypeRequestHandlerTestClass<TRequest>
+      where TRequest : notnull
   {
     Type[] Handle(TRequest request);
   }
 
   public abstract class GenericTypeRequestHandlerTestClass<TRequest> : IGenericTypeRequestHandlerTestClass<TRequest>
-      where TRequest : IBaseRequest
+      where TRequest : notnull
   {
     public bool IsIRequest { get; }
 
     public bool IsIRequestT { get; }
-
-    public bool IsIBaseRequest { get; }
 
     public GenericTypeRequestHandlerTestClass()
     {
@@ -24,8 +23,6 @@ public class GenericTypeConstraintsTests
       IsIRequestT = typeof(TRequest).GetInterfaces()
           .Any(x => x.GetTypeInfo().IsGenericType &&
                     x.GetGenericTypeDefinition() == typeof(IRequest<>));
-
-      IsIBaseRequest = typeof(IBaseRequest).IsAssignableFrom(typeof(TRequest));
     }
 
     public Type[] Handle(TRequest request)
@@ -51,10 +48,10 @@ public class GenericTypeConstraintsTests
 
   public class JingHandler : IRequestHandler<Jing>
   {
-    public Task Handle(Jing request, CancellationToken cancellationToken)
+    public ValueTask Handle(Jing request, CancellationToken cancellationToken)
     {
       // empty handle
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -70,9 +67,9 @@ public class GenericTypeConstraintsTests
 
   public class PingHandler : IRequestHandler<Ping, Pong>
   {
-    public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
+    public ValueTask<Pong> Handle(Ping request, CancellationToken cancellationToken)
     {
-      return Task.FromResult(new Pong { Message = request.Message + " Pong" });
+      return ValueTask.FromResult(new Pong { Message = request.Message + " Pong" });
     }
   }
 
@@ -109,18 +106,15 @@ public class GenericTypeConstraintsTests
     // Create new instance of type constrained class
     GenericTypeConstraintJing genericTypeConstraintsVoidReturn = new();
 
-    // Assert it is of type IRequest and IRequest<T>
+    // Assert it is of type IRequest and not IRequest<T>
     Assert.True(genericTypeConstraintsVoidReturn.IsIRequest);
     Assert.False(genericTypeConstraintsVoidReturn.IsIRequestT);
-    Assert.True(genericTypeConstraintsVoidReturn.IsIBaseRequest);
 
-    // Verify it is of IRequest and IBaseRequest
     Type[] results = genericTypeConstraintsVoidReturn.Handle(jing);
 
-    Assert.Equal(2, results.Length);
+    Assert.Equal(1, results.Length);
 
     results.ShouldNotContain(typeof(IRequest<Unit>));
-    results.ShouldContain(typeof(IBaseRequest));
     results.ShouldContain(typeof(IRequest));
   }
 
@@ -140,15 +134,12 @@ public class GenericTypeConstraintsTests
     // Assert it is of type IRequest<T> but not IRequest
     Assert.False(genericTypeConstraintsResponseReturn.IsIRequest);
     Assert.True(genericTypeConstraintsResponseReturn.IsIRequestT);
-    Assert.True(genericTypeConstraintsResponseReturn.IsIBaseRequest);
 
-    // Verify it is of IRequest<Pong> and IBaseRequest, but not IRequest
     Type[] results = genericTypeConstraintsResponseReturn.Handle(ping);
 
-    Assert.Equal(2, results.Length);
+    Assert.Equal(1, results.Length);
 
     results.ShouldContain(typeof(IRequest<Pong>));
-    results.ShouldContain(typeof(IBaseRequest));
     results.ShouldNotContain(typeof(IRequest));
   }
 }

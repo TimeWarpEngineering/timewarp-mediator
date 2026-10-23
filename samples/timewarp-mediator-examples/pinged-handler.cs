@@ -11,9 +11,9 @@ public class PingedHandler : INotificationHandler<Pinged>
     TextWriter = writer;
   }
 
-  public Task Handle(Pinged notification, CancellationToken cancellationToken)
+  public ValueTask Handle(Pinged notification, CancellationToken cancellationToken)
   {
-    return TextWriter.WriteLineAsync("Got pinged async.");
+    return new ValueTask(TextWriter.WriteLineAsync("Got pinged async."));
   }
 }
 
@@ -26,9 +26,9 @@ public class PongedHandler : INotificationHandler<Ponged>
     TextWriter = writer;
   }
 
-  public Task Handle(Ponged notification, CancellationToken cancellationToken)
+  public ValueTask Handle(Ponged notification, CancellationToken cancellationToken)
   {
-    return TextWriter.WriteLineAsync("Got ponged async.");
+    return new ValueTask(TextWriter.WriteLineAsync("Got ponged async."));
   }
 }
 
@@ -42,9 +42,9 @@ public class ConstrainedPingedHandler<TNotification> : INotificationHandler<TNot
     TextWriter = writer;
   }
 
-  public Task Handle(TNotification notification, CancellationToken cancellationToken)
+  public ValueTask Handle(TNotification notification, CancellationToken cancellationToken)
   {
-    return TextWriter.WriteLineAsync("Got pinged constrained async.");
+    return new ValueTask(TextWriter.WriteLineAsync("Got pinged constrained async."));
   }
 }
 
@@ -57,8 +57,8 @@ public class PingedAlsoHandler : INotificationHandler<Pinged>
     TextWriter = writer;
   }
 
-  public Task Handle(Pinged notification, CancellationToken cancellationToken)
+  public ValueTask Handle(Pinged notification, CancellationToken cancellationToken)
   {
-    return TextWriter.WriteLineAsync("Got pinged also async.");
+    return new ValueTask(TextWriter.WriteLineAsync("Got pinged also async."));
   }
 }

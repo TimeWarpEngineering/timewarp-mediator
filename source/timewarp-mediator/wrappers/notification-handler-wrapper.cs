@@ -18,7 +18,7 @@ internal class NotificationHandlerWrapperImpl<TNotification> : NotificationHandl
   {
     IEnumerable<NotificationHandlerExecutor> handlers = serviceProvider
         .GetServices<INotificationHandler<TNotification>>()
-        .Select(static x => new NotificationHandlerExecutor(x, (theNotification, theToken) => x.Handle((TNotification) theNotification, theToken)));
+        .Select(static x => new NotificationHandlerExecutor(x, (theNotification, theToken) => x.Handle((TNotification) theNotification, theToken).AsTask()));
 
     return publish(handlers, notification, cancellationToken);
   }

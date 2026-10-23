@@ -37,10 +37,10 @@ public class PipelineTests
     {
       Logger = output;
     }
-    public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
+    public ValueTask<Pong> Handle(Ping request, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Handler");
-      return Task.FromResult(new Pong { Message = request.Message + " Pong" });
+      return ValueTask.FromResult(new Pong { Message = request.Message + " Pong" });
     }
   }
 
@@ -52,10 +52,10 @@ public class PipelineTests
     {
       Logger = output;
     }
-    public Task Handle(VoidPing request, CancellationToken cancellationToken)
+    public ValueTask Handle(VoidPing request, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Handler");
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -67,10 +67,10 @@ public class PipelineTests
     {
       Logger = output;
     }
-    public Task<Zong> Handle(Zing request, CancellationToken cancellationToken)
+    public ValueTask<Zong> Handle(Zing request, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Handler");
-      return Task.FromResult(new Zong { Message = request.Message + " Zong" });
+      return ValueTask.FromResult(new Zong { Message = request.Message + " Zong" });
     }
   }
 
@@ -83,10 +83,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<Pong> Handle(Ping request, RequestHandlerDelegate<Pong> next, CancellationToken cancellationToken)
+    public async ValueTask<Pong> Handle(Ping request, MessageHandlerDelegate<Ping, Pong> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Outer before");
-      Pong response = await next();
+      Pong response = await next(request, cancellationToken);
       Logger.Messages.Add("Outer after");
 
       return response;
@@ -102,10 +102,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<Unit> Handle(VoidPing request, RequestHandlerDelegate<Unit> next, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(VoidPing request, MessageHandlerDelegate<VoidPing, Unit> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Outer before");
-      Unit response = await next();
+      Unit response = await next(request, cancellationToken);
       Logger.Messages.Add("Outer after");
 
       return response;
@@ -121,10 +121,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<Pong> Handle(Ping request, RequestHandlerDelegate<Pong> next, CancellationToken cancellationToken)
+    public async ValueTask<Pong> Handle(Ping request, MessageHandlerDelegate<Ping, Pong> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Inner before");
-      Pong response = await next();
+      Pong response = await next(request, cancellationToken);
       Logger.Messages.Add("Inner after");
 
       return response;
@@ -140,10 +140,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<Unit> Handle(VoidPing request, RequestHandlerDelegate<Unit> next, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(VoidPing request, MessageHandlerDelegate<VoidPing, Unit> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Inner before");
-      Unit response = await next();
+      Unit response = await next(request, cancellationToken);
       Logger.Messages.Add("Inner after");
 
       return response;
@@ -160,10 +160,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Inner generic before");
-      TResponse? response = await next();
+      TResponse? response = await next(request, cancellationToken);
       Logger.Messages.Add("Inner generic after");
 
       return response;
@@ -179,10 +179,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Outer generic before");
-      TResponse? response = await next();
+      TResponse? response = await next(request, cancellationToken);
       Logger.Messages.Add("Outer generic after");
 
       return response;
@@ -200,10 +200,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Constrained before");
-      TResponse response = await next();
+      TResponse response = await next(request, cancellationToken);
       Logger.Messages.Add("Constrained after");
 
       return response;
@@ -219,13 +219,56 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<Pong> Handle(Ping request, RequestHandlerDelegate<Pong> next, CancellationToken cancellationToken)
+    public async ValueTask<Pong> Handle(Ping request, MessageHandlerDelegate<Ping, Pong> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Concrete before");
-      Pong response = await next();
+      Pong response = await next(request, cancellationToken);
       Logger.Messages.Add("Concrete after");
 
       return response;
+    }
+  }
+
+  public class ReplacementRequest : IRequest<string>
+  {
+    public string Marker { get; set; } = string.Empty;
+  }
+
+  public class ReplacementRequestHandler : IRequestHandler<ReplacementRequest, string>
+  {
+    public static ReplacementRequest? Received { get; set; }
+
+    public ValueTask<string> Handle(ReplacementRequest request, CancellationToken cancellationToken)
+    {
+      Received = request;
+      return ValueTask.FromResult(request.Marker);
+    }
+  }
+
+  public class ReplacingBehavior : IPipelineBehavior<ReplacementRequest, string>
+  {
+    public static ReplacementRequest Replacement { get; } = new() { Marker = "replaced" };
+
+    public ValueTask<string> Handle(
+      ReplacementRequest request,
+      MessageHandlerDelegate<ReplacementRequest, string> next,
+      CancellationToken cancellationToken)
+    {
+      return next(Replacement, cancellationToken);
+    }
+  }
+
+  public class ObservingBehavior : IPipelineBehavior<ReplacementRequest, string>
+  {
+    public static ReplacementRequest? Seen { get; set; }
+
+    public ValueTask<string> Handle(
+      ReplacementRequest request,
+      MessageHandlerDelegate<ReplacementRequest, string> next,
+      CancellationToken cancellationToken)
+    {
+      Seen = request;
+      return next(request, cancellationToken);
     }
   }
 
@@ -478,5 +521,55 @@ public class PipelineTests
             "Inner generic after",
             "Outer generic after",
         });
+  }
+
+  [Fact]
+  public async Task Should_forward_replacement_request_to_handler()
+  {
+    ReplacementRequestHandler.Received = null;
+    ReplacementRequest original = new() { Marker = "original" };
+    using ServiceProvider provider = BuildReplacementMediator(cfg =>
+    {
+      cfg.AddBehavior<ReplacingBehavior>();
+    });
+    IMediator mediator = provider.GetRequiredService<IMediator>();
+
+    string marker = await mediator.Send(original);
+
+    marker.ShouldBe("replaced");
+    ReplacementRequestHandler.Received.ShouldBeSameAs(ReplacingBehavior.Replacement);
+    ReplacementRequestHandler.Received.ShouldNotBeSameAs(original);
+  }
+
+  [Fact]
+  public async Task Should_forward_replacement_request_through_behavior_chain()
+  {
+    ReplacementRequestHandler.Received = null;
+    ObservingBehavior.Seen = null;
+    ReplacementRequest original = new() { Marker = "original" };
+    using ServiceProvider provider = BuildReplacementMediator(cfg =>
+    {
+      cfg.AddBehavior<ReplacingBehavior>();
+      cfg.AddBehavior<ObservingBehavior>();
+    });
+    IMediator mediator = provider.GetRequiredService<IMediator>();
+
+    string marker = await mediator.Send(original);
+
+    marker.ShouldBe("replaced");
+    ObservingBehavior.Seen.ShouldBeSameAs(ReplacingBehavior.Replacement);
+    ReplacementRequestHandler.Received.ShouldBeSameAs(ReplacingBehavior.Replacement);
+    ReplacementRequestHandler.Received.ShouldNotBeSameAs(original);
+  }
+
+  private static ServiceProvider BuildReplacementMediator(Action<MediatorServiceConfiguration> configure)
+  {
+    ServiceCollection services = new();
+    services.AddMediator(cfg =>
+    {
+      cfg.RegisterServicesFromAssembly(typeof(PipelineTests).Assembly);
+      configure(cfg);
+    });
+    return services.BuildServiceProvider();
   }
 }

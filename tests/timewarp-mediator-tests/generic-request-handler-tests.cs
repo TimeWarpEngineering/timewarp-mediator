@@ -284,7 +284,7 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
 
   public class ClosedRequestGenericHandler<T> : IRequestHandler<ClosedRequest, string>
   {
-    public Task<string> Handle(ClosedRequest request, CancellationToken cancellationToken) => Task.FromResult(typeof(T).Name);
+    public ValueTask<string> Handle(ClosedRequest request, CancellationToken cancellationToken) => ValueTask.FromResult(typeof(T).Name);
   }
 
   public class FirstMultiRequest : IRequest<string> { }
@@ -293,14 +293,14 @@ public class GenericRequestHandlerTests : BaseGenericRequestHandlerTests
 
   public class MultiRequestHandler : IRequestHandler<FirstMultiRequest, string>, IRequestHandler<SecondMultiRequest, string>
   {
-    public Task<string> Handle(FirstMultiRequest request, CancellationToken cancellationToken) => Task.FromResult("first");
+    public ValueTask<string> Handle(FirstMultiRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("first");
 
-    public Task<string> Handle(SecondMultiRequest request, CancellationToken cancellationToken) => Task.FromResult("second");
+    public ValueTask<string> Handle(SecondMultiRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("second");
   }
 
   public class FirstMultiRequestHandler : IRequestHandler<FirstMultiRequest, string>
   {
-    public Task<string> Handle(FirstMultiRequest request, CancellationToken cancellationToken) => Task.FromResult("first-only");
+    public ValueTask<string> Handle(FirstMultiRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("first-only");
   }
 
   private static List<List<Type>> CreateTypeLists(int typesPerList, int listCount)

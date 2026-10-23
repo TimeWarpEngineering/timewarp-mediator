@@ -34,6 +34,6 @@ public sealed record SmokePing(string Message) : IRequest<string>;
 
 public sealed class SmokePingHandler : IRequestHandler<SmokePing, string>
 {
-  public Task<string> Handle(SmokePing request, CancellationToken cancellationToken) =>
-      Task.FromResult(request.Message + "-pong");
+  public ValueTask<string> Handle(SmokePing request, CancellationToken cancellationToken) =>
+      ValueTask.FromResult(request.Message + "-pong");
 }

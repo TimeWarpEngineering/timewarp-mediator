@@ -78,7 +78,7 @@ namespace Zeta
 
     public sealed class NoteHandler : INotificationHandler<Note>
     {
-        public Task Handle(Note notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Note notification, CancellationToken cancellationToken) => default;
     }
 
     public sealed class Ping : IRequest<string>
@@ -87,7 +87,7 @@ namespace Zeta
 
     public sealed class PingHandler : IRequestHandler<Ping, string>
     {
-        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(""zeta"");
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""zeta"");
     }
 }
 ";
@@ -103,12 +103,12 @@ namespace Alpha
 {
     public sealed class NoteHandler : INotificationHandler<Zeta.Note>
     {
-        public Task Handle(Zeta.Note notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Zeta.Note notification, CancellationToken cancellationToken) => default;
     }
 
     public sealed class PingHandler : IRequestHandler<Zeta.Ping, string>
     {
-        public Task<string> Handle(Zeta.Ping request, CancellationToken cancellationToken) => Task.FromResult(""alpha"");
+        public ValueTask<string> Handle(Zeta.Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""alpha"");
     }
 }
 ";
@@ -122,7 +122,7 @@ namespace Host
 {
     public sealed class NoteHandler : INotificationHandler<Zeta.Note>
     {
-        public Task Handle(Zeta.Note notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Zeta.Note notification, CancellationToken cancellationToken) => default;
     }
 }
 ";

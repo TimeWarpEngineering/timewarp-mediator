@@ -43,12 +43,6 @@ public class AssemblyResolutionTests
   }
 
   [Fact]
-  public void ShouldResolveStreamHandlers()
-  {
-    ServiceProvider.GetService<IStreamRequestHandler<StreamPing, Pong>>().ShouldNotBeNull();
-  }
-
-  [Fact]
   public void ShouldRequireAtLeastOneAssembly()
   {
     ServiceCollection services = new();

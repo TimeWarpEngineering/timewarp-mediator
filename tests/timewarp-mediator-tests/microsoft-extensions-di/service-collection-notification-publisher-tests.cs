@@ -105,7 +105,7 @@ public class ServiceCollectionNotificationPublisherTests
     med.ShouldNotBeNull();
     publisher.ShouldNotBeNull();
 
-    await Should.NotThrowAsync(med.Publish(new Pinged()));
+    await Should.NotThrowAsync(async () => await med.Publish(new Pinged()));
 
     publisher.ShouldBeOfType<TaskWhenAllPublisher>();
   }

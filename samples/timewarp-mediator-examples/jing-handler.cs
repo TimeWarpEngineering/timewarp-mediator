@@ -11,8 +11,8 @@ public class JingHandler : IRequestHandler<Jing>
     TextWriter = writer;
   }
 
-  public Task Handle(Jing request, CancellationToken cancellationToken)
+  public ValueTask Handle(Jing request, CancellationToken cancellationToken)
   {
-    return TextWriter.WriteLineAsync($"--- Handled Jing: {request.Message}, no Jong");
+    return new ValueTask(TextWriter.WriteLineAsync($"--- Handled Jing: {request.Message}, no Jong"));
   }
 }

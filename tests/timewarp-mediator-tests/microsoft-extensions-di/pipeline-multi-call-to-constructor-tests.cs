@@ -11,10 +11,10 @@ public class PipelineMultiCallToConstructorTests
 
     public ConstructorTestBehavior(Logger output) => Logger = output;
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("ConstructorTestBehavior before");
-      TResponse? response = await next();
+      TResponse? response = await next(request, cancellationToken);
       Logger.Messages.Add("ConstructorTestBehavior after");
 
       return response;
@@ -50,10 +50,10 @@ public class PipelineMultiCallToConstructorTests
       counter.Increment();
     }
 
-    public Task<ConstructorTestResponse> Handle(ConstructorTestRequest request, CancellationToken cancellationToken)
+    public ValueTask<ConstructorTestResponse> Handle(ConstructorTestRequest request, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Handler");
-      return Task.FromResult(new ConstructorTestResponse { Message = request.Message + " ConstructorPong" });
+      return ValueTask.FromResult(new ConstructorTestResponse { Message = request.Message + " ConstructorPong" });
     }
   }
 

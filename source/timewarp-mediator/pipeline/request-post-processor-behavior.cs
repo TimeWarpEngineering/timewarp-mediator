@@ -20,9 +20,9 @@ public class RequestPostProcessorBehavior<TRequest, TResponse> : IPipelineBehavi
       => PostProcessors = postProcessors;
 
   /// <inheritdoc/>
-  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
   {
-    TResponse? response = await next(cancellationToken).ConfigureAwait(false);
+    TResponse? response = await next(request, cancellationToken).ConfigureAwait(false);
 
     foreach (IRequestPostProcessor<TRequest, TResponse> processor in PostProcessors)
     {

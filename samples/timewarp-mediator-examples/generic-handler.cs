@@ -11,8 +11,8 @@ public class GenericHandler : INotificationHandler<INotification>
     TextWriter = writer;
   }
 
-  public Task Handle(INotification notification, CancellationToken cancellationToken)
+  public ValueTask Handle(INotification notification, CancellationToken cancellationToken)
   {
-    return TextWriter.WriteLineAsync("Got notified.");
+    return new ValueTask(TextWriter.WriteLineAsync("Got notified."));
   }
 }

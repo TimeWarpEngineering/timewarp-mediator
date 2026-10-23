@@ -48,17 +48,17 @@ public class ExceptionTests
 
   public class NullPingHandler : IRequestHandler<NullPing, Pong>
   {
-    public Task<Pong> Handle(NullPing request, CancellationToken cancellationToken)
+    public ValueTask<Pong> Handle(NullPing request, CancellationToken cancellationToken)
     {
-      return Task.FromResult(new Pong());
+      return ValueTask.FromResult(new Pong());
     }
   }
 
   public class VoidNullPingHandler : IRequestHandler<VoidNullPing>
   {
-    public Task Handle(VoidNullPing request, CancellationToken cancellationToken)
+    public ValueTask Handle(VoidNullPing request, CancellationToken cancellationToken)
     {
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -237,7 +237,7 @@ public class ExceptionTests
 
   public class PingExceptionHandler : IRequestHandler<PingException>
   {
-    public Task Handle(PingException request, CancellationToken cancellationToken)
+    public ValueTask Handle(PingException request, CancellationToken cancellationToken)
     {
       throw new NotImplementedException();
     }

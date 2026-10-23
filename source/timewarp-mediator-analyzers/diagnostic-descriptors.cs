@@ -108,7 +108,7 @@ internal static class DiagnosticDescriptors
       category: Category,
       defaultSeverity: DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
-      description: "The generated mediator dispatches IRequestHandler, INotificationHandler, and [assembly: MediatorBehavior] pipeline behaviors. Stream handlers, stream behaviors, pre/post processors, and exception handlers/actions in member assemblies never run. CreateStream throws NotSupportedException.",
+      description: "The generated mediator dispatches IRequestHandler, INotificationHandler, and [assembly: MediatorBehavior] pipeline behaviors. Pre/post processors and exception handlers/actions in member assemblies never run.",
       helpLinkUri: HelpLink("TWM009"));
 
   internal static readonly DiagnosticDescriptor InvalidBehaviorRegistration = new(

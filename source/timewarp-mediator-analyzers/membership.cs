@@ -3,11 +3,10 @@
 #endregion
 
 #region Design
-// Current compilation is a member when it has [assembly: MediatorAssembly], a MediatorModule
-// on a type, MediatorAssemblies listing, or MSBuild TimeWarpMediatorAssembly=true (set by the
-// generator package for hosts). Referenced assemblies join only with [assembly: MediatorAssembly]
-// or by being listed via MediatorAssembliesAttribute marker types. No marker → not linked.
-// Pipeline assignment is MediatorScopeAttribute (marker type), not MediatorModule's string name.
+// Current compilation is a member when it has [assembly: MediatorAssembly] or MSBuild
+// TimeWarpMediatorAssembly=true (set by the generator package for hosts). Referenced assemblies
+// join only with [assembly: MediatorAssembly]. No marker → not linked.
+// Pipeline assignment is MediatorScopeAttribute (marker type).
 // IsHost is the generator itself or TimeWarpMediatorAssembly=true; an attribute-only library is
 // not a host, so whole-program checks (TWM004 on interface-typed or unscoped sends) stay off there.
 // Build properties come only from GlobalOptions (MembershipOptions): CompilerVisibleProperty values
@@ -19,8 +18,6 @@ namespace TimeWarp.Mediator.Analyzers;
 public sealed class Membership
 {
   public const string AssemblyAttributeMetadataName = "TimeWarp.Mediator.MediatorAssemblyAttribute";
-  public const string AssembliesAttributeMetadataName = "TimeWarp.Mediator.MediatorAssembliesAttribute";
-  public const string ModuleAttributeMetadataName = "TimeWarp.Mediator.MediatorModuleAttribute";
   public const string BehaviorAttributeMetadataName = "TimeWarp.Mediator.MediatorBehaviorAttribute";
   public const string ScopeAttributeMetadataName = "TimeWarp.Mediator.MediatorScopeAttribute";
   public const string MsBuildPropertyName = "build_property.TimeWarpMediatorAssembly";
@@ -83,9 +80,7 @@ public sealed class Membership
       CancellationToken cancellationToken,
       out Membership membership)
   {
-    bool attributeMember = HasAssemblyAttribute(compilation.Assembly, AssemblyAttributeMetadataName)
-        || HasAssemblyAttribute(compilation.Assembly, AssembliesAttributeMetadataName)
-        || HasModuleAttribute(compilation.Assembly, cancellationToken);
+    bool attributeMember = HasAssemblyAttribute(compilation.Assembly, AssemblyAttributeMetadataName);
 
     if (!currentCompilationIsHost && !options.IsMsBuildMember && !attributeMember)
     {
@@ -104,14 +99,6 @@ public sealed class Membership
       if (HasAssemblyAttribute(assembly, AssemblyAttributeMetadataName))
       {
         members.Add(assembly);
-      }
-    }
-
-    foreach (INamedTypeSymbol marker in GetMediatorAssembliesMarkers(compilation.Assembly))
-    {
-      if (marker.ContainingAssembly is not null)
-      {
-        members.Add(marker.ContainingAssembly);
       }
     }
 
@@ -138,55 +125,6 @@ public sealed class Membership
     }
 
     throw new InvalidOperationException("Generator membership should always succeed for the current compilation.");
-  }
-
-  private static bool HasModuleAttribute(IAssemblySymbol assembly, CancellationToken cancellationToken)
-  {
-    foreach (INamedTypeSymbol type in EnumerateTypes(assembly.GlobalNamespace))
-    {
-      cancellationToken.ThrowIfCancellationRequested();
-      foreach (AttributeData attribute in type.GetAttributes())
-      {
-        if (attribute.AttributeClass?.ToDisplayString() == ModuleAttributeMetadataName)
-        {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private static IEnumerable<INamedTypeSymbol> GetMediatorAssembliesMarkers(IAssemblySymbol assembly)
-  {
-    foreach (AttributeData attribute in assembly.GetAttributes())
-    {
-      if (attribute.AttributeClass?.ToDisplayString() != AssembliesAttributeMetadataName)
-      {
-        continue;
-      }
-
-      if (attribute.ConstructorArguments.Length == 0)
-      {
-        continue;
-      }
-
-      TypedConstant argument = attribute.ConstructorArguments[0];
-      if (argument.Kind == TypedConstantKind.Array)
-      {
-        foreach (TypedConstant element in argument.Values)
-        {
-          if (element.Value is INamedTypeSymbol marker)
-          {
-            yield return marker;
-          }
-        }
-      }
-      else if (argument.Value is INamedTypeSymbol single)
-      {
-        yield return single;
-      }
-    }
   }
 
   private static bool HasAssemblyAttribute(IAssemblySymbol assembly, string metadataName)

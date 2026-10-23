@@ -8,21 +8,21 @@ namespace TimeWarp.Mediator;
 public interface IPublisher
 {
   /// <summary>
-  /// Asynchronously send a notification to multiple handlers
+  /// Sends a notification to multiple handlers. The notification is type-erased.
   /// </summary>
-  /// <param name="notification">Notification object</param>
-  /// <param name="cancellationToken">Optional cancellation token</param>
-  /// <returns>A task that represents the publish operation.</returns>
-  Task Publish(object notification, CancellationToken cancellationToken = default);
+  /// <param name="notification">Notification object.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>A <see cref="ValueTask"/> that completes when publishing finishes.</returns>
+  ValueTask Publish(object notification, CancellationToken cancellationToken = default);
 
   /// <summary>
-  /// Asynchronously send a notification to multiple handlers
+  /// Sends a notification to multiple handlers.
   /// </summary>
-  /// <typeparam name="TNotification">Notification type</typeparam>
-  /// <param name="notification">Notification object</param>
-  /// <param name="cancellationToken">Optional cancellation token</param>
-  /// <returns>A task that represents the publish operation.</returns>
-  Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
+  /// <typeparam name="TNotification">Notification type.</typeparam>
+  /// <param name="notification">Notification object.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>A <see cref="ValueTask"/> that completes when publishing finishes.</returns>
+  ValueTask Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
       where TNotification : INotification;
 }
 

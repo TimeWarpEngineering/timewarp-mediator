@@ -21,9 +21,9 @@ public sealed class RecordingExceptionHandler : INotificationHandler<ExceptionNo
 {
   public List<ExceptionNotification> Notifications { get; } = new();
 
-  public Task Handle(ExceptionNotification notification, CancellationToken cancellationToken)
+  public ValueTask Handle(ExceptionNotification notification, CancellationToken cancellationToken)
   {
     Notifications.Add(notification);
-    return Task.CompletedTask;
+    return default;
   }
 }

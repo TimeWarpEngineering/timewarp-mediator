@@ -9,5 +9,5 @@ public class Ping : IRequest
 
 public class PingHandler : IRequestHandler<Ping>
 {
-  public Task Handle(Ping request, CancellationToken cancellationToken) => Task.CompletedTask;
+  public ValueTask Handle(Ping request, CancellationToken cancellationToken) => default;
 }

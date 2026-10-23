@@ -8,7 +8,7 @@ class Program
   {
     WrappingWriter writer = new(Console.Out);
     IMediator med = BuildMediator(writer);
-    return Runner.Run(med, writer, "Stashbox", testStreams: true);
+    return Runner.Run(med, writer, "Stashbox");
   }
 
   private static IMediator BuildMediator(WrappingWriter writer)

@@ -11,7 +11,7 @@ public class SyncPingedHandler : INotificationHandler<Pinged>
 
   public string Name { get; set; }
 
-  public Task Handle(Pinged notification, CancellationToken cancellationToken)
+  public ValueTask Handle(Pinged notification, CancellationToken cancellationToken)
   {
     if (Name == "2")
     {
@@ -21,6 +21,6 @@ public class SyncPingedHandler : INotificationHandler<Pinged>
     Console.WriteLine($"[SyncPingedHandler {Name}] {DateTime.Now:HH:mm:ss.fff} : Pinged");
     Thread.Sleep(100);
     Console.WriteLine($"[SyncPingedHandler {Name}] {DateTime.Now:HH:mm:ss.fff} : After pinged");
-    return Task.CompletedTask;
+    return default;
   }
 }

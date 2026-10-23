@@ -30,12 +30,12 @@ public class Benchmarks
   [Benchmark]
   public Task SendingRequests()
   {
-    return Mediator.Send(Ping);
+    return Mediator.Send(Ping).AsTask();
   }
 
   [Benchmark]
   public Task PublishingNotifications()
   {
-    return Mediator.Publish(Pinged);
+    return Mediator.Publish(Pinged).AsTask();
   }
 }

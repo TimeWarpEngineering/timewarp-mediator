@@ -63,7 +63,7 @@ namespace Shapes
         {
             public sealed class PingHandler : IRequestHandler<Outer.Ping, string>
             {
-                public Task<string> Handle(Outer.Ping request, CancellationToken cancellationToken) => Task.FromResult(""pong"");
+                public ValueTask<string> Handle(Outer.Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""pong"");
             }
         }
     }
@@ -85,7 +85,7 @@ namespace Shapes
 
     internal sealed class PingHandler : IRequestHandler<Ping, string>
     {
-        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(""pong"");
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""pong"");
     }
 
     internal sealed class Note : INotification
@@ -94,7 +94,7 @@ namespace Shapes
 
     internal sealed class NoteHandler : INotificationHandler<Note>
     {
-        public Task Handle(Note notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Note notification, CancellationToken cancellationToken) => default;
     }
 }
 ",
@@ -115,7 +115,7 @@ namespace @event.@class
 
     public sealed class @string : IRequestHandler<@object, string>
     {
-        public Task<string> Handle(@object request, CancellationToken cancellationToken) => Task.FromResult(""keyword"");
+        public ValueTask<string> Handle(@object request, CancellationToken cancellationToken) => ValueTask.FromResult(""keyword"");
     }
 
     public sealed class @int : INotification
@@ -124,7 +124,7 @@ namespace @event.@class
 
     public sealed class @namespace : INotificationHandler<@int>
     {
-        public Task Handle(@int notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(@int notification, CancellationToken cancellationToken) => default;
     }
 }
 ",
@@ -147,12 +147,12 @@ namespace Shapes
 
     public sealed class IntBoxHandler : IRequestHandler<Box<int>, List<int>>
     {
-        public Task<List<int>> Handle(Box<int> request, CancellationToken cancellationToken) => Task.FromResult(new List<int>());
+        public ValueTask<List<int>> Handle(Box<int> request, CancellationToken cancellationToken) => ValueTask.FromResult(new List<int>());
     }
 
     public sealed class StringBoxHandler : IRequestHandler<Box<string>, List<string>>
     {
-        public Task<List<string>> Handle(Box<string> request, CancellationToken cancellationToken) => Task.FromResult(new List<string>());
+        public ValueTask<List<string>> Handle(Box<string> request, CancellationToken cancellationToken) => ValueTask.FromResult(new List<string>());
     }
 }
 ",
@@ -188,13 +188,13 @@ namespace Shapes
         IRequestHandler<Archive>,
         INotificationHandler<Archived>
     {
-        public Task<string> Handle(GetName request, CancellationToken cancellationToken) => Task.FromResult(""name"");
+        public ValueTask<string> Handle(GetName request, CancellationToken cancellationToken) => ValueTask.FromResult(""name"");
 
-        public Task<int> Handle(GetCount request, CancellationToken cancellationToken) => Task.FromResult(1);
+        public ValueTask<int> Handle(GetCount request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
 
-        public Task Handle(Archive request, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Archive request, CancellationToken cancellationToken) => default;
 
-        public Task Handle(Archived notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Archived notification, CancellationToken cancellationToken) => default;
     }
 }
 ",
@@ -220,12 +220,12 @@ namespace Shapes
 
     public abstract class PingHandlerBase : IRequestHandler<Ping, string>
     {
-        public abstract Task<string> Handle(Ping request, CancellationToken cancellationToken);
+        public abstract ValueTask<string> Handle(Ping request, CancellationToken cancellationToken);
     }
 
     public sealed class PingHandler : PingHandlerBase
     {
-        public override Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(""derived"");
+        public override ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""derived"");
     }
 }
 ",
@@ -249,17 +249,17 @@ namespace Shapes
 
     public sealed class AuditHandler : INotificationHandler<Changed>
     {
-        public Task Handle(Changed notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Changed notification, CancellationToken cancellationToken) => default;
     }
 
     public sealed class CacheHandler : INotificationHandler<Changed>
     {
-        public Task Handle(Changed notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Changed notification, CancellationToken cancellationToken) => default;
     }
 
     public sealed class RenamedHandler : INotificationHandler<Renamed>
     {
-        public Task Handle(Renamed notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Renamed notification, CancellationToken cancellationToken) => default;
     }
 }
 ",
@@ -286,7 +286,7 @@ namespace Shapes
     [MediatorScope(typeof(ClientPipeline))]
     public sealed class PingHandler : IRequestHandler<Ping, string>
     {
-        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(""client"");
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""client"");
     }
 
     public sealed class Pong : IRequest<string>
@@ -295,7 +295,7 @@ namespace Shapes
 
     public sealed class PongHandler : IRequestHandler<Pong, string>
     {
-        public Task<string> Handle(Pong request, CancellationToken cancellationToken) => Task.FromResult(""default"");
+        public ValueTask<string> Handle(Pong request, CancellationToken cancellationToken) => ValueTask.FromResult(""default"");
     }
 }
 ",
@@ -315,7 +315,7 @@ namespace Shapes
 
     public sealed class PingHandler : IRequestHandler<Ping, int>
     {
-        public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(7);
+        public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(7);
     }
 }
 ",

@@ -22,10 +22,7 @@ public sealed class StateTransactionBehavior<TRequest, TResponse> : IPipelineBeh
     Publisher = publisher;
   }
 
-  public async Task<TResponse> Handle(
-      TRequest request,
-      RequestHandlerDelegate<TResponse> next,
-      CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
   {
     Type enclosingStateType = typeof(TRequest).GetEnclosingStateType();
     IState originalState = Store.GetState(enclosingStateType);
@@ -35,7 +32,7 @@ public sealed class StateTransactionBehavior<TRequest, TResponse> : IPipelineBeh
 
     try
     {
-      return await next(cancellationToken).ConfigureAwait(false);
+      return await next(request, cancellationToken).ConfigureAwait(false);
     }
     catch (Exception exception)
     {

@@ -16,9 +16,9 @@ public class RequestPostProcessorTests
 
   public class PingHandler : IRequestHandler<Ping, Pong>
   {
-    public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
+    public ValueTask<Pong> Handle(Ping request, CancellationToken cancellationToken)
     {
-      return Task.FromResult(new Pong { Message = request.Message + " Pong" });
+      return ValueTask.FromResult(new Pong { Message = request.Message + " Pong" });
     }
   }
 

@@ -36,10 +36,10 @@ public class VarianceTests
 
     public AnimalEventInterfaceHandler(EventLog log) => EventLog = log;
 
-    public Task Handle(IAnimalEvent notification, CancellationToken cancellationToken)
+    public ValueTask Handle(IAnimalEvent notification, CancellationToken cancellationToken)
     {
       EventLog.Entries.Add($"IAnimalEvent:{notification.Name}");
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -49,10 +49,10 @@ public class VarianceTests
 
     public AnimalEventHandler(EventLog log) => EventLog = log;
 
-    public Task Handle(AnimalEvent notification, CancellationToken cancellationToken)
+    public ValueTask Handle(AnimalEvent notification, CancellationToken cancellationToken)
     {
       EventLog.Entries.Add($"AnimalEvent:{notification.Name}");
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -62,10 +62,10 @@ public class VarianceTests
 
     public DogBarkedHandler(EventLog log) => EventLog = log;
 
-    public Task Handle(DogBarked notification, CancellationToken cancellationToken)
+    public ValueTask Handle(DogBarked notification, CancellationToken cancellationToken)
     {
       EventLog.Entries.Add($"DogBarked:{notification.Name}");
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -80,8 +80,8 @@ public class VarianceTests
 
   public class GreetingHandler : IRequestHandler<Greeting, string>
   {
-    public Task<string> Handle(Greeting request, CancellationToken cancellationToken)
-        => Task.FromResult($"Hello {request.Name} from {request.GetType().Name}");
+    public ValueTask<string> Handle(Greeting request, CancellationToken cancellationToken)
+        => ValueTask.FromResult($"Hello {request.Name} from {request.GetType().Name}");
   }
 
   private static readonly HashSet<Type> ScannedTypes = new()

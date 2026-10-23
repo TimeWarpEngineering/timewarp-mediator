@@ -17,8 +17,8 @@ public sealed class Ping : IRequest<string> { }
 
 public sealed class PingHandler : IRequestHandler<Ping, string>
 {
-  public Task<string> Handle(Ping request, CancellationToken cancellationToken) =>
-    Task.FromResult("Pong");
+  public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) =>
+    ValueTask.FromResult("Pong");
 }
 
 services.AddGeneratedMediator();
@@ -33,7 +33,7 @@ string reply = await provider.GetRequiredService<ISender>().Send(new Ping());
 
 - This package and `TimeWarp.Mediator` target net10.0 only. Stay on 13.0.0 if you cannot.
 - `AddMediator()` does not register the generated mediator. A generated host calls `AddGeneratedMediator()`.
-- The generated dispatcher does not run streams, pre/post processors, or the exception cascade.
+- The generated dispatcher does not run pre/post processors or the exception cascade.
 - From MediatR: change `using MediatR;` to `using TimeWarp.Mediator;` and `AddMediatR` to `AddMediator`.
 
 Matrix and steps: [13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).

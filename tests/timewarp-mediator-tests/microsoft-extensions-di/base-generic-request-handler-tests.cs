@@ -116,11 +116,14 @@ public abstract class BaseGenericRequestHandlerTests
     MethodBuilder handleMethodBuilder = handlerTypeBuilder.DefineMethod(
         "Handle",
         MethodAttributes.Public | MethodAttributes.Virtual,
-        typeof(Task),
+        typeof(ValueTask),
         new[] { requestType, typeof(CancellationToken) });
 
     ILGenerator ilGenerator = handleMethodBuilder.GetILGenerator();
-
+    LocalBuilder result = ilGenerator.DeclareLocal(typeof(ValueTask));
+    ilGenerator.Emit(OpCodes.Ldloca_S, result);
+    ilGenerator.Emit(OpCodes.Initobj, typeof(ValueTask));
+    ilGenerator.Emit(OpCodes.Ldloc, result);
     ilGenerator.Emit(OpCodes.Ret);
 
     // Implement the interface method

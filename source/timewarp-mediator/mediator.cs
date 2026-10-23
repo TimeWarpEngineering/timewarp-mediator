@@ -13,12 +13,10 @@ public class Mediator : IMediator
   private readonly INotificationPublisher NotificationPublisher;
   // Typed caches are keyed by (request type, response type): a request type can implement several request
   // interfaces (or IRequest and IRequest<T>), so the request type alone does not identify the wrapper.
-  // The untyped Send(object)/CreateStream(object) paths have their own caches keyed by request type.
+  // The untyped Send(object) path has its own cache keyed by request type.
   private static readonly ConcurrentDictionary<(Type RequestType, Type ResponseType), RequestHandlerBase> RequestHandlers = new();
   private static readonly ConcurrentDictionary<Type, RequestHandlerBase> ObjectRequestHandlers = new();
   private static readonly ConcurrentDictionary<Type, NotificationHandlerWrapper> NotificationHandlers = new();
-  private static readonly ConcurrentDictionary<(Type RequestType, Type ResponseType), StreamRequestHandlerBase> StreamRequestHandlers = new();
-  private static readonly ConcurrentDictionary<Type, StreamRequestHandlerBase> ObjectStreamRequestHandlers = new();
 
   /// <summary>
   /// Initializes a new instance of the <see cref="Mediator"/> class.
@@ -43,7 +41,7 @@ public class Mediator : IMediator
   }
 
   /// <inheritdoc/>
-  public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+  public ValueTask<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
   {
     if (request == null)
     {
@@ -61,7 +59,7 @@ public class Mediator : IMediator
   }
 
   /// <inheritdoc/>
-  public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
+  public async ValueTask Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
       where TRequest : IRequest
   {
     if (request == null)
@@ -77,11 +75,11 @@ public class Mediator : IMediator
       return (RequestHandlerBase) wrapper;
     });
 
-    return handler.Handle(request, ServiceProvider, cancellationToken);
+    await handler.Handle(request, ServiceProvider, cancellationToken).ConfigureAwait(false);
   }
 
   /// <inheritdoc/>
-  public Task<object?> Send(object request, CancellationToken cancellationToken = default)
+  public ValueTask<object?> Send(object request, CancellationToken cancellationToken = default)
   {
     if (request == null)
     {
@@ -118,7 +116,7 @@ public class Mediator : IMediator
   }
 
   /// <inheritdoc/>
-  public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
+  public ValueTask Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
       where TNotification : INotification
   {
     if (notification == null)
@@ -126,17 +124,22 @@ public class Mediator : IMediator
       throw new ArgumentNullException(nameof(notification));
     }
 
-    return PublishNotification(notification, cancellationToken);
+    return new ValueTask(PublishNotification(notification, cancellationToken));
   }
 
   /// <inheritdoc/>
-  public Task Publish(object notification, CancellationToken cancellationToken = default) =>
-      notification switch
-      {
-        null => throw new ArgumentNullException(nameof(notification)),
-        INotification instance => PublishNotification(instance, cancellationToken),
-        _ => throw new ArgumentException($"{notification.GetType().Name} does not implement {nameof(INotification)}", nameof(notification))
-      };
+  public ValueTask Publish(object notification, CancellationToken cancellationToken = default)
+  {
+    switch (notification)
+    {
+      case null:
+        throw new ArgumentNullException(nameof(notification));
+      case INotification instance:
+        return new ValueTask(PublishNotification(instance, cancellationToken));
+      default:
+        throw new ArgumentException($"{notification.GetType().Name} does not implement {nameof(INotification)}", nameof(notification));
+    }
+  }
 
   /// <summary>
   /// Override in a derived class to control how the tasks are awaited. By default the implementation calls the <see cref="INotificationPublisher"/>.
@@ -158,52 +161,5 @@ public class Mediator : IMediator
     });
 
     return handler.Handle(notification, ServiceProvider, PublishCore, cancellationToken);
-  }
-
-  /// <inheritdoc/>
-  public IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request, CancellationToken cancellationToken = default)
-  {
-    if (request == null)
-    {
-      throw new ArgumentNullException(nameof(request));
-    }
-
-    StreamRequestHandlerWrapper<TResponse> streamHandler = (StreamRequestHandlerWrapper<TResponse>) StreamRequestHandlers.GetOrAdd((request.GetType(), typeof(TResponse)), static key =>
-    {
-      Type wrapperType = typeof(StreamRequestHandlerWrapperImpl<,>).MakeGenericType(key.RequestType, key.ResponseType);
-      object wrapper = Activator.CreateInstance(wrapperType) ?? throw new InvalidOperationException($"Could not create wrapper for type {key.RequestType}");
-      return (StreamRequestHandlerBase) wrapper;
-    });
-
-    IAsyncEnumerable<TResponse> items = streamHandler.Handle(request, ServiceProvider, cancellationToken);
-
-    return items;
-  }
-
-  /// <inheritdoc/>
-  public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default)
-  {
-    if (request == null)
-    {
-      throw new ArgumentNullException(nameof(request));
-    }
-
-    StreamRequestHandlerBase handler = ObjectStreamRequestHandlers.GetOrAdd(request.GetType(), static requestType =>
-    {
-      Type? requestInterfaceType = requestType.GetInterfaces().FirstOrDefault(static i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IStreamRequest<>));
-      if (requestInterfaceType is null)
-      {
-        throw new ArgumentException($"{requestType.Name} does not implement IStreamRequest<TResponse>", nameof(request));
-      }
-
-      Type responseType = requestInterfaceType.GetGenericArguments()[0];
-      Type wrapperType = typeof(StreamRequestHandlerWrapperImpl<,>).MakeGenericType(requestType, responseType);
-      object wrapper = Activator.CreateInstance(wrapperType) ?? throw new InvalidOperationException($"Could not create wrapper for type {requestType}");
-      return (StreamRequestHandlerBase) wrapper;
-    });
-
-    IAsyncEnumerable<object?> items = handler.Handle(request, ServiceProvider, cancellationToken);
-
-    return items;
   }
 }

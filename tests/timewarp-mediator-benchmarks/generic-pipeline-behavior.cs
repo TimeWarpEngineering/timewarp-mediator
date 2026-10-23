@@ -12,10 +12,10 @@ public class GenericPipelineBehavior<TRequest, TResponse> : IPipelineBehavior<TR
     TextWriter = writer;
   }
 
-  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
   {
     await TextWriter.WriteLineAsync("-- Handling Request");
-    TResponse response = await next();
+    TResponse response = await next(request, cancellationToken);
     await TextWriter.WriteLineAsync("-- Finished Request");
     return response;
   }

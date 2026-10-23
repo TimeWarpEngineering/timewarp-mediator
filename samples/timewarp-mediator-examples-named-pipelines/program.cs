@@ -81,9 +81,9 @@ public sealed class ClientPing : IRequest<string>
 [MediatorScope(typeof(ClientPipeline))]
 public sealed class ClientPingHandler : IRequestHandler<ClientPing, string>
 {
-  public Task<string> Handle(ClientPing request, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(ClientPing request, CancellationToken cancellationToken)
   {
-    return Task.FromResult("client:" + request.Message);
+    return ValueTask.FromResult("client:" + request.Message);
   }
 }
 
@@ -101,9 +101,9 @@ public sealed class ServerPing : IRequest<string>
 [MediatorScope(typeof(ServerPipeline))]
 public sealed class ServerPingHandler : IRequestHandler<ServerPing, string>
 {
-  public Task<string> Handle(ServerPing request, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(ServerPing request, CancellationToken cancellationToken)
   {
-    return Task.FromResult("server:" + request.Message);
+    return ValueTask.FromResult("server:" + request.Message);
   }
 }
 
@@ -124,10 +124,7 @@ public static class ServerStamp
 public sealed class ClientStampBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
-  public async Task<TResponse> Handle(
-      TRequest request,
-      RequestHandlerDelegate<TResponse> next,
-      CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
   {
     ClientStamp.Ran = true;
     if (request is ServerPing)
@@ -135,17 +132,14 @@ public sealed class ClientStampBehavior<TRequest, TResponse> : IPipelineBehavior
       ClientStamp.RanOnServer = true;
     }
 
-    return await next(cancellationToken).ConfigureAwait(false);
+    return await next(request, cancellationToken).ConfigureAwait(false);
   }
 }
 
 public sealed class ServerStampBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
-  public async Task<TResponse> Handle(
-      TRequest request,
-      RequestHandlerDelegate<TResponse> next,
-      CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
   {
     ServerStamp.Ran = true;
     if (request is ClientPing)
@@ -153,6 +147,6 @@ public sealed class ServerStampBehavior<TRequest, TResponse> : IPipelineBehavior
       ServerStamp.RanOnClient = true;
     }
 
-    return await next(cancellationToken).ConfigureAwait(false);
+    return await next(request, cancellationToken).ConfigureAwait(false);
   }
 }

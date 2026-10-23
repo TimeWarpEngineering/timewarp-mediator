@@ -37,26 +37,26 @@ public sealed class OrderHandler
       IRequestHandler<GetOrderLabel, string>,
       IRequestHandler<ArchiveOrder>
 {
-  public Task Handle(OrderPlaced notification, CancellationToken cancellationToken)
+  public ValueTask Handle(OrderPlaced notification, CancellationToken cancellationToken)
   {
     BindingLog.Events.Add("order:placed");
-    return Task.CompletedTask;
+    return default;
   }
 
-  public Task Handle(OrderShipped notification, CancellationToken cancellationToken)
+  public ValueTask Handle(OrderShipped notification, CancellationToken cancellationToken)
   {
     BindingLog.Events.Add("order:shipped");
-    return Task.CompletedTask;
+    return default;
   }
 
-  public Task<int> Handle(GetOrderCount request, CancellationToken cancellationToken) => Task.FromResult(3);
+  public ValueTask<int> Handle(GetOrderCount request, CancellationToken cancellationToken) => ValueTask.FromResult(3);
 
-  public Task<string> Handle(GetOrderLabel request, CancellationToken cancellationToken) => Task.FromResult("order");
+  public ValueTask<string> Handle(GetOrderLabel request, CancellationToken cancellationToken) => ValueTask.FromResult("order");
 
-  public Task Handle(ArchiveOrder request, CancellationToken cancellationToken)
+  public ValueTask Handle(ArchiveOrder request, CancellationToken cancellationToken)
   {
     BindingLog.Events.Add("order:archived");
-    return Task.CompletedTask;
+    return default;
   }
 }
 
@@ -75,22 +75,22 @@ public sealed class GetInvoiceTotal : IRequest<decimal>
 // Concrete base handler: owns the InvoiceRaised and GetInvoiceTotal bindings.
 public class InvoiceHandler : INotificationHandler<InvoiceRaised>, IRequestHandler<GetInvoiceTotal, decimal>
 {
-  public virtual Task Handle(InvoiceRaised notification, CancellationToken cancellationToken)
+  public virtual ValueTask Handle(InvoiceRaised notification, CancellationToken cancellationToken)
   {
     BindingLog.Events.Add("invoice:raised:" + GetType().Name);
-    return Task.CompletedTask;
+    return default;
   }
 
-  public Task<decimal> Handle(GetInvoiceTotal request, CancellationToken cancellationToken) => Task.FromResult(42m);
+  public ValueTask<decimal> Handle(GetInvoiceTotal request, CancellationToken cancellationToken) => ValueTask.FromResult(42m);
 }
 
 // Inherits InvoiceHandler's bindings (no TWM002, no second publish) and introduces InvoicePaid.
 public sealed class AuditedInvoiceHandler : InvoiceHandler, INotificationHandler<InvoicePaid>
 {
-  public Task Handle(InvoicePaid notification, CancellationToken cancellationToken)
+  public ValueTask Handle(InvoicePaid notification, CancellationToken cancellationToken)
   {
     BindingLog.Events.Add("invoice:paid");
-    return Task.CompletedTask;
+    return default;
   }
 }
 
@@ -102,10 +102,10 @@ public sealed class RefundIssued : INotification
 public abstract class RefundHandlerBase<TNotification> : INotificationHandler<TNotification>
     where TNotification : INotification
 {
-  public Task Handle(TNotification notification, CancellationToken cancellationToken)
+  public ValueTask Handle(TNotification notification, CancellationToken cancellationToken)
   {
     BindingLog.Events.Add("refund:" + GetType().Name);
-    return Task.CompletedTask;
+    return default;
   }
 }
 

@@ -19,14 +19,14 @@ public class SendScopeAnalyzerTests
         [MediatorScope(typeof(ClientPipeline))]
         public sealed class ClientPingHandler : IRequestHandler<ClientPing, string>
         {
-            public Task<string> Handle(ClientPing request, CancellationToken cancellationToken) => Task.FromResult("c");
+            public ValueTask<string> Handle(ClientPing request, CancellationToken cancellationToken) => ValueTask.FromResult("c");
         }
         [MediatorScope(typeof(ServerPipeline))]
         public sealed class ServerPing : IRequest<int> { }
         [MediatorScope(typeof(ServerPipeline))]
         public sealed class ServerPingHandler : IRequestHandler<ServerPing, int>
         {
-            public Task<int> Handle(ServerPing request, CancellationToken cancellationToken) => Task.FromResult(2);
+            public ValueTask<int> Handle(ServerPing request, CancellationToken cancellationToken) => ValueTask.FromResult(2);
         }
         """;
 
@@ -46,7 +46,7 @@ public class SendScopeAnalyzerTests
             [MediatorScope(typeof(ServerPipeline))]
             public sealed class NoteHandler : INotificationHandler<Note>
             {
-                public Task Handle(Note notification, CancellationToken cancellationToken) => Task.CompletedTask;
+                public ValueTask Handle(Note notification, CancellationToken cancellationToken) => default;
             }
             """;
 
@@ -70,13 +70,13 @@ public class SendScopeAnalyzerTests
             [MediatorScope(typeof(ClientPipeline))]
             public sealed class PingHandler : IRequestHandler<Ping, int>
             {
-                public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
             [MediatorScope(typeof(ClientPipeline))]
             public sealed class Note : INotification { }
             public sealed class NoteHandler : INotificationHandler<Note>
             {
-                public Task Handle(Note notification, CancellationToken cancellationToken) => Task.CompletedTask;
+                public ValueTask Handle(Note notification, CancellationToken cancellationToken) => default;
             }
             """;
 
@@ -91,7 +91,7 @@ public class SendScopeAnalyzerTests
         """
             public static class Use
             {
-                public static Task<int>? Go(ISender<ClientPipeline>? sender) => sender?.Send(new ServerPing());
+                public static ValueTask<int>? Go(ISender<ClientPipeline>? sender) => sender?.Send(new ServerPing());
             }
             """;
 
@@ -107,7 +107,7 @@ public class SendScopeAnalyzerTests
         """
             public static class Use
             {
-                public static Task<object?> Go(ISender<ClientPipeline> sender) => sender.Send((object)new ServerPing());
+                public static ValueTask<object?> Go(ISender<ClientPipeline> sender) => sender.Send((object)new ServerPing());
             }
             """;
 
@@ -144,7 +144,7 @@ public class SendScopeAnalyzerTests
         """
             public static class Use
             {
-                public static Task<int> Go(IMediator mediator) => mediator.Send(new ServerPing());
+                public static ValueTask<int> Go(IMediator mediator) => mediator.Send(new ServerPing());
             }
             """;
 
@@ -161,7 +161,7 @@ public class SendScopeAnalyzerTests
         """
             public static class Use
             {
-                public static Task<int> Go(IMediator mediator) => mediator.Send(new ServerPing());
+                public static ValueTask<int> Go(IMediator mediator) => mediator.Send(new ServerPing());
             }
             """;
 
@@ -176,7 +176,7 @@ public class SendScopeAnalyzerTests
         """
             public static class Use
             {
-                public static Task<int> Go(ISender sender) => sender.Send(new ServerPing());
+                public static ValueTask<int> Go(ISender sender) => sender.Send(new ServerPing());
             }
             """;
 
@@ -190,7 +190,7 @@ public class SendScopeAnalyzerTests
         """
             public static class Use
             {
-                public static Task<int> Go(ISender<ClientPipeline> sender, IRequest<int> request) => sender.Send(request);
+                public static ValueTask<int> Go(ISender<ClientPipeline> sender, IRequest<int> request) => sender.Send(request);
             }
             """;
 
@@ -207,7 +207,7 @@ public class SendScopeAnalyzerTests
         """
             public static class Use
             {
-                public static Task<string> Go(ISender<ClientPipeline> sender, IRequest<string> request) => sender.Send(request);
+                public static ValueTask<string> Go(ISender<ClientPipeline> sender, IRequest<string> request) => sender.Send(request);
             }
             """;
 
@@ -221,7 +221,7 @@ public class SendScopeAnalyzerTests
         """
             public static class Use
             {
-                public static Task<int> Go(ISender<ClientPipeline> sender, IRequest<int> request) => sender.Send(request);
+                public static ValueTask<int> Go(ISender<ClientPipeline> sender, IRequest<int> request) => sender.Send(request);
             }
             """;
 
@@ -235,7 +235,7 @@ public class SendScopeAnalyzerTests
         """
             public static class Use
             {
-                public static Task<int> Go(ISender<ServerPipeline> sender) => sender.Send(new ServerPing());
+                public static ValueTask<int> Go(ISender<ServerPipeline> sender) => sender.Send(new ServerPing());
             }
             """;
 

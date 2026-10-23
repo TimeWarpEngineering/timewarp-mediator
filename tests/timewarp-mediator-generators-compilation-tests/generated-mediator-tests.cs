@@ -14,7 +14,7 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 public sealed class GeneratedMediatorTests
 {
   [Fact]
-  public void ReferencedLibrary_JoinsTheGraphByMediatorAssembly_NotByMediatorModuleAlone()
+  public void ReferencedLibrary_JoinsTheGraphOnlyWithMediatorAssembly()
   {
     MetadataReference member = HostCompiler.CompileLibrary("MemberLibrary", MemberLibraryAttribute + ModuleLibrarySource);
     MetadataReference moduleOnly = HostCompiler.CompileLibrary("ModuleOnlyLibrary", ModuleLibrarySource);
@@ -29,25 +29,6 @@ public sealed class GeneratedMediatorTests
     Problems(unlinked).ShouldBeEmpty();
     unlinked.Manifest().Requests.Select(r => r.Request).ShouldBe(new[] { "App.Ping" });
     unlinked.Manifest().Membership.ShouldBe(new[] { "ModuleOnlyHost" });
-  }
-
-  [Fact]
-  public void MediatorAssembliesMarker_LinksAnAttributeFreeLibrary()
-  {
-    MetadataReference library = HostCompiler.CompileLibrary("PlainLibrary", PlainLibrarySource);
-
-    HostCompilation linked = HostCompiler.Compile(
-        "LinkedHost",
-        "[assembly: TimeWarp.Mediator.MediatorAssemblies(typeof(Plain.Marker))]" + PingSource,
-        "Host",
-        library);
-    HostCompilation unlinked = HostCompiler.Compile("UnlinkedHost", PingSource, "Host", library);
-
-    Problems(linked).ShouldBeEmpty();
-    linked.Manifest().Request("Plain.Lookup").Handler.ShouldBe("Plain.LookupHandler");
-    linked.Manifest().Membership.ShouldContain("PlainLibrary");
-    unlinked.Manifest().Requests.Select(r => r.Request).ShouldBe(new[] { "App.Ping" });
-    unlinked.Manifest().Membership.ShouldNotContain("PlainLibrary");
   }
 
   [Fact]
@@ -158,10 +139,10 @@ public sealed class GeneratedMediatorTests
   {
     IMediator mediator = CreateMediator(HostCompiler.Compile("NullGuards", PingSource, "Aot"));
 
-    await Should.ThrowAsync<ArgumentNullException>(() => mediator.Send((object) null!));
-    await Should.ThrowAsync<ArgumentNullException>(() => mediator.Send((IRequest<string>) null!));
-    await Should.ThrowAsync<ArgumentNullException>(() => mediator.Publish((object) null!));
-    await Should.ThrowAsync<ArgumentNullException>(() => mediator.Publish((INotification) null!));
+    await Should.ThrowAsync<ArgumentNullException>(async () => await mediator.Send((object) null!));
+    await Should.ThrowAsync<ArgumentNullException>(async () => await mediator.Send((IRequest<string>) null!));
+    await Should.ThrowAsync<ArgumentNullException>(async () => await mediator.Publish((object) null!));
+    await Should.ThrowAsync<ArgumentNullException>(async () => await mediator.Publish((INotification) null!));
   }
 
   [Fact]
@@ -169,15 +150,7 @@ public sealed class GeneratedMediatorTests
   {
     IMediator mediator = CreateMediator(HostCompiler.Compile("UnknownRequest", PingSource, "Aot"));
 
-    await Should.ThrowAsync<NoHandlerException>(() => mediator.Send(new object()));
-  }
-
-  [Fact]
-  public void CreateStream_ThrowsNotSupportedException()
-  {
-    IMediator mediator = CreateMediator(HostCompiler.Compile("StreamGuard", PingSource, "Aot"));
-
-    Should.Throw<NotSupportedException>(() => mediator.CreateStream(new object()));
+    await Should.ThrowAsync<NoHandlerException>(async () => await mediator.Send(new object()));
   }
 
   [Fact]
@@ -259,8 +232,8 @@ namespace App
 
     public sealed class PingHandler : TimeWarp.Mediator.IRequestHandler<Ping, string>
     {
-        public System.Threading.Tasks.Task<string> Handle(Ping request, System.Threading.CancellationToken cancellationToken)
-            => System.Threading.Tasks.Task.FromResult(""pong"");
+        public System.Threading.Tasks.ValueTask<string> Handle(Ping request, System.Threading.CancellationToken cancellationToken)
+            => System.Threading.Tasks.ValueTask.FromResult(""pong"");
     }
 }
 ";
@@ -279,8 +252,8 @@ namespace App
 {
     public sealed class SecondPingHandler : TimeWarp.Mediator.IRequestHandler<Ping, string>
     {
-        public System.Threading.Tasks.Task<string> Handle(Ping request, System.Threading.CancellationToken cancellationToken)
-            => System.Threading.Tasks.Task.FromResult(""second"");
+        public System.Threading.Tasks.ValueTask<string> Handle(Ping request, System.Threading.CancellationToken cancellationToken)
+            => System.Threading.Tasks.ValueTask.FromResult(""second"");
     }
 }
 ";
@@ -304,8 +277,8 @@ namespace App
     [TimeWarp.Mediator.MediatorScope(typeof(ServerPipeline))]
     public sealed class ScopedHandler : TimeWarp.Mediator.IRequestHandler<Scoped, int>
     {
-        public System.Threading.Tasks.Task<int> Handle(Scoped request, System.Threading.CancellationToken cancellationToken)
-            => System.Threading.Tasks.Task.FromResult(1);
+        public System.Threading.Tasks.ValueTask<int> Handle(Scoped request, System.Threading.CancellationToken cancellationToken)
+            => System.Threading.Tasks.ValueTask.FromResult(1);
     }
 }
 ";
@@ -325,8 +298,8 @@ namespace App
     [TimeWarp.Mediator.MediatorScope(typeof(ClientPipeline))]
     public sealed class ScopedHandler : TimeWarp.Mediator.IRequestHandler<Scoped, int>
     {
-        public System.Threading.Tasks.Task<int> Handle(Scoped request, System.Threading.CancellationToken cancellationToken)
-            => System.Threading.Tasks.Task.FromResult(1);
+        public System.Threading.Tasks.ValueTask<int> Handle(Scoped request, System.Threading.CancellationToken cancellationToken)
+            => System.Threading.Tasks.ValueTask.FromResult(1);
     }
 }
 ";
@@ -340,16 +313,15 @@ namespace App
 
     public sealed class MeasureHandler : TimeWarp.Mediator.IRequestHandler<Measure, int>
     {
-        public System.Threading.Tasks.Task<int> Handle(Measure request, System.Threading.CancellationToken cancellationToken)
-            => System.Threading.Tasks.Task.FromResult(7);
+        public System.Threading.Tasks.ValueTask<int> Handle(Measure request, System.Threading.CancellationToken cancellationToken)
+            => System.Threading.Tasks.ValueTask.FromResult(7);
     }
 }
 ";
 
   private const string MemberLibraryAttribute = "[assembly: TimeWarp.Mediator.MediatorAssembly]";
 
-  // [MediatorModule] makes the compilation declaring it a member; a referenced assembly still
-  // joins a host only by [assembly: MediatorAssembly] or a [MediatorAssemblies] marker.
+  // A referenced assembly joins a host only with [assembly: MediatorAssembly].
   private const string ModuleLibrarySource = @"
 namespace Orders
 {
@@ -357,30 +329,10 @@ namespace Orders
     {
     }
 
-    [TimeWarp.Mediator.MediatorModule(""Orders"")]
     public sealed class PlaceOrderHandler : TimeWarp.Mediator.IRequestHandler<PlaceOrder, int>
     {
-        public System.Threading.Tasks.Task<int> Handle(PlaceOrder request, System.Threading.CancellationToken cancellationToken)
-            => System.Threading.Tasks.Task.FromResult(42);
-    }
-}
-";
-
-  private const string PlainLibrarySource = @"
-namespace Plain
-{
-    public sealed class Marker
-    {
-    }
-
-    public sealed class Lookup : TimeWarp.Mediator.IRequest<string>
-    {
-    }
-
-    public sealed class LookupHandler : TimeWarp.Mediator.IRequestHandler<Lookup, string>
-    {
-        public System.Threading.Tasks.Task<string> Handle(Lookup request, System.Threading.CancellationToken cancellationToken)
-            => System.Threading.Tasks.Task.FromResult(""found"");
+        public System.Threading.Tasks.ValueTask<int> Handle(PlaceOrder request, System.Threading.CancellationToken cancellationToken)
+            => System.Threading.Tasks.ValueTask.FromResult(42);
     }
 }
 ";
@@ -408,28 +360,28 @@ namespace Notes
 
     public sealed class CacheHandler : INotificationHandler<Changed>
     {
-        public Task Handle(Changed notification, CancellationToken cancellationToken)
+        public ValueTask Handle(Changed notification, CancellationToken cancellationToken)
         {
             Log.Events.Add(""Changed:CacheHandler"");
-            return Task.CompletedTask;
+            return default;
         }
     }
 
     public sealed class AuditHandler : INotificationHandler<Changed>
     {
-        public Task Handle(Changed notification, CancellationToken cancellationToken)
+        public ValueTask Handle(Changed notification, CancellationToken cancellationToken)
         {
             Log.Events.Add(""Changed:AuditHandler"");
-            return Task.CompletedTask;
+            return default;
         }
     }
 
     public sealed class RenamedHandler : INotificationHandler<Renamed>
     {
-        public Task Handle(Renamed notification, CancellationToken cancellationToken)
+        public ValueTask Handle(Renamed notification, CancellationToken cancellationToken)
         {
             Log.Events.Add(""Renamed:RenamedHandler"");
-            return Task.CompletedTask;
+            return default;
         }
     }
 }

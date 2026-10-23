@@ -32,7 +32,6 @@ public class ArgumentGuardTests
     Should.Throw<ArgumentNullException>(() => configuration.RegisterServicesFromAssembly(null!)).ParamName.ShouldBe("assembly");
     Should.Throw<ArgumentNullException>(() => configuration.RegisterServicesFromAssemblies(null!)).ParamName.ShouldBe("assemblies");
     Should.Throw<ArgumentNullException>(() => configuration.AddBehavior((Type) null!)).ParamName.ShouldBe("implementationType");
-    Should.Throw<ArgumentNullException>(() => configuration.AddStreamBehavior((Type) null!)).ParamName.ShouldBe("implementationType");
     Should.Throw<ArgumentNullException>(() => configuration.AddRequestPreProcessor((Type) null!)).ParamName.ShouldBe("implementationType");
     Should.Throw<ArgumentNullException>(() => configuration.AddRequestPostProcessor((Type) null!)).ParamName.ShouldBe("implementationType");
     Should.Throw<ArgumentNullException>(() => configuration.AddOpenBehaviors((IEnumerable<Type>) null!)).ParamName.ShouldBe("openBehaviorTypes");

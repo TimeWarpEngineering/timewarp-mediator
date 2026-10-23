@@ -21,12 +21,12 @@ public class FooHandler : IRequestHandler<Foo, Bar>
   {
     Logger = logger;
   }
-  public Task<Bar> Handle(Foo message, CancellationToken cancellationToken)
+  public ValueTask<Bar> Handle(Foo message, CancellationToken cancellationToken)
   {
     Logger.Messages.Add("Handler");
 
     message.ThrowAction?.Invoke(message);
 
-    return Task.FromResult(new Bar { Message = message.Message + " Bar" });
+    return ValueTask.FromResult(new Bar { Message = message.Message + " Bar" });
   }
 }

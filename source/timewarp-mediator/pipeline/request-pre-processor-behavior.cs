@@ -20,13 +20,13 @@ public class RequestPreProcessorBehavior<TRequest, TResponse> : IPipelineBehavio
       => PreProcessors = preProcessors;
 
   /// <inheritdoc/>
-  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
   {
     foreach (IRequestPreProcessor<TRequest> processor in PreProcessors)
     {
       await processor.Process(request, cancellationToken).ConfigureAwait(false);
     }
 
-    return await next(cancellationToken).ConfigureAwait(false);
+    return await next(request, cancellationToken).ConfigureAwait(false);
   }
 }
