@@ -76,6 +76,8 @@ Parent: 021. Depends on: 021-002 (contracts). Review sections 3 (F2, F4, F7, F12
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
 - 2026-10-24: emitted the non-boxing dispatcher, cached behavior chain, concrete registration, manifest kind, and assembly attribute. `ganda repo audit --fix` inserted `charset = utf-8` under `[*]` in `.editorconfig`. `./bin/dev workflow` exited 0 (clean, build, test, samples, pack, package smoke).
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T19:30:05Z
+- Review oracle round 1 (2026-10-24): claude (claude-opus-5-5), effort 3, roster general, session not reported. Findings M1–M7 open; fix pass requested.
 
 ## Results
 
@@ -97,3 +99,13 @@ Smoke: `./bin/dev workflow`
 Expect: exit 0. The generator compilation tests and generator runtime tests pass, including concrete-only registration, manifest kinds, the assembly attribute, and contravariant publish. The comparison baseline in `documentation/benchmarks/comparison-baseline.md` shows interface Ping/Pong at 9.731 ns / 24 B, void interface send at 0 B, and the State pipeline at 0 B.
 
 Ran 2026-10-24: exit 0. Tests passed (generators 43, compilation 83, roslyn-floor 84, analyzers 42, mediator 191). Eleven samples verified. Package smoke printed `package-pong via TimeWarp.Mediator.Generated.Mediator`.
+
+### Review
+
+Round 1 (effort 3, roster general): 2 bug, 2 suggestion, 3 nit, all open. Disposition pending; a fix pass is needed.
+
+- M1 bug: the `Unsafe.As` covariant `Send` throws `EntryPointNotFoundException` when the handler completes asynchronously.
+- M2 bug: the thread-static chain scope breaks a behavior that awaits before `next`.
+- M3–M7: handler-cache retention, synchronous throws, `global::` on the attribute, mutable manifest arrays, baseline provenance.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` (live ledger).
