@@ -84,7 +84,7 @@ Acceptance criteria:
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
 - Round 2: Blocked — open M8
-- Round 3: Done — M8 fixed, 0 open, disposition clean
+- Round 3: Done
 ## Notes
 
 Parent: 021. Depends on: 021-002 (contracts). Review sections 3 (F2, F4, F7, F12, F13), 4
