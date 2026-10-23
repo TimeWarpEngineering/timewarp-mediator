@@ -63,8 +63,12 @@ Measured on 2026-10-13: interface 64.8 ns / 240 B, reflection 65.2 ns / 224 B, c
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
 - Implementation: 01a169b4-3bff-75c0-82a3-d7ebd381caf0 (2026-10-24)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T17:30:35Z
+- Review oracle round 1: claude (claude-opus-5-5), effort 3, roster general, session not reported — 2026-10-24. 1 open suggestion (M1), fix pass requested.
 
 ## Results
+
+**Review (in progress):** round 1, effort 3, roster general. Counts: bug 0, suggestion 1 open (M1), nit 0. No disposition yet. M1 needs a fix pass. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 Recorded `documentation/benchmarks/comparison-baseline.md` with `./bin/dev benchmark --project comparison --record` on commit `280a84289f7665ff9312fd607ad6d9894622be84` (2026-10-23, BenchmarkDotNet 0.15.8, iteration count 8, warmup count 3, .NET 10.0.13). Package version is still 14.0.0. This tree already contains the merged 021-002 ValueTask contracts, so these numbers are the baseline for 021-003. They are not the 2026-10-13 Task-shaped research numbers (interface was 64.8 ns / 240 B then).
 
