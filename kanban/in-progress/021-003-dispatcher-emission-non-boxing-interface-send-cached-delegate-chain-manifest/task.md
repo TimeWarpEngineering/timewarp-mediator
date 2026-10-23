@@ -119,7 +119,7 @@ Smoke: `./bin/dev workflow`
 
 Expect: exit 0. Generator tests cover covariant send, a dual-interface mismatch, await-before-next, concurrent scopes, faulted and canceled `ValueTask`s, and a manifest that cannot be cast back to an array. Compilation tests cover the scoped handler cache, a disposed scope, and a synchronous handler throw. The comparison baseline names commit `2a2a10d2dca7ebbc5780bdf4899315e8c7190cfd` with no uncommitted-changes note, interface Ping/Pong at 8.855 ns / 24 B, void interface send at 0 B, and the State pipeline at 0 B.
 
-Ran 2026-10-24 before this workflow pass: generators 49, compilation 87, roslyn-floor 88. Interface send 8.855 ns / 24 B, void send 0 B, State pipeline 134.919 ns / 0 B.
+Ran 2026-10-24: `./bin/dev workflow --mode pr` exited 0. Tests passed (generators 49, compilation 87, roslyn-floor 88, analyzers 42, mediator 191). Eleven samples verified. Package smoke printed `package-pong via TimeWarp.Mediator.Generated.Mediator`. Interface send 8.855 ns / 24 B, void send 0 B, State pipeline 134.919 ns / 0 B.
 
 ### Review
 
