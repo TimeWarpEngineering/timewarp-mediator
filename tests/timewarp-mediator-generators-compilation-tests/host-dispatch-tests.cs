@@ -4,8 +4,10 @@
 
 #region Design
 // The generators test assembly weaves open behaviors onto every request, so the no-behavior
-// path is compiled here. HandlerCache is scoped and reused by the dispatcher instance, so a
-// transient registration is resolved once. Synchronous throws stay synchronous; 021-007 records that.
+// path is compiled here. HandlerCache is scoped and reused by the dispatcher instance. Each
+// handler slot is filled on the first send of that request, so a transient registration is
+// resolved once per cache and an unresolvable handler does not block the others. Synchronous
+// throws stay synchronous; 021-007 records that.
 #endregion
 
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +30,11 @@ public sealed class HostDispatchTests
     generated.ShouldNotContain("ThreadStatic");
     generated.ShouldNotContain("CachedHandler_");
     generated.ShouldContain("class HandlerCache");
-    generated.ShouldContain("GetRequiredService<");
+    generated.ShouldContain("??= global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<");
+    int cacheClass = generated.IndexOf("sealed class HandlerCache", StringComparison.Ordinal);
+    int constructor = generated.IndexOf("public HandlerCache", cacheClass, StringComparison.Ordinal);
+    int scopeAssignment = generated.IndexOf("Scope = scope;", constructor, StringComparison.Ordinal);
+    generated[constructor..scopeAssignment].ShouldNotContain("GetRequiredService");
   }
 
   [Fact]
@@ -54,7 +60,7 @@ public sealed class HostDispatchTests
   }
 
   [Fact]
-  public async Task TransientHandler_IsResolvedWhenTheCacheIsCreated()
+  public async Task TransientHandler_IsResolvedOncePerCache()
   {
     Assembly assembly = Load(HostCompiler.Compile("TransientHandler", CountingSource));
     Type handler = assembly.GetType("App.CountingHandler", true)!;
@@ -72,6 +78,29 @@ public sealed class HostDispatchTests
     first.ShouldBe(1);
     second.ShouldBe(1);
     handler.GetField("Count")!.GetValue(null).ShouldBe(1);
+  }
+
+  [Fact]
+  public async Task UnresolvableHandler_DoesNotBlockTheOtherRequest()
+  {
+    Assembly assembly = Load(HostCompiler.Compile("LazyHandlers", TwoHandlerSource));
+    await using ServiceProvider provider = Provider(assembly);
+    using IServiceScope scope = provider.CreateScope();
+    ISender sender = Sender(scope, assembly);
+    Type goodHandler = assembly.GetType("App.GoodHandler", true)!;
+    Type badHandler = assembly.GetType("App.BadHandler", true)!;
+    IRequest<string> good = (IRequest<string>)Activator.CreateInstance(assembly.GetType("App.GoodPing", true)!)!;
+    IRequest<int> bad = (IRequest<int>)Activator.CreateInstance(assembly.GetType("App.BadPing", true)!)!;
+
+    string result = await sender.Send(good);
+
+    result.ShouldBe("ok");
+    goodHandler.GetField("Count")!.GetValue(null).ShouldBe(1);
+    badHandler.GetField("Count")!.GetValue(null).ShouldBe(0);
+    Should.Throw<InvalidOperationException>(() => sender.Send(bad));
+    badHandler.GetField("Count")!.GetValue(null).ShouldBe(0);
+    (await sender.Send(good)).ShouldBe("ok");
+    goodHandler.GetField("Count")!.GetValue(null).ShouldBe(1);
   }
 
   [Fact]
@@ -162,6 +191,50 @@ namespace App
         }
 
         public System.Threading.Tasks.ValueTask<int> Handle(CountPing request, System.Threading.CancellationToken cancellationToken)
+            => System.Threading.Tasks.ValueTask.FromResult(Count);
+    }
+}
+";
+
+  private const string TwoHandlerSource = @"
+namespace App
+{
+    public sealed class GoodPing : TimeWarp.Mediator.IRequest<string>
+    {
+    }
+
+    public sealed class GoodHandler : TimeWarp.Mediator.IRequestHandler<GoodPing, string>
+    {
+        public static int Count;
+
+        public GoodHandler()
+        {
+            System.Threading.Interlocked.Increment(ref Count);
+        }
+
+        public System.Threading.Tasks.ValueTask<string> Handle(GoodPing request, System.Threading.CancellationToken cancellationToken)
+            => System.Threading.Tasks.ValueTask.FromResult(""ok"");
+    }
+
+    public sealed class MissingDep
+    {
+    }
+
+    public sealed class BadPing : TimeWarp.Mediator.IRequest<int>
+    {
+    }
+
+    public sealed class BadHandler : TimeWarp.Mediator.IRequestHandler<BadPing, int>
+    {
+        public static int Count;
+
+        public BadHandler(MissingDep missing)
+        {
+            _ = missing;
+            System.Threading.Interlocked.Increment(ref Count);
+        }
+
+        public System.Threading.Tasks.ValueTask<int> Handle(BadPing request, System.Threading.CancellationToken cancellationToken)
             => System.Threading.Tasks.ValueTask.FromResult(Count);
     }
 }

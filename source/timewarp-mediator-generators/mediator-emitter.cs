@@ -19,11 +19,13 @@
 // With behaviors, Dispatch_* resolves a scoped Chain_* and invokes it. The chain creates its
 // MessageHandlerDelegate steps once per scope. Each step resolves from that instance, so a
 // behavior may await before next and two scopes may send the same request together.
-// No behaviors: the dispatcher resolves a scoped HandlerCache once and reuses it. That makes
-// the no-behavior path effectively scoped, including a handler whose registration is transient.
-// Disposing the scope disposes the cache, and the next send throws ObjectDisposedException.
-// Nothing is stored in a thread-static slot. Static Dispatch_* still resolves from the scope
-// so a call site can pass the provider without the dispatcher instance.
+// No behaviors: the dispatcher resolves a scoped HandlerCache once and reuses it. Each handler
+// slot is filled on the first send of that request, so an unresolvable handler does not fail
+// other sends and an unsent request does not construct its handler. A transient registration
+// is resolved once per cache, which makes that path effectively scoped. Disposing the scope
+// disposes the cache, and the next send throws ObjectDisposedException. Nothing is stored in
+// a thread-static slot. Static Dispatch_* still resolves from the scope so a call site can
+// pass the provider without the dispatcher instance.
 // Publish<TNotification> type-tests the typed value and awaits each assignable handler
 // sequentially. It does not cast to object. Publish(object) keeps that cast for late-bound hosts.
 // Registration is an internal extension class in the host generated namespace. The class name is
@@ -891,6 +893,36 @@ internal static class MediatorEmitter
     return false;
   }
 
+  // Property names come from MemberNames. The backing field appends "Cache" and, if that
+  // identifier is already a property name, a numeric suffix. Two members of this class cannot share a name.
+  private static List<(INamedTypeSymbol Handler, string Property, string Field)> HandlerSlots(
+      MemberNames names,
+      List<INamedTypeSymbol> handlers)
+  {
+    HashSet<string> taken = new(StringComparer.Ordinal);
+    foreach (INamedTypeSymbol handler in handlers)
+    {
+      taken.Add(names.For(handler));
+    }
+
+    List<(INamedTypeSymbol Handler, string Property, string Field)> slots = new();
+    foreach (INamedTypeSymbol handler in handlers)
+    {
+      string property = names.For(handler);
+      string field = property + "Cache";
+      int suffix = 2;
+      while (!taken.Add(field))
+      {
+        field = property + "Cache" + suffix;
+        suffix++;
+      }
+
+      slots.Add((handler, property, field));
+    }
+
+    return slots;
+  }
+
   private static void EmitHandlerCache(StringBuilder builder, MemberNames names, List<RequestBinding> requests)
   {
     List<INamedTypeSymbol> handlers = new();
@@ -919,9 +951,11 @@ internal static class MediatorEmitter
     builder.AppendLine();
     builder.AppendLine("    internal sealed class HandlerCache : global::System.IDisposable");
     builder.AppendLine("    {");
-    foreach (INamedTypeSymbol handler in handlers)
+    builder.AppendLine("        private readonly global::System.IServiceProvider Scope;");
+    List<(INamedTypeSymbol Handler, string Property, string Field)> slots = HandlerSlots(names, handlers);
+    foreach ((INamedTypeSymbol Handler, string Property, string Field) slot in slots)
     {
-      builder.Append("        internal readonly ").Append(Fq(handler)).Append(' ').Append(names.For(handler)).AppendLine(";");
+      builder.Append("        private ").Append(Fq(slot.Handler)).Append("? ").Append(slot.Field).AppendLine(";");
     }
 
     builder.AppendLine("        private volatile bool Disposed;");
@@ -933,13 +967,16 @@ internal static class MediatorEmitter
     builder.AppendLine("                throw new global::System.ArgumentNullException(nameof(scope));");
     builder.AppendLine("            }");
     builder.AppendLine();
-    foreach (INamedTypeSymbol handler in handlers)
+    builder.AppendLine("            Scope = scope;");
+    builder.AppendLine("        }");
+    foreach ((INamedTypeSymbol handler, string property, string field) in slots)
     {
-      builder.Append("            ").Append(names.For(handler)).Append(" = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<");
-      builder.Append(Fq(handler)).AppendLine(">(scope);");
+      builder.AppendLine();
+      builder.Append("        internal ").Append(Fq(handler)).Append(' ').Append(property).Append(" => ");
+      builder.Append(field).Append(" ??= global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<");
+      builder.Append(Fq(handler)).AppendLine(">(Scope);");
     }
 
-    builder.AppendLine("        }");
     builder.AppendLine();
     builder.AppendLine("        internal void EnsureAlive()");
     builder.AppendLine("        {");

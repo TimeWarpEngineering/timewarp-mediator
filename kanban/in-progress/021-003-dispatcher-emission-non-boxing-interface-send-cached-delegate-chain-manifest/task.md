@@ -37,7 +37,7 @@ Consumers call `ISender.Send<TResponse>` and the void `Send<TRequest>` where `TR
 
 A response arm may reinterpret `ValueTask<TConcrete>` as `ValueTask<TResponse>` only when those types are the same. A covariant send, or a request that implements two `IRequest<>` closures, awaits the concrete task and casts the result. A mismatch throws `InvalidCastException`. A faulted or canceled `ValueTask` stays faulted until the caller awaits it. A null argument, a missing handler, or a handler that throws before returning a `ValueTask` still leaves `Send` as a thrown exception.
 
-When a request has behaviors, `Dispatch_*` resolves one scoped chain object and invokes it. That object creates its `MessageHandlerDelegate<TRequest, TResponse>` steps once per scope and resolves each behavior and the handler from that scope. A behavior may await before it calls `next`, and may call `next` again after an await. Two scopes can send the same request at the same time. A send does not allocate a closure. With no behaviors, the dispatcher resolves one scoped `HandlerCache` and reuses it, so that path is effectively scoped even if a handler was registered transient. Disposing the scope disposes the cache and the next send throws `ObjectDisposedException`. Nothing is stored in a thread-static slot. Per-send resolve was measured at about 24 ns, past 1.5× the martinothamar row, which is why the cache exists.
+When a request has behaviors, `Dispatch_*` resolves one scoped chain object and invokes it. That object creates its `MessageHandlerDelegate<TRequest, TResponse>` steps once per scope and resolves each behavior and the handler from that scope. A behavior may await before it calls `next`, and may call `next` again after an await. Two scopes can send the same request at the same time. A send does not allocate a closure. With no behaviors, the dispatcher resolves one scoped `HandlerCache` and reuses it. Each handler slot stays empty until that request is sent, then `GetRequiredService` fills it once for the scope. A handler that cannot be constructed fails only its own send, and a request that was never sent does not construct its handler. A transient registration is still one instance per scope. Disposing the scope disposes the cache and the next send throws `ObjectDisposedException`. Nothing is stored in a thread-static slot. Per-send resolve was measured at about 24 ns, past 1.5× the martinothamar row, which is why the cache exists. The slot is a null check on the hot path, so the comparison baseline is re-recorded when that check lands.
 
 `Publish<TNotification>` stays typed, does not cast the notification to `object`, and still awaits every assignable handler sequentially.
 
@@ -52,7 +52,7 @@ Acceptance criteria:
 - Typed `Send` arms return `Dispatch_*` without boxing. `Send(object)` and `Publish(object)` remain the boxing paths.
 - `Unsafe.As` runs only when `TResponse` is the handler's response type. The other arm awaits and casts.
 - Behavior dispatch uses a scoped chain whose delegates are created once per scope, with no per-call closure and no thread-static scope.
-- A request with no behaviors uses the scoped `HandlerCache` on the dispatcher instance. A disposed scope throws. The cache is not thread-static. A transient handler registration is resolved when the cache is created.
+- A request with no behaviors uses the scoped `HandlerCache` on the dispatcher instance. Each handler is resolved on the first send of its request and reused for that scope. An unresolvable handler does not fail other no-behavior sends, and an unsent request does not construct its handler. A disposed scope throws. The cache is not thread-static. A transient handler registration is resolved once per cache.
 - A faulted or canceled `ValueTask` is not thrown synchronously from `AdaptUnit` or `AsVoid`.
 - `Publish<TNotification>` is typed and still awaits handlers sequentially, including contravariant base handlers.
 - Registration is concrete handler and behavior types, scoped chain types, a scoped `HandlerCache` for unchained requests, plus the dispatcher and scoped sender/publisher. The extension class is internal in the host generated namespace.
@@ -74,6 +74,7 @@ Acceptance criteria:
 - [x] Covariant and dual-interface `Send` await and cast
 - [x] Scoped behavior chain; await-before-next and concurrent scopes
 - [x] No thread-static handler cache
+- [x] Lazy no-behavior handler slots; an unresolvable handler does not block the others
 - [x] Faulted `ValueTask` stays faulted; sync-throw note on 021-007
 - [x] `global::` on the assembly attribute; read-only manifest
 - [x] Baseline re-recorded from a clean tree
@@ -82,8 +83,7 @@ Acceptance criteria:
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
-- Round 2: M1–M7 fixed. New bug M8 is open: `HandlerCache` resolves every no-behavior handler eagerly. Blocked, fix pass needed.
-
+- Round 2: Blocked — open M8
 ## Notes
 
 Parent: 021. Depends on: 021-002 (contracts). Review sections 3 (F2, F4, F7, F12, F13), 4
