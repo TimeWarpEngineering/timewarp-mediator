@@ -47,7 +47,7 @@ Parent: 021. First child; nothing depends on it except the gate in 021-003. Revi
 `documentation/design/2026-10-13-15.0-breaking-redesign-review.md` sections 3 (F2, F17), 9.
 Measured on 2026-10-13: interface 64.8 ns / 240 B, reflection 65.2 ns / 224 B, concrete
 29.9 ns / 96 B, martinothamar 8.6 ns / 24 B; void concrete 24.1 ns / 0 B, void interface
-43.9 ns / 96 B (`research/interface-path-benchmark.log` in the parent kitchen).
+43.9 ns / 96 B (`research/interface-path-benchmark.md` in the parent kitchen).
 
 ## Session
 
