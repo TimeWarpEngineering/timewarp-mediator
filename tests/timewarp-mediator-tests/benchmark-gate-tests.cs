@@ -5,6 +5,10 @@
 #region Design
 // The gate reads GitHub-flavored BenchmarkDotNet tables. These fixtures cover unit
 // conversion, the 15.0 target table (not a measurement), and the TimeWarp* rule.
+// The stored comparison file is checked for structure: it parses, the scoped, publish,
+// State, and Architecture rows are present, and the tolerance sentence matches
+// MeanTolerancePercent. Measured byte counts and the row count stay out of that test
+// so --record can change them without failing the suite.
 #endregion
 
 using DevCli;
@@ -133,10 +137,20 @@ public class BenchmarkGateTests
     BenchmarkTable table = BenchmarkGate.Parse(text);
 
     table.Errors.ShouldBeEmpty();
-    table.Rows.Count.ShouldBe(13);
-    table.Rows["TimeWarpGeneratedMonomorphicSendUnit"].AllocatedBytes.ShouldBe(0);
-    table.Rows["TimeWarpGeneratedInterfacePublish"].AllocatedBytes.ShouldBe(0);
-    table.Rows["TimeWarpGeneratedStatePipeline"].AllocatedBytes.ShouldBe(272);
+    string[] addedRows =
+    [
+      "TimeWarpGeneratedScopedSend",
+      "TimeWarpGeneratedInterfacePublish",
+      "TimeWarpGeneratedScopedPublish",
+      "TimeWarpGeneratedStatePipeline",
+      "TimeWarpGeneratedArchitectureSend"
+    ];
+    foreach (string method in addedRows)
+    {
+      table.Rows.ContainsKey(method).ShouldBeTrue($"{method} is missing from the recorded baseline");
+      BenchmarkGate.IsGated(method).ShouldBeTrue();
+    }
+
     text.ShouldContain($"at most {BenchmarkGate.MeanTolerancePercent}%");
   }
 

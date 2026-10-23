@@ -2,13 +2,15 @@
 
 ## Goal (implementer restatement)
 
-Record what this tree costs on the paths consumers call, and fail a later change that is slower or allocates more than that record.
+Leave a comparison baseline that 021-003 can beat, and a gate that fails when a later change is slower or allocates more than that record.
 
-Every consumer dispatches through `ISender`, `ISender<TScope>`, or `IPublisher`. The stored comparison baseline measured the concrete `Mediator.Send(Ping)` overload. This task keeps the interface Ping/Pong and void rows already in the comparison project, and adds a scoped `ISender<ClientPipeline>` send, unscoped and scoped `IPublisher` publishes, a State-shaped send (one `IAction`, three open-generic behaviors registered with `[assembly: MediatorBehavior]` and scoped to `ClientPipeline`, dispatched through `ISender<ClientPipeline>`), and an Architecture-shaped send (`IRequest<OneOf<...>>`-style response through `ISender` with one behavior).
+Consumers dispatch through `ISender`, `ISender<TScope>`, or `IPublisher`. The stored comparison file used to measure only the concrete `Mediator.Send(Ping)` overload. This task keeps the interface Ping/Pong and void rows already in the comparison project, and adds a scoped `ISender<ClientPipeline>` send, unscoped and scoped `IPublisher` publishes, a State-shaped send (one `IAction`, three open-generic behaviors registered with `[assembly: MediatorBehavior]` and scoped to `ClientPipeline`, dispatched through `ISender<ClientPipeline>`), and an Architecture-shaped send (`IRequest<OneOf<...>>`-style response through `ISender` with one behavior).
 
 `./bin/dev benchmark --project comparison --record` rewrites `documentation/benchmarks/comparison-baseline.md` with those rows, the commit SHA, and the date. `./bin/dev benchmark --project comparison --gate` re-runs that project and fails when a `TimeWarp*` row's mean time or allocated bytes exceed the recorded numbers by more than the tolerance written in that file. The 15.0 goals (interface Ping/Pong ≤ 1.5× martinothamar and ≤ 24 B, void send 0 B, three-behavior pipeline allocation-free apart from the handler) are a table in the same file and are not enforced.
 
-Done when those rows exist, the baseline file is a fresh `--record` of this tree, the gate is documented and rejects an overage, and `./bin/dev workflow` is green.
+021-003 will run `--record` after an intentional dispatcher change. That rewrite changes means, allocated bytes, and maybe the row count. The unit test that reads the stored file must still pass. It checks that the file parses with no errors, that the five rows this task added are present and gated, and that the tolerance sentence matches `BenchmarkGate.MeanTolerancePercent`. It does not pin `Rows.Count` or any allocated-byte measurement.
+
+Done when those rows exist, the baseline file is a fresh `--record` of this tree, the gate is documented and rejects an overage, that parser test survives a re-record that changes the numbers, and `./bin/dev workflow` is green.
 
 ## Description
 
@@ -49,7 +51,12 @@ cannot regress silently.
 - [x] 14.0 baseline recorded with `--record`
 - [x] Regression gate implemented and documented
 - [x] `./bin/dev workflow` green
+- [x] Recorded-baseline test asserts structure, not measured counts or bytes (M1)
 - [ ] PR with merge commit
+
+## Review
+
+- Round 1: M1 fixed on the implement-fix-2 pass (structural baseline assertions). Host runs round 2.
 
 ## Notes
 
@@ -65,10 +72,14 @@ Measured on 2026-10-13: interface 64.8 ns / 240 B, reflection 65.2 ns / 224 B, c
 - Implementation: 01a169b4-3bff-75c0-82a3-d7ebd381caf0 (2026-10-24)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T17:30:35Z
 - Review oracle round 1: claude (claude-opus-5-5), effort 3, roster general, session not reported — 2026-10-24. 1 open suggestion (M1), fix pass requested.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T17:33:41Z
+- Fix pass (implement-fix-2): implemented by implementer-grok (grok, model grok-4.7), session not reported — 2026-10-24. M1: the recorded-baseline test no longer pins row count or allocated bytes.
 
 ## Results
 
-**Review (in progress):** round 1, effort 3, roster general. Counts: bug 0, suggestion 1 open (M1), nit 0. No disposition yet. M1 needs a fix pass. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+**Review:** round 1, effort 3, roster general. Counts after the fix pass: bug 0, suggestion 1 fixed (M1), nit 0. Disposition waits on host review round 2. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+M1: `Parse_should_read_the_recorded_comparison_baseline` now checks a clean parse, presence of the five rows this task added (`TimeWarpGeneratedScopedSend`, `TimeWarpGeneratedInterfacePublish`, `TimeWarpGeneratedScopedPublish`, `TimeWarpGeneratedStatePipeline`, `TimeWarpGeneratedArchitectureSend`), that those names are gated, and that the tolerance sentence matches `BenchmarkGate.MeanTolerancePercent`. The `Rows.Count == 13` pin, the State pipeline `272` B pin, and the `0` B pins are gone. A later `--record` can change means, bytes, and row count without failing `./bin/dev test`. The dash-as-zero case stays in `Parse_should_treat_a_dash_allocated_cell_as_zero_bytes`.
 
 Recorded `documentation/benchmarks/comparison-baseline.md` with `./bin/dev benchmark --project comparison --record` on commit `280a84289f7665ff9312fd607ad6d9894622be84` (2026-10-23, BenchmarkDotNet 0.15.8, iteration count 8, warmup count 3, .NET 10.0.13). Package version is still 14.0.0. This tree already contains the merged 021-002 ValueTask contracts, so these numbers are the baseline for 021-003. They are not the 2026-10-13 Task-shaped research numbers (interface was 64.8 ns / 240 B then).
 
@@ -94,7 +105,9 @@ The gate allows a mean at most 50% above the recorded mean and does not allow al
 
 A second comparison run on 2026-10-24 (`./bin/dev benchmark --project comparison --gate`) printed `Benchmark gate passed`. The noisiest gated mean was scoped send at 61.56 ns against the 50.78 ns baseline (limit 76.17 ns). Allocations matched, including the three 0 B rows.
 
-`./bin/dev workflow` printed `Pipeline SUCCEEDED`: generators 42, analyzers 42, Roslyn-floor 83, compilation 82, mediator tests 191, 11 samples, pack of 14.0.0 with the package smoke. `ganda repo audit` passed 31, failed 0. The pull request is the host open-pr node.
+`./bin/dev workflow` printed `Pipeline SUCCEEDED`: generators 42, analyzers 42, Roslyn-floor 83, compilation 82, mediator tests 191, 11 samples, pack of 14.0.0 with the package smoke. That run is the commit before this fix. The fix pass did not re-run workflow: the change is the parser test's assertions, and the benchmark project and the gate are unchanged.
+
+Fix-pass check on 2026-10-24: `dotnet test tests/timewarp-mediator-tests/timewarp-mediator-tests.csproj --filter FullyQualifiedName~BenchmarkGateTests --nologo` printed `Passed! Failed: 0, Passed: 8`. `ganda repo audit` passed 31, failed 0. The pull request is the host open-pr node.
 
 ### How to validate
 
@@ -106,7 +119,7 @@ dotnet test tests/timewarp-mediator-tests/timewarp-mediator-tests.csproj --filte
 
 **Expect**
 
-- BenchmarkGateTests: 8 passed, 0 failed. The recorded baseline parses as 13 rows, dash cells are 0 B, the State pipeline row is 272 B, and the file contains the same percent as `BenchmarkGate.MeanTolerancePercent` (50).
+- BenchmarkGateTests: 8 passed, 0 failed. The recorded baseline parses with no errors. The five rows this task added are present and gated. The file contains the same percent as `BenchmarkGate.MeanTolerancePercent` (50). The test does not pin row count or allocated bytes. Dash cells are still 0 B in the separate fixture.
 - A mean more than 50% above its baseline row fails. Allocated bytes above the recorded bytes fail. `MartinothamarGenerated` is not gated.
 
 **Gate**
