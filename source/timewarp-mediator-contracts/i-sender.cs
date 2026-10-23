@@ -8,48 +8,31 @@ namespace TimeWarp.Mediator;
 public interface ISender
 {
   /// <summary>
-  /// Asynchronously send a request to a single handler
+  /// Sends a request to a single handler.
   /// </summary>
-  /// <typeparam name="TResponse">Response type</typeparam>
-  /// <param name="request">Request object</param>
-  /// <param name="cancellationToken">Optional cancellation token</param>
-  /// <returns>A task that represents the send operation. The task result contains the handler response</returns>
-  Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default);
+  /// <typeparam name="TResponse">Response type.</typeparam>
+  /// <param name="request">Request object.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>A <see cref="ValueTask{TResult}"/> whose result is the handler response.</returns>
+  ValueTask<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default);
 
   /// <summary>
-  /// Asynchronously send a request to a single handler with no response
+  /// Sends a request that has no response value.
   /// </summary>
-  /// <typeparam name="TRequest">Request type</typeparam>
-  /// <param name="request">Request object</param>
-  /// <param name="cancellationToken">Optional cancellation token</param>
-  /// <returns>A task that represents the send operation.</returns>
-  Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
+  /// <typeparam name="TRequest">Request type.</typeparam>
+  /// <param name="request">Request object.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>A <see cref="ValueTask"/> that completes when the handler finishes.</returns>
+  ValueTask Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
       where TRequest : IRequest;
 
   /// <summary>
-  /// Asynchronously send an object request to a single handler via dynamic dispatch
+  /// Sends an object request to a single handler. The response is type-erased.
   /// </summary>
-  /// <param name="request">Request object</param>
-  /// <param name="cancellationToken">Optional cancellation token</param>
-  /// <returns>A task that represents the send operation. The task result contains the type erased handler response</returns>
-  Task<object?> Send(object request, CancellationToken cancellationToken = default);
-
-  /// <summary>
-  /// Create a stream via a single stream handler
-  /// </summary>
-  /// <typeparam name="TResponse">Type of each streamed item</typeparam>
-  /// <param name="request">Stream request object</param>
-  /// <param name="cancellationToken">Optional cancellation token, observed while the stream is enumerated</param>
-  /// <returns>An async enumerable of the items produced by the stream handler</returns>
-  IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request, CancellationToken cancellationToken = default);
-
-  /// <summary>
-  /// Create a stream via an object request to a stream handler
-  /// </summary>
-  /// <param name="request">Stream request object; its type must implement <see cref="IStreamRequest{TResponse}"/></param>
-  /// <param name="cancellationToken">Optional cancellation token, observed while the stream is enumerated</param>
-  /// <returns>An async enumerable of the type erased items produced by the stream handler</returns>
-  IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default);
+  /// <param name="request">Request object.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>A <see cref="ValueTask{TResult}"/> whose result is the type-erased handler response.</returns>
+  ValueTask<object?> Send(object request, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

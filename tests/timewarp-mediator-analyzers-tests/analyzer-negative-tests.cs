@@ -49,7 +49,7 @@ public class AnalyzerNegativeTests
             public sealed class Handled : IRequest<int> { }
             public sealed class HandledHandler : IRequestHandler<Handled, int>
             {
-                public Task<int> Handle(Handled request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public ValueTask<int> Handle(Handled request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
             public static class Outer
             {
@@ -67,22 +67,6 @@ public class AnalyzerNegativeTests
   }
 
   [Fact]
-  public async Task MediatorModule_MakesTheDeclaringLibraryAMember()
-  {
-    const string source =
-        """
-            using TimeWarp.Mediator;
-            [MediatorModule("Orders")]
-            public sealed class Orphan : IRequest<int> { }
-            """;
-
-    Diagnostic diagnostic = (await AnalyzerTestHelper.GetDiagnosticsAsync(source)).ShouldHaveSingleItem();
-
-    diagnostic.Id.ShouldBe("TWM001");
-    AnalyzerTestHelper.LocatedText(diagnostic).ShouldBe("Orphan");
-  }
-
-  [Fact]
   public async Task Twm004_IsReportedAtEachWrongSendOnly()
   {
     const string source =
@@ -95,14 +79,14 @@ public class AnalyzerNegativeTests
             [MediatorScope(typeof(ClientPipeline))]
             public sealed class ClientPingHandler : IRequestHandler<ClientPing, int>
             {
-                public Task<int> Handle(ClientPing request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public ValueTask<int> Handle(ClientPing request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
             [MediatorScope(typeof(ServerPipeline))]
             public sealed class ServerPing : IRequest<int> { }
             [MediatorScope(typeof(ServerPipeline))]
             public sealed class ServerPingHandler : IRequestHandler<ServerPing, int>
             {
-                public Task<int> Handle(ServerPing request, CancellationToken cancellationToken) => Task.FromResult(2);
+                public ValueTask<int> Handle(ServerPing request, CancellationToken cancellationToken) => ValueTask.FromResult(2);
             }
             public static class Use
             {
@@ -149,11 +133,11 @@ public class AnalyzerNegativeTests
             public sealed class Ping : IRequest<int> { }
             public abstract class PingHandlerBase : IRequestHandler<Ping, int>
             {
-                public abstract Task<int> Handle(Ping request, CancellationToken cancellationToken);
+                public abstract ValueTask<int> Handle(Ping request, CancellationToken cancellationToken);
             }
             public sealed class PingHandler : PingHandlerBase
             {
-                public override Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public override ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
             """,
 
@@ -165,8 +149,8 @@ public class AnalyzerNegativeTests
             public sealed class Second : IRequest<string> { }
             public sealed class BothHandler : IRequestHandler<First, int>, IRequestHandler<Second, string>
             {
-                public Task<int> Handle(First request, CancellationToken cancellationToken) => Task.FromResult(1);
-                public Task<string> Handle(Second request, CancellationToken cancellationToken) => Task.FromResult("2");
+                public ValueTask<int> Handle(First request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
+                public ValueTask<string> Handle(Second request, CancellationToken cancellationToken) => ValueTask.FromResult("2");
             }
             """,
     ["NotificationWithManyHandlers"] =
@@ -174,11 +158,11 @@ public class AnalyzerNegativeTests
             public sealed class Note : INotification { }
             public sealed class AuditHandler : INotificationHandler<Note>
             {
-                public Task Handle(Note notification, CancellationToken cancellationToken) => Task.CompletedTask;
+                public ValueTask Handle(Note notification, CancellationToken cancellationToken) => default;
             }
             public sealed class CacheHandler : INotificationHandler<Note>
             {
-                public Task Handle(Note notification, CancellationToken cancellationToken) => Task.CompletedTask;
+                public ValueTask Handle(Note notification, CancellationToken cancellationToken) => default;
             }
             """,
 
@@ -191,7 +175,7 @@ public class AnalyzerNegativeTests
             [MediatorScope(typeof(ClientPipeline))]
             public sealed class PingHandler : IRequestHandler<Ping, int>
             {
-                public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
             """,
     ["ScopeFromContainingType"] =
@@ -203,7 +187,7 @@ public class AnalyzerNegativeTests
                 public sealed class Ping : IRequest<int> { }
                 public sealed class PingHandler : IRequestHandler<Ping, int>
                 {
-                    public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(1);
+                    public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
                 }
             }
             """,
@@ -217,12 +201,12 @@ public class AnalyzerNegativeTests
             [MediatorScope(typeof(ClientPipeline))]
             public sealed class PingHandler : IRequestHandler<Ping, int>
             {
-                public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
             public sealed class Pong : IRequest<int> { }
             public sealed class PongHandler : IRequestHandler<Pong, int>
             {
-                public Task<int> Handle(Pong request, CancellationToken cancellationToken) => Task.FromResult(2);
+                public ValueTask<int> Handle(Pong request, CancellationToken cancellationToken) => ValueTask.FromResult(2);
             }
             public static class Use
             {

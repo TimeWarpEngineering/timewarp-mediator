@@ -9,7 +9,7 @@ public class NotificationHandlerTests
     public string? Message { get; set; }
   }
 
-  public class PongChildHandler : NotificationHandler<Ping>
+  public class PongChildHandler : INotificationHandler<Ping>
   {
     private readonly TextWriter TextWriter;
 
@@ -18,14 +18,15 @@ public class NotificationHandlerTests
       TextWriter = writer;
     }
 
-    protected override void Handle(Ping notification)
+    public ValueTask Handle(Ping notification, CancellationToken cancellationToken)
     {
       TextWriter.WriteLine(notification.Message + " Pong");
+      return default;
     }
   }
 
   [Fact]
-  public async Task Should_call_abstract_handle_method()
+  public async Task Should_call_handle_method()
   {
     StringBuilder builder = new();
     StringWriter writer = new(builder);

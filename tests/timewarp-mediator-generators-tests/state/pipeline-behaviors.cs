@@ -22,13 +22,10 @@ public static class PipelineLog
 public sealed class OuterTrackingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
-  public async Task<TResponse> Handle(
-      TRequest request,
-      RequestHandlerDelegate<TResponse> next,
-      CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
   {
     PipelineLog.Events.Add("outer-before");
-    TResponse response = await next(cancellationToken).ConfigureAwait(false);
+    TResponse response = await next(request, cancellationToken).ConfigureAwait(false);
     PipelineLog.Events.Add("outer-after");
     return response;
   }
@@ -37,13 +34,10 @@ public sealed class OuterTrackingBehavior<TRequest, TResponse> : IPipelineBehavi
 public sealed class InnerTrackingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
-  public async Task<TResponse> Handle(
-      TRequest request,
-      RequestHandlerDelegate<TResponse> next,
-      CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
   {
     PipelineLog.Events.Add("inner-before");
-    TResponse response = await next(cancellationToken).ConfigureAwait(false);
+    TResponse response = await next(request, cancellationToken).ConfigureAwait(false);
     PipelineLog.Events.Add("inner-after");
     return response;
   }
@@ -54,30 +48,24 @@ public sealed class ShortCircuitBehavior<TRequest, TResponse> : IPipelineBehavio
 {
   public static bool ShortCircuit { get; set; }
 
-  public Task<TResponse> Handle(
-      TRequest request,
-      RequestHandlerDelegate<TResponse> next,
-      CancellationToken cancellationToken)
+  public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
   {
     if (ShortCircuit)
     {
       PipelineLog.Events.Add("short-circuit");
-      return Task.FromResult(default(TResponse)!);
+      return ValueTask.FromResult(default(TResponse)!);
     }
 
-    return next(cancellationToken);
+    return next(request, cancellationToken);
   }
 }
 
 public sealed class UnitOnlyBehavior<TRequest> : IPipelineBehavior<TRequest, Unit>
     where TRequest : notnull
 {
-  public Task<Unit> Handle(
-      TRequest request,
-      RequestHandlerDelegate<Unit> next,
-      CancellationToken cancellationToken)
+  public ValueTask<Unit> Handle(TRequest request, MessageHandlerDelegate<TRequest, Unit> next, CancellationToken cancellationToken)
   {
-    return next(cancellationToken);
+    return next(request, cancellationToken);
   }
 }
 
@@ -88,10 +76,10 @@ public sealed class Ping : IRequest<string>
 
 public sealed class PingHandler : IRequestHandler<Ping, string>
 {
-  public Task<string> Handle(Ping request, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken)
   {
     PipelineLog.Events.Add("handler");
-    return Task.FromResult(request.Message + "-pong");
+    return ValueTask.FromResult(request.Message + "-pong");
   }
 }
 
@@ -109,7 +97,7 @@ public sealed class ReentrantHandler : IRequestHandler<ReentrantAction, int>
     Sender = sender;
   }
 
-  public async Task<int> Handle(ReentrantAction request, CancellationToken cancellationToken)
+  public async ValueTask<int> Handle(ReentrantAction request, CancellationToken cancellationToken)
   {
     if (request.Value == 0)
     {

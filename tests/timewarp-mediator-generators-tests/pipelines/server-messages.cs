@@ -13,9 +13,9 @@ public sealed class ServerPing : IRequest<string>
 [MediatorScope(typeof(ServerPipeline))]
 public sealed class ServerPingHandler : IRequestHandler<ServerPing, string>
 {
-  public Task<string> Handle(ServerPing request, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(ServerPing request, CancellationToken cancellationToken)
   {
-    return Task.FromResult("server:" + request.Message);
+    return ValueTask.FromResult("server:" + request.Message);
   }
 }
 
@@ -29,9 +29,9 @@ public sealed class ServerNoteHandler : INotificationHandler<ServerNote>
 {
   public static int Count;
 
-  public Task Handle(ServerNote notification, CancellationToken cancellationToken)
+  public ValueTask Handle(ServerNote notification, CancellationToken cancellationToken)
   {
     Count++;
-    return Task.CompletedTask;
+    return default;
   }
 }

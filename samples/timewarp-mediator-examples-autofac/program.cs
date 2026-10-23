@@ -9,7 +9,7 @@ internal static class Program
     WrappingWriter writer = new(Console.Out);
     IMediator med = BuildMediator(writer);
 
-    return Runner.Run(med, writer, "Autofac", testStreams: true);
+    return Runner.Run(med, writer, "Autofac");
   }
 
   private static IMediator BuildMediator(WrappingWriter writer)
@@ -24,8 +24,7 @@ internal static class Program
                 typeof(IRequestHandler<,>),
                 typeof(IRequestExceptionHandler<,,>),
                 typeof(IRequestExceptionAction<,>),
-                typeof(INotificationHandler<>),
-                typeof(IStreamRequestHandler<,>)
+                typeof(INotificationHandler<>)
             };
 
     foreach (Type mediatorOpenType in mediatorOpenTypes)
@@ -44,8 +43,6 @@ internal static class Program
     builder.RegisterInstance(writer).As<TextWriter>();
 
     // It appears Autofac returns the last registered types first
-    builder.RegisterGeneric(typeof(GenericStreamPipelineBehavior<,>)).As(typeof(IStreamPipelineBehavior<,>));
-
     builder.RegisterGeneric(typeof(RequestPostProcessorBehavior<,>)).As(typeof(IPipelineBehavior<,>));
     builder.RegisterGeneric(typeof(RequestPreProcessorBehavior<,>)).As(typeof(IPipelineBehavior<,>));
     builder.RegisterGeneric(typeof(RequestExceptionActionProcessorBehavior<,>))
@@ -65,7 +62,6 @@ internal static class Program
     //  - RequestPreProcessorBehavior
     //  - RequestPostProcessorBehavior
     //  - GenericPipelineBehavior
-    //  - GenericStreamPipelineBehavior
     //  - RequestExceptionActionProcessorBehavior
     //  - RequestExceptionProcessorBehavior
 

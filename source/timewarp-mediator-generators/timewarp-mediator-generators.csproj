@@ -39,6 +39,19 @@
     <ProjectReference Include="..\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" PrivateAssets="all" />
   </ItemGroup>
 
+  <!-- Roslyn loads a generator dependency only when that DLL is a registered analyzer in the
+       generator output directory. Project references otherwise pass the two assemblies from
+       different folders, and MediatorGenerator fails to initialize (CS8784). -->
+  <PropertyGroup>
+    <GetTargetPathDependsOn>$(GetTargetPathDependsOn);AddMediatorAnalyzerDependency</GetTargetPathDependsOn>
+  </PropertyGroup>
+
+  <Target Name="AddMediatorAnalyzerDependency">
+    <ItemGroup>
+      <TargetPathWithTargetPlatformMoniker Include="$(TargetDir)TimeWarp.Mediator.Analyzers.dll" IncludeRuntimeDependency="false" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <None Include="$(OutputPath)TimeWarp.Mediator.Generators.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(OutputPath)TimeWarp.Mediator.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />

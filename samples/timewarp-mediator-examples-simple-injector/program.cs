@@ -9,7 +9,7 @@ internal static class Program
     WrappingWriter writer = new(Console.Out);
     IMediator med = BuildMediator(writer);
 
-    return Runner.Run(med, writer, "SimpleInjector", true);
+    return Runner.Run(med, writer, "SimpleInjector");
   }
 
   private static IMediator BuildMediator(WrappingWriter writer)
@@ -28,7 +28,6 @@ internal static class Program
     RegisterHandlers(container, typeof(INotificationHandler<>), assemblies);
     RegisterHandlers(container, typeof(IRequestExceptionAction<,>), assemblies);
     RegisterHandlers(container, typeof(IRequestExceptionHandler<,,>), assemblies);
-    RegisterHandlers(container, typeof(IStreamRequestHandler<,>), assemblies);
 
     container.Register(() => (TextWriter) writer, Lifestyle.Singleton);
 
@@ -43,10 +42,6 @@ internal static class Program
         });
     container.Collection.Register(typeof(IRequestPreProcessor<>), new[] { typeof(GenericRequestPreProcessor<>) });
     container.Collection.Register(typeof(IRequestPostProcessor<,>), new[] { typeof(GenericRequestPostProcessor<,>), typeof(ConstrainedRequestPostProcessor<,>) });
-    container.Collection.Register(typeof(IStreamPipelineBehavior<,>), new[]
-    {
-            typeof(GenericStreamPipelineBehavior<,>)
-        });
 
     IServiceProvider serviceProvider = services.BuildServiceProvider().UseSimpleInjector(container);
 

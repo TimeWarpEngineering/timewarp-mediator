@@ -81,7 +81,6 @@ rename. All your existing:
 - Request/Response handlers
 - Notification handlers
 - Pipeline behaviors
-- Stream handlers
 - Exception handlers
 
 ...will continue to work without modification after updating the namespaces. This holds for
@@ -186,7 +185,6 @@ named pipelines, switch the host to `AddGeneratedMediator()`.
 | Request/response, commands, queries, `Send(object)` | yes | yes | yes |
 | Notifications (`Publish`) | yes, with pluggable `INotificationPublisher` | yes, handlers run sequentially in a fixed order | yes, sequential |
 | `IPipelineBehavior<,>` | registered with `AddBehavior` / `AddOpenBehavior` | `[assembly: MediatorBehavior(typeof(...))]` | not woven (**TWM005**) |
-| Streams (`CreateStream`, `IStreamRequestHandler`, `IStreamPipelineBehavior`) | yes | no: throws `NotSupportedException`, handlers are **TWM009** | no |
 | Pre/post processors (`IRequestPreProcessor`, `IRequestPostProcessor`) | yes | no (**TWM009**) | no |
 | Exception cascade (`IRequestExceptionHandler`, `IRequestExceptionAction`) | yes | no (**TWM009**) | no |
 | Named pipelines (`ISender<TScope>` / `IPublisher<TScope>`) | no | yes, `AddGeneratedMediator<TScope>()` | `Sender_*` / `Publisher_*` are emitted, but there is no `AddGeneratedMediator<TScope>()` |
@@ -202,7 +200,7 @@ On the Host profile, `AddGeneratedMediator()` registers the mediator, sender, an
 transient and registers handlers and pipeline behaviors as scoped. Reflection scanned handlers
 are transient.
 
-If you need streams, pre/post processors, or the exception cascade, stay on `AddMediator()`, or
+If you need pre/post processors or the exception cascade, stay on `AddMediator()`, or
 move that logic into a request handler or an `IPipelineBehavior` first.
 
 ### Steps
@@ -221,8 +219,8 @@ move that logic into a request handler or an `IPipelineBehavior` first.
 4. **Registration.** Replace `services.AddMediator(cfg => ...)` with
    `services.AddGeneratedMediator()` in the host project. The generated extension is `internal`,
    so call it from the host itself, not from a shared library.
-5. **Unsupported kinds.** Build and fix every **TWM009** warning: move stream handlers,
-   processors, and exception handlers/actions into request handlers or pipeline behaviors.
+5. **Unsupported kinds.** Build and fix every **TWM009** warning: move processors and
+   exception handlers/actions into request handlers or pipeline behaviors.
 6. **Named pipelines (optional).** Mark requests with `[MediatorScope(typeof(ClientPipeline))]`
    and call `AddGeneratedMediator<ClientPipeline>()`. See
    [Named pipelines](./documentation/generated-vs-legacy.md#named-pipelines-marker-types-not-strings).

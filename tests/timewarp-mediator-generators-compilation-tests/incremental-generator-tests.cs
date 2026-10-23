@@ -88,7 +88,7 @@ public sealed class IncrementalGeneratorTests
 
             public sealed class PingHandler : IRequestHandler<Ping, string>
             {
-                public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult("pong");
+                public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult("pong");
             }
         }
 
@@ -115,7 +115,7 @@ public sealed class IncrementalGeneratorTests
 
             public sealed class PongHandler : IRequestHandler<Pong, int>
             {
-                public Task<int> Handle(Pong request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public ValueTask<int> Handle(Pong request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
         }
         """;

@@ -24,11 +24,11 @@ public class RequestExceptionActionProcessorBehavior<TRequest, TResponse> : IPip
   public RequestExceptionActionProcessorBehavior(IServiceProvider serviceProvider) => ServiceProvider = serviceProvider;
 
   /// <inheritdoc/>
-  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
   {
     try
     {
-      return await next(cancellationToken).ConfigureAwait(false);
+      return await next(request, cancellationToken).ConfigureAwait(false);
     }
     catch (Exception exception)
     {

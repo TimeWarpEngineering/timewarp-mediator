@@ -7,10 +7,10 @@ public class SendIdempotentCommandTests
     public string? Message { get; set; }
   }
 
-  public class UpsertHandler : IIdempotentCommandHandler<Upsert, string>
+  public class UpsertHandler : IRequestHandler<Upsert, string>
   {
-    public Task<string> Handle(Upsert request, CancellationToken cancellationToken)
-        => Task.FromResult(request.Message + " Upserted");
+    public ValueTask<string> Handle(Upsert request, CancellationToken cancellationToken)
+        => ValueTask.FromResult(request.Message + " Upserted");
   }
 
   public class Reset : IIdempotentCommand
@@ -18,14 +18,14 @@ public class SendIdempotentCommandTests
     public string? Message { get; set; }
   }
 
-  public class ResetHandler : IIdempotentCommandHandler<Reset>
+  public class ResetHandler : IRequestHandler<Reset>
   {
     private readonly TextWriter TextWriter;
 
     public ResetHandler(TextWriter writer) => TextWriter = writer;
 
-    public Task Handle(Reset request, CancellationToken cancellationToken)
-        => TextWriter.WriteAsync(request.Message + " Reset");
+    public ValueTask Handle(Reset request, CancellationToken cancellationToken)
+        => new ValueTask(TextWriter.WriteAsync(request.Message + " Reset"));
   }
 
   [Fact]

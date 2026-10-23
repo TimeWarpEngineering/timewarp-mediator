@@ -34,16 +34,33 @@ Parent review task 021, findings F3, F4, F5, F6, F8, F10, F18; decisions D2, D3,
   contracts; the dispatcher redesign itself is 021-003. Update analyzers and their tests.
 - Delete `migration.md` sections and XML docs that describe the removed members.
 
+## Goal (implementer restatement)
+
+Make the contracts package `ValueTask`-native and delete the MediatR-compat types that 15.0 does not dispatch. The generator must emit code that compiles against that surface. The non-boxing dispatcher, cached delegate chain, and manifest redesign stay on 021-003.
+
+Acceptance criteria:
+
+- `IRequestHandler<,>`, `IRequestHandler<>`, `INotificationHandler<>`, `IPipelineBehavior<,>`, `ISender`, `ISender<TScope>`, `IPublisher`, `IPublisher<TScope>`, and `IMediator` expose only `ValueTask` or `ValueTask<T>` members.
+- `RequestHandlerDelegate<TResponse>` is replaced by `MessageHandlerDelegate<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken)`. Behaviors call `next(request, cancellationToken)`.
+- Deleted: `IBaseRequest`, both `ICommandHandler` arities, `IQueryHandler<,>`, `IActionHandler<>`, both `IIdempotentCommandHandler` arities, `NotificationHandler<T>`, `IStreamRequest<>`, `IStreamRequestHandler<,>`, `IStreamPipelineBehavior<,>`, `StreamHandlerDelegate<>`, both `ISender.CreateStream` overloads, `MediatorAssembliesAttribute`, and `MediatorModuleAttribute`.
+- Message markers stay: `IAction`, `ICommand`, `ICommand<T>`, `IQuery<T>`, `IIdempotentCommand`, `IIdempotentCommand<T>`, and `IIdempotent`, as markers over `IRequest` or `IRequest<T>`. `ActionHandler<TAction>` stays, returns `ValueTask`, and has no `Task` shim.
+- `Unit` keeps `Unit.Value`, adds a cached `Unit.ValueTask`, drops `Unit.Task` and `IComparable`, and does not hide `System.Threading.Tasks.Task` under `using static`.
+- `ISender.Send(object)` and `IPublisher.Publish(object)` stay.
+- Contracts define `GeneratedMediatorAttribute` for `[assembly: GeneratedMediator(typeof(Mediator))]`. Emission of that attribute stays on 021-003.
+- Surviving MediatR-derived files keep the Steven T. Cramer notice. New files do not get it. The package license expression stays `Unlicense AND Apache-2.0`.
+- Generator emission, analyzers, golden/dispatch tests, and in-repo handlers compile and pass against the new contracts. `migration.md` and XML docs no longer describe the removed members.
+- `./bin/dev workflow` is green.
+
 ## Checklist
 
-- [ ] ValueTask on every contract member
-- [ ] `MessageHandlerDelegate<TRequest, TResponse>` replaces `RequestHandlerDelegate<T>`
-- [ ] Compat-only interfaces, streams, `MediatorAssemblies`, `MediatorModule` deleted
-- [ ] `Unit` cleanup
-- [ ] `[GeneratedMediator]` attribute added
-- [ ] Generator, analyzers, golden files and tests updated and green
-- [ ] Apache notices preserved on derived files
-- [ ] `./bin/dev workflow` green
+- [x] ValueTask on every contract member
+- [x] `MessageHandlerDelegate<TRequest, TResponse>` replaces `RequestHandlerDelegate<T>`
+- [x] Compat-only interfaces, streams, `MediatorAssemblies`, `MediatorModule` deleted
+- [x] `Unit` cleanup
+- [x] `[GeneratedMediator]` attribute added
+- [x] Generator, analyzers, golden files and tests updated and green
+- [x] Apache notices preserved on derived files
+- [x] `./bin/dev workflow` green
 - [ ] PR with merge commit
 
 ## Notes
@@ -54,6 +71,34 @@ Consumer impact is in review section 6: State's seven behaviors, Architecture's 
 and Nuru's endpoint handlers all change signature; those are consumer-repo tasks after
 `15.0.0-beta.1`.
 
+## Results
+
+Contract members on `IRequestHandler<,>`, `IRequestHandler<>`, `INotificationHandler<>`, `IPipelineBehavior<,>`, `ISender`, `ISender<TScope>`, `IPublisher`, `IPublisher<TScope>`, and `IMediator` return `ValueTask` or `ValueTask<T>`. `RequestHandlerDelegate<TResponse>` is `MessageHandlerDelegate<TRequest, TResponse>`; behaviors call `next(request, cancellationToken)`. Compat-only handler interfaces, stream types, both `CreateStream` overloads, `MediatorAssembliesAttribute`, and `MediatorModuleAttribute` are deleted. Message markers and `ActionHandler<TAction>` stay. `Unit` keeps `Unit.Value`, adds a cached `Unit.ValueTask`, and drops `Unit.Task` and `IComparable`. Contracts define `GeneratedMediatorAttribute`; the generator does not emit it.
+
+The reflection runtime, samples, analyzers, and generator compile against that surface. Project references register `TimeWarp.Mediator.Analyzers.dll` beside the generator so Roslyn can load `MediatorGenerator`. Pre-processors, post-processors, exception handlers and actions, and `INotificationPublisher` stay `Task`. Package version stays `14.0.0`. Root `readme.md`, `agent.md`, and `skills/tw-mediator/SKILL.md` still describe the removed APIs; 021-007 owns that rewrite. `migration.md` no longer describes them.
+
+`in TRequest` is gone from `IPipelineBehavior` because `MessageHandlerDelegate` is invariant. There is no implicit conversion from `Task` to `ValueTask`, so handlers return `ValueTask.FromResult`, `default`, or `new ValueTask(...)`, and call sites that still need a `Task` use `.AsTask()`.
+
+### How to validate
+
+**Smoke**
+
+```bash
+./bin/dev workflow
+ganda repo audit
+```
+
+**Expect**
+
+- `./bin/dev workflow` runs `clean -> build -> test -> verify-samples -> pack`, exits 0, and prints `Pipeline SUCCEEDED`.
+- Tests pass with failed 0: generators 40, analyzers 42, roslyn-floor 83, compilation 82, mediator 181.
+- `Samples verified successfully!` for the 11 executable samples.
+- Pack produces `TimeWarp.Mediator.14.0.0.nupkg`, `TimeWarp.Mediator.Contracts.14.0.0.nupkg`, `TimeWarp.Mediator.Analyzers.14.0.0.nupkg`, and `TimeWarp.Mediator.Generators.14.0.0.nupkg`. Package smoke prints `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`.
+- `ganda repo audit` exits 0.
+
+**Not in scope:** emitting `[assembly: GeneratedMediator(typeof(Mediator))]`, the non-boxing dispatcher, and deleting the reflection runtime (021-003 and 021-004). State, Architecture, and Nuru signature updates wait on `15.0.0-beta.1`.
+
 ## Session
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
+- Implementation: grok 01a16902-d58d-7201-b302-322c8e278bd4 (2026-10-23)

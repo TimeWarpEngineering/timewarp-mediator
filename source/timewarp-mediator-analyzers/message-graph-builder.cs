@@ -16,7 +16,7 @@
 // assembly. Unscoped (no attribute) is the default ISender/IPublisher pipeline. Behaviors with a
 // Scope named argument weave only that pipeline; unscoped behaviors never run on scoped requests.
 // Void dispatch comes from matching IRequestHandler<T>, never from TResponse == Unit: an explicit
-// IRequestHandler<T, Unit> returns Task<Unit> and must be registered as the two-arity interface.
+// IRequestHandler<T, Unit> returns ValueTask<Unit> and must be registered as the two-arity interface.
 // Responses are ITypeSymbol so arrays and other non-named types (T[]) bind like named ones.
 // A handler, message, response, behavior, or pipeline scope marker the host cannot access
 // (internal in a referenced member without InternalsVisibleTo) is not bound and is TWM007,
@@ -44,8 +44,6 @@ public static class MessageGraphBuilder
   // Handler kinds the generated mediator does not dispatch (TWM009).
   private static readonly string[] UnsupportedHandlerKinds =
   {
-        "TimeWarp.Mediator.IStreamRequestHandler`2",
-        "TimeWarp.Mediator.IStreamPipelineBehavior`2",
         "TimeWarp.Mediator.Pipeline.IRequestPreProcessor`1",
         "TimeWarp.Mediator.Pipeline.IRequestPostProcessor`2",
         "TimeWarp.Mediator.Pipeline.IRequestExceptionHandler`3",

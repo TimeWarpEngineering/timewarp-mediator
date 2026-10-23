@@ -146,7 +146,6 @@ internal static class MediatorEmitter
       EmitInterfaceSend(builder);
       EmitMonomorphicSend(builder, names, requests, aot);
       EmitObjectSend(builder, names, requests, aot);
-      EmitStreams(builder);
       EmitDispatchMethods(builder, names, requests, aot);
     }
 
@@ -158,7 +157,7 @@ internal static class MediatorEmitter
     if (includeSend)
     {
       builder.AppendLine();
-      builder.AppendLine("    private static async global::System.Threading.Tasks.Task<object?> Box<T>(global::System.Threading.Tasks.ValueTask<T> valueTask)");
+      builder.AppendLine("    private static async global::System.Threading.Tasks.ValueTask<object?> Box<T>(global::System.Threading.Tasks.ValueTask<T> valueTask)");
       builder.AppendLine("    {");
       builder.AppendLine("        T result = await valueTask.ConfigureAwait(false);");
       builder.AppendLine("        return result;");
@@ -227,7 +226,7 @@ internal static class MediatorEmitter
 
   private static void EmitInterfaceSend(StringBuilder builder)
   {
-    builder.AppendLine("    public global::System.Threading.Tasks.Task<TResponse> Send<TResponse>(global::TimeWarp.Mediator.IRequest<TResponse> request, global::System.Threading.CancellationToken cancellationToken = default)");
+    builder.AppendLine("    public global::System.Threading.Tasks.ValueTask<TResponse> Send<TResponse>(global::TimeWarp.Mediator.IRequest<TResponse> request, global::System.Threading.CancellationToken cancellationToken = default)");
     builder.AppendLine("    {");
     builder.AppendLine("        if (request is null)");
     builder.AppendLine("        {");
@@ -237,7 +236,7 @@ internal static class MediatorEmitter
     builder.AppendLine("        return SendCore<TResponse>(request, cancellationToken);");
     builder.AppendLine("    }");
     builder.AppendLine();
-    builder.AppendLine("    public global::System.Threading.Tasks.Task Send<TRequest>(TRequest request, global::System.Threading.CancellationToken cancellationToken = default)");
+    builder.AppendLine("    public async global::System.Threading.Tasks.ValueTask Send<TRequest>(TRequest request, global::System.Threading.CancellationToken cancellationToken = default)");
     builder.AppendLine("        where TRequest : global::TimeWarp.Mediator.IRequest");
     builder.AppendLine("    {");
     builder.AppendLine("        if (request is null)");
@@ -245,10 +244,10 @@ internal static class MediatorEmitter
     builder.AppendLine("            throw new global::System.ArgumentNullException(nameof(request));");
     builder.AppendLine("        }");
     builder.AppendLine();
-    builder.AppendLine("        return Send((object)request, cancellationToken);");
+    builder.AppendLine("        await Send((object)request, cancellationToken).ConfigureAwait(false);");
     builder.AppendLine("    }");
     builder.AppendLine();
-    builder.AppendLine("    private async global::System.Threading.Tasks.Task<TResponse> SendCore<TResponse>(global::TimeWarp.Mediator.IRequest<TResponse> request, global::System.Threading.CancellationToken cancellationToken)");
+    builder.AppendLine("    private async global::System.Threading.Tasks.ValueTask<TResponse> SendCore<TResponse>(global::TimeWarp.Mediator.IRequest<TResponse> request, global::System.Threading.CancellationToken cancellationToken)");
     builder.AppendLine("    {");
     builder.AppendLine("        object? boxed = await Send((object)request, cancellationToken).ConfigureAwait(false);");
     builder.AppendLine("        return (TResponse)boxed!;");
@@ -296,7 +295,7 @@ internal static class MediatorEmitter
 
   private static void EmitObjectSend(StringBuilder builder, MemberNames names, List<RequestBinding> requests, bool aot)
   {
-    builder.AppendLine("    public global::System.Threading.Tasks.Task<object?> Send(object request, global::System.Threading.CancellationToken cancellationToken = default)");
+    builder.AppendLine("    public global::System.Threading.Tasks.ValueTask<object?> Send(object request, global::System.Threading.CancellationToken cancellationToken = default)");
     builder.AppendLine("    {");
     builder.AppendLine("        if (request is null)");
     builder.AppendLine("        {");
@@ -341,7 +340,7 @@ internal static class MediatorEmitter
 
   private static void EmitPublish(StringBuilder builder, MemberNames names, List<NotificationBinding> notifications, bool aot)
   {
-    builder.AppendLine("    public global::System.Threading.Tasks.Task Publish<TNotification>(TNotification notification, global::System.Threading.CancellationToken cancellationToken = default)");
+    builder.AppendLine("    public global::System.Threading.Tasks.ValueTask Publish<TNotification>(TNotification notification, global::System.Threading.CancellationToken cancellationToken = default)");
     builder.AppendLine("        where TNotification : global::TimeWarp.Mediator.INotification");
     builder.AppendLine("    {");
     builder.AppendLine("        if (notification is null)");
@@ -352,7 +351,7 @@ internal static class MediatorEmitter
     builder.AppendLine("        return Publish((object)notification, cancellationToken);");
     builder.AppendLine("    }");
     builder.AppendLine();
-    builder.AppendLine("    public global::System.Threading.Tasks.Task Publish(object notification, global::System.Threading.CancellationToken cancellationToken = default)");
+    builder.AppendLine("    public global::System.Threading.Tasks.ValueTask Publish(object notification, global::System.Threading.CancellationToken cancellationToken = default)");
     builder.AppendLine("    {");
     builder.AppendLine("        if (notification is null)");
     builder.AppendLine("        {");
@@ -361,7 +360,7 @@ internal static class MediatorEmitter
     builder.AppendLine();
     if (notifications.Count == 0)
     {
-      builder.AppendLine("        return global::System.Threading.Tasks.Task.CompletedTask;");
+      builder.AppendLine("        return default;");
       builder.AppendLine("    }");
       builder.AppendLine();
       return;
@@ -374,7 +373,7 @@ internal static class MediatorEmitter
     // Contravariant delivery (MediatR parity): every bound notification type the runtime object
     // is assignable to gets its handlers, most-derived type first. Separate if statements, not a
     // switch, so a Derived notification also reaches INotificationHandler<Base>.
-    builder.AppendLine("    private async global::System.Threading.Tasks.Task PublishCore(object notification, global::System.Threading.CancellationToken cancellationToken)");
+    builder.AppendLine("    private async global::System.Threading.Tasks.ValueTask PublishCore(object notification, global::System.Threading.CancellationToken cancellationToken)");
     builder.AppendLine("    {");
     List<INamedTypeSymbol> notificationTypes = new();
     foreach (NotificationBinding notification in notifications)
@@ -407,7 +406,7 @@ internal static class MediatorEmitter
         builder.Append("");
       }
 
-      builder.Append("async global::System.Threading.Tasks.Task ").Append(method).Append('(');
+      builder.Append("async global::System.Threading.Tasks.ValueTask ").Append(method).Append('(');
       builder.Append(typeName).AppendLine(" notification, global::System.Threading.CancellationToken cancellationToken)");
       builder.AppendLine("    {");
       int index = 0;
@@ -434,20 +433,6 @@ internal static class MediatorEmitter
       builder.AppendLine("    }");
       builder.AppendLine();
     }
-  }
-
-  private static void EmitStreams(StringBuilder builder)
-  {
-    builder.AppendLine("    public global::System.Collections.Generic.IAsyncEnumerable<TResponse> CreateStream<TResponse>(global::TimeWarp.Mediator.IStreamRequest<TResponse> request, global::System.Threading.CancellationToken cancellationToken = default)");
-    builder.AppendLine("    {");
-    builder.AppendLine("        throw new global::System.NotSupportedException(\"The generated mediator does not dispatch stream requests. Use the reflection-based TimeWarp.Mediator runtime (AddMediator) for IStreamRequest handlers.\");");
-    builder.AppendLine("    }");
-    builder.AppendLine();
-    builder.AppendLine("    public global::System.Collections.Generic.IAsyncEnumerable<object?> CreateStream(object request, global::System.Threading.CancellationToken cancellationToken = default)");
-    builder.AppendLine("    {");
-    builder.AppendLine("        throw new global::System.NotSupportedException(\"The generated mediator does not dispatch stream requests. Use the reflection-based TimeWarp.Mediator runtime (AddMediator) for IStreamRequest handlers.\");");
-    builder.AppendLine("    }");
-    builder.AppendLine();
   }
 
   private static void EmitDispatchMethods(StringBuilder builder, MemberNames names, List<RequestBinding> requests, bool aot)
@@ -526,23 +511,24 @@ internal static class MediatorEmitter
   private static void EmitNextDelegate(StringBuilder builder, RequestBinding request, int behaviorIndex)
   {
     int nextIndex = behaviorIndex + 1;
+    string requestType = Fq(request.RequestType);
     if (nextIndex >= request.ClosedBehaviors.Length)
     {
       if (request.IsUnitResponse)
       {
-        builder.Append("async (global::System.Threading.CancellationToken t) => { await handler.Handle(request, t == default ? cancellationToken : t).ConfigureAwait(false); return global::TimeWarp.Mediator.Unit.Value; }");
+        builder.Append("async (").Append(requestType).Append(" message, global::System.Threading.CancellationToken token) => { await handler.Handle(message, token).ConfigureAwait(false); return global::TimeWarp.Mediator.Unit.Value; }");
       }
       else
       {
-        builder.Append("(global::System.Threading.CancellationToken t) => handler.Handle(request, t == default ? cancellationToken : t)");
+        builder.Append('(').Append(requestType).Append(" message, global::System.Threading.CancellationToken token) => handler.Handle(message, token)");
       }
 
       return;
     }
 
-    builder.Append("(global::System.Threading.CancellationToken t").Append(behaviorIndex).Append(") => b").Append(nextIndex).Append(".Handle(request, next: ");
+    builder.Append('(').Append(requestType).Append(" message, global::System.Threading.CancellationToken token) => b").Append(nextIndex).Append(".Handle(message, next: ");
     EmitNextDelegate(builder, request, nextIndex);
-    builder.Append(", t").Append(behaviorIndex).Append(" == default ? cancellationToken : t").Append(behaviorIndex).Append(')');
+    builder.Append(", token)");
   }
 
   private static string EmitRegistration(MessageGraph graph, MemberNames names)

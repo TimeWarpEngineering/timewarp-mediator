@@ -37,7 +37,7 @@ public class RequestExceptionActionTests
 
   public class PingHandler : IRequestHandler<Ping, Pong>
   {
-    public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
+    public ValueTask<Pong> Handle(Ping request, CancellationToken cancellationToken)
     {
       throw new PingException(request.Message);
     }
@@ -106,7 +106,7 @@ public class RequestExceptionActionTests
     IMediator med = container.GetInstance<IMediator>();
 
     Ping request = new() { Message = "Ping!" };
-    await Assert.ThrowsAsync<PingException>(() => med.Send(request));
+    await Assert.ThrowsAsync<PingException>(async () => await med.Send(request));
 
     pingExceptionAction.Executed.ShouldBeTrue();
     pingPongExceptionAction.Executed.ShouldBeTrue();
@@ -128,7 +128,7 @@ public class RequestExceptionActionTests
     IMediator med = container.GetInstance<IMediator>();
 
     Ping request = new() { Message = "Ping!" };
-    await Assert.ThrowsAsync<PingException>(() => med.Send(request));
+    await Assert.ThrowsAsync<PingException>(async () => await med.Send(request));
 
     genericExceptionAction.ExecutionCount.ShouldBe(1);
   }

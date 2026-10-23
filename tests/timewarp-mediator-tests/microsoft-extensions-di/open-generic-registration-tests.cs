@@ -7,15 +7,8 @@ public class OpenGenericRegistrationTests
   public class OpenBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
       where TRequest : notnull
   {
-    public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
-        => next(cancellationToken);
-  }
-
-  public class OpenStreamBehavior<TRequest, TResponse> : IStreamPipelineBehavior<TRequest, TResponse>
-      where TRequest : notnull
-  {
-    public IAsyncEnumerable<TResponse> Handle(TRequest request, StreamHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
-        => next();
+    public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
+        => next(request, cancellationToken);
   }
 
   public class OpenPreProcessor<TRequest> : IRequestPreProcessor<TRequest>
@@ -33,7 +26,6 @@ public class OpenGenericRegistrationTests
   public static IEnumerable<object[]> ClosedGenericRegistrations()
   {
     yield return new object[] { (Action<MediatorServiceConfiguration>) (cfg => cfg.AddOpenBehavior(typeof(OpenBehavior<Ping, Pong>))) };
-    yield return new object[] { (Action<MediatorServiceConfiguration>) (cfg => cfg.AddOpenStreamBehavior(typeof(OpenStreamBehavior<Ping, Pong>))) };
     yield return new object[] { (Action<MediatorServiceConfiguration>) (cfg => cfg.AddOpenRequestPreProcessor(typeof(OpenPreProcessor<Ping>))) };
     yield return new object[] { (Action<MediatorServiceConfiguration>) (cfg => cfg.AddOpenRequestPostProcessor(typeof(OpenPostProcessor<Ping, Pong>))) };
   }
@@ -41,7 +33,6 @@ public class OpenGenericRegistrationTests
   public static IEnumerable<object[]> NullRegistrations()
   {
     yield return new object[] { (Action<MediatorServiceConfiguration>) (cfg => cfg.AddOpenBehavior(null!)) };
-    yield return new object[] { (Action<MediatorServiceConfiguration>) (cfg => cfg.AddOpenStreamBehavior(null!)) };
     yield return new object[] { (Action<MediatorServiceConfiguration>) (cfg => cfg.AddOpenRequestPreProcessor(null!)) };
     yield return new object[] { (Action<MediatorServiceConfiguration>) (cfg => cfg.AddOpenRequestPostProcessor(null!)) };
   }
@@ -73,12 +64,10 @@ public class OpenGenericRegistrationTests
   {
     MediatorServiceConfiguration configuration = new MediatorServiceConfiguration()
         .AddOpenBehavior(typeof(OpenBehavior<,>))
-        .AddOpenStreamBehavior(typeof(OpenStreamBehavior<,>))
         .AddOpenRequestPreProcessor(typeof(OpenPreProcessor<>))
         .AddOpenRequestPostProcessor(typeof(OpenPostProcessor<,>));
 
     configuration.BehaviorsToRegister.ShouldHaveSingleItem().ServiceType.ShouldBe(typeof(IPipelineBehavior<,>));
-    configuration.StreamBehaviorsToRegister.ShouldHaveSingleItem().ServiceType.ShouldBe(typeof(IStreamPipelineBehavior<,>));
     configuration.RequestPreProcessorsToRegister.ShouldHaveSingleItem().ServiceType.ShouldBe(typeof(IRequestPreProcessor<>));
     configuration.RequestPostProcessorsToRegister.ShouldHaveSingleItem().ServiceType.ShouldBe(typeof(IRequestPostProcessor<,>));
   }

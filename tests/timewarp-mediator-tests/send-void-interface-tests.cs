@@ -15,8 +15,8 @@ public class SendVoidInterfaceTests
 
     public PingHandler(TextWriter writer) => TextWriter = writer;
 
-    public Task Handle(Ping request, CancellationToken cancellationToken)
-        => TextWriter.WriteAsync(request.Message + " Pong");
+    public ValueTask Handle(Ping request, CancellationToken cancellationToken)
+        => new ValueTask(TextWriter.WriteAsync(request.Message + " Pong"));
   }
 
   [Fact]

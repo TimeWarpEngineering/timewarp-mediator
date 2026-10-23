@@ -5,7 +5,7 @@
 #region Design
 // TScope is a marker type, not a string. Applied to a handler, request, containing type, or
 // assembly (assembly is the default for types that do not set their own). Type-level wins.
-// [MediatorModule(string)] remains graph membership only and does not name a pipeline.
+// The marker type names the pipeline. Graph membership is [assembly: MediatorAssembly].
 #endregion
 
 namespace TimeWarp.Mediator;

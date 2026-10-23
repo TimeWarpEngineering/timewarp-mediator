@@ -42,7 +42,7 @@ public class DispatchBenchmarks
   [Benchmark(Baseline = true)]
   public Task<Pong> TimeWarpLegacyMakeGenericType()
   {
-    return LegacyMediator.Send(Request);
+    return LegacyMediator.Send(Request).AsTask();
   }
 
   [Benchmark]
@@ -54,19 +54,19 @@ public class DispatchBenchmarks
   [Benchmark]
   public Task<Pong> TimeWarpGeneratedInterfaceSend()
   {
-    return GeneratedSender.Send(Request);
+    return GeneratedSender.Send(Request).AsTask();
   }
 
   [Benchmark]
   public Task<object?> TimeWarpGeneratedObjectSend()
   {
-    return GeneratedSender.Send((object)Request);
+    return GeneratedSender.Send((object)Request).AsTask();
   }
 
   [Benchmark]
   public Task TimeWarpGeneratedInterfaceSendUnit()
   {
-    return GeneratedSender.Send(NopRequest);
+    return GeneratedSender.Send(NopRequest).AsTask();
   }
 
   [Benchmark]

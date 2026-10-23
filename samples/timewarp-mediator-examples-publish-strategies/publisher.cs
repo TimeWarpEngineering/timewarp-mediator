@@ -43,7 +43,7 @@ public class Publisher
       throw new ArgumentException($"Unknown strategy: {strategy}");
     }
 
-    return med.Publish(notification, cancellationToken);
+    return med.Publish(notification, cancellationToken).AsTask();
   }
 
   private Task ParallelWhenAll(IEnumerable<NotificationHandlerExecutor> handlers, INotification notification, CancellationToken cancellationToken)

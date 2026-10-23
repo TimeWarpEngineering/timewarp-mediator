@@ -117,7 +117,7 @@ public class IncrementActionSetTests
   public async Task UnknownObject_ThrowsNoHandlerException()
   {
     Fixture fixture = Fixture.Create();
-    await Should.ThrowAsync<NoHandlerException>(() => fixture.Generated.Send(new object()));
+    await Should.ThrowAsync<NoHandlerException>(async () => await fixture.Generated.Send(new object()));
   }
 
   [Fact]

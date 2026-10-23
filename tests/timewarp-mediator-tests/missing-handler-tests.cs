@@ -23,7 +23,7 @@ public class MissingHandlerTests
     Mediator med = new(serviceProvider);
 
     await Assert.ThrowsAsync<InvalidOperationException>(
-        () => med.Send(new Ping())
+        async () => await med.Send(new Ping())
     );
   }
 }

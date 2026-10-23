@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Contract-only package for TimeWarp.Mediator: IRequest, ICommand, IQuery, INotification, IStreamRequest, their handler and pipeline-behavior interfaces, ISender/IPublisher/IMediator, and the scope/module attributes the source generator reads. Reference it from message libraries without depending on a dispatcher.</Description>
+    <Description>Contract-only package for TimeWarp.Mediator: IRequest, ICommand, IQuery, INotification, their handler and pipeline-behavior interfaces, ISender/IPublisher/IMediator, and the membership attributes the source generator reads. Reference it from message libraries without depending on a dispatcher.</Description>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
     <AssemblyName>TimeWarp.Mediator.Contracts</AssemblyName>

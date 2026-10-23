@@ -43,8 +43,8 @@ public sealed class Pong
 
 public sealed class PingHandler : IRequestHandler<Ping, Pong>
 {
-  public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
+  public ValueTask<Pong> Handle(Ping request, CancellationToken cancellationToken)
   {
-    return Task.FromResult(new Pong(request.Message + "-pong"));
+    return ValueTask.FromResult(new Pong(request.Message + "-pong"));
   }
 }

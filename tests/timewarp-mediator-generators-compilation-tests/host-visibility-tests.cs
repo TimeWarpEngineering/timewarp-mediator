@@ -97,7 +97,7 @@ namespace " + hostNamespace + @"
 
     public sealed class PingHandler : IRequestHandler<Ping, string>
     {
-        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(""" + hostNamespace + @""");
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""" + hostNamespace + @""");
     }
 
     [MediatorScope(typeof(AppPipeline))]
@@ -108,7 +108,7 @@ namespace " + hostNamespace + @"
     [MediatorScope(typeof(AppPipeline))]
     public sealed class ScopedPingHandler : IRequestHandler<ScopedPing, int>
     {
-        public Task<int> Handle(ScopedPing request, CancellationToken cancellationToken) => Task.FromResult(1);
+        public ValueTask<int> Handle(ScopedPing request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
     }
 
     [MediatorScope(typeof(AppPipeline))]
@@ -119,7 +119,7 @@ namespace " + hostNamespace + @"
     [MediatorScope(typeof(AppPipeline))]
     public sealed class ScopedNoteHandler : INotificationHandler<ScopedNote>
     {
-        public Task Handle(ScopedNote notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(ScopedNote notification, CancellationToken cancellationToken) => default;
     }
 }
 ";

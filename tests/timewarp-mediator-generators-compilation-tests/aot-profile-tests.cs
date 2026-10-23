@@ -151,13 +151,13 @@ namespace Pipes
 
     public sealed class PingHandler : IRequestHandler<Ping, string>
     {
-        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(""pong"");
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""pong"");
     }
 
     public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
         where TRequest : notnull
     {
-        public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+        public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
             => throw new System.InvalidOperationException(""behavior ran"");
     }
 }
@@ -189,7 +189,7 @@ namespace Ctors
             Clock = clock;
         }
 
-        public Task<string> Handle(Dependent request, CancellationToken cancellationToken) => Task.FromResult(Clock.ToString()!);
+        public ValueTask<string> Handle(Dependent request, CancellationToken cancellationToken) => ValueTask.FromResult(Clock.ToString()!);
     }
 
     public sealed class Hidden : IRequest<string>
@@ -202,7 +202,7 @@ namespace Ctors
         {
         }
 
-        public Task<string> Handle(Hidden request, CancellationToken cancellationToken) => Task.FromResult(""hidden"");
+        public ValueTask<string> Handle(Hidden request, CancellationToken cancellationToken) => ValueTask.FromResult(""hidden"");
     }
 
     public sealed class Optional : IRequest<string>
@@ -215,7 +215,7 @@ namespace Ctors
         {
         }
 
-        public Task<string> Handle(Optional request, CancellationToken cancellationToken) => Task.FromResult(""optional"");
+        public ValueTask<string> Handle(Optional request, CancellationToken cancellationToken) => ValueTask.FromResult(""optional"");
     }
 
     public sealed class Note : INotification
@@ -228,7 +228,7 @@ namespace Ctors
         {
         }
 
-        public Task Handle(Note notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Note notification, CancellationToken cancellationToken) => default;
     }
 }
 ";
@@ -250,7 +250,7 @@ namespace Required
     {
         public required string Name { get; init; }
 
-        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(Name);
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(Name);
     }
 
     public class RequiredBase
@@ -264,7 +264,7 @@ namespace Required
 
     public sealed class DerivedRequiredHandler : RequiredBase, IRequestHandler<DerivedPing, string>
     {
-        public Task<string> Handle(DerivedPing request, CancellationToken cancellationToken) => Task.FromResult(Name);
+        public ValueTask<string> Handle(DerivedPing request, CancellationToken cancellationToken) => ValueTask.FromResult(Name);
     }
 }
 ";
@@ -293,7 +293,7 @@ namespace Sets
             Name = ""set"";
         }
 
-        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(Name);
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(Name);
     }
 }
 ";

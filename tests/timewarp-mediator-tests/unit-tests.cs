@@ -8,7 +8,7 @@ public class UnitTests
   public async Task Should_be_equal_to_each_other()
   {
     Unit unit1 = Unit.Value;
-    Unit unit2 = await Unit.Task;
+    Unit unit2 = await Unit.ValueTask;
 
     Assert.Equal(unit1, unit2);
     Assert.True(unit1 == unit2);
@@ -33,15 +33,6 @@ public class UnitTests
     Assert.Equal("()", unit.ToString());
   }
 
-  [Fact]
-  public void Should_compareto_as_zero()
-  {
-    Unit unit1 = new();
-    Unit unit2 = new();
-
-    Assert.Equal(0, unit1.CompareTo(unit2));
-  }
-
   public static object[][] ValueData()
   {
     return new[]
@@ -53,13 +44,9 @@ public class UnitTests
             new object[] {new Uri("https://www.google.com"), false},
             new object[] {new Unit(), true},
             new object[] {Unit.Value, true},
-            new object[] {Unit.Task.Result, true},
             new object[] {default(Unit), true},
         };
   }
-
-  public static object[][] CompareToValueData()
-      => ValueData().Select(objects => new[] { objects[0] }).ToArray();
 
   [Theory]
   [MemberData(nameof(ValueData))]
@@ -71,14 +58,5 @@ public class UnitTests
       Assert.True(unit1.Equals(value));
     else
       Assert.False(unit1.Equals(value));
-  }
-
-  [Theory]
-  [MemberData(nameof(CompareToValueData))]
-  public void Should_compareto_value_as_zero(object value)
-  {
-    Unit unit1 = new();
-
-    Assert.Equal(0, ((IComparable) unit1).CompareTo(value));
   }
 }

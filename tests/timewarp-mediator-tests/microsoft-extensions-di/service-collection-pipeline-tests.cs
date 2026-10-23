@@ -13,10 +13,10 @@ public class ServiceCollectionPipelineTests
       Logger = output;
     }
 
-    public async Task<Pong> Handle(Ping request, RequestHandlerDelegate<Pong> next, CancellationToken cancellationToken)
+    public async ValueTask<Pong> Handle(Ping request, MessageHandlerDelegate<Ping, Pong> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Outer before");
-      Pong response = await next();
+      Pong response = await next(request, cancellationToken);
       Logger.Messages.Add("Outer after");
 
       return response;
@@ -32,53 +32,13 @@ public class ServiceCollectionPipelineTests
       Logger = output;
     }
 
-    public async Task<Pong> Handle(Ping request, RequestHandlerDelegate<Pong> next, CancellationToken cancellationToken)
+    public async ValueTask<Pong> Handle(Ping request, MessageHandlerDelegate<Ping, Pong> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Inner before");
-      Pong response = await next();
+      Pong response = await next(request, cancellationToken);
       Logger.Messages.Add("Inner after");
 
       return response;
-    }
-  }
-
-  public class OuterStreamBehavior : IStreamPipelineBehavior<Ping, Pong>
-  {
-    private readonly Logger Logger;
-
-    public OuterStreamBehavior(Logger output)
-    {
-      Logger = output;
-    }
-
-    public async IAsyncEnumerable<Pong> Handle(Ping request, StreamHandlerDelegate<Pong> next, [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-      Logger.Messages.Add("Outer before");
-      await foreach (Pong? item in next().WithCancellation(cancellationToken))
-      {
-        yield return item;
-      }
-      Logger.Messages.Add("Outer after");
-    }
-  }
-
-  public class InnerStreamBehavior : IStreamPipelineBehavior<Ping, Pong>
-  {
-    private readonly Logger Logger;
-
-    public InnerStreamBehavior(Logger output)
-    {
-      Logger = output;
-    }
-
-    public async IAsyncEnumerable<Pong> Handle(Ping request, StreamHandlerDelegate<Pong> next, [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-      Logger.Messages.Add("Inner before");
-      await foreach (Pong? item in next().WithCancellation(cancellationToken))
-      {
-        yield return item;
-      }
-      Logger.Messages.Add("Inner after");
     }
   }
 
@@ -92,10 +52,10 @@ public class ServiceCollectionPipelineTests
       Logger = output;
     }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Inner generic before");
-      TResponse? response = await next();
+      TResponse? response = await next(request, cancellationToken);
       Logger.Messages.Add("Inner generic after");
 
       return response;
@@ -112,10 +72,10 @@ public class ServiceCollectionPipelineTests
       Logger = output;
     }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Outer generic before");
-      TResponse? response = await next();
+      TResponse? response = await next(request, cancellationToken);
       Logger.Messages.Add("Outer generic after");
 
       return response;
@@ -133,10 +93,10 @@ public class ServiceCollectionPipelineTests
       Logger = output;
     }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Constrained before");
-      TResponse response = await next();
+      TResponse response = await next(request, cancellationToken);
       Logger.Messages.Add("Constrained after");
 
       return response;
@@ -347,37 +307,24 @@ public class ServiceCollectionPipelineTests
 
   public class NotAnOpenBehavior : IPipelineBehavior<Ping, Pong>
   {
-    public Task<Pong> Handle(Ping request, RequestHandlerDelegate<Pong> next, CancellationToken cancellationToken) => next();
+    public ValueTask<Pong> Handle(Ping request, MessageHandlerDelegate<Ping, Pong> next, CancellationToken cancellationToken) => next(request, cancellationToken);
   }
 
   public class ThrowingBehavior : IPipelineBehavior<Ping, Pong>
   {
-    public Task<Pong> Handle(Ping request, RequestHandlerDelegate<Pong> next, CancellationToken cancellationToken) => throw new Exception(request.Message);
-  }
-
-  public class NotAnOpenStreamBehavior : IStreamPipelineBehavior<Ping, Pong>
-  {
-    public IAsyncEnumerable<Pong> Handle(Ping request, StreamHandlerDelegate<Pong> next, CancellationToken cancellationToken) => next();
+    public ValueTask<Pong> Handle(Ping request, MessageHandlerDelegate<Ping, Pong> next, CancellationToken cancellationToken) => throw new Exception(request.Message);
   }
 
   public class OpenBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
       where TRequest : notnull
   {
-    public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) => next();
+    public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken) => next(request, cancellationToken);
   }
 
-  public class OpenStreamBehavior<TRequest, TResponse> : IStreamPipelineBehavior<TRequest, TResponse>
+  public class MultiOpenBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
       where TRequest : notnull
   {
-    public IAsyncEnumerable<TResponse> Handle(TRequest request, StreamHandlerDelegate<TResponse> next, CancellationToken cancellationToken) => next();
-  }
-
-  public class MultiOpenBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>, IStreamPipelineBehavior<TRequest, TResponse>
-      where TRequest : notnull
-  {
-    public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) => next();
-
-    public IAsyncEnumerable<TResponse> Handle(TRequest request, StreamHandlerDelegate<TResponse> next, CancellationToken cancellationToken) => next();
+    public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken) => next(request, cancellationToken);
   }
 
   [Fact]
@@ -631,12 +578,6 @@ public class ServiceCollectionPipelineTests
   }
 
   [Fact]
-  public void Should_throw_when_adding_non_open_stream_behavior()
-  {
-    Should.Throw<InvalidOperationException>(() => new MediatorServiceConfiguration().AddOpenBehavior(typeof(NotAnOpenStreamBehavior)));
-  }
-
-  [Fact]
   public void Should_throw_when_adding_random_generic_type_as_open_behavior()
   {
     Should.Throw<InvalidOperationException>(() => new MediatorServiceConfiguration().AddOpenBehavior(typeof(List<string>)));
@@ -647,22 +588,14 @@ public class ServiceCollectionPipelineTests
   {
     MediatorServiceConfiguration cfg = new();
     cfg.AddOpenBehavior(typeof(OpenBehavior<,>));
-    cfg.AddOpenStreamBehavior(typeof(OpenStreamBehavior<,>));
 
     cfg.BehaviorsToRegister.Count.ShouldBe(1);
-    cfg.StreamBehaviorsToRegister.Count.ShouldBe(1);
 
     cfg.BehaviorsToRegister[0].ServiceType.ShouldBe(typeof(IPipelineBehavior<,>));
     cfg.BehaviorsToRegister[0].ImplementationType.ShouldBe(typeof(OpenBehavior<,>));
     cfg.BehaviorsToRegister[0].ImplementationFactory.ShouldBeNull();
     cfg.BehaviorsToRegister[0].ImplementationInstance.ShouldBeNull();
     cfg.BehaviorsToRegister[0].Lifetime.ShouldBe(ServiceLifetime.Transient);
-
-    cfg.StreamBehaviorsToRegister[0].ServiceType.ShouldBe(typeof(IStreamPipelineBehavior<,>));
-    cfg.StreamBehaviorsToRegister[0].ImplementationType.ShouldBe(typeof(OpenStreamBehavior<,>));
-    cfg.StreamBehaviorsToRegister[0].ImplementationFactory.ShouldBeNull();
-    cfg.StreamBehaviorsToRegister[0].ImplementationInstance.ShouldBeNull();
-    cfg.StreamBehaviorsToRegister[0].Lifetime.ShouldBe(ServiceLifetime.Transient);
 
     ServiceCollection services = new();
 
@@ -694,37 +627,6 @@ public class ServiceCollectionPipelineTests
     cfg.BehaviorsToRegister[1].ImplementationFactory.ShouldBeNull();
     cfg.BehaviorsToRegister[1].ImplementationInstance.ShouldBeNull();
     cfg.BehaviorsToRegister[1].Lifetime.ShouldBe(ServiceLifetime.Transient);
-
-    ServiceCollection services = new();
-
-    cfg.RegisterServicesFromAssemblyContaining<Ping>();
-
-    Should.NotThrow(() =>
-    {
-      services.AddMediator(cfg);
-      services.BuildServiceProvider();
-    });
-  }
-
-  [Fact]
-  public void Should_handle_inferred_stream_behavior_registration()
-  {
-    MediatorServiceConfiguration cfg = new();
-    cfg.AddStreamBehavior<InnerStreamBehavior>();
-    cfg.AddStreamBehavior(typeof(OuterStreamBehavior));
-
-    cfg.StreamBehaviorsToRegister.Count.ShouldBe(2);
-
-    cfg.StreamBehaviorsToRegister[0].ServiceType.ShouldBe(typeof(IStreamPipelineBehavior<Ping, Pong>));
-    cfg.StreamBehaviorsToRegister[0].ImplementationType.ShouldBe(typeof(InnerStreamBehavior));
-    cfg.StreamBehaviorsToRegister[0].ImplementationFactory.ShouldBeNull();
-    cfg.StreamBehaviorsToRegister[0].ImplementationInstance.ShouldBeNull();
-    cfg.StreamBehaviorsToRegister[0].Lifetime.ShouldBe(ServiceLifetime.Transient);
-    cfg.StreamBehaviorsToRegister[1].ServiceType.ShouldBe(typeof(IStreamPipelineBehavior<Ping, Pong>));
-    cfg.StreamBehaviorsToRegister[1].ImplementationType.ShouldBe(typeof(OuterStreamBehavior));
-    cfg.StreamBehaviorsToRegister[1].ImplementationFactory.ShouldBeNull();
-    cfg.StreamBehaviorsToRegister[1].ImplementationInstance.ShouldBeNull();
-    cfg.StreamBehaviorsToRegister[1].Lifetime.ShouldBe(ServiceLifetime.Transient);
 
     ServiceCollection services = new();
 
@@ -804,22 +706,14 @@ public class ServiceCollectionPipelineTests
   {
     MediatorServiceConfiguration cfg = new();
     cfg.AddOpenBehavior(typeof(MultiOpenBehavior<,>), ServiceLifetime.Singleton);
-    cfg.AddOpenStreamBehavior(typeof(MultiOpenBehavior<,>), ServiceLifetime.Singleton);
 
     cfg.BehaviorsToRegister.Count.ShouldBe(1);
-    cfg.StreamBehaviorsToRegister.Count.ShouldBe(1);
 
     cfg.BehaviorsToRegister[0].ServiceType.ShouldBe(typeof(IPipelineBehavior<,>));
     cfg.BehaviorsToRegister[0].ImplementationType.ShouldBe(typeof(MultiOpenBehavior<,>));
     cfg.BehaviorsToRegister[0].ImplementationFactory.ShouldBeNull();
     cfg.BehaviorsToRegister[0].ImplementationInstance.ShouldBeNull();
     cfg.BehaviorsToRegister[0].Lifetime.ShouldBe(ServiceLifetime.Singleton);
-
-    cfg.StreamBehaviorsToRegister[0].ServiceType.ShouldBe(typeof(IStreamPipelineBehavior<,>));
-    cfg.StreamBehaviorsToRegister[0].ImplementationType.ShouldBe(typeof(MultiOpenBehavior<,>));
-    cfg.StreamBehaviorsToRegister[0].ImplementationFactory.ShouldBeNull();
-    cfg.StreamBehaviorsToRegister[0].ImplementationInstance.ShouldBeNull();
-    cfg.StreamBehaviorsToRegister[0].Lifetime.ShouldBe(ServiceLifetime.Singleton);
 
     ServiceCollection services = new();
 
@@ -889,10 +783,10 @@ public class ServiceCollectionPipelineTests
 
     readonly IBlogger<FooRequestHandler> Blogger;
 
-    public Task Handle(FooRequest request, CancellationToken cancellationToken)
+    public ValueTask Handle(FooRequest request, CancellationToken cancellationToken)
     {
       Blogger.Messages.Add("Invoked Handler");
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -905,10 +799,10 @@ public class ServiceCollectionPipelineTests
 
     readonly IBlogger<ClosedBehavior> Blogger;
 
-    public Task<Unit> Handle(FooRequest request, RequestHandlerDelegate<Unit> next, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(FooRequest request, MessageHandlerDelegate<FooRequest, Unit> next, CancellationToken cancellationToken)
     {
       Blogger.Messages.Add("Invoked Closed Behavior");
-      return next();
+      return next(request, cancellationToken);
     }
   }
 
@@ -922,10 +816,10 @@ public class ServiceCollectionPipelineTests
 
     readonly IBlogger<Open2Behavior<TRequest, TResponse>> Blogger;
 
-    public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Blogger.Messages.Add("Invoked Open Behavior");
-      return next();
+      return next(request, cancellationToken);
     }
   }
   [Fact]
@@ -941,7 +835,6 @@ public class ServiceCollectionPipelineTests
     Logger logger = new();
     services.AddSingleton(logger);
     services.AddSingleton(new TimeWarp.Mediator.Tests.PipelineTests.Logger());
-    services.AddSingleton(new TimeWarp.Mediator.Tests.StreamPipelineTests.Logger());
     services.AddSingleton(new TimeWarp.Mediator.Tests.SendTests.Dependency());
     services.AddSingleton(new TimeWarp.Mediator.Tests.NotificationPublisherTests.HandlerGate());
     services.AddSingleton(new TimeWarp.Mediator.Tests.VarianceTests.EventLog());
@@ -976,10 +869,10 @@ public class ServiceCollectionPipelineTests
 
     readonly IBlogger<OpenBehaviorMultipleRegistration0<TRequest, TResponse>> Blogger;
 
-    public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Blogger.Messages.Add("Invoked OpenBehaviorMultipleRegistration0");
-      return next();
+      return next(request, cancellationToken);
     }
   }
   sealed class OpenBehaviorMultipleRegistration1<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
@@ -992,10 +885,10 @@ public class ServiceCollectionPipelineTests
 
     readonly IBlogger<OpenBehaviorMultipleRegistration1<TRequest, TResponse>> Blogger;
 
-    public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Blogger.Messages.Add("Invoked OpenBehaviorMultipleRegistration1");
-      return next();
+      return next(request, cancellationToken);
     }
   }
   sealed class OpenBehaviorMultipleRegistration2<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
@@ -1008,10 +901,10 @@ public class ServiceCollectionPipelineTests
 
     readonly IBlogger<OpenBehaviorMultipleRegistration2<TRequest, TResponse>> Blogger;
 
-    public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Blogger.Messages.Add("Invoked OpenBehaviorMultipleRegistration2");
-      return next();
+      return next(request, cancellationToken);
     }
   }
   #endregion OpenBehaviorsForMultipleRegistration
@@ -1034,7 +927,6 @@ public class ServiceCollectionPipelineTests
     Logger logger = new();
     services.AddSingleton(logger);
     services.AddSingleton(new TimeWarp.Mediator.Tests.PipelineTests.Logger());
-    services.AddSingleton(new TimeWarp.Mediator.Tests.StreamPipelineTests.Logger());
     services.AddSingleton(new TimeWarp.Mediator.Tests.SendTests.Dependency());
     services.AddSingleton(new TimeWarp.Mediator.Tests.NotificationPublisherTests.HandlerGate());
     services.AddSingleton(new TimeWarp.Mediator.Tests.VarianceTests.EventLog());

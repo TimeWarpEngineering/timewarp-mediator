@@ -8,7 +8,7 @@ public class PingResourceHandler : IRequestHandler<PingResource, Pong>
 
   public PingResourceHandler(TextWriter writer) => TextWriter = writer;
 
-  public Task<Pong> Handle(PingResource request, CancellationToken cancellationToken)
+  public ValueTask<Pong> Handle(PingResource request, CancellationToken cancellationToken)
   {
     throw new ResourceNotFoundException();
   }
@@ -20,7 +20,7 @@ public class PingNewResourceHandler : IRequestHandler<PingNewResource, Pong>
 
   public PingNewResourceHandler(TextWriter writer) => TextWriter = writer;
 
-  public Task<Pong> Handle(PingNewResource request, CancellationToken cancellationToken)
+  public ValueTask<Pong> Handle(PingNewResource request, CancellationToken cancellationToken)
   {
     throw new ServerException();
   }
@@ -32,7 +32,7 @@ public class PingResourceTimeoutHandler : IRequestHandler<PingResourceTimeout, P
 
   public PingResourceTimeoutHandler(TextWriter writer) => TextWriter = writer;
 
-  public Task<Pong> Handle(PingResourceTimeout request, CancellationToken cancellationToken)
+  public ValueTask<Pong> Handle(PingResourceTimeout request, CancellationToken cancellationToken)
   {
     throw new TaskCanceledException();
   }
@@ -44,7 +44,7 @@ public class PingResourceTimeoutOverrideHandler : IRequestHandler<Overrides.Ping
 
   public PingResourceTimeoutOverrideHandler(TextWriter writer) => TextWriter = writer;
 
-  public Task<Pong> Handle(Overrides.PingResourceTimeout request, CancellationToken cancellationToken)
+  public ValueTask<Pong> Handle(Overrides.PingResourceTimeout request, CancellationToken cancellationToken)
   {
     throw new TaskCanceledException();
   }
@@ -56,7 +56,7 @@ public class PingProtectedResourceHandler : IRequestHandler<PingProtectedResourc
 
   public PingProtectedResourceHandler(TextWriter writer) => TextWriter = writer;
 
-  public Task<Pong> Handle(PingProtectedResource request, CancellationToken cancellationToken)
+  public ValueTask<Pong> Handle(PingProtectedResource request, CancellationToken cancellationToken)
   {
     throw new ForbiddenException();
   }

@@ -34,7 +34,7 @@ public class ScopedPipelineTests
     Fixture fixture = Fixture.Create();
 
     await Should.ThrowAsync<NoHandlerException>(
-        () => fixture.Client.Send((object) new ServerPing { Message = "nope" }));
+        async () => await fixture.Client.Send((object) new ServerPing { Message = "nope" }));
   }
 
   [Fact]
@@ -43,7 +43,7 @@ public class ScopedPipelineTests
     Fixture fixture = Fixture.Create();
 
     await Should.ThrowAsync<NoHandlerException>(
-        () => fixture.Unscoped.Send((object) new ClientPing { Message = "nope" }));
+        async () => await fixture.Unscoped.Send((object) new ClientPing { Message = "nope" }));
   }
 
   [Fact]

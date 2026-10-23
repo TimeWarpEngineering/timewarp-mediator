@@ -8,12 +8,12 @@ public class WrapperCacheTests
 
   public class MultiResponsePingStringHandler : IRequestHandler<MultiResponsePing, string>
   {
-    public Task<string> Handle(MultiResponsePing request, CancellationToken cancellationToken) => Task.FromResult("pong");
+    public ValueTask<string> Handle(MultiResponsePing request, CancellationToken cancellationToken) => ValueTask.FromResult("pong");
   }
 
   public class MultiResponsePingIntHandler : IRequestHandler<MultiResponsePing, int>
   {
-    public Task<int> Handle(MultiResponsePing request, CancellationToken cancellationToken) => Task.FromResult(42);
+    public ValueTask<int> Handle(MultiResponsePing request, CancellationToken cancellationToken) => ValueTask.FromResult(42);
   }
 
   public class VoidAndResponsePing : IRequest, IRequest<string> { }
@@ -22,36 +22,16 @@ public class WrapperCacheTests
   {
     public bool Handled { get; private set; }
 
-    public Task Handle(VoidAndResponsePing request, CancellationToken cancellationToken)
+    public ValueTask Handle(VoidAndResponsePing request, CancellationToken cancellationToken)
     {
       Handled = true;
-      return Task.CompletedTask;
+      return default;
     }
   }
 
   public class VoidAndResponsePingStringHandler : IRequestHandler<VoidAndResponsePing, string>
   {
-    public Task<string> Handle(VoidAndResponsePing request, CancellationToken cancellationToken) => Task.FromResult("pong");
-  }
-
-  public class MultiResponseStreamPing : IStreamRequest<string>, IStreamRequest<int> { }
-
-  public class MultiResponseStreamPingStringHandler : IStreamRequestHandler<MultiResponseStreamPing, string>
-  {
-    public async IAsyncEnumerable<string> Handle(MultiResponseStreamPing request, [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-      await Task.Yield();
-      yield return "pong";
-    }
-  }
-
-  public class MultiResponseStreamPingIntHandler : IStreamRequestHandler<MultiResponseStreamPing, int>
-  {
-    public async IAsyncEnumerable<int> Handle(MultiResponseStreamPing request, [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-      await Task.Yield();
-      yield return 42;
-    }
+    public ValueTask<string> Handle(VoidAndResponsePing request, CancellationToken cancellationToken) => ValueTask.FromResult("pong");
   }
 
   [Fact]
@@ -84,33 +64,5 @@ public class WrapperCacheTests
     await mediator.Send(request);
 
     voidHandler.Handled.ShouldBeTrue();
-  }
-
-  [Fact]
-  public async Task Should_stream_each_response_type_for_a_request_implementing_several_stream_interfaces()
-  {
-    ServiceProvider serviceProvider = new ServiceCollection()
-        .AddTransient<IStreamRequestHandler<MultiResponseStreamPing, string>, MultiResponseStreamPingStringHandler>()
-        .AddTransient<IStreamRequestHandler<MultiResponseStreamPing, int>, MultiResponseStreamPingIntHandler>()
-        .BuildServiceProvider();
-    Mediator mediator = new(serviceProvider);
-    MultiResponseStreamPing request = new();
-
-    await foreach (object? _ in mediator.CreateStream((object) request)) { }
-
-    List<int> ints = new();
-    await foreach (int item in mediator.CreateStream<int>(request))
-    {
-      ints.Add(item);
-    }
-
-    List<string> strings = new();
-    await foreach (string item in mediator.CreateStream<string>(request))
-    {
-      strings.Add(item);
-    }
-
-    ints.ShouldBe(new[] { 42 });
-    strings.ShouldBe(new[] { "pong" });
   }
 }

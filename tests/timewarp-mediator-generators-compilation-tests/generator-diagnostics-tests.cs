@@ -122,7 +122,7 @@ public sealed class GeneratorDiagnosticsTests
   }
 
   [Fact]
-  public void StreamHandlerAndPreProcessor_AreTwm009Warnings()
+  public void PreProcessor_IsTwm009Warning()
   {
     HostCompilation host = HostCompiler.Compile(
         "Unsupported",
@@ -131,27 +131,11 @@ public sealed class GeneratorDiagnosticsTests
         MetadataReference.CreateFromFile(typeof(TimeWarp.Mediator.Pipeline.IRequestPreProcessor<>).Assembly.Location));
 
     Errors(host).ShouldBeEmpty();
-    Diagnostic[] warnings = host.Diagnostics.Where(d => d.Id == "TWM009").OrderBy(d => d.GetMessage(), StringComparer.Ordinal).ToArray();
-    warnings.Length.ShouldBe(2);
-    warnings.ShouldAllBe(d => d.Severity == DiagnosticSeverity.Warning);
-    warnings[0].GetMessage().ShouldContain("Shapes.AuditPreProcessor");
-    warnings[0].GetMessage().ShouldContain("IRequestPreProcessor<TRequest>");
-    warnings[1].GetMessage().ShouldContain("Shapes.CountHandler");
-    warnings[1].GetMessage().ShouldContain("IStreamRequestHandler<TRequest, TResponse>");
-    Span(warnings[1]).ShouldBe("CountHandler");
-  }
-
-  [Fact]
-  public void CreateStream_MessageHasNoInternalTaskIds()
-  {
-    HostCompilation host = HostCompiler.Compile("StreamMessage", HostSource, "Aot");
-    Assembly assembly = Load(host, "StreamMessage");
-    IMediator mediator = (IMediator) Activator.CreateInstance(assembly.GetType("TimeWarp.Mediator.Generated.Mediator", true)!)!;
-
-    NotSupportedException exception = Should.Throw<NotSupportedException>(() => mediator.CreateStream(new object()));
-
-    exception.Message.ShouldNotContain("004-");
-    exception.Message.ShouldContain("stream");
+    Diagnostic warning = host.Diagnostics.Where(d => d.Id == "TWM009").ShouldHaveSingleItem();
+    warning.Severity.ShouldBe(DiagnosticSeverity.Warning);
+    warning.GetMessage().ShouldContain("Shapes.AuditPreProcessor");
+    warning.GetMessage().ShouldContain("IRequestPreProcessor<TRequest>");
+    Span(warning).ShouldBe("AuditPreProcessor");
   }
 
   [Fact]
@@ -234,7 +218,7 @@ namespace App
 
     public sealed class PingHandler : IRequestHandler<Ping, string>
     {
-        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(""pong"");
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""pong"");
     }
 }
 ";
@@ -254,7 +238,7 @@ namespace Members
 
     internal sealed class HiddenHandler : IRequestHandler<Hidden, int>
     {
-        public Task<int> Handle(Hidden request, CancellationToken cancellationToken) => Task.FromResult(1);
+        public ValueTask<int> Handle(Hidden request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
     }
 }
 ";
@@ -279,7 +263,7 @@ namespace Members
 
     public sealed class PayHandler : IRequestHandler<Pay, int>
     {
-        public Task<int> Handle(Pay request, CancellationToken cancellationToken) => Task.FromResult(1);
+        public ValueTask<int> Handle(Pay request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
     }
 
     public sealed class Paid : INotification
@@ -288,7 +272,7 @@ namespace Members
 
     public sealed class PaidHandler : INotificationHandler<Paid>
     {
-        public Task Handle(Paid notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Paid notification, CancellationToken cancellationToken) => default;
     }
 }
 ";
@@ -308,20 +292,7 @@ namespace Shapes
 
     public sealed class PingHandler : IRequestHandler<Ping, string>
     {
-        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(""pong"");
-    }
-
-    public sealed class Count : IStreamRequest<int>
-    {
-    }
-
-    public sealed class CountHandler : IStreamRequestHandler<Count, int>
-    {
-        public async IAsyncEnumerable<int> Handle(Count request, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            await Task.Yield();
-            yield return 1;
-        }
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""pong"");
     }
 
     public sealed class AuditPreProcessor : IRequestPreProcessor<Ping>
@@ -354,7 +325,7 @@ namespace Pipes
 
     public sealed class PingHandler : IRequestHandler<Ping, string>
     {
-        public Task<string> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(""pong"");
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""pong"");
     }
 
     public sealed class NotABehavior
@@ -364,13 +335,13 @@ namespace Pipes
     public sealed class OpenBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
         where TRequest : notnull
     {
-        public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) => next(cancellationToken);
+        public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken) => next(request, cancellationToken);
     }
 
     public sealed class AuditedBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
         where TRequest : IAudited
     {
-        public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) => next(cancellationToken);
+        public ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken) => next(request, cancellationToken);
     }
 }
 ";

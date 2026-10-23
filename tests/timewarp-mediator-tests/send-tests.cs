@@ -39,9 +39,9 @@ public class SendTests
 
   public class PingHandler : IRequestHandler<Ping, Pong>
   {
-    public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
+    public ValueTask<Pong> Handle(Ping request, CancellationToken cancellationToken)
     {
-      return Task.FromResult(new Pong { Message = request.Message + " Pong" });
+      return ValueTask.FromResult(new Pong { Message = request.Message + " Pong" });
     }
   }
 
@@ -57,11 +57,11 @@ public class SendTests
 
     public VoidPingHandler(Dependency dependency) => Dependency = dependency;
 
-    public Task Handle(VoidPing request, CancellationToken cancellationToken)
+    public ValueTask Handle(VoidPing request, CancellationToken cancellationToken)
     {
       Dependency.Called = true;
 
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -78,11 +78,11 @@ public class SendTests
 
     public GenericPingHandler(Dependency dependency) => Dependency = dependency;
 
-    public Task<T> Handle(GenericPing<T> request, CancellationToken cancellationToken)
+    public ValueTask<T> Handle(GenericPing<T> request, CancellationToken cancellationToken)
     {
       Dependency.Called = true;
       request.Pong!.Message += " Pong";
-      return Task.FromResult(request.Pong!);
+      return ValueTask.FromResult(request.Pong!);
     }
   }
 
@@ -96,11 +96,11 @@ public class SendTests
     private readonly Dependency Dependency;
     public VoidGenericPingHandler(Dependency dependency) => Dependency = dependency;
 
-    public Task Handle(VoidGenericPing<T> request, CancellationToken cancellationToken)
+    public ValueTask Handle(VoidGenericPing<T> request, CancellationToken cancellationToken)
     {
       Dependency.Called = true;
 
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -115,10 +115,10 @@ public class SendTests
 
     public TestClass1PingRequestHandler(Dependency dependency) => Dependency = dependency;
 
-    public Task Handle(VoidGenericPing<PongExtension> request, CancellationToken cancellationToken)
+    public ValueTask Handle(VoidGenericPing<PongExtension> request, CancellationToken cancellationToken)
     {
       Dependency.CalledSpecific = true;
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -147,10 +147,10 @@ public class SendTests
 
     public MultipleGenericTypeParameterRequestHandler(Dependency dependency) => Dependency = dependency;
 
-    public Task<int> Handle(MultipleGenericTypeParameterRequest<T1, T2, T3> request, CancellationToken cancellationToken)
+    public ValueTask<int> Handle(MultipleGenericTypeParameterRequest<T1, T2, T3> request, CancellationToken cancellationToken)
     {
       Dependency.Called = true;
-      return Task.FromResult(1);
+      return ValueTask.FromResult(1);
     }
   }
 
@@ -165,10 +165,10 @@ public class SendTests
   public class TimeoutBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
       where TRequest : ITimeoutRequest
   {
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-      Task<TResponse> handlerTask = next(cts.Token);
+      ValueTask<TResponse> handlerTask = next(request, cts.Token);
       handlerTask.IsCompleted.ShouldBeFalse();
       await cts.CancelAsync();
       return await handlerTask;
@@ -189,7 +189,7 @@ public class SendTests
 
     public TimeoutRequestHandler(Dependency dependency) => Dependency = dependency;
 
-    public async Task Handle(TimeoutRequest request, CancellationToken cancellationToken)
+    public async ValueTask Handle(TimeoutRequest request, CancellationToken cancellationToken)
     {
       await Task.Delay(Timeout.Infinite, cancellationToken);
 
@@ -203,7 +203,7 @@ public class SendTests
 
     public TimeoutRequest2Handler(Dependency dependency) => Dependency = dependency;
 
-    public async Task<int> Handle(TimeoutRequest2 request, CancellationToken cancellationToken)
+    public async ValueTask<int> Handle(TimeoutRequest2 request, CancellationToken cancellationToken)
     {
       await Task.Delay(Timeout.Infinite, cancellationToken);
 
@@ -351,7 +351,7 @@ public class SendTests
   {
     TimeoutRequest request = new();
 
-    TaskCanceledException exception = await Should.ThrowAsync<TaskCanceledException>(() => Mediator.Send(request));
+    TaskCanceledException exception = await Should.ThrowAsync<TaskCanceledException>(async () => await Mediator.Send(request));
 
     exception.ShouldNotBeNull();
     exception.ShouldBeAssignableTo<TaskCanceledException>();

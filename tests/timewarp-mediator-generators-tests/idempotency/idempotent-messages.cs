@@ -11,11 +11,11 @@ public sealed class UpsertSetting : IIdempotentCommand<string>
   public string Value { get; set; } = string.Empty;
 }
 
-public sealed class UpsertSettingHandler : IIdempotentCommandHandler<UpsertSetting, string>
+public sealed class UpsertSettingHandler : IRequestHandler<UpsertSetting, string>
 {
-  public Task<string> Handle(UpsertSetting request, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(UpsertSetting request, CancellationToken cancellationToken)
   {
-    return Task.FromResult(request.Key + "=" + request.Value);
+    return ValueTask.FromResult(request.Key + "=" + request.Value);
   }
 }
 
@@ -24,14 +24,14 @@ public sealed class ResetSetting : IIdempotentCommand
   public string Key { get; set; } = string.Empty;
 }
 
-public sealed class ResetSettingHandler : IIdempotentCommandHandler<ResetSetting>
+public sealed class ResetSettingHandler : IRequestHandler<ResetSetting>
 {
   public static List<string> Resets { get; } = new();
 
-  public Task Handle(ResetSetting request, CancellationToken cancellationToken)
+  public ValueTask Handle(ResetSetting request, CancellationToken cancellationToken)
   {
     Resets.Add(request.Key);
-    return Task.CompletedTask;
+    return default;
   }
 }
 
@@ -40,10 +40,10 @@ public sealed class GetSetting : IQuery<string>
   public string Key { get; set; } = string.Empty;
 }
 
-public sealed class GetSettingHandler : IQueryHandler<GetSetting, string>
+public sealed class GetSettingHandler : IRequestHandler<GetSetting, string>
 {
-  public Task<string> Handle(GetSetting request, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(GetSetting request, CancellationToken cancellationToken)
   {
-    return Task.FromResult("value-of-" + request.Key);
+    return ValueTask.FromResult("value-of-" + request.Key);
   }
 }

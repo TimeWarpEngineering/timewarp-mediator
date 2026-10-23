@@ -39,44 +39,39 @@ public class Pinged : INotification
 
 class InternalPing : IRequest { }
 
-public class StreamPing : IStreamRequest<Pong>
-{
-  public string? Message { get; init; }
-}
-
 public class GenericHandler : INotificationHandler<INotification>
 {
-  public Task Handle(INotification notification, CancellationToken cancellationToken)
+  public ValueTask Handle(INotification notification, CancellationToken cancellationToken)
   {
-    return Task.FromResult(0);
+    return default;
   }
 }
 
 public class DingAsyncHandler : IRequestHandler<Ding>
 {
-  public Task Handle(Ding message, CancellationToken cancellationToken) => Task.CompletedTask;
+  public ValueTask Handle(Ding message, CancellationToken cancellationToken) => default;
 }
 
 public class PingedHandler : INotificationHandler<Pinged>
 {
-  public Task Handle(Pinged notification, CancellationToken cancellationToken)
+  public ValueTask Handle(Pinged notification, CancellationToken cancellationToken)
   {
-    return Task.CompletedTask;
+    return default;
   }
 }
 
 public class PingedAlsoHandler : INotificationHandler<Pinged>
 {
-  public Task Handle(Pinged notification, CancellationToken cancellationToken)
+  public ValueTask Handle(Pinged notification, CancellationToken cancellationToken)
   {
-    return Task.CompletedTask;
+    return default;
   }
 }
 
 public class PingedAlsoOpenHandler<TNotification> : INotificationHandler<TNotification>
     where TNotification : Pinged
 {
-  public Task Handle(TNotification notification, CancellationToken cancellationToken) => Task.CompletedTask;
+  public ValueTask Handle(TNotification notification, CancellationToken cancellationToken) => default;
 }
 
 public class Logger
@@ -92,13 +87,13 @@ public class PingHandler : IRequestHandler<Ping, Pong>
   {
     Logger = logger;
   }
-  public Task<Pong> Handle(Ping message, CancellationToken cancellationToken)
+  public ValueTask<Pong> Handle(Ping message, CancellationToken cancellationToken)
   {
     Logger.Messages.Add("Handler");
 
     message.ThrowAction?.Invoke(message);
 
-    return Task.FromResult(new Pong { Message = message.Message + " Pong" });
+    return ValueTask.FromResult(new Pong { Message = message.Message + " Pong" });
   }
 }
 
@@ -110,10 +105,10 @@ public class DerivedPingHandler : IRequestHandler<DerivedPing, Pong>
   {
     Logger = logger;
   }
-  public Task<Pong> Handle(DerivedPing message, CancellationToken cancellationToken)
+  public ValueTask<Pong> Handle(DerivedPing message, CancellationToken cancellationToken)
   {
     Logger.Messages.Add("Handler");
-    return Task.FromResult(new Pong { Message = $"Derived{message.Message} Pong" });
+    return ValueTask.FromResult(new Pong { Message = $"Derived{message.Message} Pong" });
   }
 }
 
@@ -125,86 +120,62 @@ public class ZingHandler : IRequestHandler<Zing, Zong>
   {
     Logger = output;
   }
-  public Task<Zong> Handle(Zing message, CancellationToken cancellationToken)
+  public ValueTask<Zong> Handle(Zing message, CancellationToken cancellationToken)
   {
     Logger.Messages.Add("Handler");
-    return Task.FromResult(new Zong { Message = message.Message + " Zong" });
-  }
-}
-
-public class PingStreamHandler : IStreamRequestHandler<StreamPing, Pong>
-{
-  private readonly Logger Logger;
-
-  public PingStreamHandler(Logger output)
-  {
-    Logger = output;
-  }
-  public async IAsyncEnumerable<Pong> Handle(StreamPing request, [EnumeratorCancellation] CancellationToken cancellationToken)
-  {
-    Logger.Messages.Add("Handler");
-    yield return await Task.Run(() => new Pong { Message = request.Message + " Pang" }, cancellationToken);
+    return ValueTask.FromResult(new Zong { Message = message.Message + " Zong" });
   }
 }
 
 public class DuplicateTest : IRequest<string> { }
 public class DuplicateHandler1 : IRequestHandler<DuplicateTest, string>
 {
-  public Task<string> Handle(DuplicateTest message, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(DuplicateTest message, CancellationToken cancellationToken)
   {
-    return Task.FromResult(nameof(DuplicateHandler1));
+    return ValueTask.FromResult(nameof(DuplicateHandler1));
   }
 }
 
 public class DuplicateHandler2 : IRequestHandler<DuplicateTest, string>
 {
-  public Task<string> Handle(DuplicateTest message, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(DuplicateTest message, CancellationToken cancellationToken)
   {
-    return Task.FromResult(nameof(DuplicateHandler2));
+    return ValueTask.FromResult(nameof(DuplicateHandler2));
   }
 }
 
 class InternalPingHandler : IRequestHandler<InternalPing>
 {
-  public Task Handle(InternalPing request, CancellationToken cancellationToken) => Task.CompletedTask;
+  public ValueTask Handle(InternalPing request, CancellationToken cancellationToken) => default;
 }
 
 class MyCustomMediator : IMediator
 {
-  public Task<object?> Send(object request, CancellationToken cancellationToken = new())
-  {
-    throw new System.NotImplementedException();
-  }
-
-  public IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request,
-      CancellationToken cancellationToken = new())
+  public ValueTask<object?> Send(object request, CancellationToken cancellationToken = default)
   {
     throw new NotImplementedException();
   }
 
-  public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = new())
+  public ValueTask Publish(object notification, CancellationToken cancellationToken = default)
   {
     throw new NotImplementedException();
   }
 
-  public Task Publish(object notification, CancellationToken cancellationToken = new())
+  public ValueTask Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
+      where TNotification : INotification
   {
-    throw new System.NotImplementedException();
+    throw new NotImplementedException();
   }
 
-  public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default) where TNotification : INotification
+  public ValueTask<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
   {
-    throw new System.NotImplementedException();
+    throw new NotImplementedException();
   }
 
-  public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
-  {
-    throw new System.NotImplementedException();
-  }
-  public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
+  public ValueTask Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
       where TRequest : IRequest
   {
-    throw new System.NotImplementedException();
+    throw new NotImplementedException();
   }
 }
 
@@ -216,7 +187,7 @@ class OpenGenericVoidRequest<T> : IRequest
 class OpenGenericVoidRequestHandler<T> : IRequestHandler<OpenGenericVoidRequest<T>>
     where T : class, ITypeArgument
 {
-  public Task Handle(OpenGenericVoidRequest<T> request, CancellationToken cancellationToken) => Task.CompletedTask;
+  public ValueTask Handle(OpenGenericVoidRequest<T> request, CancellationToken cancellationToken) => default;
 }
 class OpenGenericReturnTypeRequest<T> : IRequest<string>
     where T : class, ITypeArgument
@@ -224,7 +195,7 @@ class OpenGenericReturnTypeRequest<T> : IRequest<string>
 class OpenGenericReturnTypeRequestHandler<T> : IRequestHandler<OpenGenericReturnTypeRequest<T>, string>
     where T : class, ITypeArgument
 {
-  public Task<string> Handle(OpenGenericReturnTypeRequest<T> request, CancellationToken cancellationToken) => Task.FromResult(nameof(request));
+  public ValueTask<string> Handle(OpenGenericReturnTypeRequest<T> request, CancellationToken cancellationToken) => ValueTask.FromResult(nameof(request));
 }
 
 public class GenericPing<T> : IRequest<T>
@@ -236,7 +207,7 @@ public class GenericPing<T> : IRequest<T>
 public class GenericPingHandler<T> : IRequestHandler<GenericPing<T>, T>
     where T : Pong
 {
-  public Task<T> Handle(GenericPing<T> request, CancellationToken cancellationToken) => Task.FromResult(request.Pong!);
+  public ValueTask<T> Handle(GenericPing<T> request, CancellationToken cancellationToken) => ValueTask.FromResult(request.Pong!);
 }
 
 public class VoidGenericPing<T> : IRequest
@@ -246,5 +217,5 @@ public class VoidGenericPing<T> : IRequest
 public class VoidGenericPingHandler<T> : IRequestHandler<VoidGenericPing<T>>
     where T : Pong
 {
-  public Task Handle(VoidGenericPing<T> request, CancellationToken cancellationToken) => Task.CompletedTask;
+  public ValueTask Handle(VoidGenericPing<T> request, CancellationToken cancellationToken) => default;
 }

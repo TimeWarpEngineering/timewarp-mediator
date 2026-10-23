@@ -141,12 +141,12 @@ namespace Shapes
 
     public sealed class ABaseRequestHandler : IRequestHandler<ABaseRequest, string>
     {
-        public Task<string> Handle(ABaseRequest request, CancellationToken cancellationToken) => Task.FromResult(""base"");
+        public ValueTask<string> Handle(ABaseRequest request, CancellationToken cancellationToken) => ValueTask.FromResult(""base"");
     }
 
     public sealed class ZDerivedRequestHandler : IRequestHandler<ZDerivedRequest, string>
     {
-        public Task<string> Handle(ZDerivedRequest request, CancellationToken cancellationToken) => Task.FromResult(""derived"");
+        public ValueTask<string> Handle(ZDerivedRequest request, CancellationToken cancellationToken) => ValueTask.FromResult(""derived"");
     }
 
     public interface IAuditNote : INotification
@@ -171,28 +171,28 @@ namespace Shapes
 
     public sealed class BaseNoteHandler : INotificationHandler<ABaseNote>
     {
-        public Task Handle(ABaseNote notification, CancellationToken cancellationToken)
+        public ValueTask Handle(ABaseNote notification, CancellationToken cancellationToken)
         {
             notification.Seen.Add(""base"");
-            return Task.CompletedTask;
+            return default;
         }
     }
 
     public sealed class DerivedNoteHandler : INotificationHandler<ZDerivedNote>
     {
-        public Task Handle(ZDerivedNote notification, CancellationToken cancellationToken)
+        public ValueTask Handle(ZDerivedNote notification, CancellationToken cancellationToken)
         {
             notification.Seen.Add(""derived"");
-            return Task.CompletedTask;
+            return default;
         }
     }
 
     public sealed class AuditNoteHandler : INotificationHandler<IAuditNote>
     {
-        public Task Handle(IAuditNote notification, CancellationToken cancellationToken)
+        public ValueTask Handle(IAuditNote notification, CancellationToken cancellationToken)
         {
             notification.Log.Add(""audit"");
-            return Task.CompletedTask;
+            return default;
         }
     }
 }
@@ -218,37 +218,37 @@ namespace Keywords
 
     public sealed class RequestHandler : IRequestHandler<Request, string>
     {
-        public Task<string> Handle(Request request, CancellationToken cancellationToken) => Task.FromResult(""r"");
+        public ValueTask<string> Handle(Request request, CancellationToken cancellationToken) => ValueTask.FromResult(""r"");
     }
 
     public sealed class ObjectHandler : IRequestHandler<Object, string>
     {
-        public Task<string> Handle(Object request, CancellationToken cancellationToken) => Task.FromResult(""o"");
+        public ValueTask<string> Handle(Object request, CancellationToken cancellationToken) => ValueTask.FromResult(""o"");
     }
 
     public sealed class LockHandler : IRequestHandler<Lock, string>
     {
-        public Task<string> Handle(Lock request, CancellationToken cancellationToken) => Task.FromResult(""l"");
+        public ValueTask<string> Handle(Lock request, CancellationToken cancellationToken) => ValueTask.FromResult(""l"");
     }
 
     public sealed class ParamsHandler : IRequestHandler<Params, string>
     {
-        public Task<string> Handle(Params request, CancellationToken cancellationToken) => Task.FromResult(""p"");
+        public ValueTask<string> Handle(Params request, CancellationToken cancellationToken) => ValueTask.FromResult(""p"");
     }
 
     public sealed class BaseHandler : IRequestHandler<Base, string>
     {
-        public Task<string> Handle(Base request, CancellationToken cancellationToken) => Task.FromResult(""b"");
+        public ValueTask<string> Handle(Base request, CancellationToken cancellationToken) => ValueTask.FromResult(""b"");
     }
 
     public sealed class NotificationHandler : INotificationHandler<Notification>
     {
-        public Task Handle(Notification notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Notification notification, CancellationToken cancellationToken) => default;
     }
 
     public sealed class EventHandler : INotificationHandler<Event>
     {
-        public Task Handle(Event notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(Event notification, CancellationToken cancellationToken) => default;
     }
 }
 ";
@@ -268,12 +268,12 @@ namespace A
 
     public sealed class B_CHandler : IRequestHandler<B_C, string>
     {
-        public Task<string> Handle(B_C request, CancellationToken cancellationToken) => Task.FromResult(""A.B_C"");
+        public ValueTask<string> Handle(B_C request, CancellationToken cancellationToken) => ValueTask.FromResult(""A.B_C"");
     }
 
     public sealed class B_CNoteHandler : INotificationHandler<B_CNote>
     {
-        public Task Handle(B_CNote notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(B_CNote notification, CancellationToken cancellationToken) => default;
     }
 }
 
@@ -284,12 +284,12 @@ namespace A_B
 
     public sealed class CHandler : IRequestHandler<C, string>
     {
-        public Task<string> Handle(C request, CancellationToken cancellationToken) => Task.FromResult(""A_B.C"");
+        public ValueTask<string> Handle(C request, CancellationToken cancellationToken) => ValueTask.FromResult(""A_B.C"");
     }
 
     public sealed class CNoteHandler : INotificationHandler<CNote>
     {
-        public Task Handle(CNote notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public ValueTask Handle(CNote notification, CancellationToken cancellationToken) => default;
     }
 }
 ";

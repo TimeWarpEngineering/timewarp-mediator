@@ -47,11 +47,11 @@ public class RequestHandlerAnalyzerTests
             public sealed class Ping : IRequest<int> { }
             public sealed class PingHandlerA : IRequestHandler<Ping, int>
             {
-                public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
             public sealed class PingHandlerB : IRequestHandler<Ping, int>
             {
-                public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(2);
+                public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(2);
             }
             """;
 
@@ -87,7 +87,7 @@ public class RequestHandlerAnalyzerTests
             public sealed class Ping : IRequest<int> { }
             public sealed class PingHandler : IRequestHandler<Ping, int>
             {
-                public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
             """;
 
@@ -111,7 +111,7 @@ public class RequestHandlerAnalyzerTests
             [MediatorScope(typeof(ServerPipeline))]
             public sealed class PingHandler : IRequestHandler<Ping, int>
             {
-                public Task<int> Handle(Ping request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
             """;
 
@@ -138,18 +138,18 @@ public class RequestHandlerAnalyzerTests
             [MediatorScope(typeof(ClientPipeline))]
             public sealed class ClientPingHandler : IRequestHandler<ClientPing, int>
             {
-                public Task<int> Handle(ClientPing request, CancellationToken cancellationToken) => Task.FromResult(1);
+                public ValueTask<int> Handle(ClientPing request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
             [MediatorScope(typeof(ServerPipeline))]
             public sealed class ServerPing : IRequest<int> { }
             [MediatorScope(typeof(ServerPipeline))]
             public sealed class ServerPingHandler : IRequestHandler<ServerPing, int>
             {
-                public Task<int> Handle(ServerPing request, CancellationToken cancellationToken) => Task.FromResult(2);
+                public ValueTask<int> Handle(ServerPing request, CancellationToken cancellationToken) => ValueTask.FromResult(2);
             }
             public static class Use
             {
-                public static Task<int> Go(ISender<ClientPipeline> sender)
+                public static ValueTask<int> Go(ISender<ClientPipeline> sender)
                 {
                     return sender.Send(new ServerPing());
                 }

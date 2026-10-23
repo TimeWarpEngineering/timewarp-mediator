@@ -11,7 +11,7 @@ public class AsyncPingedHandler : INotificationHandler<Pinged>
 
   public string Name { get; set; }
 
-  public async Task Handle(Pinged notification, CancellationToken cancellationToken)
+  public async ValueTask Handle(Pinged notification, CancellationToken cancellationToken)
   {
     if (Name == "2")
     {

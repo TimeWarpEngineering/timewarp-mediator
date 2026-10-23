@@ -5,7 +5,7 @@
 #region Design
 // No marker → the assembly is not part of the MessageGraph. The generator host also opts in via
 // MSBuild TimeWarpMediatorAssembly=true. Referenced assemblies are included only when they
-// carry this attribute (or are listed by MediatorAssembliesAttribute).
+// carry this attribute.
 #endregion
 
 namespace TimeWarp.Mediator;

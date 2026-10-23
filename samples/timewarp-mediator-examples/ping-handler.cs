@@ -11,7 +11,7 @@ public class PingHandler : IRequestHandler<Ping, Pong>
     TextWriter = writer;
   }
 
-  public async Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
+  public async ValueTask<Pong> Handle(Ping request, CancellationToken cancellationToken)
   {
     await TextWriter.WriteLineAsync($"--- Handled Ping: {request.Message}");
     return new Pong { Message = request.Message + " Pong" };

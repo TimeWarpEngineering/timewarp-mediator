@@ -13,9 +13,9 @@ public sealed class ClientPing : IRequest<string>
 [MediatorScope(typeof(ClientPipeline))]
 public sealed class ClientPingHandler : IRequestHandler<ClientPing, string>
 {
-  public Task<string> Handle(ClientPing request, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(ClientPing request, CancellationToken cancellationToken)
   {
-    return Task.FromResult("client:" + request.Message);
+    return ValueTask.FromResult("client:" + request.Message);
   }
 }
 
@@ -35,7 +35,7 @@ public sealed class ClientReentrantHandler : IRequestHandler<ClientReentrant, in
     Sender = sender;
   }
 
-  public async Task<int> Handle(ClientReentrant request, CancellationToken cancellationToken)
+  public async ValueTask<int> Handle(ClientReentrant request, CancellationToken cancellationToken)
   {
     if (request.Value == 0)
     {
@@ -57,9 +57,9 @@ public sealed class ClientNoteHandler : INotificationHandler<ClientNote>
 {
   public static int Count;
 
-  public Task Handle(ClientNote notification, CancellationToken cancellationToken)
+  public ValueTask Handle(ClientNote notification, CancellationToken cancellationToken)
   {
     Count++;
-    return Task.CompletedTask;
+    return default;
   }
 }

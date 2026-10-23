@@ -37,10 +37,10 @@ public class PipelineTests
     {
       Logger = output;
     }
-    public Task<Pong> Handle(Ping request, CancellationToken cancellationToken)
+    public ValueTask<Pong> Handle(Ping request, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Handler");
-      return Task.FromResult(new Pong { Message = request.Message + " Pong" });
+      return ValueTask.FromResult(new Pong { Message = request.Message + " Pong" });
     }
   }
 
@@ -52,10 +52,10 @@ public class PipelineTests
     {
       Logger = output;
     }
-    public Task Handle(VoidPing request, CancellationToken cancellationToken)
+    public ValueTask Handle(VoidPing request, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Handler");
-      return Task.CompletedTask;
+      return default;
     }
   }
 
@@ -67,10 +67,10 @@ public class PipelineTests
     {
       Logger = output;
     }
-    public Task<Zong> Handle(Zing request, CancellationToken cancellationToken)
+    public ValueTask<Zong> Handle(Zing request, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Handler");
-      return Task.FromResult(new Zong { Message = request.Message + " Zong" });
+      return ValueTask.FromResult(new Zong { Message = request.Message + " Zong" });
     }
   }
 
@@ -83,10 +83,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<Pong> Handle(Ping request, RequestHandlerDelegate<Pong> next, CancellationToken cancellationToken)
+    public async ValueTask<Pong> Handle(Ping request, MessageHandlerDelegate<Ping, Pong> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Outer before");
-      Pong response = await next();
+      Pong response = await next(request, cancellationToken);
       Logger.Messages.Add("Outer after");
 
       return response;
@@ -102,10 +102,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<Unit> Handle(VoidPing request, RequestHandlerDelegate<Unit> next, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(VoidPing request, MessageHandlerDelegate<VoidPing, Unit> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Outer before");
-      Unit response = await next();
+      Unit response = await next(request, cancellationToken);
       Logger.Messages.Add("Outer after");
 
       return response;
@@ -121,10 +121,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<Pong> Handle(Ping request, RequestHandlerDelegate<Pong> next, CancellationToken cancellationToken)
+    public async ValueTask<Pong> Handle(Ping request, MessageHandlerDelegate<Ping, Pong> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Inner before");
-      Pong response = await next();
+      Pong response = await next(request, cancellationToken);
       Logger.Messages.Add("Inner after");
 
       return response;
@@ -140,10 +140,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<Unit> Handle(VoidPing request, RequestHandlerDelegate<Unit> next, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(VoidPing request, MessageHandlerDelegate<VoidPing, Unit> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Inner before");
-      Unit response = await next();
+      Unit response = await next(request, cancellationToken);
       Logger.Messages.Add("Inner after");
 
       return response;
@@ -160,10 +160,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Inner generic before");
-      TResponse? response = await next();
+      TResponse? response = await next(request, cancellationToken);
       Logger.Messages.Add("Inner generic after");
 
       return response;
@@ -179,10 +179,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Outer generic before");
-      TResponse? response = await next();
+      TResponse? response = await next(request, cancellationToken);
       Logger.Messages.Add("Outer generic after");
 
       return response;
@@ -200,10 +200,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async ValueTask<TResponse> Handle(TRequest request, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Constrained before");
-      TResponse response = await next();
+      TResponse response = await next(request, cancellationToken);
       Logger.Messages.Add("Constrained after");
 
       return response;
@@ -219,10 +219,10 @@ public class PipelineTests
       Logger = output;
     }
 
-    public async Task<Pong> Handle(Ping request, RequestHandlerDelegate<Pong> next, CancellationToken cancellationToken)
+    public async ValueTask<Pong> Handle(Ping request, MessageHandlerDelegate<Ping, Pong> next, CancellationToken cancellationToken)
     {
       Logger.Messages.Add("Concrete before");
-      Pong response = await next();
+      Pong response = await next(request, cancellationToken);
       Logger.Messages.Add("Concrete after");
 
       return response;
