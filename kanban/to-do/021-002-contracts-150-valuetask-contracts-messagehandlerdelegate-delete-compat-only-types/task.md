@@ -72,7 +72,8 @@ Acceptance criteria:
 
 ## Review
 
-- Round 1: open M1, M2 implemented in the fix pass. Round 2 has not run. M3 stays wontfix on 021-007.
+- Round 1: open M1, M2 implemented in the fix pass. M3 stays wontfix on 021-007.
+- Round 2: M1 and M2 verified fixed, no new findings. Disposition: accepted-exceptions (M3).
 
 ## Notes
 
@@ -115,8 +116,11 @@ The fix pass covers round-1 M1 and M2. Generated `ReplacementPipeline` has one b
 
 - Round 1 (2026-10-23): one general reviewer at effort 3. `./bin/dev workflow` was re-run and printed `Pipeline SUCCEEDED`.
 - Counts at merge: bug 0. Suggestion: 1 open (M1). Nit: 1 open (M2), 1 wontfix (M3, deferred to 021-007).
-- Fix pass implemented M1 and M2. Round 2 has not run.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Fix pass (20a559e) implemented M1 and M2.
+- Round 2 (2026-10-23): one general reviewer at effort 2 on the fix delta `03fa275..20a559e`. The four new replacement-request tests were run and pass. M1 and M2 are fixed, and the delta raised no new findings.
+- Final counts: bug 0. Suggestion: 1 fixed (M1). Nit: 1 fixed (M2), 1 wontfix (M3, deferred to 021-007, which owns the docs rewrite).
+- Disposition: **accepted-exceptions**. 0 open after 2 rounds.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Session
 
@@ -126,3 +130,4 @@ The fix pass covers round-1 M1 and M2. Generated `ReplacementPipeline` has one b
 - Review oracle round 1: general reviewer (claude-opus-5-5), effort 3, session id not exposed. Result: fix pass needed for M1, M2 (2026-10-23)
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T14:35:37Z
 - Implement-fix-2: implemented by implementer-grok (grok, model grok-4.7), session 01a16930-56db-70c3-8fa2-210ae4899e92 (2026-10-23). M1 and M2 addressed. `./bin/dev workflow` printed `Pipeline SUCCEEDED`. `ganda repo audit` passed.
+- Review oracle round 2: general reviewer (claude-opus-5-5), effort 2, session id not exposed. Result: M1 and M2 fixed, disposition accepted-exceptions (2026-10-23)
