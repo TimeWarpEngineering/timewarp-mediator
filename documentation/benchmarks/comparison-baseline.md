@@ -3,7 +3,7 @@
 Recorded by `./bin/dev benchmark --project comparison --record`. Do not edit by hand; re-record instead.
 
 - Project: `tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj`
-- Commit: `2a2a10d2dca7ebbc5780bdf4899315e8c7190cfd`
+- Commit: `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`
 - Date (UTC): 2026-10-23
 
 ## MediatorBenchmarks.DispatchBenchmarks
@@ -21,19 +21,19 @@ IterationCount=8  WarmupCount=3
 ```
 | Method                               | Mean       | Error     | StdDev    | Ratio | RatioSD | Gen0   | Allocated | Alloc Ratio |
 |------------------------------------- |-----------:|----------:|----------:|------:|--------:|-------:|----------:|------------:|
-| TimeWarpLegacyMakeGenericType        |  58.187 ns | 4.8960 ns | 2.5607 ns |  1.00 |    0.06 | 0.0041 |     208 B |        1.00 |
-| TimeWarpGeneratedMonomorphicSend     |   5.264 ns | 0.5849 ns | 0.3059 ns |  0.09 |    0.01 | 0.0005 |      24 B |        0.12 |
-| TimeWarpGeneratedInterfaceSend       |   8.855 ns | 0.9539 ns | 0.4235 ns |  0.15 |    0.01 | 0.0005 |      24 B |        0.12 |
-| TimeWarpGeneratedObjectSend          |  16.862 ns | 1.3415 ns | 0.7016 ns |  0.29 |    0.02 | 0.0019 |      96 B |        0.46 |
-| TimeWarpGeneratedInterfaceSendUnit   |   9.321 ns | 0.0947 ns | 0.0495 ns |  0.16 |    0.01 |      - |         - |        0.00 |
-| TimeWarpGeneratedMonomorphicSendUnit |   3.566 ns | 0.4787 ns | 0.2126 ns |  0.06 |    0.00 |      - |         - |        0.00 |
-| TimeWarpCallSiteInliningPrototype    |  18.811 ns | 0.3241 ns | 0.1695 ns |  0.32 |    0.01 | 0.0005 |      24 B |        0.12 |
-| TimeWarpGeneratedScopedSend          |   8.406 ns | 0.2419 ns | 0.1074 ns |  0.14 |    0.01 | 0.0005 |      24 B |        0.12 |
-| TimeWarpGeneratedInterfacePublish    |  20.645 ns | 0.7831 ns | 0.4096 ns |  0.36 |    0.02 |      - |         - |        0.00 |
-| TimeWarpGeneratedScopedPublish       |  20.628 ns | 0.6913 ns | 0.3616 ns |  0.36 |    0.02 |      - |         - |        0.00 |
-| TimeWarpGeneratedStatePipeline       | 134.919 ns | 1.5022 ns | 0.7857 ns |  2.32 |    0.10 |      - |         - |        0.00 |
-| TimeWarpGeneratedArchitectureSend    |  83.266 ns | 1.1969 ns | 0.5314 ns |  1.43 |    0.06 | 0.0005 |      24 B |        0.12 |
-| MartinothamarGenerated               |   8.657 ns | 0.2759 ns | 0.1443 ns |  0.15 |    0.01 | 0.0005 |      24 B |        0.12 |
+| TimeWarpLegacyMakeGenericType        |  55.632 ns | 0.7321 ns | 0.3251 ns |  1.00 |    0.01 | 0.0041 |     208 B |        1.00 |
+| TimeWarpGeneratedMonomorphicSend     |   5.016 ns | 0.5836 ns | 0.3053 ns |  0.09 |    0.01 | 0.0005 |      24 B |        0.12 |
+| TimeWarpGeneratedInterfaceSend       |   8.243 ns | 0.0840 ns | 0.0373 ns |  0.15 |    0.00 | 0.0005 |      24 B |        0.12 |
+| TimeWarpGeneratedObjectSend          |  15.447 ns | 0.2685 ns | 0.1405 ns |  0.28 |    0.00 | 0.0019 |      96 B |        0.46 |
+| TimeWarpGeneratedInterfaceSendUnit   |   9.360 ns | 0.0754 ns | 0.0394 ns |  0.17 |    0.00 |      - |         - |        0.00 |
+| TimeWarpGeneratedMonomorphicSendUnit |   3.885 ns | 0.0332 ns | 0.0174 ns |  0.07 |    0.00 |      - |         - |        0.00 |
+| TimeWarpCallSiteInliningPrototype    |  18.439 ns | 0.2035 ns | 0.1064 ns |  0.33 |    0.00 | 0.0005 |      24 B |        0.12 |
+| TimeWarpGeneratedScopedSend          |  10.753 ns | 3.5615 ns | 1.8627 ns |  0.19 |    0.03 | 0.0005 |      24 B |        0.12 |
+| TimeWarpGeneratedInterfacePublish    |  20.024 ns | 0.3203 ns | 0.1422 ns |  0.36 |    0.00 |      - |         - |        0.00 |
+| TimeWarpGeneratedScopedPublish       |  20.210 ns | 0.0833 ns | 0.0436 ns |  0.36 |    0.00 |      - |         - |        0.00 |
+| TimeWarpGeneratedStatePipeline       | 131.117 ns | 0.8922 ns | 0.4666 ns |  2.36 |    0.02 |      - |         - |        0.00 |
+| TimeWarpGeneratedArchitectureSend    |  81.432 ns | 0.2973 ns | 0.1060 ns |  1.46 |    0.01 | 0.0005 |      24 B |        0.12 |
+| MartinothamarGenerated               |   8.314 ns | 0.0837 ns | 0.0372 ns |  0.15 |    0.00 | 0.0005 |      24 B |        0.12 |
 
 ## Regression gate
 

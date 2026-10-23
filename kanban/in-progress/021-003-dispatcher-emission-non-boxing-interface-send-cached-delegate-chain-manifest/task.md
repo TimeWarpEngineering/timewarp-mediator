@@ -99,34 +99,35 @@ Parent: 021. Depends on: 021-002 (contracts). Review sections 3 (F2, F4, F7, F12
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T19:34:45Z
 - 2026-10-24: fix pass for review round 1. Covariant send awaits and casts, behavior chains are scoped, and the no-behavior path reuses a scoped HandlerCache after per-send resolve measured about 24 ns. `ganda repo audit` passed with no fixes.
 - Review oracle round 2 (2026-10-24): claude (claude-opus-5-5), effort 3, roster general, session not reported. M1–M7 fixed, new M8 open; fix pass requested.
+- 2026-10-24: fix pass for review round 2. Each no-behavior handler slot is filled on the first send of that request. `ganda repo audit` passed with no fixes. `./bin/dev workflow` exited 0. Comparison baseline re-recorded from clean commit `c5e4a3a`.
 
 ## Results
 
 Typed `Send<TResponse>` reinterprets `ValueTask<TConcrete>` only when `TResponse` is that concrete type. A covariant send, and a request that implements two `IRequest<>` closures, awaits the handler result and casts it; a mismatch throws `InvalidCastException`. A faulted or canceled `ValueTask` stays faulted until awaited. A null argument, `NoHandlerException`, and a handler that throws before returning a `ValueTask` still leave `Send` as a thrown exception. That difference from 14.x is noted on 021-007.
 
-Requests with behaviors resolve a scoped chain and invoke delegates created once for that scope. A behavior may await before `next` and may call `next` again. Requests with no behaviors reuse a scoped `HandlerCache` on the dispatcher instance. Disposing the scope disposes that cache and the next send throws `ObjectDisposedException`. Nothing is stored in a thread-static slot. `Publish<TNotification>` stays typed. `MediatorManifest.Requests` and each entry's `Behaviors` are read-only wrappers. The assembly attribute is `[assembly: GeneratedMediator(typeof(global::….Mediator))]`.
+Requests with behaviors resolve a scoped chain and invoke delegates created once for that scope. A behavior may await before `next` and may call `next` again. Requests with no behaviors reuse a scoped `HandlerCache` on the dispatcher instance. Each handler slot stays empty until that request is sent, then `GetRequiredService` fills it once for the scope. A handler that cannot be constructed fails only its own send. An unsent request does not construct its handler. A transient registration is still one instance per scope. Disposing the scope disposes that cache and the next send throws `ObjectDisposedException`. Nothing is stored in a thread-static slot. `Publish<TNotification>` stays typed. `MediatorManifest.Requests` and each entry's `Behaviors` are read-only wrappers. The assembly attribute is `[assembly: GeneratedMediator(typeof(global::….Mediator))]`.
 
-Recorded comparison baseline from clean commit `2a2a10d2dca7ebbc5780bdf4899315e8c7190cfd` (`./bin/dev benchmark --project comparison --record`, BDN 0.15.8, .NET 10.0.13):
+Recorded comparison baseline from clean commit `c5e4a3a6a6155b6f5ed322379a59559be58fc69a` (`./bin/dev benchmark --project comparison --record`, BDN 0.15.8, .NET 10.0.13):
 
 | Row | Mean | Allocated | Target |
 | --- | --- | --- | --- |
-| TimeWarpGeneratedInterfaceSend | 8.855 ns | 24 B | ≤ 1.5× MartinothamarGenerated (8.657 ns → 12.986 ns) and ≤ 24 B |
-| TimeWarpGeneratedInterfaceSendUnit | 9.321 ns | 0 B | 0 B |
-| TimeWarpGeneratedStatePipeline | 134.919 ns | 0 B | 0 B apart from the handler |
-| MartinothamarGenerated | 8.657 ns | 24 B | reference |
+| TimeWarpGeneratedInterfaceSend | 8.243 ns | 24 B | ≤ 1.5× MartinothamarGenerated (8.314 ns → 12.471 ns) and ≤ 24 B |
+| TimeWarpGeneratedInterfaceSendUnit | 9.360 ns | 0 B | 0 B |
+| TimeWarpGeneratedStatePipeline | 131.117 ns | 0 B | 0 B apart from the handler |
+| MartinothamarGenerated | 8.314 ns | 24 B | reference |
 
 ### How to validate
 
 Smoke: `./bin/dev workflow`
 
-Expect: exit 0. Generator tests cover covariant send, a dual-interface mismatch, await-before-next, concurrent scopes, faulted and canceled `ValueTask`s, and a manifest that cannot be cast back to an array. Compilation tests cover the scoped handler cache, a disposed scope, and a synchronous handler throw. The comparison baseline names commit `2a2a10d2dca7ebbc5780bdf4899315e8c7190cfd` with no uncommitted-changes note, interface Ping/Pong at 8.855 ns / 24 B, void interface send at 0 B, and the State pipeline at 0 B.
+Expect: exit 0. Generator tests cover covariant send, a dual-interface mismatch, await-before-next, concurrent scopes, faulted and canceled `ValueTask`s, and a manifest that cannot be cast back to an array. Compilation tests cover the scoped handler cache, a disposed scope, a synchronous handler throw, and two no-behavior requests where one handler's dependency is unregistered: the other request still dispatches and only the sent handler is constructed. The comparison baseline names commit `c5e4a3a6a6155b6f5ed322379a59559be58fc69a` with no uncommitted-changes note, interface Ping/Pong at 8.243 ns / 24 B, void interface send at 0 B, and the State pipeline at 0 B.
 
-Ran 2026-10-24: `./bin/dev workflow --mode pr` exited 0. Tests passed (generators 49, compilation 87, roslyn-floor 88, analyzers 42, mediator 191). Eleven samples verified. Package smoke printed `package-pong via TimeWarp.Mediator.Generated.Mediator`. Interface send 8.855 ns / 24 B, void send 0 B, State pipeline 134.919 ns / 0 B.
+Ran 2026-10-24: `./bin/dev workflow` (mode Pr) exited 0. Tests passed (generators 49, compilation 88, roslyn-floor 89, analyzers 42, mediator 191). Eleven samples verified. Package smoke printed `package-pong via TimeWarp.Mediator.Generated.Mediator`. Interface send 8.243 ns / 24 B, void send 0 B, State pipeline 131.117 ns / 0 B.
 
 ### Review
 
-Round 1 (effort 3, roster general) left M1–M7 open. This fix pass implements them.
+Round 1 (effort 3, roster general) left M1–M7 open. The first fix pass implements them.
 
-Round 2 (effort 3, roster general) reviewed the fix-pass delta `231ed4e..91058b9`. M1–M7 are fixed. One new bug is open, M8 at `mediator-emitter.cs:514`: the `HandlerCache` constructor resolves every no-behavior handler on the first send in a scope, so one unresolvable handler breaks every no-behavior send in that scope. Final counts so far: bug 1 open / 2 fixed, suggestion 2 fixed, nit 3 fixed. Disposition: not yet written (1 open). Generator tests (49) and compilation tests (87) pass locally.
+Round 2 (effort 3, roster general) reviewed the fix-pass delta `231ed4e..91058b9`. M1–M7 are fixed. M8 was open: the `HandlerCache` constructor resolved every no-behavior handler on the first send in a scope. This fix pass fills each slot on the first send of that request. `UnresolvableHandler_DoesNotBlockTheOtherRequest` covers a graph of two no-behavior requests where one dependency is unregistered. Round 3 has not run.
 
 Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md` (live ledger).
