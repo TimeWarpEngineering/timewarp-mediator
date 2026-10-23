@@ -82,6 +82,7 @@ Acceptance criteria:
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
+- Round 2: M1–M7 fixed. New bug M8 is open: `HandlerCache` resolves every no-behavior handler eagerly. Blocked, fix pass needed.
 
 ## Notes
 
@@ -97,6 +98,7 @@ Parent: 021. Depends on: 021-002 (contracts). Review sections 3 (F2, F4, F7, F12
 - Review oracle round 1 (2026-10-24): claude (claude-opus-5-5), effort 3, roster general, session not reported. Findings M1–M7 open; fix pass requested.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T19:34:45Z
 - 2026-10-24: fix pass for review round 1. Covariant send awaits and casts, behavior chains are scoped, and the no-behavior path reuses a scoped HandlerCache after per-send resolve measured about 24 ns. `ganda repo audit` passed with no fixes.
+- Review oracle round 2 (2026-10-24): claude (claude-opus-5-5), effort 3, roster general, session not reported. M1–M7 fixed, new M8 open; fix pass requested.
 
 ## Results
 
@@ -123,6 +125,8 @@ Ran 2026-10-24: `./bin/dev workflow --mode pr` exited 0. Tests passed (generator
 
 ### Review
 
-Round 1 (effort 3, roster general) left M1–M7 open. This fix pass implements them. Review round 2 has not run.
+Round 1 (effort 3, roster general) left M1–M7 open. This fix pass implements them.
 
-Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` (live ledger).
+Round 2 (effort 3, roster general) reviewed the fix-pass delta `231ed4e..91058b9`. M1–M7 are fixed. One new bug is open, M8 at `mediator-emitter.cs:514`: the `HandlerCache` constructor resolves every no-behavior handler on the first send in a scope, so one unresolvable handler breaks every no-behavior send in that scope. Final counts so far: bug 1 open / 2 fixed, suggestion 2 fixed, nit 3 fixed. Disposition: not yet written (1 open). Generator tests (49) and compilation tests (87) pass locally.
+
+Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md` (live ledger).
