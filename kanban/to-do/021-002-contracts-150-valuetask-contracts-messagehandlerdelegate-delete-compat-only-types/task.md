@@ -73,8 +73,7 @@ Acceptance criteria:
 ## Review
 
 - Round 1: open M1, M2 implemented in the fix pass. M3 stays wontfix on 021-007.
-- Round 2: M1 and M2 verified fixed, no new findings. Disposition: accepted-exceptions (M3).
-
+- Round 2: Done
 ## Notes
 
 Parent: 021. Depends on: 021-001 (baseline recorded before contracts change). Blocks 021-003.
