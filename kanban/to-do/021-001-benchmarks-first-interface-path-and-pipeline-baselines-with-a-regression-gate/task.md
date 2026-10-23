@@ -1,5 +1,15 @@
 # Benchmarks first: interface-path and pipeline baselines with a regression gate
 
+## Goal (implementer restatement)
+
+Record what this tree costs on the paths consumers call, and fail a later change that is slower or allocates more than that record.
+
+Every consumer dispatches through `ISender`, `ISender<TScope>`, or `IPublisher`. The stored comparison baseline measured the concrete `Mediator.Send(Ping)` overload. This task keeps the interface Ping/Pong and void rows already in the comparison project, and adds a scoped `ISender<ClientPipeline>` send, unscoped and scoped `IPublisher` publishes, a State-shaped send (one `IAction`, three open-generic behaviors registered with `[assembly: MediatorBehavior]` and scoped to `ClientPipeline`, dispatched through `ISender<ClientPipeline>`), and an Architecture-shaped send (`IRequest<OneOf<...>>`-style response through `ISender` with one behavior).
+
+`./bin/dev benchmark --project comparison --record` rewrites `documentation/benchmarks/comparison-baseline.md` with those rows, the commit SHA, and the date. `./bin/dev benchmark --project comparison --gate` re-runs that project and fails when a `TimeWarp*` row's mean time or allocated bytes exceed the recorded numbers by more than the tolerance written in that file. The 15.0 goals (interface Ping/Pong ≤ 1.5× martinothamar and ≤ 24 B, void send 0 B, three-behavior pipeline allocation-free apart from the handler) are a table in the same file and are not enforced.
+
+Done when those rows exist, the baseline file is a fresh `--record` of this tree, the gate is documented and rejects an overage, and `./bin/dev workflow` is green.
+
 ## Description
 
 Every consumer dispatches through `ISender`, `ISender<TScope>` or `IMediator`, but the recorded
