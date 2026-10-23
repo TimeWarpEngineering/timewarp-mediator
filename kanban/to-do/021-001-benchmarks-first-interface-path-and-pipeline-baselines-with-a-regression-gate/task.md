@@ -56,7 +56,8 @@ cannot regress silently.
 
 ## Review
 
-- Round 1: M1 fixed on the implement-fix-2 pass (structural baseline assertions). Host runs round 2.
+- Round 1: M1 fixed on the implement-fix-2 pass (structural baseline assertions).
+- Round 2: M1 re-verified fixed, no new findings. Disposition: clean.
 
 ## Notes
 
@@ -74,10 +75,11 @@ Measured on 2026-10-13: interface 64.8 ns / 240 B, reflection 65.2 ns / 224 B, c
 - Review oracle round 1: claude (claude-opus-5-5), effort 3, roster general, session not reported — 2026-10-24. 1 open suggestion (M1), fix pass requested.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T17:33:41Z
 - Fix pass (implement-fix-2): implemented by implementer-grok (grok, model grok-4.7), session not reported — 2026-10-24. M1: the recorded-baseline test no longer pins row count or allocated bytes.
+- Review oracle round 2: claude (claude-opus-5-5), effort 1, roster general, session not reported, max-turns 80 — 2026-10-24. M1 verified fixed, 0 open, disposition clean.
 
 ## Results
 
-**Review:** round 1, effort 3, roster general. Counts after the fix pass: bug 0, suggestion 1 fixed (M1), nit 0. Disposition waits on host review round 2. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+**Review disposition: clean.** Two rounds, roster general (round 1 effort 3, round 2 effort 1). Final counts: bug 0, suggestion 1 fixed (M1), nit 0; 0 open, no wontfix. Round 2 re-verified M1 on a6da9a4 (BenchmarkGateTests 8 passed) and found nothing new. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 M1: `Parse_should_read_the_recorded_comparison_baseline` now checks a clean parse, presence of the five rows this task added (`TimeWarpGeneratedScopedSend`, `TimeWarpGeneratedInterfacePublish`, `TimeWarpGeneratedScopedPublish`, `TimeWarpGeneratedStatePipeline`, `TimeWarpGeneratedArchitectureSend`), that those names are gated, and that the tolerance sentence matches `BenchmarkGate.MeanTolerancePercent`. The `Rows.Count == 13` pin, the State pipeline `272` B pin, and the `0` B pins are gone. A later `--record` can change means, bytes, and row count without failing `./bin/dev test`. The dash-as-zero case stays in `Parse_should_treat_a_dash_allocated_cell_as_zero_bytes`.
 
