@@ -1,5 +1,6 @@
 #region Purpose
-// Compares legacy MakeGenericType, generated IMediator.Send, CallSiteInlining Dispatch_*, martinothamar.
+// Compares legacy MakeGenericType, generated interface and concrete Send, scoped send,
+// publish, State and Architecture pipelines, CallSiteInlining Dispatch_*, and martinothamar.
 #endregion
 
 using TimeWarp.Mediator;
@@ -14,9 +15,17 @@ public class DispatchBenchmarks
   private TimeWarp.Mediator.Generated.Mediator GeneratedMediator = null!;
   private IServiceProvider GeneratedScope = null!;
   private ISender GeneratedSender = null!;
+  private ISender<ClientPipeline> ScopedSender = null!;
+  private IPublisher Publisher = null!;
+  private IPublisher<ClientPipeline> ScopedPublisher = null!;
   private global::Mediator.IMediator MartinothamarMediator = null!;
   private readonly Nop NopRequest = new();
   private readonly Ping Request = new() { Message = "hi" };
+  private readonly ScopedPing ScopedRequest = new() { Message = "hi" };
+  private readonly Pinged PingedNotification = new();
+  private readonly ClientPinged ClientPingedNotification = new();
+  private readonly Increment IncrementRequest = new();
+  private readonly UpdateProfile UpdateProfileRequest = new();
   private readonly MartinPing MartinRequest = new() { Message = "hi" };
 
   [GlobalSetup]
@@ -29,10 +38,14 @@ public class DispatchBenchmarks
 
     ServiceCollection generatedServices = new();
     generatedServices.AddGeneratedMediator();
+    generatedServices.AddGeneratedMediator<ClientPipeline>();
     GeneratedScope = generatedServices.BuildServiceProvider().CreateScope().ServiceProvider;
     GeneratedMediator = GeneratedScope.GetRequiredService<TimeWarp.Mediator.Generated.Mediator>();
 
     GeneratedSender = GeneratedScope.GetRequiredService<ISender>();
+    ScopedSender = GeneratedScope.GetRequiredService<ISender<ClientPipeline>>();
+    Publisher = GeneratedScope.GetRequiredService<IPublisher>();
+    ScopedPublisher = GeneratedScope.GetRequiredService<IPublisher<ClientPipeline>>();
 
     ServiceCollection martinServices = new();
     martinServices.AddMediator();
@@ -82,6 +95,36 @@ public class DispatchBenchmarks
         GeneratedScope,
         Request,
         default);
+  }
+
+  [Benchmark]
+  public ValueTask<Pong> TimeWarpGeneratedScopedSend()
+  {
+    return ScopedSender.Send(ScopedRequest);
+  }
+
+  [Benchmark]
+  public ValueTask TimeWarpGeneratedInterfacePublish()
+  {
+    return Publisher.Publish(PingedNotification);
+  }
+
+  [Benchmark]
+  public ValueTask TimeWarpGeneratedScopedPublish()
+  {
+    return ScopedPublisher.Publish(ClientPingedNotification);
+  }
+
+  [Benchmark]
+  public ValueTask TimeWarpGeneratedStatePipeline()
+  {
+    return ScopedSender.Send(IncrementRequest);
+  }
+
+  [Benchmark]
+  public ValueTask<OneOf<ProfileResponse, ProblemDetails>> TimeWarpGeneratedArchitectureSend()
+  {
+    return GeneratedSender.Send(UpdateProfileRequest);
   }
 
   [Benchmark]
