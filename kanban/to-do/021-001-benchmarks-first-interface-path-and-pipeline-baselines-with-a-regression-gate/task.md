@@ -57,8 +57,7 @@ cannot regress silently.
 ## Review
 
 - Round 1: M1 fixed on the implement-fix-2 pass (structural baseline assertions).
-- Round 2: M1 re-verified fixed, no new findings. Disposition: clean.
-
+- Round 2: Done
 ## Notes
 
 Parent: 021. First child; nothing depends on it except the gate in 021-003. Review:
