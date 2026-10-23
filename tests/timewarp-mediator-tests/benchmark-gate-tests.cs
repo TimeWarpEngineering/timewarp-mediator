@@ -65,7 +65,7 @@ public class BenchmarkGateTests
         """
         | Method                         | Mean    | Allocated |
         |------------------------------- |--------:|----------:|
-        | TimeWarpLegacyMakeGenericType  | 100 ns  |     224 B |
+        | TimeWarpLegacyMakeGenericType  | 120 ns  |     224 B |
         | TimeWarpGeneratedInterfaceSend | 1.5 µs  |     241 B |
         | TimeWarpGeneratedObjectSend    | 50.5 ns |    1.5 KB |
         | MartinothamarGenerated         | 800 ns  |    9.9 KB |
@@ -101,6 +101,43 @@ public class BenchmarkGateTests
     text.ShouldContain("missing");
     text.ShouldContain("TimeWarpGeneratedStatePipeline");
     text.ShouldContain("no baseline row");
+  }
+
+  [Fact]
+  public void Parse_should_treat_a_dash_allocated_cell_as_zero_bytes()
+  {
+    const string dash =
+        """
+        | Method | Mean | Allocated |
+        | --- | --- | --- |
+        | TimeWarpGeneratedInterfacePublish | 31.20 ns | - |
+        """;
+
+    BenchmarkTable table = BenchmarkGate.Parse(dash);
+
+    table.Errors.ShouldBeEmpty();
+    table.Rows["TimeWarpGeneratedInterfacePublish"].AllocatedBytes.ShouldBe(0);
+  }
+
+  [Fact]
+  public void Parse_should_read_the_recorded_comparison_baseline()
+  {
+    string? repoRoot = Path.GetDirectoryName(typeof(BenchmarkGateTests).Assembly.Location);
+    while (repoRoot is not null && !File.Exists(Path.Combine(repoRoot, "timewarp-mediator.slnx")))
+    {
+      repoRoot = Path.GetDirectoryName(repoRoot);
+    }
+
+    repoRoot.ShouldNotBeNull();
+    string text = File.ReadAllText(Path.Combine(repoRoot, "documentation", "benchmarks", "comparison-baseline.md"));
+    BenchmarkTable table = BenchmarkGate.Parse(text);
+
+    table.Errors.ShouldBeEmpty();
+    table.Rows.Count.ShouldBe(13);
+    table.Rows["TimeWarpGeneratedMonomorphicSendUnit"].AllocatedBytes.ShouldBe(0);
+    table.Rows["TimeWarpGeneratedInterfacePublish"].AllocatedBytes.ShouldBe(0);
+    table.Rows["TimeWarpGeneratedStatePipeline"].AllocatedBytes.ShouldBe(272);
+    text.ShouldContain($"at most {BenchmarkGate.MeanTolerancePercent}%");
   }
 
   [Fact]

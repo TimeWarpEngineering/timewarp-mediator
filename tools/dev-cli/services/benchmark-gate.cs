@@ -7,7 +7,9 @@
 // Only tables with Method, Mean, and Allocated columns are measurements. The 15.0 target
 // table uses different headers so a re-record cannot turn those goals into a gate.
 // Rows whose names start with TimeWarp are gated. MartinothamarGenerated is the external
-// reference and is not. Mean may rise by MeanToleranceRatio. Allocated bytes may not rise.
+// reference and is not. Mean may rise by MeanToleranceRatio (half, because an 8-iteration
+// job records a 99.9% error bar of about 20 to 30 percent of the mean on the interface
+// and State rows). Allocated bytes may not rise. A MemoryDiagnoser dash is 0 B.
 #endregion
 
 using System.Globalization;
@@ -25,7 +27,7 @@ internal sealed class BenchmarkTable
 
 internal static class BenchmarkGate
 {
-  internal const double MeanToleranceRatio = 0.20;
+  internal const double MeanToleranceRatio = 0.50;
 
   internal static int MeanTolerancePercent => (int)Math.Round(MeanToleranceRatio * 100);
 
@@ -298,6 +300,11 @@ internal static class BenchmarkGate
   private static bool TryParseBytes(string cell, out long bytes)
   {
     bytes = 0;
+    if (cell.Trim() == "-")
+    {
+      return true;
+    }
+
     if (!TrySplitMeasurement(cell, out double value, out string unit))
     {
       return false;

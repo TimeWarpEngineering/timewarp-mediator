@@ -43,12 +43,12 @@ cannot regress silently.
 
 ## Checklist
 
-- [ ] Scoped-sender and publisher interface benchmarks added
-- [ ] State-shaped pipeline benchmark added
-- [ ] Architecture-shaped response benchmark added
-- [ ] 14.0 baseline recorded with `--record`
-- [ ] Regression gate implemented and documented
-- [ ] `./bin/dev workflow` green
+- [x] Scoped-sender and publisher interface benchmarks added
+- [x] State-shaped pipeline benchmark added
+- [x] Architecture-shaped response benchmark added
+- [x] 14.0 baseline recorded with `--record`
+- [x] Regression gate implemented and documented
+- [x] `./bin/dev workflow` green
 - [ ] PR with merge commit
 
 ## Notes
@@ -62,3 +62,53 @@ Measured on 2026-10-13: interface 64.8 ns / 240 B, reflection 65.2 ns / 224 B, c
 ## Session
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
+- Implementation: 01a169b4-3bff-75c0-82a3-d7ebd381caf0 (2026-10-24)
+
+## Results
+
+Recorded `documentation/benchmarks/comparison-baseline.md` with `./bin/dev benchmark --project comparison --record` on commit `280a84289f7665ff9312fd607ad6d9894622be84` (2026-10-23, BenchmarkDotNet 0.15.8, iteration count 8, warmup count 3, .NET 10.0.13). Package version is still 14.0.0. This tree already contains the merged 021-002 ValueTask contracts, so these numbers are the baseline for 021-003. They are not the 2026-10-13 Task-shaped research numbers (interface was 64.8 ns / 240 B then).
+
+| Method | Mean | Allocated |
+| --- | ---: | ---: |
+| TimeWarpLegacyMakeGenericType | 70.29 ns | 208 B |
+| TimeWarpGeneratedMonomorphicSend | 27.00 ns | 24 B |
+| TimeWarpGeneratedInterfaceSend | 66.89 ns | 96 B |
+| TimeWarpGeneratedObjectSend | 36.86 ns | 96 B |
+| TimeWarpGeneratedInterfaceSendUnit | 42.42 ns | 24 B |
+| TimeWarpGeneratedMonomorphicSendUnit | 25.39 ns | 0 B |
+| TimeWarpCallSiteInliningPrototype | 25.06 ns | 24 B |
+| TimeWarpGeneratedScopedSend | 50.78 ns | 24 B |
+| TimeWarpGeneratedInterfacePublish | 31.20 ns | 0 B |
+| TimeWarpGeneratedScopedPublish | 33.90 ns | 0 B |
+| TimeWarpGeneratedStatePipeline | 213.10 ns | 272 B |
+| TimeWarpGeneratedArchitectureSend | 125.08 ns | 144 B |
+| MartinothamarGenerated | 11.06 ns | 24 B |
+
+`MartinothamarGenerated` is the external reference and is not gated. The interface Ping/Pong row is about 6× that reference and allocates 96 B. The 15.0 table in the same file (≤ 1.5× and ≤ 24 B, void send 0 B, three-behavior pipeline 0 B apart from the handler) is not enforced.
+
+The gate allows a mean at most 50% above the recorded mean and does not allow allocated bytes to rise. BenchmarkDotNet writes `-` for 0 B; the parser treats that dash as zero. The recorded 99.9% error bars on the interface, architecture, and State rows were about 19–29% of the mean, so a 20% limit would fail a quiet re-run on this host. The measurement table is the `--record` output. The tolerance sentence was aligned to `BenchmarkGate.MeanToleranceRatio` after that record, because the ratio was widened once those error bars were visible. A later `--record` rewrites the table and that sentence together.
+
+A second comparison run on 2026-10-24 (`./bin/dev benchmark --project comparison --gate`) printed `Benchmark gate passed`. The noisiest gated mean was scoped send at 61.56 ns against the 50.78 ns baseline (limit 76.17 ns). Allocations matched, including the three 0 B rows.
+
+`./bin/dev workflow` printed `Pipeline SUCCEEDED`: generators 42, analyzers 42, Roslyn-floor 83, compilation 82, mediator tests 191, 11 samples, pack of 14.0.0 with the package smoke. `ganda repo audit` passed 31, failed 0. The pull request is the host open-pr node.
+
+### How to validate
+
+**Smoke**
+
+```bash
+dotnet test tests/timewarp-mediator-tests/timewarp-mediator-tests.csproj --filter FullyQualifiedName~BenchmarkGateTests --nologo
+```
+
+**Expect**
+
+- BenchmarkGateTests: 8 passed, 0 failed. The recorded baseline parses as 13 rows, dash cells are 0 B, the State pipeline row is 272 B, and the file contains the same percent as `BenchmarkGate.MeanTolerancePercent` (50).
+- A mean more than 50% above its baseline row fails. Allocated bytes above the recorded bytes fail. `MartinothamarGenerated` is not gated.
+
+**Gate**
+
+```bash
+./bin/dev benchmark --project comparison --gate
+```
+
+Expect: exit 0 and the line `Benchmark gate passed`. The run takes about three minutes. Re-record after an intentional change with `./bin/dev benchmark --project comparison --record`. Do not combine `--gate` with `--record` or with `--filter`. The gate is not part of `./bin/dev workflow`.
