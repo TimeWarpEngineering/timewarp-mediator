@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\source\timewarp-mediator\timewarp-mediator.csproj" />
+    <Compile Include="..\..\tools\dev-cli\services\benchmark-gate.cs" Link="benchmark-gate.cs" />
   </ItemGroup>
 
   <ItemGroup>

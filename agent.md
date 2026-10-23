@@ -21,7 +21,7 @@ dotnet run --file tools/dev-cli/dev.cs -- self-install
 | `./bin/dev test [--no-build] [--quiet]` | Run the test suite |
 | `./bin/dev pack [--no-build]` | Pack the four packages to `artifacts/packages`, assert the nupkg layout (analyzer DLLs, buildTransitive props, a single `lib/net10.0` folder, `notice`, `unlicense`, and the package's own `readme.md` with absolute links only), then build and run the package smoke consumer against those nupkgs |
 | `./bin/dev verify-samples [--no-build]` | Build every `samples/**/*.csproj`, then run each Exe sample and require exit code 0 (aot and named-pipelines also check their output) |
-| `./bin/dev benchmark [--project comparison\|legacy] [--filter <glob>] [--record]` | Run BenchmarkDotNet; `--record` rewrites `documentation/benchmarks/<project>-baseline.md` with commit SHA and date |
+| `./bin/dev benchmark [--project comparison\|legacy] [--filter <glob>] [--record] [--gate]` | Run BenchmarkDotNet. `--record` rewrites `documentation/benchmarks/<project>-baseline.md` with commit SHA, date, tolerance, and (for comparison) the 15.0 target table. `--gate` re-runs `comparison` and fails when a `TimeWarp*` row exceeds that file. Not part of `workflow`. |
 | `./bin/dev workflow [--mode pr\|merge\|release]` | CI pipeline: clean → build → test → verify-samples → pack. Release mode: clean → build → pack → check-version → push |
 | `./bin/dev check-version [--strict]` | Fail if `<Version>` is already published on nuget.org |
 | `./bin/dev release [--dry-run]` | Tag `v<Version>` and create the GitHub Release |

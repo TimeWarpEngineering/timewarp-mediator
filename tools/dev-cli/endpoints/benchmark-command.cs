@@ -10,11 +10,14 @@
 // under a header with the commit SHA, a dirty-tree flag and the UTC date;
 // BenchmarkDotNet's own block records the host (CPU, OS, runtime). Not part of
 // `dev workflow`: shared CI runners are too noisy for a stored number.
+// --gate (comparison only) re-runs that project and fails when a TimeWarp* row
+// exceeds the recorded baseline. Tolerance and the 15.0 target table are written
+// by --record; see BenchmarkGate.
 #endregion
 
 namespace DevCli.Commands;
 
-[NuruRoute("benchmark", Description = "Run benchmarks (--record stores the baseline under documentation/benchmarks)")]
+[NuruRoute("benchmark", Description = "Run benchmarks (--record stores the baseline, --gate fails on regression)")]
 public sealed class BenchmarkCommand : ICommand<Unit>
 {
   [Option("project", "p", Description = "Benchmark project: comparison (default) or legacy")]
@@ -25,6 +28,9 @@ public sealed class BenchmarkCommand : ICommand<Unit>
 
   [Option("record", "r", Description = "Write the report to documentation/benchmarks/<project>-baseline.md")]
   public bool Record { get; set; }
+
+  [Option("gate", "g", Description = "Fail when a TimeWarp* comparison row exceeds the recorded baseline")]
+  public bool Gate { get; set; }
 
   public sealed class Handler : ICommandHandler<BenchmarkCommand, Unit>
   {
@@ -46,6 +52,27 @@ public sealed class BenchmarkCommand : ICommand<Unit>
       }
 
       string name = string.IsNullOrWhiteSpace(command.Project) ? "comparison" : command.Project.Trim();
+      if (command.Record && command.Gate)
+      {
+        Terminal.WriteErrorLine("Pass either --record or --gate, not both.".Red());
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
+
+      if (command.Gate && !string.Equals(name, "comparison", StringComparison.OrdinalIgnoreCase))
+      {
+        Terminal.WriteErrorLine("The regression gate applies to the comparison project only.".Red());
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
+
+      if (command.Gate && !string.IsNullOrWhiteSpace(command.Filter) && command.Filter.Trim() != "*")
+      {
+        Terminal.WriteErrorLine("--gate runs the full comparison set. Omit --filter.".Red());
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
+
       (string Name, string Project) match = RepoLayout.BenchmarkProjects
         .FirstOrDefault(candidate => string.Equals(candidate.Name, name, StringComparison.OrdinalIgnoreCase));
       if (match.Project is null)
@@ -79,6 +106,11 @@ public sealed class BenchmarkCommand : ICommand<Unit>
       }
 
       if (command.Record && !await RecordAsync(repoRoot, match.Name, match.Project, artifactsPath, ct))
+      {
+        return Unit.Value;
+      }
+
+      if (command.Gate && !await GateAsync(repoRoot, artifactsPath, ct))
       {
         return Unit.Value;
       }
@@ -141,11 +173,63 @@ public sealed class BenchmarkCommand : ICommand<Unit>
         baseline.AppendLine();
       }
 
+      if (string.Equals(name, "comparison", StringComparison.OrdinalIgnoreCase))
+      {
+        baseline.AppendLine(BenchmarkGate.BaselineSuffix().TrimEnd());
+        baseline.AppendLine();
+      }
+
       string outputDirectory = Path.Combine(repoRoot, "documentation", "benchmarks");
       Directory.CreateDirectory(outputDirectory);
       string outputPath = Path.Combine(outputDirectory, $"{name}-baseline.md");
       await File.WriteAllTextAsync(outputPath, baseline.ToString().ReplaceLineEndings("\n"), ct);
       Terminal.WriteLine($"Recorded {Path.GetRelativePath(repoRoot, outputPath)}");
+      return true;
+    }
+
+    private async Task<bool> GateAsync(string repoRoot, string artifactsPath, CancellationToken ct)
+    {
+      string baselinePath = Path.Combine(repoRoot, "documentation", "benchmarks", "comparison-baseline.md");
+      if (!File.Exists(baselinePath))
+      {
+        Terminal.WriteErrorLine($"No baseline at {Path.GetRelativePath(repoRoot, baselinePath)}. Record one with --record.".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      string resultsPath = Path.Combine(artifactsPath, "results");
+      string[] reports = Directory.Exists(resultsPath)
+        ? Directory.GetFiles(resultsPath, "*-report-github.md").OrderBy(path => path, StringComparer.Ordinal).ToArray()
+        : [];
+      if (reports.Length == 0)
+      {
+        Terminal.WriteErrorLine($"No *-report-github.md under {resultsPath}".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      List<string> documents = [];
+      foreach (string report in reports)
+      {
+        documents.Add(await File.ReadAllTextAsync(report, ct));
+      }
+
+      BenchmarkTable baseline = BenchmarkGate.Parse(await File.ReadAllTextAsync(baselinePath, ct));
+      BenchmarkTable measured = BenchmarkGate.ParseMany(documents);
+      List<string> failures = BenchmarkGate.Compare(baseline, measured);
+      if (failures.Count > 0)
+      {
+        Terminal.WriteErrorLine("Benchmark gate failed:".Red());
+        foreach (string failure in failures)
+        {
+          Terminal.WriteErrorLine("  " + failure);
+        }
+
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      Terminal.WriteLine("Benchmark gate passed.".Green());
       return true;
     }
   }

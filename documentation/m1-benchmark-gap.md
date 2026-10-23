@@ -24,4 +24,7 @@ Re-run:
 ```bash
 ./bin/dev benchmark            # run only; results in artifacts/benchmarks/comparison
 ./bin/dev benchmark --record   # also rewrite documentation/benchmarks/comparison-baseline.md
+./bin/dev benchmark --gate     # fail when a TimeWarp* row exceeds that baseline
 ```
+
+Tolerance, the rows the gate checks, and the 15.0 targets that are recorded but not enforced live in [benchmarks/comparison-baseline.md](./benchmarks/comparison-baseline.md). `--record` writes them. Do not edit that file by hand.
