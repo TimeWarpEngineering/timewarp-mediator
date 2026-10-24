@@ -76,7 +76,7 @@ TWM009. See `documentation/diagnostics.md`.
 - Tests, benchmarks, samples and the dev CLI: `net10.0`
 
 ### Key Dependencies
-- Microsoft.Extensions.DependencyInjection.Abstractions (version pinned in `Directory.Packages.props`; central package management)
+- Microsoft.Extensions.DependencyInjection (test, benchmark, sample and smoke hosts; version pinned in `Directory.Packages.props`). A Host-profile consumer needs `Microsoft.Extensions.DependencyInjection.Abstractions` (TWM008).
 - Microsoft.CodeAnalysis.CSharp 4.8.0 floor for the shipped analyzers/generators (`VersionOverride`)
 
 ### Build Properties

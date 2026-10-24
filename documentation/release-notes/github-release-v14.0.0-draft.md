@@ -94,7 +94,7 @@ Full matrix and steps:
 6. Optional: `[MediatorScope(typeof(ClientPipeline))]` and
    `AddGeneratedMediator<ClientPipeline>()` for a named pipeline.
 7. Optional: `<TimeWarpMediatorProfile>Aot</TimeWarpMediatorProfile>` and the Aot limits in
-   [generated-vs-legacy.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md).
+   [generated-vs-legacy.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v14.0.0/documentation/generated-vs-legacy.md).
 
 From MediatR rather than from 13.x: `using MediatR;` becomes `using TimeWarp.Mediator;`, and
 `AddMediatR` becomes `AddMediator`. That rename is the 13.x guide at the top of the same file.

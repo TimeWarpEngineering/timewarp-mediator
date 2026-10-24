@@ -13,7 +13,7 @@ generated path is trim and NativeAOT safe. This project is a fork of
 
 | Package | Use it for |
 |---------|------------|
-| [TimeWarp.Mediator.Contracts](https://www.nuget.org/packages/TimeWarp.Mediator.Contracts) | Message, handler and pipeline interfaces, `ISender` / `IPublisher` / `IMediator`, membership attributes. Needed by both stacks. |
+| [TimeWarp.Mediator.Contracts](https://www.nuget.org/packages/TimeWarp.Mediator.Contracts) | Message, handler and pipeline interfaces, `ISender` / `IPublisher` / `IMediator`, membership attributes. Needed by every host and message library. |
 | [TimeWarp.Mediator.Generators](https://www.nuget.org/packages/TimeWarp.Mediator.Generators) | Source generator for the compile-time mediator (`AddGeneratedMediator()`). Bundles the analyzers. |
 | [TimeWarp.Mediator.Analyzers](https://www.nuget.org/packages/TimeWarp.Mediator.Analyzers) | TWM001–TWM004 for libraries that do not run the generator. |
 
