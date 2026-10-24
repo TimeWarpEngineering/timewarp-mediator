@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 2189
+- Lines changed: 1172
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
@@ -17,6 +17,14 @@
 **Effort:** 3
 **Reviewer roster:** general. Two independent general passes ran in parallel, split by file: (a) extraction (`candidate-extractor.cs`, `type-model.cs`, `candidate-facts.cs`, `referenced-assembly-candidates.cs`), (b) graph and emitters (`candidate-graph.cs`, `emission-graph.cs`, emitter diffs). The orchestrator owned the pipeline, props, tests, and verification.
 **Session IDs:** review oracle (claude-opus-5-5, Claude Code headless); subagents aee4966440ea66a39 (general-a), a0e0c0b5a6062138b (general-b)
+
+## Scope — round 2
+
+**Date:** 2026-10-24
+**Diff scope:** fix delta `be72432..a1979f8` (`fix: match generator facts to the symbol walk`), re-verifying M1–M12 and scanning the delta for new defects.
+**Effort:** 3 (budget by diff: 1172 lines). **Roster:** general, as a single pass by the review oracle. The comparison reference is `source/timewarp-mediator-analyzers/message-graph-builder.cs`.
+**Verification run:** `./bin/dev build`, `./bin/dev test` (57 + 42 + 69 passed), and `./bin/dev pack` (package smoke exited 0).
+**Session IDs:** review-2 oracle (claude-opus-5-5, Claude Code headless; session id not reported).
 
 ## Ground rules
 

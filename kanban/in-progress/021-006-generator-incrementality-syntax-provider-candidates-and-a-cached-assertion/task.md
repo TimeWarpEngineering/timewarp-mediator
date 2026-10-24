@@ -54,7 +54,8 @@ finding F9; gate in section 9.
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12
-- Fix pass: M1–M12 implemented on this branch. Round 2 has not run.
+- Fix pass: M1–M12 implemented on this branch (a1979f8).
+- Round 2: M1–M12 verified fixed. New nits M13 and M14 are wontfix. 0 open. Disposition: accepted-exceptions.
 
 ## Notes
 
@@ -72,7 +73,29 @@ Each handler match carries `ResolveScope` of the message. Facts are ordered by a
 
 Tracking names are unchanged: `TimeWarpMediator.Options`, `HostCandidates`, `ReferencedAssemblies`, `Model`, `Sources`, `Diagnostics`.
 
-`./bin/dev workflow --mode pr` succeeded: clean, build with 0 warnings, tests 57 + 42 + 69, both samples, and pack. Package smoke printed `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator` and exited 0, which includes the host membership and host behavior checks. `ganda repo audit` passed (32 passed, 0 failed). The pull request is the host open-pr node. Round 2 has not run.
+`./bin/dev workflow --mode pr` succeeded: clean, build with 0 warnings, tests 57 + 42 + 69, both samples, and pack. Package smoke printed `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator` and exited 0, which includes the host membership and host behavior checks. `ganda repo audit` passed (32 passed, 0 failed). The pull request is the host open-pr node.
+
+### Review disposition
+
+- **Outcome:** accepted-exceptions. 2 rounds. Final open count: 0.
+- **Roster and effort:**
+  - Round 1: effort 3, roster general, two parallel general passes split by file.
+  - Round 2: effort 3, roster general, one pass over the fix delta `be72432..a1979f8`.
+- **Final counts:**
+
+  | Severity | fixed | wontfix | open |
+  |----------|-------|---------|------|
+  | bug | 6 | 0 | 0 |
+  | suggestion | 1 | 0 | 0 |
+  | nit | 5 | 2 | 0 |
+
+- **Wontfix:**
+  - M13: a dead `MembershipOptions.HostAssemblyName` option. It has no behavior effect, and removing it changes the Analyzers public surface, so it is deferred to cleanup.
+  - M14: an unused `RequestModel` parameter in a private helper.
+  - The review oracle decided both.
+- **Round 2 verification:** `./bin/dev build` clean; `./bin/dev test` 57 + 42 + 69 passed; `./bin/dev pack` succeeded, and package smoke exited 0.
+- **Follow-up candidate (not blocking):** the `ExtractBehavior` `GetAttributes` index can go stale across files during IDE incremental runs. It affects only the same-`Order` tie-break.
+- **Paths:** `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -87,4 +110,5 @@ Expect: `UnrelatedEdit_LeavesModelCached_AndSourcesCached` passes with the model
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T11:41:19Z
 - Review oracle round 1: claude-opus-5-5 (Claude Code headless), effort 3, roster general. Subagents aee4966440ea66a39 (general-a, extraction) and a0e0c0b5a6062138b (general-b, graph/emitters). 12 open findings; fix pass needed — 2026-10-24
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-24T11:52:54Z
-- Fix pass (implement-fix-2): 01a16dc1-b941-7e80-b3a6-619a113fcc54 (2026-10-24). M1–M12 implemented. Workflow and audit green. Round 2 not run.
+- Fix pass (implement-fix-2): 01a16dc1-b941-7e80-b3a6-619a113fcc54 (2026-10-24). M1–M12 implemented. Workflow and audit green.
+- Review oracle round 2: reviewer-claude (claude-opus-5-5, Claude Code headless), effort 3, roster general, max-turns 200, session not reported. M1–M12 fixed, M13 and M14 wontfix, disposition accepted-exceptions — 2026-10-24
