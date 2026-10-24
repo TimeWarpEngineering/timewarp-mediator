@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 10797
-- Effort: 3
+- Lines changed: 35
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -17,6 +17,8 @@
 **Effort:** 3 (by-diff budget); roster axes: general only
 **Reviewer roster:** general (review oracle, claude-opus-5-5)
 **Session IDs:** review oracle session not reported by host
+
+**Round 2 scope:** fix-pass delta `8fe815f..e1d0eb4` (04bdae6 product prose plus one MSBuild line, e1d0eb4 kanban). The Budget above is for this delta: 35 lines, effort 1, general. The round-1 Effort 3 line above records round 1.
 
 ## Ground rules
 

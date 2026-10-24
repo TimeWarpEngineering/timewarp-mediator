@@ -54,6 +54,7 @@ Parent review task 021, findings F1 and F16; decision D1 signed off 2026-10-23 (
 ## Review
 
 - Round 1: fix pass applied M1, M2, M3, M5. M4 and M6 stay wontfix (021-005 and 021-007).
+- Round 2: all four fixes verified, no new findings. Disposition `accepted-exceptions` (0 open; M4 and M6 wontfix).
 
 ## Notes
 
@@ -71,6 +72,7 @@ because the surviving contracts still carry MediatR-derived code.
 - Review round 1 (2026-10-24): review oracle (claude, model claude-opus-5-5), effort 3, roster general, session not reported. Re-ran `./bin/dev build`, `test --no-build`, and `pack --no-build`; all green. Found 0 bugs, 1 suggestion, 5 nits. M4 and M6 are `wontfix` (deferred to 021-005 and 021-007). M1, M2, M3, and M5 are open and need a fix pass. Files: `review/review-framework.md` and `review/round-1/{general,merged}.md`.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-24T08:43:56Z
 - 2026-10-24: fix pass for review round 1. M1 names the full `Microsoft.Extensions.DependencyInjection` pin in `agent.md` and notes the Host-profile Abstractions requirement (TWM008). M2 changes the Contracts row from "both stacks" to "every host and message library". M3 deletes the dead `SignAssembly` override in `.githooks/Directory.Build.props`. M5 repoints the three 14.0.0 release-note links at the `v14.0.0` blob of `generated-vs-legacy.md`. M4 and M6 stay wontfix.
+- Review round 2 (2026-10-24): review oracle (claude, model claude-opus-5-5), effort 1 (by-diff, 35 lines), roster general, session not reported. Reviewed the fix-pass delta `8fe815f..e1d0eb4`. M1, M2, M3, and M5 are verified fixed, and there are no new findings. The goal restatement matches the Requirements, with no new misread. Disposition: `accepted-exceptions`. Files: `review/round-2/{general,merged}.md` and `review/disposition.md`.
 
 ## Learnings
 
@@ -87,6 +89,13 @@ Analyzer `InternalsVisibleTo` for `TimeWarp.Mediator.Generators`, and generator 
 `./bin/dev workflow` (clean, build, test, verify-samples, pack) succeeded on the deletion commit. Tests: generators 57, analyzers 42, compilation 88, Roslyn floor 89, all passed. Samples `aot` and `named-pipelines` ran. Pack verified the three nupkgs and the package smoke printed `package-pong`. `ganda repo audit` passes.
 
 Review round 1 fix pass (M1, M2, M3, M5): `agent.md` names the full `Microsoft.Extensions.DependencyInjection` pin used by the test, benchmark, sample, and smoke hosts, and notes that a Host-profile consumer needs Abstractions (TWM008). The Contracts row says the package is needed by every host and message library. `.githooks/Directory.Build.props` no longer sets `SignAssembly`. The three links in the 14.0.0 release notes and the GitHub release draft point at `https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v14.0.0/documentation/generated-vs-legacy.md`. Tag `v14.0.0` (`96e3e427`) still contains that file. M4 and M6 stay wontfix. The fix pass did not re-run `./bin/dev workflow`; the delta is prose plus one dead MSBuild property outside the solution. This pass re-ran `ganda repo audit` (32 passed, 0 failed). `git grep` for `SignAssembly` outside `kanban/` and `documentation/archive`, and for `both stacks` in `readme.md` and `agent.md`, printed no lines. The three release-note links use the `v14.0.0` blob.
+
+### Review disposition
+
+- Rounds: 2. Round 1 ran at effort 3 and round 2 at effort 1. Roster: general (review oracle, claude-opus-5-5).
+- Final counts: bug 0. Suggestion: 1 fixed (M1). Nit: 3 fixed (M2, M3, M5) and 2 wontfix (M4, M6). Open: 0.
+- Disposition: **accepted-exceptions**. M4 (TWM009 and stream text) is deferred to 021-005 and 021-007. M6 (the stale baseline Ratio column; the gate reads only Mean and Allocated) is deferred to the 021-007 re-record.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md` (final ledger), and `review/disposition.md`.
 
 ### How to validate
 
