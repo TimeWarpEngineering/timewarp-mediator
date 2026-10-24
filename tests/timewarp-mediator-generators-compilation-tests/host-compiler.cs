@@ -5,6 +5,9 @@
 #region Design
 // A host runs the generator and the analyzer. TimeWarpMediatorGenerator=true makes the analyzer
 // leave TWM001–TWM003 to the generator. Diagnostics here are both.
+// The generator keys host membership on the compilation assembly name. The
+// TimeWarpMediatorAssemblyName property is still supplied so an empty value can be tested,
+// and it is not what decides membership.
 #endregion
 
 namespace TimeWarp.Mediator.Generators.Compilation.Tests;
@@ -33,20 +36,50 @@ internal static class HostCompiler
     return CompileWithReferences(assemblyName, source, GetBaseReferences().Concat(hostReferences));
   }
 
+  internal static HostCompilation Compile(
+      string assemblyName,
+      string source,
+      string hostAssemblyNameProperty,
+      params MetadataReference[] hostReferences)
+  {
+    return CompileWithReferences(
+        assemblyName,
+        source,
+        GetBaseReferences().Concat(hostReferences),
+        hostAssemblyNameProperty: hostAssemblyNameProperty);
+  }
+
+  internal static HostCompilation CompileSigned(
+      string assemblyName,
+      string source,
+      ImmutableArray<byte> publicKey,
+      params MetadataReference[] hostReferences)
+  {
+    CSharpCompilationOptions options = CompilationOptions.WithCryptoPublicKey(publicKey);
+    return CompileWithReferences(
+        assemblyName,
+        source,
+        GetBaseReferences().Concat(hostReferences),
+        compilationOptions: options);
+  }
+
   // Exact reference set, for hosts that are missing TimeWarp.Mediator or the MS.DI abstractions.
   internal static HostCompilation CompileWithReferences(
       string assemblyName,
       string source,
       IEnumerable<MetadataReference> references,
-      string generatedNamespace = DefaultNamespace)
+      string generatedNamespace = DefaultNamespace,
+      string? hostAssemblyNameProperty = null,
+      CSharpCompilationOptions? compilationOptions = null)
   {
     CSharpCompilation compilation = CSharpCompilation.Create(
         assemblyName,
         syntaxTrees: new[] { CSharpSyntaxTree.ParseText(source, ParseOptions) },
         references: references,
-        options: CompilationOptions);
+        options: compilationOptions ?? CompilationOptions);
+    string propertyName = hostAssemblyNameProperty ?? assemblyName;
 
-    GeneratorDriver driver = CreateDriver(generatedNamespace: generatedNamespace);
+    GeneratorDriver driver = CreateDriver(generatedNamespace: generatedNamespace, assemblyName: propertyName);
 
     driver.RunGeneratorsAndUpdateCompilation(
         compilation,
@@ -56,7 +89,7 @@ internal static class HostCompiler
     ImmutableArray<Diagnostic> analyzerDiagnostics = output
         .WithAnalyzers(
             ImmutableArray.Create<DiagnosticAnalyzer>(new TimeWarp.Mediator.Analyzers.RequestHandlerAnalyzer()),
-            new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(generatedNamespace)))
+            new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(generatedNamespace, propertyName)))
         .GetAnalyzerDiagnosticsAsync()
         .GetAwaiter()
         .GetResult();
@@ -68,23 +101,25 @@ internal static class HostCompiler
 
   internal static GeneratorDriver CreateDriver(
       bool trackSteps = false,
-      string generatedNamespace = DefaultNamespace)
+      string generatedNamespace = DefaultNamespace,
+      string assemblyName = "IncrementalHost")
   {
     return CSharpGeneratorDriver.Create(
         generators: new[] { new MediatorGenerator().AsSourceGenerator() },
         additionalTexts: null,
         parseOptions: ParseOptions,
-        optionsProvider: CreateOptionsProvider(generatedNamespace),
+        optionsProvider: CreateOptionsProvider(generatedNamespace, assemblyName),
         driverOptions: new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: trackSteps));
   }
 
-  private static AnalyzerConfigOptionsProvider CreateOptionsProvider(string generatedNamespace)
+  private static AnalyzerConfigOptionsProvider CreateOptionsProvider(string generatedNamespace, string assemblyName)
   {
     return new BuildPropertyOptionsProvider(new Dictionary<string, string>
     {
       ["build_property.TimeWarpMediatorAssembly"] = "true",
       ["build_property.TimeWarpMediatorGenerator"] = "true",
       ["build_property.TimeWarpMediatorNamespace"] = generatedNamespace,
+      ["build_property.TimeWarpMediatorAssemblyName"] = assemblyName,
     });
   }
 

@@ -16,6 +16,7 @@ public sealed class GeneratorDiagnosticsTests
     host.Diagnostics.ShouldNotContain(d => d.Id == "CS0122" || d.Id == "TWM001");
     Diagnostic error = Errors(host).ShouldHaveSingleItem();
     error.Id.ShouldBe("TWM007");
+    error.Location.ShouldBe(Location.None);
     error.GetMessage().ShouldContain("Members.HiddenHandler");
     error.GetMessage().ShouldContain("InternalMember");
     error.GetMessage().ShouldContain("InternalsVisibleTo(\"InternalHost\")");

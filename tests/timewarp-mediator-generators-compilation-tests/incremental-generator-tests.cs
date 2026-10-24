@@ -2,12 +2,18 @@
 // The generator pipeline is incremental and TWM001–TWM003 have one reporter in a host (013-011).
 #endregion
 
+#region Design
+// Cached means the step did not run. An unrelated file matches no syntax predicate and does not
+// change metadata references, so host candidates, referenced assemblies, and the model stay Cached.
+// A new handler matches the type predicate, so those steps are Modified.
+#endregion
+
 namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 public sealed class IncrementalGeneratorTests
 {
   [Fact]
-  public void UnrelatedEdit_LeavesModelUnchanged_AndSourcesCached()
+  public void UnrelatedEdit_LeavesModelCached_AndSourcesCached()
   {
     CSharpCompilation compilation = CreateCompilation(HostSource);
     GeneratorDriver driver = HostCompiler.CreateDriver(trackSteps: true).RunGenerators(compilation);
@@ -19,7 +25,9 @@ public sealed class IncrementalGeneratorTests
 
     GeneratorRunResult result = driver.GetRunResult().Results.ShouldHaveSingleItem();
     Reasons(result, TrackingNames.Options).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
-    Reasons(result, TrackingNames.Model).ShouldAllBe(reason => reason == IncrementalStepRunReason.Unchanged);
+    Reasons(result, TrackingNames.HostCandidates).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
+    Reasons(result, TrackingNames.ReferencedAssemblies).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
+    Reasons(result, TrackingNames.Model).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
     Reasons(result, TrackingNames.Sources).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
     IncrementalStepRunReason[] emitReasons = result.TrackedOutputSteps.SelectMany(pair => pair.Value)
         .Where(step => step.Inputs.Any(input => input.Source.Name == TrackingNames.Sources))
@@ -41,6 +49,8 @@ public sealed class IncrementalGeneratorTests
         CSharpSyntaxTree.ParseText(NewHandlerSource, HostCompiler.ParseOptions, path: "Pong.cs")));
 
     GeneratorRunResult result = driver.GetRunResult().Results.ShouldHaveSingleItem();
+    Reasons(result, TrackingNames.HostCandidates).ShouldAllBe(reason => reason == IncrementalStepRunReason.Modified);
+    Reasons(result, TrackingNames.ReferencedAssemblies).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
     Reasons(result, TrackingNames.Model).ShouldAllBe(reason => reason == IncrementalStepRunReason.Modified);
     Reasons(result, TrackingNames.Sources).ShouldAllBe(reason => reason == IncrementalStepRunReason.Modified);
     result.GeneratedSources.ShouldContain(source => source.SourceText.ToString().Contains("App.PongHandler"));

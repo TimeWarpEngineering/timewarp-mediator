@@ -5,19 +5,19 @@
 #region Design
 // A `case Base x:` before `case Derived y:` is CS8120, and an `if (o is Base)` chain would run the
 // base branch first. Kahn's algorithm over "derived must precede its bases" edges; among ready types
-// the ordinal display name wins, so output is deterministic. Assignability is the base-class chain
-// plus AllInterfaces (exact symbol match). Generic variance (IEvent<out T>) is not modelled.
+// the ordinal fully qualified name wins, so output is deterministic. Assignability is the copied
+// base-class chain plus interface keys (exact type key). Generic variance (IEvent<out T>) is not modelled.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
 
 internal static class TypeOrder
 {
-  internal static List<INamedTypeSymbol> MostDerivedFirst(IEnumerable<INamedTypeSymbol> source)
+  internal static List<TypeModel> MostDerivedFirst(IEnumerable<TypeModel> source)
   {
-    List<INamedTypeSymbol> types = new();
-    HashSet<INamedTypeSymbol> seen = new(SymbolEqualityComparer.Default);
-    foreach (INamedTypeSymbol type in source)
+    List<TypeModel> types = new();
+    HashSet<TypeModel> seen = new(TypeModelKeyComparer.Instance);
+    foreach (TypeModel type in source)
     {
       if (seen.Add(type))
       {
@@ -25,7 +25,7 @@ internal static class TypeOrder
       }
     }
 
-    types.Sort((left, right) => string.CompareOrdinal(Fq(left), Fq(right)));
+    types.Sort((left, right) => string.CompareOrdinal(left.FullyQualified, right.FullyQualified));
 
     // pending[i] = how many other types in the set derive from types[i] and are not yet emitted.
     int[] pending = new int[types.Count];
@@ -40,7 +40,7 @@ internal static class TypeOrder
       }
     }
 
-    List<INamedTypeSymbol> ordered = new(types.Count);
+    List<TypeModel> ordered = new(types.Count);
     bool[] emitted = new bool[types.Count];
     while (ordered.Count < types.Count)
     {
@@ -81,34 +81,29 @@ internal static class TypeOrder
     return ordered;
   }
 
-  internal static bool DerivesFrom(INamedTypeSymbol derived, INamedTypeSymbol baseType)
+  internal static bool DerivesFrom(TypeModel derived, TypeModel baseType)
   {
-    if (SymbolEqualityComparer.Default.Equals(derived, baseType))
+    if (TypeModels.Same(derived, baseType))
     {
       return false;
     }
 
-    for (INamedTypeSymbol? current = derived.BaseType; current is not null; current = current.BaseType)
+    foreach (string key in derived.BaseKeys)
     {
-      if (SymbolEqualityComparer.Default.Equals(current, baseType))
+      if (key == baseType.Key)
       {
         return true;
       }
     }
 
-    foreach (INamedTypeSymbol candidate in derived.AllInterfaces)
+    foreach (string key in derived.InterfaceKeys)
     {
-      if (SymbolEqualityComparer.Default.Equals(candidate, baseType))
+      if (key == baseType.Key)
       {
         return true;
       }
     }
 
     return false;
-  }
-
-  private static string Fq(INamedTypeSymbol type)
-  {
-    return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
   }
 }

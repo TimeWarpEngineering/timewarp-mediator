@@ -3,10 +3,10 @@
 #endregion
 
 #region Design
-// The graph needs whole-program symbol information (referenced member assemblies, generic
-// constraint checks when closing behaviors), so it is built from the Compilation and rendered to
-// strings in one semantic step. Everything that step returns is strings and value records, so an
-// edit that does not change the generated text or the diagnostics compares equal and the
+// The model step is a pure function of equatable host facts, referenced-assembly facts, and
+// membership options. It does not take a Compilation: that input would re-run the step on every
+// edit (Unchanged) instead of skipping it (Cached). The step returns strings and value records,
+// so an edit that does not change the generated text or the diagnostics compares equal and the
 // AddSource step is cached: no re-emission and no re-parse of the generated trees.
 // Diagnostics keep their final message text and a file path + span instead of a Location (which
 // holds a SyntaxTree). The diagnostics output re-attaches that span to the matching tree.

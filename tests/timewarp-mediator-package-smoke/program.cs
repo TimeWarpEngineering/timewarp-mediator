@@ -16,6 +16,8 @@ using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Mediator;
 using TimeWarp.Mediator.Generated;
 
+[assembly: MediatorBehavior(typeof(SmokeBehavior<,>))]
+
 ServiceCollection services = new();
 services.AddGeneratedMediator();
 using ServiceProvider provider = services.BuildServiceProvider();
@@ -43,6 +45,29 @@ if (entry.Kind != MediatorManifest.KindRequest || entry.Response != "string")
   return 1;
 }
 
+string assemblyName = typeof(SmokePing).Assembly.GetName().Name ?? string.Empty;
+int membership = MediatorManifest.Json.IndexOf("\"membership\":[", StringComparison.Ordinal);
+if (membership < 0 || MediatorManifest.Json.IndexOf("\"" + assemblyName + "\"", membership, StringComparison.Ordinal) < 0)
+{
+  await Console.Error.WriteLineAsync($"Host '{assemblyName}' is not a manifest member: {MediatorManifest.Json}");
+  return 1;
+}
+
+bool behaviorWoven = false;
+foreach (string behavior in entry.Behaviors)
+{
+  if (behavior == "SmokeBehavior<SmokePing, string>")
+  {
+    behaviorWoven = true;
+  }
+}
+
+if (!behaviorWoven)
+{
+  await Console.Error.WriteLineAsync("Host behavior SmokeBehavior<SmokePing, string> was not woven.");
+  return 1;
+}
+
 Console.WriteLine($"package-smoke: {reply} via {typeof(Mediator).FullName}");
 return 0;
 
@@ -52,4 +77,13 @@ public sealed class SmokePingHandler : IRequestHandler<SmokePing, string>
 {
   public ValueTask<string> Handle(SmokePing request, CancellationToken cancellationToken) =>
       ValueTask.FromResult(request.Message + "-pong");
+}
+
+public sealed class SmokeBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : notnull
+{
+  public ValueTask<TResponse> Handle(
+      TRequest request,
+      MessageHandlerDelegate<TRequest, TResponse> next,
+      CancellationToken cancellationToken) => next(request, cancellationToken);
 }

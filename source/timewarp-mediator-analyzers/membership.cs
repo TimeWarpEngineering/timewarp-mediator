@@ -23,6 +23,7 @@ public sealed class Membership
   public const string MsBuildPropertyName = "build_property.TimeWarpMediatorAssembly";
   public const string NamespacePropertyName = "build_property.TimeWarpMediatorNamespace";
   public const string GeneratorPropertyName = "build_property.TimeWarpMediatorGenerator";
+  public const string AssemblyNamePropertyName = "build_property.TimeWarpMediatorAssemblyName";
 
   private Membership(
       IAssemblySymbol compilationAssembly,

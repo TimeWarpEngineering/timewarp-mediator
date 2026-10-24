@@ -10,45 +10,47 @@
 // order. A further clash (vanishingly rare) appends an index in ordinal display-name order.
 // Notification handler types are omitted. No emitted member is named from them, and including
 // them would hash-suffix a Dispatch_* or Publish_* name that only collides with a handler.
+// Identity is the type key, not record equality, so a declaration copy and a closed copy of the
+// same type share one name.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
 
 internal sealed class MemberNames
 {
-  private readonly Dictionary<INamedTypeSymbol, string> Names = new(SymbolEqualityComparer.Default);
+  private readonly Dictionary<TypeModel, string> Names = new(TypeModelKeyComparer.Instance);
 
-  public MemberNames(MessageGraph graph)
+  public MemberNames(EmissionGraph graph)
   {
-    List<INamedTypeSymbol> types = new();
-    HashSet<INamedTypeSymbol> seen = new(SymbolEqualityComparer.Default);
-    foreach (RequestBinding request in graph.Requests)
+    List<TypeModel> types = new();
+    HashSet<TypeModel> seen = new(TypeModelKeyComparer.Instance);
+    foreach (EmissionRequest request in graph.Requests)
     {
       Add(types, seen, request.RequestType);
       Add(types, seen, request.HandlerType);
       Add(types, seen, request.ScopeType);
     }
 
-    foreach (NotificationBinding notification in graph.Notifications)
+    foreach (EmissionNotification notification in graph.Notifications)
     {
       Add(types, seen, notification.NotificationType);
       Add(types, seen, notification.ScopeType);
     }
 
-    types.Sort((left, right) => string.CompareOrdinal(Fq(left), Fq(right)));
+    types.Sort((left, right) => string.CompareOrdinal(left.FullyQualified, right.FullyQualified));
 
     Dictionary<string, int> counts = new(StringComparer.Ordinal);
-    foreach (INamedTypeSymbol type in types)
+    foreach (TypeModel type in types)
     {
-      string sanitized = MessageGraphBuilder.Sanitize(type);
+      string sanitized = Sanitize(type.FullyQualified);
       counts[sanitized] = counts.TryGetValue(sanitized, out int count) ? count + 1 : 1;
     }
 
     HashSet<string> taken = new(StringComparer.Ordinal);
-    List<INamedTypeSymbol> colliding = new();
-    foreach (INamedTypeSymbol type in types)
+    List<TypeModel> colliding = new();
+    foreach (TypeModel type in types)
     {
-      string sanitized = MessageGraphBuilder.Sanitize(type);
+      string sanitized = Sanitize(type.FullyQualified);
       if (counts[sanitized] == 1)
       {
         Names[type] = sanitized;
@@ -60,9 +62,9 @@ internal sealed class MemberNames
       }
     }
 
-    foreach (INamedTypeSymbol type in colliding)
+    foreach (TypeModel type in colliding)
     {
-      string candidate = MessageGraphBuilder.Sanitize(type) + "_" + StableHash(Fq(type));
+      string candidate = Sanitize(type.FullyQualified) + "_" + StableHash(type.FullyQualified);
       string name = candidate;
       int index = 1;
       while (!taken.Add(name))
@@ -75,12 +77,12 @@ internal sealed class MemberNames
     }
   }
 
-  public string For(INamedTypeSymbol type)
+  public string For(TypeModel type)
   {
-    return Names.TryGetValue(type, out string? name) ? name : MessageGraphBuilder.Sanitize(type);
+    return Names.TryGetValue(type, out string? name) ? name : Sanitize(type.FullyQualified);
   }
 
-  private static void Add(List<INamedTypeSymbol> types, HashSet<INamedTypeSymbol> seen, INamedTypeSymbol? type)
+  private static void Add(List<TypeModel> types, HashSet<TypeModel> seen, TypeModel? type)
   {
     if (type is not null && seen.Add(type))
     {
@@ -88,9 +90,23 @@ internal sealed class MemberNames
     }
   }
 
-  private static string Fq(INamedTypeSymbol type)
+  // Same character map as MessageGraphBuilder.Sanitize, over the fully qualified display string.
+  private static string Sanitize(string fullyQualified)
   {
-    return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    StringBuilder builder = new(fullyQualified.Length);
+    foreach (char c in fullyQualified)
+    {
+      if (char.IsLetterOrDigit(c))
+      {
+        builder.Append(c);
+      }
+      else
+      {
+        builder.Append('_');
+      }
+    }
+
+    return builder.ToString().Trim('_');
   }
 
   private static string StableHash(string value)
