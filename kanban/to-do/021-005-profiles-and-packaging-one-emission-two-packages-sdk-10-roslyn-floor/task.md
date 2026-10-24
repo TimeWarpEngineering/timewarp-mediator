@@ -77,8 +77,7 @@ release note.
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8
 - Fix pass: M1–M8 applied on this id. M9 stays wontfix for 021-007.
-- Round 2: Done. M1–M8 verified fixed, no new findings. Disposition: accepted-exceptions (M9).
-
+- Round 2: Done
 ## Notes
 
 Parent: 021. Depends on: 021-004 (the old `TimeWarp.Mediator` package id must be free before
