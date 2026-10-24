@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1746
-- Effort: 3
+- Lines changed: 281
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Task 021-005
 
@@ -25,6 +25,14 @@ read-only general-purpose sub-agent briefed with the task requirements but not w
 findings). Both passes write into `round-N/general.md`.
 **Session IDs:** reviewer-claude review oracle (headless, claude-opus-5-5), session id not
 exposed in print mode; sub-agent a489660e36348b5b0.
+
+### Round 2
+
+**Diff scope:** the fix delta `969c4d8..07088c4` (round-1 `base.sha` to HEAD), kanban paths
+excluded. The budget above is this round's: 281 lines, effort 2, turn cap 120.
+**Reviewer roster:** general (review oracle only).
+**Session IDs:** reviewer-claude review oracle (headless, claude-opus-5-5), session id not
+exposed in print mode.
 
 ### Ground rules
 

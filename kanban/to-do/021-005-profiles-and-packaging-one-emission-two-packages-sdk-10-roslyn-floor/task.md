@@ -77,6 +77,7 @@ release note.
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8
 - Fix pass: M1–M8 applied on this id. M9 stays wontfix for 021-007.
+- Round 2: Done. M1–M8 verified fixed, no new findings. Disposition: accepted-exceptions (M9).
 
 ## Notes
 
@@ -142,10 +143,21 @@ pass's claim; `review/round-1/merged.md` stays the round-1 ledger.
 
 The implementation matches the original task and the implementer restatement. No misread was found.
 
+Round 2 (effort 2, roster general, one pass by the review oracle) reviewed the fix delta
+`969c4d8..07088c4`. It confirmed M1–M8 fixed against the repo and found no new defects.
+`./bin/dev workflow` finished with `Pipeline SUCCEEDED`: 0 build warnings, and the generators
+(57), analyzers (42), and compilation (56) tests passed with 0 failed. Both nupkg layouts were
+verified, and the package smoke and the AOT sample ran. The final counts are the table above,
+confirmed by `review/round-2/merged.md`.
+
+**Disposition: accepted-exceptions.** 2 rounds, 0 open. The one exception is M9 (wontfix,
+suggestion), because 021-007 owns the stale docs and readmes.
+
 Artifacts:
 - `review/review-framework.md`
-- `review/round-1/general.md`
-- `review/round-1/merged.md` (live ledger)
+- `review/round-1/general.md`, `review/round-1/merged.md`
+- `review/round-2/general.md`, `review/round-2/merged.md` (final ledger)
+- `review/disposition.md`
 
 ## Session
 
@@ -160,3 +172,6 @@ Artifacts:
 - Fix pass: implement-fix-2 (grok, model grok-4.7). `./bin/dev workflow` Pipeline SUCCEEDED
   (analyzers 42, generators 57, compilation 56). `ganda repo audit` Passed 32, Failed 0, Skipped 2.
   M1–M8 applied; M9 left for 021-007 (2026-10-24).
+- Review oracle round 2: reviewer-claude (claude-opus-5-5, headless), effort 2, roster general,
+  turn cap 120, session not reported. Reviewed the fix delta and ran `./bin/dev workflow`
+  (green). No new findings. Disposition: accepted-exceptions (M9) (2026-10-24).
