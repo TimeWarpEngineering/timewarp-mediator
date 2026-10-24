@@ -54,8 +54,7 @@ Parent review task 021, findings F1 and F16; decision D1 signed off 2026-10-23 (
 ## Review
 
 - Round 1: fix pass applied M1, M2, M3, M5. M4 and M6 stay wontfix (021-005 and 021-007).
-- Round 2: all four fixes verified, no new findings. Disposition `accepted-exceptions` (0 open; M4 and M6 wontfix).
-
+- Round 2: Done
 ## Notes
 
 Parent: 021. Depends on: 021-003 (the generated dispatcher must be the complete replacement
