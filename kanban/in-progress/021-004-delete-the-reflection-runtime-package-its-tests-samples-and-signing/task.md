@@ -61,6 +61,12 @@ because the surviving contracts still carry MediatR-derived code.
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
 - 2026-10-24: implementer oracle removed the reflection runtime, its tests, the legacy benchmark, the container samples, and strong-name signing. Living docs no longer tell a host to call `AddMediator()`. `./bin/dev workflow` succeeded. `ganda repo audit --fix` dropped the orphaned `Microsoft.Extensions.DependencyInjection.Abstractions` package version.
 - 2026-10-24: restored the executable bit on `tools/dev-cli/dev.cs`. The removal edit rewrote that shebang runfile as a normal file, and the attest hook will not sign until it is executable again.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T08:38:33Z
+- Review round 1 (2026-10-24): review oracle (claude, model claude-opus-5-5), effort 3, roster general, session not reported. Re-ran `./bin/dev build`, `test --no-build`, and `pack --no-build`; all green. Found 0 bugs, 1 suggestion, 5 nits. M4 and M6 are `wontfix` (deferred to 021-005 and 021-007). M1, M2, M3, and M5 are open and need a fix pass. Files: `review/review-framework.md` and `review/round-1/{general,merged}.md`.
+
+## Learnings
+
+- Misread (review round 1): the `## Goal (implementer restatement)` acceptance list leaves out the requirement "Drop `Microsoft.Extensions.DependencyInjection` (full container) from the remaining projects where only Abstractions is needed". Results do cover it: every remaining full-DI project builds a `ServiceCollection`, so none can drop. The restatement also narrows "remove `InternalsVisibleTo`" to the strong-name pairing for the runtime tests. That reading is reasonable, because generator and analyzer friend assemblies are how the tests compile, but it should be stated as a deliberate narrowing. The restatement should list every Requirements bullet, even one that ends up a no-op.
 
 ## Results
 
