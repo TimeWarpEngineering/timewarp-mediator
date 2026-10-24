@@ -60,6 +60,7 @@ because the surviving contracts still carry MediatR-derived code.
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
 - 2026-10-24: implementer oracle removed the reflection runtime, its tests, the legacy benchmark, the container samples, and strong-name signing. Living docs no longer tell a host to call `AddMediator()`. `./bin/dev workflow` succeeded. `ganda repo audit --fix` dropped the orphaned `Microsoft.Extensions.DependencyInjection.Abstractions` package version.
+- 2026-10-24: restored the executable bit on `tools/dev-cli/dev.cs`. The removal edit rewrote that shebang runfile as a normal file, and the attest hook will not sign until it is executable again.
 
 ## Results
 
