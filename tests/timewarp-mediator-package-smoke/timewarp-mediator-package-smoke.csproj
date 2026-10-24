@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="TimeWarp.Mediator.Generators" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>

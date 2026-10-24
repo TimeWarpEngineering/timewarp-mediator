@@ -1,6 +1,6 @@
 {
   // Packable projects live under source/; package ids stay PascalCase.
   "checkVersionConfig": {
-    "packages": "TimeWarp.Mediator,TimeWarp.Mediator.Contracts,TimeWarp.Mediator.Analyzers,TimeWarp.Mediator.Generators"
+    "packages": "TimeWarp.Mediator,TimeWarp.Mediator.Generators"
   }
 }

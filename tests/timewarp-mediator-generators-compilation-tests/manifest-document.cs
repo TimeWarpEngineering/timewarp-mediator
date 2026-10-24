@@ -15,14 +15,12 @@ internal sealed class ManifestDocument
 {
   private ManifestDocument(
       int version,
-      string profile,
       string generatedNamespace,
       IReadOnlyList<ManifestRequest> requests,
       IReadOnlyList<ManifestNotification> notifications,
       IReadOnlyList<string> membership)
   {
     Version = version;
-    Profile = profile;
     Namespace = generatedNamespace;
     Requests = requests;
     Notifications = notifications;
@@ -30,8 +28,6 @@ internal sealed class ManifestDocument
   }
 
   public int Version { get; }
-
-  public string Profile { get; }
 
   public string Namespace { get; }
 
@@ -50,7 +46,6 @@ internal sealed class ManifestDocument
     JsonElement root = document.RootElement;
     return new ManifestDocument(
         root.GetProperty("version").GetInt32(),
-        root.GetProperty("profile").GetString()!,
         root.GetProperty("namespace").GetString()!,
         root.GetProperty("requests").EnumerateArray().Select(ReadRequest).ToArray(),
         root.GetProperty("notifications").EnumerateArray().Select(ReadNotification).ToArray(),

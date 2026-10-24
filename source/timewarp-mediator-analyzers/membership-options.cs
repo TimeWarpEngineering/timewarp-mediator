@@ -5,7 +5,7 @@
 #region Design
 // Equatable so the generator's options step caches: an edit that leaves the build properties alone
 // does not invalidate anything downstream of it. IsGeneratorHost comes from the generator package's
-// props (TimeWarpMediatorGenerator=true): the bundled analyzer then knows the generator reports
+// props (TimeWarpMediatorGenerator=true): the analyzer then knows the generator reports
 // TWM001–TWM003 in this compilation and does not report them again.
 #endregion
 
@@ -13,15 +13,12 @@ namespace TimeWarp.Mediator.Analyzers;
 
 public sealed class MembershipOptions : IEquatable<MembershipOptions>
 {
-  public MembershipOptions(string profile, string generatedNamespace, bool isMsBuildMember, bool isGeneratorHost)
+  public MembershipOptions(string generatedNamespace, bool isMsBuildMember, bool isGeneratorHost)
   {
-    Profile = profile;
     GeneratedNamespace = generatedNamespace;
     IsMsBuildMember = isMsBuildMember;
     IsGeneratorHost = isGeneratorHost;
   }
-
-  public string Profile { get; }
 
   public string GeneratedNamespace { get; }
 
@@ -38,7 +35,6 @@ public sealed class MembershipOptions : IEquatable<MembershipOptions>
   public static MembershipOptions Read(AnalyzerConfigOptions globalOptions)
   {
     return new MembershipOptions(
-        ReadProperty(globalOptions, Membership.ProfilePropertyName) ?? "Host",
         ReadProperty(globalOptions, Membership.NamespacePropertyName) ?? "TimeWarp.Mediator.Generated",
         IsTrue(ReadProperty(globalOptions, Membership.MsBuildPropertyName)),
         IsTrue(ReadProperty(globalOptions, Membership.GeneratorPropertyName)));
@@ -47,7 +43,6 @@ public sealed class MembershipOptions : IEquatable<MembershipOptions>
   public bool Equals(MembershipOptions? other)
   {
     return other is not null
-        && Profile == other.Profile
         && GeneratedNamespace == other.GeneratedNamespace
         && IsMsBuildMember == other.IsMsBuildMember
         && IsGeneratorHost == other.IsGeneratorHost;
@@ -59,8 +54,7 @@ public sealed class MembershipOptions : IEquatable<MembershipOptions>
   {
     unchecked
     {
-      int hash = StringComparer.Ordinal.GetHashCode(Profile);
-      hash = (hash * 397) ^ StringComparer.Ordinal.GetHashCode(GeneratedNamespace);
+      int hash = StringComparer.Ordinal.GetHashCode(GeneratedNamespace);
       hash = (hash * 397) ^ (IsMsBuildMember ? 1 : 0);
       return (hash * 397) ^ (IsGeneratorHost ? 2 : 0);
     }

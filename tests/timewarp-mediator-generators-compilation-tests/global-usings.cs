@@ -13,6 +13,7 @@ global using Microsoft.CodeAnalysis;
 global using Microsoft.CodeAnalysis.CSharp;
 global using Microsoft.CodeAnalysis.Diagnostics;
 global using Microsoft.CodeAnalysis.Emit;
+global using Microsoft.Extensions.DependencyInjection;
 global using Shouldly;
 global using TimeWarp.Mediator;
 global using TimeWarp.Mediator.Generators;

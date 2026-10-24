@@ -5,13 +5,13 @@
 // Maps Build.ps1 pack + Assert-NupkgContains. Output is artifacts/packages
 // (repository.props), not the former Artifacts/. PackAsync deletes that folder
 // first so FindNupkg / push only see this run's nupkgs. Layout gate uses
-// NupkgLayoutCheck so a hollow Analyzers/Generators nupkg, or any nupkg missing
+// NupkgLayoutCheck so a hollow Generators nupkg, or any nupkg missing
 // notice/unlicense, fails the command
 // the same way the PowerShell zip asserts did. NupkgReadmeCheck then requires
-// the package's own readme.md with only absolute links. The runtime packages
+// the package's own readme.md with only absolute links. TimeWarp.Mediator
 // must ship exactly one lib/ TFM folder (RepoLayout.LibTargetFramework).
-// Contracts is the only lib package.
-// Last, the package smoke project restores Contracts + Generators from
+// The artifacts directory must contain exactly the two PackageLayout nupkgs.
+// Last, the package smoke project restores TimeWarp.Mediator + Generators from
 // artifacts/packages into a throwaway packages folder (the version is not
 // bumped per build, so the global cache could hold a stale nupkg of the same
 // version), then builds and runs as an outside consumer would.
@@ -118,6 +118,10 @@ public sealed class PackCommand : ICommand<Unit>
     private bool AssertPackageLayout()
     {
       string outputDir = Path.Combine(RepoRoot, "artifacts", "packages");
+      if (!AssertExactNupkgSet(outputDir))
+      {
+        return false;
+      }
 
       foreach ((string packageId, string[] requiredEntries) in RepoLayout.PackageLayout)
       {
@@ -210,6 +214,49 @@ public sealed class PackCommand : ICommand<Unit>
 
       Terminal.WriteLine(output.Stdout.Trim());
       return true;
+    }
+
+    private bool AssertExactNupkgSet(string outputDir)
+    {
+      string[] expected = RepoLayout.PackageLayout
+        .Select(layout => layout.PackageId)
+        .OrderBy(id => id, StringComparer.Ordinal)
+        .ToArray();
+      string[] actual = Directory.Exists(outputDir)
+        ? Directory.GetFiles(outputDir, "*.nupkg")
+          .Where(path => !path.EndsWith(".symbols.nupkg", StringComparison.OrdinalIgnoreCase))
+          .Select(path => PackageIdFromFileName(Path.GetFileName(path)))
+          .OrderBy(id => id, StringComparer.Ordinal)
+          .ToArray()
+        : [];
+
+      if (!expected.SequenceEqual(actual, StringComparer.Ordinal))
+      {
+        Terminal.WriteErrorLine(
+          $"artifacts/packages nupkgs are [{string.Join(", ", actual)}], expected [{string.Join(", ", expected)}]".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      return true;
+    }
+
+    // TimeWarp.Mediator.Generators.14.0.0.nupkg -> TimeWarp.Mediator.Generators.
+    // The version starts at the first ".<digit>" segment.
+    private static string PackageIdFromFileName(string fileName)
+    {
+      string name = fileName.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase)
+        ? fileName[..^".nupkg".Length]
+        : fileName;
+      for (int i = 0; i < name.Length - 1; i++)
+      {
+        if (name[i] == '.' && char.IsDigit(name[i + 1]))
+        {
+          return name[..i];
+        }
+      }
+
+      return name;
     }
 
     private static string? FindNupkg(string outputDir, string packageId)

@@ -1,6 +1,6 @@
 # TimeWarp.Mediator.Analyzers
 
-Roslyn analyzers for TimeWarp Mediator 14.0 libraries that declare requests and handlers and do not run the source generator.
+Roslyn analyzers for TimeWarp Mediator libraries that declare requests and handlers and do not run the source generator. The analyzer DLL ships inside the `TimeWarp.Mediator` package. This project is not a separate NuGet package.
 
 | Id | Summary |
 |----|---------|
@@ -9,13 +9,12 @@ Roslyn analyzers for TimeWarp Mediator 14.0 libraries that declare requests and 
 | TWM003 | Handler and message belong to different pipelines |
 | TWM004 | Request is not a member of this sender pipeline |
 
-A project that references `TimeWarp.Mediator.Generators` already gets these analyzers. Do not add both.
+A project that references `TimeWarp.Mediator.Generators` already runs the generator, which reports TWM001–TWM003 in that host. The analyzer still reports TWM004 there, and it reports TWM001–TWM004 in a library.
 
 ## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0
-dotnet add package TimeWarp.Mediator.Analyzers --version 14.0.0
+dotnet add package TimeWarp.Mediator --version 14.0.0
 ```
 
 ## Example
@@ -27,16 +26,16 @@ public sealed class Ping : IRequest<string> { }
 
 public sealed class PingHandler : IRequestHandler<Ping, string>
 {
-  public Task<string> Handle(Ping request, CancellationToken cancellationToken) =>
-    Task.FromResult("Pong");
+  public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) =>
+    ValueTask.FromResult("Pong");
 }
 ```
 
-Requires Roslyn 4.8 or later (.NET SDK 8.0.100 or Visual Studio 2022 17.8). Contracts targets net10.0, so the library project needs the .NET 10 SDK.
+The analyzer targets netstandard2.0 and needs the Roslyn that ships with the .NET 10 SDK (`Microsoft.CodeAnalysis.CSharp` 5.0.0). `TimeWarp.Mediator` targets net10.0, so the library project needs the .NET 10 SDK.
 
 ## Migration
 
-14.0.0 is not a drop-in for 13.0.0. These analyzers do not register a mediator. The host that dispatches the messages in this library references `TimeWarp.Mediator.Generators` and calls `AddGeneratedMediator()`. A missing handler fails that host's build (TWM001) even when this package is absent. Add this package so the library fails its own build first.
+14.0.0 is not a drop-in for 13.0.0. These analyzers do not register a mediator. The host that dispatches the messages in this library references `TimeWarp.Mediator.Generators` and calls `AddGeneratedMediator()`. A missing handler fails that host's build (TWM001) even when the library does not reference `TimeWarp.Mediator`. Reference `TimeWarp.Mediator` so the library fails its own build first.
 
 Steps: [Generated host](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
 
@@ -44,8 +43,8 @@ Steps: [Generated host](https://github.com/TimeWarpEngineering/timewarp-mediator
 
 - [Repository readme](https://github.com/TimeWarpEngineering/timewarp-mediator#readme)
 - [Generated mediator](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m1-generated-mediator.md)
-- [Diagnostics TWM001–TWM011](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md)
+- [Diagnostics](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md)
 
 ## License
 
-Released under The Unlicense. The `notice` and `unlicense` files ship in this package.
+Released under The Unlicense.

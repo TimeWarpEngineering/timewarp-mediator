@@ -9,45 +9,31 @@ public sealed class HostVisibilityTests
   private const string GeneratedNamespace = "TimeWarp.Mediator.Generated";
   private const string RegistrationType = "TimeWarp.Mediator.Generated.TimeWarpMediatorGeneratedServiceCollectionExtensions";
 
-  [Theory]
-  [InlineData("Host")]
-  [InlineData("Aot")]
-  [InlineData("Link")]
-  public void GeneratedTypes_AreInternal(string profile)
+  [Fact]
+  public void GeneratedTypes_AreInternal()
   {
-    HostCompilation host = HostCompiler.Compile("HostA", HostSource("HostA"), profile);
+    HostCompilation host = HostCompiler.Compile("HostA", HostSource("HostA"));
 
     ShouldBeClean(host);
     host.GetType(GeneratedNamespace + ".Mediator").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
     host.GetType(GeneratedNamespace + ".MediatorManifest").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
     host.GetType(GeneratedNamespace + ".Sender_AppPipeline").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
     host.GetType(GeneratedNamespace + ".Publisher_AppPipeline").DeclaredAccessibility.ShouldBe(Accessibility.Internal);
-    if (profile == "Host")
-    {
-      host.GetType(RegistrationType).DeclaredAccessibility.ShouldBe(Accessibility.Internal);
-    }
-    else
-    {
-      host.Compilation.Assembly.GetTypeByMetadataName(RegistrationType).ShouldBeNull();
-    }
+    host.GetType(RegistrationType).DeclaredAccessibility.ShouldBe(Accessibility.Internal);
   }
 
-  [Theory]
-  [InlineData("Host")]
-  [InlineData("Aot")]
-  [InlineData("Link")]
-  public void ThirdHost_ReferencingTwoHosts_CompilesWithoutCS0436(string profile)
+  [Fact]
+  public void ThirdHost_ReferencingTwoHosts_CompilesWithoutCS0436()
   {
-    HostCompilation hostA = HostCompiler.Compile("HostA", HostSource("HostA"), profile);
-    HostCompilation hostB = HostCompiler.Compile("HostB", HostSource("HostB"), profile);
+    HostCompilation hostA = HostCompiler.Compile("HostA", HostSource("HostA"));
+    HostCompilation hostB = HostCompiler.Compile("HostB", HostSource("HostB"));
     ShouldBeClean(hostA);
     ShouldBeClean(hostB);
 
-    string source = HostSource("HostC") + (profile == "Host" ? HostCRegistrationSource : HostCAotSource);
+    string source = HostSource("HostC") + HostCRegistrationSource;
     HostCompilation hostC = HostCompiler.Compile(
         "HostC",
         source,
-        profile,
         hostA.ToMetadataReference(),
         hostB.ToMetadataReference());
 
@@ -154,18 +140,6 @@ namespace HostC.Composition
         internal static string Manifest => global::TimeWarp.Mediator.Generated.MediatorManifest.Json;
 
         internal static System.Type MediatorType => typeof(global::TimeWarp.Mediator.Generated.Mediator);
-    }
-}
-";
-
-  private const string HostCAotSource = @"
-namespace HostC.Composition
-{
-    public static class Startup
-    {
-        public static global::TimeWarp.Mediator.IMediator Create() => new global::TimeWarp.Mediator.Generated.Mediator();
-
-        internal static string Manifest => global::TimeWarp.Mediator.Generated.MediatorManifest.Json;
     }
 }
 ";

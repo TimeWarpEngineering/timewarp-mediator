@@ -21,9 +21,9 @@
 // A handler, message, response, behavior, or pipeline scope marker the host cannot access
 // (internal in a referenced member without InternalsVisibleTo) is not bound and is TWM007,
 // never CS0122 in generated code; its message is then not TWM001. Generated senders and
-// publishers name that marker. Handler kinds the generated mediator ignores are TWM009, and
-// [MediatorBehavior] entries that are not pipeline behaviors or close over no request are
-// TWM010/TWM011. Those land in GeneratorDiagnostics so the analyzer-only package stays TWM001–TWM004.
+// publishers name that marker. [MediatorBehavior] entries that are not pipeline behaviors or
+// close over no request are TWM010/TWM011. Those land in GeneratorDiagnostics so the analyzer
+// stays TWM001–TWM004.
 // Diagnostic locations are limited to this compilation's syntax trees: analyzers and generators
 // may not report into another project's source.
 #endregion
@@ -41,15 +41,6 @@ public static class MessageGraphBuilder
   private const string Notification0 = "TimeWarp.Mediator.INotification";
   private const string UnitTypeName = "TimeWarp.Mediator.Unit";
 
-  // Handler kinds the generated mediator does not dispatch (TWM009).
-  private static readonly string[] UnsupportedHandlerKinds =
-  {
-        "TimeWarp.Mediator.Pipeline.IRequestPreProcessor`1",
-        "TimeWarp.Mediator.Pipeline.IRequestPostProcessor`2",
-        "TimeWarp.Mediator.Pipeline.IRequestExceptionHandler`3",
-        "TimeWarp.Mediator.Pipeline.IRequestExceptionAction`2",
-    };
-
   public static MessageGraph Build(Compilation compilation, Membership membership, CancellationToken cancellationToken)
   {
     INamedTypeSymbol? requestHandler1 = compilation.GetTypeByMetadataName(RequestHandler1);
@@ -60,11 +51,6 @@ public static class MessageGraphBuilder
     INamedTypeSymbol? request1 = compilation.GetTypeByMetadataName(Request1);
     INamedTypeSymbol? notification0 = compilation.GetTypeByMetadataName(Notification0);
     INamedTypeSymbol? unitType = compilation.GetTypeByMetadataName(UnitTypeName);
-    ImmutableArray<INamedTypeSymbol> unsupportedKinds = UnsupportedHandlerKinds
-        .Select(compilation.GetTypeByMetadataName)
-        .Where(kind => kind is not null)
-        .Select(kind => kind!)
-        .ToImmutableArray();
 
     List<Diagnostic> diagnostics = new();
     List<Diagnostic> generatorDiagnostics = new();
@@ -90,7 +76,6 @@ public static class MessageGraphBuilder
         }
 
         CollectRequest(compilation, type, request0, request1, requests);
-        ReportUnsupportedKinds(compilation, type, unsupportedKinds, generatorDiagnostics);
 
         foreach (RequestHandlerMatch match in GetRequestHandlers(type, requestHandler1, requestHandler2, unitType, membership))
         {
@@ -329,34 +314,6 @@ public static class MessageGraphBuilder
   private static bool PipelineScopeAllowed(AccessGuard access, INamedTypeSymbol? scopeType)
   {
     return scopeType is null || access.Allows(scopeType);
-  }
-
-  // One TWM009 per class and ignored interface definition (a class handling two stream requests is one warning).
-  private static void ReportUnsupportedKinds(
-      Compilation compilation,
-      INamedTypeSymbol type,
-      ImmutableArray<INamedTypeSymbol> unsupportedKinds,
-      List<Diagnostic> generatorDiagnostics)
-  {
-    if (unsupportedKinds.IsEmpty || type.TypeKind != TypeKind.Class || type.IsAbstract)
-    {
-      return;
-    }
-
-    foreach (INamedTypeSymbol kind in unsupportedKinds)
-    {
-      if (!type.AllInterfaces.Any(iface => SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, kind)))
-      {
-        continue;
-      }
-
-      generatorDiagnostics.Add(
-          Diagnostic.Create(
-              DiagnosticDescriptors.UnsupportedHandlerKind,
-              GetSourceLocation(compilation, type),
-              type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-              kind.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
-    }
   }
 
   private static void CollectRequest(

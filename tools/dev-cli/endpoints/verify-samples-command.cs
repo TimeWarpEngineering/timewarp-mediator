@@ -7,7 +7,9 @@
 // command builds each samples/**/*.csproj first. Every Exe sample then runs
 // with `dotnet run --no-build` and must exit 0; RepoLayout.SampleExpectedOutput
 // adds a stdout check for the generated-stack samples (aot, named-pipelines).
-// A sample that hangs fails after SampleTimeout.
+// The AOT sample is the exception: `dotnet run` does not exercise PublishAot,
+// so this command publishes it and runs the native binary. A sample that hangs
+// fails after SampleTimeout. NativeAOT publish gets AotPublishTimeout.
 #endregion
 
 namespace DevCli.Commands;
@@ -21,6 +23,8 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
   public sealed class Handler : ICommandHandler<VerifySamplesCommand, Unit>
   {
     private static readonly TimeSpan SampleTimeout = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan AotPublishTimeout = TimeSpan.FromMinutes(10);
+    private const string AotSampleName = "timewarp-mediator-examples-aot";
 
     private readonly ITerminal Terminal;
 
@@ -70,7 +74,11 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
 
       foreach (string project in runnable)
       {
-        if (!await RunAsync(repoRoot, project, ct))
+        string sampleName = Path.GetFileNameWithoutExtension(project);
+        bool ran = sampleName == AotSampleName
+          ? await PublishAndRunAotAsync(repoRoot, project, ct)
+          : await RunAsync(repoRoot, project, ct);
+        if (!ran)
         {
           return Unit.Value;
         }
@@ -105,6 +113,75 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
       return true;
     }
 
+    private async Task<bool> PublishAndRunAotAsync(string repoRoot, string project, CancellationToken ct)
+    {
+      string relativePath = Path.GetRelativePath(repoRoot, project);
+      string outputDir = Path.Combine(repoRoot, "artifacts", "publish", AotSampleName);
+      Terminal.WriteLine($"Publishing {relativePath} (NativeAOT)...");
+
+      using CancellationTokenSource publishTimeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+      publishTimeout.CancelAfter(AotPublishTimeout);
+
+      CommandOutput publish;
+      try
+      {
+        publish = await DotNet.Publish()
+          .WithProject(project)
+          .WithConfiguration("Release")
+          .WithOutput(outputDir)
+          .WithNoValidation()
+          .CaptureAsync(publishTimeout.Token);
+      }
+      catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+      {
+        Terminal.WriteErrorLine($"NativeAOT publish timed out after {AotPublishTimeout.TotalSeconds:0}s: {relativePath}".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      if (publish.ExitCode != 0)
+      {
+        Terminal.WriteErrorLine(publish.Combined);
+        Terminal.WriteErrorLine($"NativeAOT publish failed: {relativePath}".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      string binary = Path.Combine(outputDir, AotSampleName);
+      if (OperatingSystem.IsWindows())
+      {
+        binary += ".exe";
+      }
+
+      if (!File.Exists(binary))
+      {
+        Terminal.WriteErrorLine($"NativeAOT publish did not produce {binary}".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      Terminal.WriteLine($"Running {binary}...");
+      using CancellationTokenSource runTimeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+      runTimeout.CancelAfter(SampleTimeout);
+
+      CommandOutput output;
+      try
+      {
+        output = await Shell.Builder(binary)
+          .WithWorkingDirectory(outputDir)
+          .WithNoValidation()
+          .CaptureAsync(runTimeout.Token);
+      }
+      catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+      {
+        Terminal.WriteErrorLine($"Sample timed out after {SampleTimeout.TotalSeconds:0}s: {relativePath}".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      return AcceptSampleOutput(output, AotSampleName, relativePath);
+    }
+
     private async Task<bool> RunAsync(string repoRoot, string project, CancellationToken ct)
     {
       string relativePath = Path.GetRelativePath(repoRoot, project);
@@ -131,6 +208,11 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
         return false;
       }
 
+      return AcceptSampleOutput(output, sampleName, relativePath);
+    }
+
+    private bool AcceptSampleOutput(CommandOutput output, string sampleName, string relativePath)
+    {
       if (output.ExitCode != 0)
       {
         Terminal.WriteErrorLine(output.Combined);

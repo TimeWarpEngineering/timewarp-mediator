@@ -30,15 +30,11 @@ public sealed class MessageGraph
   public ImmutableArray<Diagnostic> Diagnostics { get; }
 
   /// <summary>
-  /// TWM007, TWM009–TWM011: shapes the generated mediator drops. Reported by the generator only.
+  /// TWM007, TWM010, and TWM011: shapes the generated mediator drops. Reported by the generator only.
   /// </summary>
   public ImmutableArray<Diagnostic> GeneratorDiagnostics { get; }
 
   public Membership Membership { get; }
-
-  public bool IsAotProfile =>
-      string.Equals(Membership.Profile, "Aot", System.StringComparison.OrdinalIgnoreCase)
-      || string.Equals(Membership.Profile, "Link", System.StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed class RequestBinding

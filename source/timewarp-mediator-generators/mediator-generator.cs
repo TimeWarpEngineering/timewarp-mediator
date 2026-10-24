@@ -3,15 +3,14 @@
 #endregion
 
 #region Design
-// Generated code names TimeWarp.Mediator.IMediator and, under the Host profile, the MS.DI
-// abstractions. When one cannot be resolved (for example a project that references only the
-// Generators package) the generator emits nothing and reports TWM008 once, instead of a wall of
-// CS0234/CS0246 inside .g.cs files.
+// Generated code names TimeWarp.Mediator.IMediator and the MS.DI abstractions. When one cannot
+// be resolved (for example a project that references only the Generators package) the generator
+// emits nothing and reports TWM008 once, instead of a wall of CS0234/CS0246 inside .g.cs files.
 // Pipeline: Options (equatable build properties) + Compilation -> MediatorModel (rendered sources
 // and diagnostics, no symbols) -> Sources / Diagnostics. Each step has a TrackingNames entry so
 // tests assert that an unrelated edit leaves the model unchanged and the AddSource step cached.
 // The diagnostics output re-joins the Compilation only to put each span back on its syntax tree.
-// This generator is the only reporter of TWM001-TWM003 in its host: the bundled analyzer sees
+// This generator is the only reporter of TWM001-TWM003 in its host: the analyzer sees
 // TimeWarpMediatorGenerator=true and skips them, so each is reported once.
 #endregion
 
@@ -20,17 +19,13 @@ namespace TimeWarp.Mediator.Generators;
 [Generator]
 public sealed class MediatorGenerator : IIncrementalGenerator
 {
-  private const string ContractsHint = "Reference the TimeWarp.Mediator.Contracts package";
+  private const string ContractsHint = "Reference the TimeWarp.Mediator package";
   private const string DependencyInjectionHint =
-      "Reference Microsoft.Extensions.DependencyInjection.Abstractions, or set TimeWarpMediatorProfile to Aot";
+      "Reference Microsoft.Extensions.DependencyInjection.Abstractions";
 
   private static readonly (string MetadataName, string Hint)[] RequiredTypes =
   {
         ("TimeWarp.Mediator.IMediator", ContractsHint),
-    };
-
-  private static readonly (string MetadataName, string Hint)[] HostRequiredTypes =
-  {
         ("Microsoft.Extensions.DependencyInjection.IServiceCollection", DependencyInjectionHint),
         ("Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions", DependencyInjectionHint),
         ("Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions", DependencyInjectionHint),
@@ -75,7 +70,7 @@ public sealed class MediatorGenerator : IIncrementalGenerator
   private static MediatorModel CreateModel(Compilation compilation, MembershipOptions options, CancellationToken cancellationToken)
   {
     Membership membership = Membership.ForGenerator(compilation, options, cancellationToken);
-    Diagnostic? missing = FindMissingRuntime(compilation, membership);
+    Diagnostic? missing = FindMissingRuntime(compilation);
     if (missing is not null)
     {
       return new MediatorModel(
@@ -84,16 +79,14 @@ public sealed class MediatorGenerator : IIncrementalGenerator
     }
 
     MessageGraph graph = MessageGraphBuilder.Build(compilation, membership, cancellationToken);
-    AotProfile aotProfile = AotProfile.Analyze(compilation, graph);
     ImmutableArray<DiagnosticInfo> diagnostics = graph.Diagnostics
         .Concat(graph.GeneratorDiagnostics)
-        .Concat(aotProfile.Diagnostics)
         .Select(DiagnosticInfo.From)
         .ToImmutableArray();
 
     cancellationToken.ThrowIfCancellationRequested();
     List<GeneratedSource> sources = new();
-    MediatorEmitter.Emit(sources, graph, aotProfile);
+    MediatorEmitter.Emit(sources, graph);
     ManifestEmitter.Emit(sources, graph);
 
     return new MediatorModel(
@@ -101,15 +94,9 @@ public sealed class MediatorGenerator : IIncrementalGenerator
         new EquatableArray<DiagnosticInfo>(diagnostics));
   }
 
-  private static Diagnostic? FindMissingRuntime(Compilation compilation, Membership membership)
+  private static Diagnostic? FindMissingRuntime(Compilation compilation)
   {
-    bool aot = string.Equals(membership.Profile, "Aot", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(membership.Profile, "Link", StringComparison.OrdinalIgnoreCase);
-    IEnumerable<(string MetadataName, string Hint)> required = aot
-        ? RequiredTypes
-        : RequiredTypes.Concat(HostRequiredTypes);
-
-    foreach ((string metadataName, string hint) in required)
+    foreach ((string metadataName, string hint) in RequiredTypes)
     {
       if (compilation.GetTypeByMetadataName(metadataName) is null)
       {

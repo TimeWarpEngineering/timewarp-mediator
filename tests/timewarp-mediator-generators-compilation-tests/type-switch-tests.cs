@@ -7,12 +7,10 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 
 public sealed class TypeSwitchTests
 {
-  [Theory]
-  [InlineData("Host")]
-  [InlineData("Aot")]
-  public void BaseRequestSortingBeforeDerived_Compiles(string profile)
+  [Fact]
+  public void BaseRequestSortingBeforeDerived_Compiles()
   {
-    HostCompilation host = HostCompiler.Compile("BaseBeforeDerived" + profile, HierarchySource, profile);
+    HostCompilation host = HostCompiler.Compile("BaseBeforeDerived", HierarchySource);
 
     Errors(host).ShouldBeEmpty();
   }
@@ -20,7 +18,7 @@ public sealed class TypeSwitchTests
   [Fact]
   public async Task DerivedRequest_DispatchesToItsOwnHandler()
   {
-    IMediator mediator = LoadAotMediator("RequestHierarchy", HierarchySource, out Assembly assembly);
+    IMediator mediator = LoadMediator("RequestHierarchy", HierarchySource, out Assembly assembly);
 
     object? derived = await mediator.Send(Activator.CreateInstance(assembly.GetType("Shapes.ZDerivedRequest", true)!)!);
     object? baseRequest = await mediator.Send(Activator.CreateInstance(assembly.GetType("Shapes.ABaseRequest", true)!)!);
@@ -32,7 +30,7 @@ public sealed class TypeSwitchTests
   [Fact]
   public async Task DerivedNotification_ReachesBaseAndInterfaceHandlers()
   {
-    IMediator mediator = LoadAotMediator("NotificationHierarchy", HierarchySource, out Assembly assembly);
+    IMediator mediator = LoadMediator("NotificationHierarchy", HierarchySource, out Assembly assembly);
 
     object derived = Activator.CreateInstance(assembly.GetType("Shapes.ZDerivedNote", true)!)!;
     await mediator.Publish(derived);
@@ -46,7 +44,7 @@ public sealed class TypeSwitchTests
   [Fact]
   public async Task UnboundDerivedNotification_ReachesEveryBoundSupertype()
   {
-    IMediator mediator = LoadAotMediator("UnboundDerived", HierarchySource, out Assembly assembly);
+    IMediator mediator = LoadMediator("UnboundDerived", HierarchySource, out Assembly assembly);
 
     object note = Activator.CreateInstance(assembly.GetType("Shapes.UnboundNote", true)!)!;
     await mediator.Publish(note);
@@ -54,22 +52,18 @@ public sealed class TypeSwitchTests
     Seen(note).ShouldBe(new[] { "base", "audit" });
   }
 
-  [Theory]
-  [InlineData("Host")]
-  [InlineData("Aot")]
-  public void KeywordNamedMessages_Compile(string profile)
+  [Fact]
+  public void KeywordNamedMessages_Compile()
   {
-    HostCompilation host = HostCompiler.Compile("KeywordNames" + profile, KeywordSource, profile);
+    HostCompilation host = HostCompiler.Compile("KeywordNames", KeywordSource);
 
     Errors(host).ShouldBeEmpty();
   }
 
-  [Theory]
-  [InlineData("Host")]
-  [InlineData("Aot")]
-  public void CollidingSanitizedNames_Compile(string profile)
+  [Fact]
+  public void CollidingSanitizedNames_Compile()
   {
-    HostCompilation host = HostCompiler.Compile("Colliding" + profile, CollidingSource, profile);
+    HostCompilation host = HostCompiler.Compile("Colliding", CollidingSource);
 
     Errors(host).ShouldBeEmpty();
     INamedTypeSymbol mediator = host.GetType("TimeWarp.Mediator.Generated.Mediator");
@@ -84,7 +78,7 @@ public sealed class TypeSwitchTests
   [Fact]
   public async Task CollidingSanitizedNames_DispatchToTheirOwnHandlers()
   {
-    IMediator mediator = LoadAotMediator("CollidingRuntime", CollidingSource, out Assembly assembly);
+    IMediator mediator = LoadMediator("CollidingRuntime", CollidingSource, out Assembly assembly);
 
     object? first = await mediator.Send(Activator.CreateInstance(assembly.GetType("A.B_C", true)!)!);
     object? second = await mediator.Send(Activator.CreateInstance(assembly.GetType("A_B.C", true)!)!);
@@ -104,9 +98,9 @@ public sealed class TypeSwitchTests
     return ((List<string>) list).ToArray();
   }
 
-  private static IMediator LoadAotMediator(string assemblyName, string source, out Assembly assembly)
+  private static IMediator LoadMediator(string assemblyName, string source, out Assembly assembly)
   {
-    HostCompilation host = HostCompiler.Compile(assemblyName, source, "Aot");
+    HostCompilation host = HostCompiler.Compile(assemblyName, source);
     Errors(host).ShouldBeEmpty();
 
     using MemoryStream stream = new();
@@ -116,8 +110,25 @@ public sealed class TypeSwitchTests
 
     AssemblyLoadContext context = new(assemblyName, isCollectible: true);
     assembly = context.LoadFromStream(stream);
+    return CreateMediator(assembly);
+  }
+
+  private static readonly List<object> Roots = new();
+
+  private static IMediator CreateMediator(Assembly assembly)
+  {
+    ServiceCollection services = new();
+    MethodInfo add = assembly
+        .GetType("TimeWarp.Mediator.Generated.TimeWarpMediatorGeneratedServiceCollectionExtensions", true)!
+        .GetMethods(BindingFlags.Public | BindingFlags.Static)
+        .Single(method => method.Name == "AddGeneratedMediator" && !method.IsGenericMethod);
+    add.Invoke(null, new object[] { services });
+    ServiceProvider provider = services.BuildServiceProvider();
+    IServiceScope scope = provider.CreateScope();
+    Roots.Add(provider);
+    Roots.Add(scope);
     Type mediatorType = assembly.GetType("TimeWarp.Mediator.Generated.Mediator", true)!;
-    return (IMediator) Activator.CreateInstance(mediatorType)!;
+    return (IMediator) scope.ServiceProvider.GetRequiredService(mediatorType);
   }
 
   // ABase* sorts before ZDerived*: alphabetical emission produced CS8120 and lost base delivery.

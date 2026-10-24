@@ -11,8 +11,8 @@ public sealed class MemberAssemblyOrderTests
   {
     (MetadataReference zeta, MetadataReference alpha) = CompileMembers();
 
-    string forward = GeneratedSource(HostCompiler.Compile("Host", HostSource, "Host", zeta, alpha));
-    string reverse = GeneratedSource(HostCompiler.Compile("Host", HostSource, "Host", alpha, zeta));
+    string forward = GeneratedSource(HostCompiler.Compile("Host", HostSource, zeta, alpha));
+    string reverse = GeneratedSource(HostCompiler.Compile("Host", HostSource, alpha, zeta));
 
     forward.ShouldBe(reverse);
   }
@@ -24,7 +24,7 @@ public sealed class MemberAssemblyOrderTests
 
     foreach (MetadataReference[] references in new[] { new[] { zeta, alpha }, new[] { alpha, zeta } })
     {
-      string source = GeneratedSource(HostCompiler.Compile("Host", HostSource, "Host", references));
+      string source = GeneratedSource(HostCompiler.Compile("Host", HostSource, references));
       source.ShouldContain("global::Alpha.NoteHandler handler0 =");
       source.ShouldContain("global::Host.NoteHandler handler1 =");
       source.ShouldContain("global::Zeta.NoteHandler handler2 =");
@@ -38,7 +38,7 @@ public sealed class MemberAssemblyOrderTests
 
     foreach (MetadataReference[] references in new[] { new[] { zeta, alpha }, new[] { alpha, zeta } })
     {
-      HostCompilation host = HostCompiler.Compile("Host", HostSource, "Host", references);
+      HostCompilation host = HostCompiler.Compile("Host", HostSource, references);
       Diagnostic[] duplicates = host.Diagnostics.Where(d => d.Id == "TWM002").ToArray();
 
       duplicates.Length.ShouldBe(1, string.Join(Environment.NewLine, host.Diagnostics));
@@ -49,7 +49,7 @@ public sealed class MemberAssemblyOrderTests
   private static (MetadataReference Zeta, MetadataReference Alpha) CompileMembers()
   {
     MetadataReference zeta = HostCompiler.Compile("Zeta", ZetaSource).ToMetadataReference();
-    MetadataReference alpha = HostCompiler.Compile("Alpha", AlphaSource, "Host", zeta).ToMetadataReference();
+    MetadataReference alpha = HostCompiler.Compile("Alpha", AlphaSource, zeta).ToMetadataReference();
     return (zeta, alpha);
   }
 

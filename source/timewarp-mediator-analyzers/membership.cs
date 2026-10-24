@@ -21,29 +21,24 @@ public sealed class Membership
   public const string BehaviorAttributeMetadataName = "TimeWarp.Mediator.MediatorBehaviorAttribute";
   public const string ScopeAttributeMetadataName = "TimeWarp.Mediator.MediatorScopeAttribute";
   public const string MsBuildPropertyName = "build_property.TimeWarpMediatorAssembly";
-  public const string ProfilePropertyName = "build_property.TimeWarpMediatorProfile";
   public const string NamespacePropertyName = "build_property.TimeWarpMediatorNamespace";
   public const string GeneratorPropertyName = "build_property.TimeWarpMediatorGenerator";
 
   private Membership(
       IAssemblySymbol compilationAssembly,
       ImmutableHashSet<IAssemblySymbol> memberAssemblies,
-      string profile,
       string generatedNamespace,
       bool isHost)
   {
     CompilationAssembly = compilationAssembly;
     IsHost = isHost;
     MemberAssemblies = memberAssemblies;
-    Profile = profile;
     GeneratedNamespace = generatedNamespace;
   }
 
   public IAssemblySymbol CompilationAssembly { get; }
 
   public ImmutableHashSet<IAssemblySymbol> MemberAssemblies { get; }
-
-  public string Profile { get; }
 
   public string GeneratedNamespace { get; }
 
@@ -111,7 +106,6 @@ public sealed class Membership
     membership = new Membership(
         compilation.Assembly,
         memberBuilder.ToImmutable(),
-        options.Profile,
         options.GeneratedNamespace,
         currentCompilationIsHost || options.IsMsBuildMember);
     return true;
