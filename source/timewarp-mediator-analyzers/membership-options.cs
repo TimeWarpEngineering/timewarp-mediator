@@ -7,17 +7,20 @@
 // does not invalidate anything downstream of it. IsGeneratorHost comes from the generator package's
 // props (TimeWarpMediatorGenerator=true): the analyzer then knows the generator reports
 // TWM001–TWM003 in this compilation and does not report them again.
+// HostAssemblyName is the compilation's assembly name. The generator uses it for InternalsVisibleTo
+// and manifest membership without taking a Compilation, which would bust the Cached step.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
 
 public sealed class MembershipOptions : IEquatable<MembershipOptions>
 {
-  public MembershipOptions(string generatedNamespace, bool isMsBuildMember, bool isGeneratorHost)
+  public MembershipOptions(string generatedNamespace, bool isMsBuildMember, bool isGeneratorHost, string hostAssemblyName)
   {
     GeneratedNamespace = generatedNamespace;
     IsMsBuildMember = isMsBuildMember;
     IsGeneratorHost = isGeneratorHost;
+    HostAssemblyName = hostAssemblyName;
   }
 
   public string GeneratedNamespace { get; }
@@ -32,12 +35,18 @@ public sealed class MembershipOptions : IEquatable<MembershipOptions>
   /// </summary>
   public bool IsGeneratorHost { get; }
 
+  /// <summary>
+  /// MSBuild AssemblyName, exposed as TimeWarpMediatorAssemblyName.
+  /// </summary>
+  public string HostAssemblyName { get; }
+
   public static MembershipOptions Read(AnalyzerConfigOptions globalOptions)
   {
     return new MembershipOptions(
         ReadProperty(globalOptions, Membership.NamespacePropertyName) ?? "TimeWarp.Mediator.Generated",
         IsTrue(ReadProperty(globalOptions, Membership.MsBuildPropertyName)),
-        IsTrue(ReadProperty(globalOptions, Membership.GeneratorPropertyName)));
+        IsTrue(ReadProperty(globalOptions, Membership.GeneratorPropertyName)),
+        ReadProperty(globalOptions, Membership.AssemblyNamePropertyName) ?? string.Empty);
   }
 
   public bool Equals(MembershipOptions? other)
@@ -45,7 +54,8 @@ public sealed class MembershipOptions : IEquatable<MembershipOptions>
     return other is not null
         && GeneratedNamespace == other.GeneratedNamespace
         && IsMsBuildMember == other.IsMsBuildMember
-        && IsGeneratorHost == other.IsGeneratorHost;
+        && IsGeneratorHost == other.IsGeneratorHost
+        && HostAssemblyName == other.HostAssemblyName;
   }
 
   public override bool Equals(object? obj) => Equals(obj as MembershipOptions);
@@ -56,7 +66,8 @@ public sealed class MembershipOptions : IEquatable<MembershipOptions>
     {
       int hash = StringComparer.Ordinal.GetHashCode(GeneratedNamespace);
       hash = (hash * 397) ^ (IsMsBuildMember ? 1 : 0);
-      return (hash * 397) ^ (IsGeneratorHost ? 2 : 0);
+      hash = (hash * 397) ^ (IsGeneratorHost ? 2 : 0);
+      return (hash * 397) ^ StringComparer.Ordinal.GetHashCode(HostAssemblyName);
     }
   }
 

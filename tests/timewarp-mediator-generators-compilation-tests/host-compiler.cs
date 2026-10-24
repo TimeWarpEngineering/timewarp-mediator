@@ -5,6 +5,8 @@
 #region Design
 // A host runs the generator and the analyzer. TimeWarpMediatorGenerator=true makes the analyzer
 // leave TWM001–TWM003 to the generator. Diagnostics here are both.
+// TimeWarpMediatorAssemblyName is the compilation name. The generator keys host membership on
+// that property, so an in-memory host whose property is empty drops every host type.
 #endregion
 
 namespace TimeWarp.Mediator.Generators.Compilation.Tests;
@@ -46,7 +48,7 @@ internal static class HostCompiler
         references: references,
         options: CompilationOptions);
 
-    GeneratorDriver driver = CreateDriver(generatedNamespace: generatedNamespace);
+    GeneratorDriver driver = CreateDriver(generatedNamespace: generatedNamespace, assemblyName: assemblyName);
 
     driver.RunGeneratorsAndUpdateCompilation(
         compilation,
@@ -56,7 +58,7 @@ internal static class HostCompiler
     ImmutableArray<Diagnostic> analyzerDiagnostics = output
         .WithAnalyzers(
             ImmutableArray.Create<DiagnosticAnalyzer>(new TimeWarp.Mediator.Analyzers.RequestHandlerAnalyzer()),
-            new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(generatedNamespace)))
+            new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(generatedNamespace, assemblyName)))
         .GetAnalyzerDiagnosticsAsync()
         .GetAwaiter()
         .GetResult();
@@ -68,23 +70,25 @@ internal static class HostCompiler
 
   internal static GeneratorDriver CreateDriver(
       bool trackSteps = false,
-      string generatedNamespace = DefaultNamespace)
+      string generatedNamespace = DefaultNamespace,
+      string assemblyName = "IncrementalHost")
   {
     return CSharpGeneratorDriver.Create(
         generators: new[] { new MediatorGenerator().AsSourceGenerator() },
         additionalTexts: null,
         parseOptions: ParseOptions,
-        optionsProvider: CreateOptionsProvider(generatedNamespace),
+        optionsProvider: CreateOptionsProvider(generatedNamespace, assemblyName),
         driverOptions: new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: trackSteps));
   }
 
-  private static AnalyzerConfigOptionsProvider CreateOptionsProvider(string generatedNamespace)
+  private static AnalyzerConfigOptionsProvider CreateOptionsProvider(string generatedNamespace, string assemblyName)
   {
     return new BuildPropertyOptionsProvider(new Dictionary<string, string>
     {
       ["build_property.TimeWarpMediatorAssembly"] = "true",
       ["build_property.TimeWarpMediatorGenerator"] = "true",
       ["build_property.TimeWarpMediatorNamespace"] = generatedNamespace,
+      ["build_property.TimeWarpMediatorAssemblyName"] = assemblyName,
     });
   }
 
