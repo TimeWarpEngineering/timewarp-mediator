@@ -58,6 +58,19 @@ Tracking names: `TimeWarpMediator.Options`, `HostCandidates`, `ReferencedAssembl
 
 The nine mediator files under `tests/timewarp-mediator-generators-tests` (`Mediator.g.cs`, manifest, service-collection extensions, and the three sender and publisher pipelines) match the pre-change snapshot byte for byte. `./bin/dev workflow --mode pr` succeeded: clean, build with 0 warnings, tests 57 + 42 + 56, both samples, and pack. `ganda repo audit` passed (32 passed, 0 failed). The pull request is the host open-pr node.
 
+### Review
+
+Disposition is pending. Round 1 ran at effort 3 with roster general: two parallel general passes, split into extraction and graph/emitters. It has 12 open findings: 6 bugs, 1 suggestion, 5 nits, none fixed or wontfix. The incrementality goal holds: `IncrementalGeneratorTests` pass 3/3. Output parity with the old symbol walk does not hold:
+
+- M1: NuGet consumers get an empty `TimeWarpMediatorAssemblyName`, because the buildTransitive props are evaluated before `AssemblyName` is set. The host is then never a member assembly.
+- M2: `[MediatorScope]` is lost on messages with no fact, such as plain notifications.
+- M3: strong-named hosts lose `InternalsVisibleTo` access.
+- M4: array responses lose their interface constraints.
+- M5: the bound dedupe runs before `BoundByBase`.
+- M6: an aliased `MediatorBehavior` attribute is missed.
+
+A fix pass is needed, followed by round 2. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
 ### How to validate
 
 Smoke: `dotnet test tests/timewarp-mediator-generators-compilation-tests --filter FullyQualifiedName~IncrementalGeneratorTests`
@@ -68,3 +81,5 @@ Expect: `UnrelatedEdit_LeavesModelCached_AndSourcesCached` passes, and the model
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
 - Implementation: 01a16d96-39b7-74c0-80e7-46cb56ac2191 (2026-10-24)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T11:41:19Z
+- Review oracle round 1: claude-opus-5-5 (Claude Code headless), effort 3, roster general. Subagents aee4966440ea66a39 (general-a, extraction) and a0e0c0b5a6062138b (general-b, graph/emitters). 12 open findings; fix pass needed — 2026-10-24
