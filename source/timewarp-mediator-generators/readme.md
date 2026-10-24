@@ -32,17 +32,17 @@ The host that references this package is a graph member. A library opts in with 
 
 14.0.0 is not a drop-in for 13.0.0.
 
-- `AddMediator()` does not register this generator's mediator. Replace it with `AddGeneratedMediator()` in the host.
+- The host calls `AddGeneratedMediator()`.
 - Contracts targets net10.0. The generator itself is netstandard2.0 because Roslyn loads it. You need Roslyn 4.8 or later, and in practice the .NET 10 SDK, because Contracts targets net10.0.
-- Streams, pre/post processors, and the exception cascade are not dispatched (TWM009). Keep `AddMediator()` if you still need them.
+- Streams, pre/post processors, and the exception cascade are not dispatched (TWM009). Move that logic into a request handler or an `IPipelineBehavior`.
 - A missing or duplicate handler is a build error (TWM001, TWM002), not a runtime exception.
 
-Matrix and steps: [13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
+Steps: [Generated host](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
 
 ## Documentation
 
 - [Repository readme](https://github.com/TimeWarpEngineering/timewarp-mediator#readme)
-- [Generated vs reflection](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md)
+- [Generated mediator](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m1-generated-mediator.md)
 - [Diagnostics TWM001–TWM011](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md)
 
 ## License

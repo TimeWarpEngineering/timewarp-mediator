@@ -2,8 +2,7 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
-    <!-- CLI is not a signed/packable product assembly. -->
-    <SignAssembly>false</SignAssembly>
+    <!-- CLI is not a packable product assembly. -->
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>

@@ -127,8 +127,7 @@ public sealed class GeneratorDiagnosticsTests
     HostCompilation host = HostCompiler.Compile(
         "Unsupported",
         UnsupportedSource,
-        "Host",
-        MetadataReference.CreateFromFile(typeof(TimeWarp.Mediator.Pipeline.IRequestPreProcessor<>).Assembly.Location));
+        "Host");
 
     Errors(host).ShouldBeEmpty();
     Diagnostic warning = host.Diagnostics.Where(d => d.Id == "TWM009").ShouldHaveSingleItem();
@@ -283,6 +282,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Mediator;
 using TimeWarp.Mediator.Pipeline;
+
+namespace TimeWarp.Mediator.Pipeline
+{
+    public interface IRequestPreProcessor<TRequest>
+    {
+        Task Process(TRequest request, CancellationToken cancellationToken);
+    }
+}
 
 namespace Shapes
 {

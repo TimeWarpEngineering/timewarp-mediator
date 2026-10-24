@@ -8,8 +8,6 @@
          a project that opts out says so in its own csproj (props are imported before the csproj body,
          so a csproj value always wins). -->
     <Features></Features>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>

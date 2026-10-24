@@ -16,8 +16,6 @@
     <!-- Repo-wide snupkg + no lib/ output yields an empty symbol package (NU5017). -->
     <IncludeSymbols>false</IncludeSymbols>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>

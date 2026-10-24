@@ -1,6 +1,6 @@
 # TimeWarp.Mediator.Contracts
 
-Message contracts for TimeWarp Mediator 14.0: one set of requests, commands, queries, notifications, and pipeline types for both dispatchers.
+Message contracts for TimeWarp Mediator 14.0: requests, commands, queries, notifications, and pipeline types for the generated mediator.
 
 ## Install
 
@@ -8,7 +8,7 @@ Message contracts for TimeWarp Mediator 14.0: one set of requests, commands, que
 dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0
 ```
 
-A generated host also needs `TimeWarp.Mediator.Generators` at the same version. A reflection host needs `TimeWarp.Mediator` instead. Keep every TimeWarp.Mediator package on 14.0.0.
+A host also needs `TimeWarp.Mediator.Generators` at the same version. Keep every TimeWarp.Mediator package on 14.0.0.
 
 ## Example
 
@@ -31,17 +31,17 @@ string reply = await provider.GetRequiredService<ISender>().Send(new Ping());
 
 14.0.0 is not a drop-in for 13.0.0.
 
-- This package and `TimeWarp.Mediator` target net10.0 only. Stay on 13.0.0 if you cannot.
-- `AddMediator()` does not register the generated mediator. A generated host calls `AddGeneratedMediator()`.
-- The generated dispatcher does not run pre/post processors or the exception cascade.
-- From MediatR: change `using MediatR;` to `using TimeWarp.Mediator;` and `AddMediatR` to `AddMediator`.
+- This package targets net10.0 only. Stay on 13.0.0 if you cannot.
+- A host calls `AddGeneratedMediator()`.
+- Pre/post processors and the exception cascade are not dispatched (TWM009). Move that logic into a request handler or an `IPipelineBehavior`.
+- From MediatR: change `using MediatR;` to `using TimeWarp.Mediator;`.
 
-Matrix and steps: [13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
+Steps: [Generated host](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
 
 ## Documentation
 
 - [Repository readme](https://github.com/TimeWarpEngineering/timewarp-mediator#readme)
-- [Generated vs reflection](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md)
+- [Generated mediator](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m1-generated-mediator.md)
 - [Diagnostics TWM001–TWM011](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md)
 
 ## License

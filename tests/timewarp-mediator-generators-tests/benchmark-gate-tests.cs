@@ -12,6 +12,7 @@
 #endregion
 
 using DevCli;
+using System.IO;
 
 namespace TimeWarp.Mediator.Tests;
 

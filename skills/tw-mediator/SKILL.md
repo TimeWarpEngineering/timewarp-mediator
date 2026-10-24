@@ -1,44 +1,37 @@
 ---
 name: tw-mediator
-description: Add and use TimeWarp.Mediator - in-process request/response and notifications for .NET with a source-generated, trim and NativeAOT safe dispatcher beside the MediatR-fork reflection one. Use when adding TimeWarp.Mediator to a project, writing requests, handlers, notifications or pipeline behaviors, choosing the generated (AddGeneratedMediator) or reflection (AddMediator) dispatcher, setting up named pipelines (ISender<TScope>), or fixing TWM001-TWM011 diagnostics.
+description: Add and use TimeWarp.Mediator - in-process request/response and notifications for .NET with a source-generated, trim and NativeAOT safe dispatcher. Use when adding TimeWarp.Mediator to a project, writing requests, handlers, notifications or pipeline behaviors, calling AddGeneratedMediator, setting up named pipelines (ISender<TScope>), or fixing TWM001-TWM011 diagnostics.
 ---
 
 # TimeWarp.Mediator
 
 In-process messaging for .NET: `ISender.Send` (one handler) and `IPublisher.Publish` (many
-handlers). 14.x ships two independent dispatchers. Pick one per host; calling `AddMediator()`
-never registers the generated mediator.
+handlers). The dispatcher is source-generated. A host calls `AddGeneratedMediator()`.
 
 **Packages:** `TimeWarp.Mediator.Contracts`, `TimeWarp.Mediator.Generators`,
-`TimeWarp.Mediator.Analyzers`, `TimeWarp.Mediator`
+`TimeWarp.Mediator.Analyzers`
 **Repository:** https://github.com/TimeWarpEngineering/timewarp-mediator
 **Docs this skill links instead of repeating:**
-[generated-vs-legacy.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md),
+[m1-generated-mediator.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m1-generated-mediator.md),
 [diagnostics.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md),
 [m2-named-pipelines.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m2-named-pipelines.md),
-[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
+[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
 
-## 1. Which dispatcher
+## 1. Dispatcher
 
-Default to **generated**. Use reflection only when you need something the generated stack does
-not dispatch.
+| | Generated host |
+|---|---|
+| Packages | `TimeWarp.Mediator.Contracts` + `TimeWarp.Mediator.Generators` |
+| Registration | `services.AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()` |
+| Handler discovery | compile time, member assemblies only |
+| Missing / duplicate handler | build error (TWM001 / TWM002) |
+| Behaviors | `[assembly: MediatorBehavior(typeof(B<,>))]` |
+| Named pipelines (`ISender<TScope>`) | yes |
+| Streams (`IStreamRequest<>`, `CreateStream`) | no (TWM009, throws `NotSupportedException`) |
+| Pre/post processors, exception handlers/actions | no (TWM009). Move the logic into a handler or `IPipelineBehavior` |
+| Trimming / NativeAOT | safe |
 
-| | Generated (default) | Reflection |
-|---|---|---|
-| Packages | `TimeWarp.Mediator.Contracts` + `TimeWarp.Mediator.Generators` | `TimeWarp.Mediator` (pulls Contracts) |
-| Registration | `services.AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()` | `services.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining<T>())` |
-| Handler discovery | compile time, member assemblies only | runtime assembly scan |
-| Missing / duplicate handler | build error (TWM001 / TWM002) | runtime exception |
-| Behaviors | `[assembly: MediatorBehavior(typeof(B<,>))]` | `cfg.AddBehavior` / `cfg.AddOpenBehavior` |
-| Named pipelines (`ISender<TScope>`) | yes | no |
-| Streams (`IStreamRequest<>`, `CreateStream`) | no (TWM009, throws `NotSupportedException`) | yes |
-| Pre/post processors, exception handlers/actions | no (TWM009) | yes |
-| Trimming / NativeAOT | safe | no (IL2026 / IL3050) |
-
-Choose reflection only for **streams**, **pre/post processors or the exception cascade**, or
-**runtime assembly scanning** (plugins loaded after build). Full matrix:
-[migration.md feature matrix](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#feature-matrix).
-Do not suppress IL2026/IL3050 on `AddMediator()`; move the host to the generated stack.
+Steps: [migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
 
 ## 2. Minimal host (generated)
 
@@ -204,7 +197,7 @@ string reply = await mediator.Send(new Ping("aot"));
 
 Aot/Link still emit `Sender_*` / `Publisher_*` for named pipelines, but there is no
 `AddGeneratedMediator<TScope>()`. Validation, transaction and logging behaviors need Host.
-Limits: [Aot / Link profile limits](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/generated-vs-legacy.md#aot--link-profile-limits).
+Limits: [m1-generated-mediator.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m1-generated-mediator.md).
 
 ## 4. Diagnostics TWM001-TWM011
 
@@ -221,7 +214,7 @@ All are errors unless marked warning. Full text:
 | TWM006 | Aot/Link handler not constructible with `new()` | Add an accessible parameterless ctor (`[SetsRequiredMembers]` for `required` members), or use Host |
 | TWM007 | Member-assembly type is `internal` / inaccessible from the host | Make it public, or `[assembly: InternalsVisibleTo("Host")]` in the member |
 | TWM008 | Contracts or, on Host, MS.DI Abstractions not referenced; nothing generated | Add Contracts. For the MS.DI gap, add Abstractions, or set the profile to `Aot` when the host does not use MS.DI |
-| TWM009 (warning) | Stream handler, pre/post processor or exception handler/action is never called | Use `AddMediator()`, or move the logic into a handler or `IPipelineBehavior` |
+| TWM009 (warning) | Stream handler, pre/post processor or exception handler/action is never called | Move the logic into a handler or `IPipelineBehavior` |
 | TWM010 (warning) | `[MediatorBehavior]` type is not an `IPipelineBehavior<,>` | Fix the type or remove the registration |
 | TWM011 (warning) | Behavior's constraints match no request in its pipeline | Fix the constraints or `Scope`, or remove it |
 
@@ -253,11 +246,11 @@ In a generator host the generator reports TWM001-TWM003; in a library the Analyz
 - **`TimeWarpMediatorNamespace`.** Generated types land in `TimeWarp.Mediator.Generated` by
   default. Set `<TimeWarpMediatorNamespace>My.App.Mediation</TimeWarpMediatorNamespace>` to move
   them (useful when two hosts' generated types meet in one compilation).
-- **net10.0 floor.** `TimeWarp.Mediator` and `TimeWarp.Mediator.Contracts` 14.x target `net10.0`
-  only. Projects that cannot move stay on 13.x. Generators/Analyzers are netstandard2.0 but need
-  Roslyn 4.8+ (CS9057 on older compilers).
-- **Streams are reflection-only.** `IStreamRequest<>` / `CreateStream` throw
-  `NotSupportedException` on the generated mediator (TWM009). Keep `AddMediator()` for them.
+- **net10.0 floor.** `TimeWarp.Mediator.Contracts` 14.x targets `net10.0` only. Projects that
+  cannot move stay on 13.x. Generators/Analyzers are netstandard2.0 but need Roslyn 4.8+
+  (CS9057 on older compilers).
+- **Streams are not dispatched.** `IStreamRequest<>` / `CreateStream` throw
+  `NotSupportedException` (TWM009). Move that work into a handler or `IPipelineBehavior`.
 - **Membership is opt-in.** A library without `[assembly: MediatorAssembly]` is left out of the
   host graph. When its request types are outside the graph too, the host build stays clean and
   `Send` throws `NoHandlerException`. TWM001 fires only when the request type is already in a
@@ -265,23 +258,17 @@ In a generator host the generator reports TWM001-TWM003; in a library the Analyz
 - **`Send(object)`** of a request from another pipeline compiles and throws
   `NoHandlerException` at runtime; prefer typed `Send`.
 
-## 6. Migrating 13.x to 14.0
+## 6. Migrating to the generated host
 
-Full steps and matrix:
-[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated);
-per-beta changes:
+Steps:
+[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
+14.0.0 behavior that already shipped:
 [release-notes-v14.0.0.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/release-notes/release-notes-v14.0.0.md).
 
-- 14.0.0 is **not** a drop-in for 13.0.0. Keeping `AddMediator()` on 14.x is legal (needs
-  net10.0) but stays reflection: no source gen, AOT or named pipelines.
-- Packages: host references Contracts + Generators; drop `TimeWarp.Mediator` once nothing calls
-  `AddMediator()`. Handler libraries: Contracts + Analyzers + `[assembly: MediatorAssembly]`.
-- Behaviors: `cfg.AddBehavior` / `cfg.AddOpenBehavior` become `[assembly: MediatorBehavior(...)]`.
-- Registration: `services.AddMediator(cfg => ...)` becomes `services.AddGeneratedMediator()` in
-  the host project.
-- Build and clear every TWM009: move processors and exception handlers into handlers or
-  behaviors, or keep those hosts on reflection.
-- Handler lifetime changes from transient (reflection) to scoped (generated Host).
-- `GetPipelineInfo()` is reflection-only; inspect `MediatorManifest.Json` on the generated stack.
-- Reflection runtime removed public plumbing in beta.5 (`ServiceFactory`, wrappers,
-  `ServiceRegistrar`); see the release notes table.
+- Packages: the host references Contracts + Generators. Handler libraries reference Contracts +
+  Analyzers and `[assembly: MediatorAssembly]`.
+- Behaviors: `[assembly: MediatorBehavior(...)]`.
+- Registration: `services.AddGeneratedMediator()` in the host project.
+- Clear every TWM009: move processors, streams, and exception handlers into handlers or behaviors.
+- Handlers and behaviors are scoped on the Host profile.
+- Inspect `MediatorManifest.Json` for the generated pipeline.

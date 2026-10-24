@@ -2,6 +2,10 @@
 
 Recorded by `./bin/dev benchmark --project comparison --record`. Do not edit by hand; re-record instead.
 
+The reflection row `TimeWarpLegacyMakeGenericType` was removed with the reflection runtime.
+Ratio in the remaining rows still uses that row as 1.00 until the next
+`./bin/dev benchmark --project comparison --record`.
+
 - Project: `tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj`
 - Commit: `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`
 - Date (UTC): 2026-10-23
@@ -21,7 +25,6 @@ IterationCount=8  WarmupCount=3
 ```
 | Method                               | Mean       | Error     | StdDev    | Ratio | RatioSD | Gen0   | Allocated | Alloc Ratio |
 |------------------------------------- |-----------:|----------:|----------:|------:|--------:|-------:|----------:|------------:|
-| TimeWarpLegacyMakeGenericType        |  55.632 ns | 0.7321 ns | 0.3251 ns |  1.00 |    0.01 | 0.0041 |     208 B |        1.00 |
 | TimeWarpGeneratedMonomorphicSend     |   5.016 ns | 0.5836 ns | 0.3053 ns |  0.09 |    0.01 | 0.0005 |      24 B |        0.12 |
 | TimeWarpGeneratedInterfaceSend       |   8.243 ns | 0.0840 ns | 0.0373 ns |  0.15 |    0.00 | 0.0005 |      24 B |        0.12 |
 | TimeWarpGeneratedObjectSend          |  15.447 ns | 0.2685 ns | 0.1405 ns |  0.28 |    0.00 | 0.0019 |      96 B |        0.46 |

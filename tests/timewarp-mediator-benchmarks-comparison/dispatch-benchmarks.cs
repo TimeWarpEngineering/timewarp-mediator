@@ -1,6 +1,6 @@
 #region Purpose
-// Compares legacy MakeGenericType, generated interface and concrete Send, scoped send,
-// publish, State and Architecture pipelines, CallSiteInlining Dispatch_*, and martinothamar.
+// Compares generated interface and concrete Send, scoped send, publish, State and
+// Architecture pipelines, CallSiteInlining Dispatch_*, and martinothamar.
 #endregion
 
 using TimeWarp.Mediator;
@@ -11,7 +11,6 @@ namespace MediatorBenchmarks;
 [SimpleJob(warmupCount: 3, iterationCount: 8)]
 public class DispatchBenchmarks
 {
-  private IMediator LegacyMediator = null!;
   private TimeWarp.Mediator.Generated.Mediator GeneratedMediator = null!;
   private IServiceProvider GeneratedScope = null!;
   private ISender GeneratedSender = null!;
@@ -31,11 +30,6 @@ public class DispatchBenchmarks
   [GlobalSetup]
   public void Setup()
   {
-    ServiceCollection legacyServices = new();
-    legacyServices.AddMediator(cfg => cfg.RegisterServicesFromAssemblyContaining<Ping>());
-    IServiceProvider legacyProvider = legacyServices.BuildServiceProvider();
-    LegacyMediator = legacyProvider.GetRequiredService<IMediator>();
-
     ServiceCollection generatedServices = new();
     generatedServices.AddGeneratedMediator();
     generatedServices.AddGeneratedMediator<ClientPipeline>();
@@ -52,19 +46,13 @@ public class DispatchBenchmarks
     MartinothamarMediator = martinServices.BuildServiceProvider().GetRequiredService<Mediator.IMediator>();
   }
 
-  [Benchmark(Baseline = true)]
-  public Task<Pong> TimeWarpLegacyMakeGenericType()
-  {
-    return LegacyMediator.Send(Request).AsTask();
-  }
-
   [Benchmark]
   public ValueTask<Pong> TimeWarpGeneratedMonomorphicSend()
   {
     return GeneratedMediator.Send(Request);
   }
 
-  [Benchmark]
+  [Benchmark(Baseline = true)]
   public ValueTask<Pong> TimeWarpGeneratedInterfaceSend()
   {
     return GeneratedSender.Send(Request);

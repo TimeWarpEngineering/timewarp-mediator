@@ -2,29 +2,27 @@
 
 Source-generated dispatcher, analyzer, and State-shaped golden file (milestone M1). Design SSOT: [`design/2026-06-17-source-gen-aot-rewrite-spec.md`](design/2026-06-17-source-gen-aot-rewrite-spec.md) §14.
 
-**Do not call `AddMediator()` for this stack**, and 14.0.0 is not a drop-in for 13.0.0.
-Two stacks, packages for a generated host, and membership:
-[generated-vs-legacy.md](./generated-vs-legacy.md).
+Registration is `AddGeneratedMediator()`. Packages and the host steps are in
+[migration.md](../migration.md#generated-host).
 
 ## What shipped
 
 - `TimeWarp.Mediator.Analyzers` — TWM001 (request with no handler), TWM002 (duplicate handler). Safe on a library that does **not** run the generator. The library must opt in with `[assembly: MediatorAssembly]`.
-- `TimeWarp.Mediator.Generators` — emits `internal sealed TimeWarp.Mediator.Generated.Mediator : IMediator`, monomorphic `Send`, `Send(object)` switch, `MediatorManifest` v1 (embedded JSON const; source generators cannot write a loose `mediator.manifest.json`), and `AddGeneratedMediator()` (Host profile). Profile `Aot` uses ServiceGen static fields (handlers are process-wide singletons and must be constructible with `new Handler()`, else **TWM006**; `required` members need `[SetsRequiredMembers]`) and does **not** weave `[assembly: MediatorBehavior]` into `Dispatch_*`: each such behavior is **TWM005** and the Aot manifest lists no behaviors (Host/State is the scoped pipeline path). See [generated-vs-legacy.md](./generated-vs-legacy.md#aot--link-profile-limits).
+- `TimeWarp.Mediator.Generators` — emits `internal sealed TimeWarp.Mediator.Generated.Mediator : IMediator`, monomorphic `Send`, `Send(object)` switch, `MediatorManifest` v1 (embedded JSON const; source generators cannot write a loose `mediator.manifest.json`), and `AddGeneratedMediator()` (Host profile). Profile `Aot` uses ServiceGen static fields (handlers are process-wide singletons and must be constructible with `new Handler()`, else **TWM006**; `required` members need `[SetsRequiredMembers]`) and does **not** weave `[assembly: MediatorBehavior]` into `Dispatch_*`: each such behavior is **TWM005** and the Aot manifest lists no behaviors (Host/State is the scoped pipeline path).
 - Generator diagnostics: shapes the generated mediator cannot emit are diagnostics, not compile errors inside `.g.cs`. **TWM007** an inaccessible member-assembly type, including a pipeline scope marker (no `InternalsVisibleTo`), **TWM008** missing Contracts or (Host) MS.DI abstractions — nothing is generated, **TWM009** stream/processor/exception handler kinds that are ignored, **TWM010**/**TWM011** `[MediatorBehavior]` entries that are not pipeline behaviors or close over no request. See [diagnostics.md](./diagnostics.md).
 - Contracts: `IAction` / `IActionHandler` / `ActionHandler` (`ValueTask`), `ICommand` / `IQuery` + handlers, membership attributes, `NoHandlerException`.
 - Contracts (14.0.0-beta.2): `IIdempotent` marker, `IIdempotentCommand` / `IIdempotentCommand<T>` (`: ICommand…, IIdempotent`) + `IIdempotentCommandHandler<>` / `IIdempotentCommandHandler<,>`. `IQuery<T>` now implements `IIdempotent`. Dispatch is identical to `ICommand`; idempotency-key enforcement and a dedup store are out of scope.
 - Generator (14.0.0-beta.3, [#68](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/68)): `IRequestHandler<T, Unit>` dispatches as a response-returning request (only `IRequestHandler<T>` is void), and array / other non-named responses (`IQuery<T[]>`) are discovered and close pipeline behaviors.
 - Generator (14.0.0-beta.4): every generated type is `internal` in every profile (`Mediator`, `Sender_*` / `Publisher_*`, `MediatorManifest`, and, on the Host profile, `GeneratedMediatorServiceCollectionExtensions`), so a compilation that references two hosts sees no duplicate types (CS0436). Aot and Link do not emit `AddGeneratedMediator()`. Resolve the mediator through `IMediator` / `ISender` / `IPublisher` from outside the host.
-- `ISender`, `IPublisher`, `IMediator`, handler and pipeline interfaces live in `TimeWarp.Mediator.Contracts` (type-forwarded from `TimeWarp.Mediator`) so the AOT sample does not reference the reflection assembly.
+- `ISender`, `IPublisher`, `IMediator`, handler and pipeline interfaces live in `TimeWarp.Mediator.Contracts`.
 - State golden file: `IncrementActionSet` + `StateTransactionBehavior` (scoped) matching `Reverse().Aggregate` (short-circuit, clone/restore, `ExceptionNotification`).
 - AOT sample: `samples/timewarp-mediator-examples-aot` with `EnableTrimAnalyzer`, `EnableAotAnalyzer`, `IsAotCompatible`, **no** `NoWarn` on IL2026/IL3050. Profile `Aot` uses ServiceGen static fields.
-- Benchmarks: `tests/timewarp-mediator-benchmarks-comparison` vs legacy MakeGenericType, generated `IMediator.Send`, CallSiteInlining `Dispatch_*`, and martinothamar.
-
-The reflection `TimeWarp.Mediator.Mediator` remains the `AddMediator()` implementation (Phase A coexistence). It is a different dispatcher.
+- Benchmarks: `tests/timewarp-mediator-benchmarks-comparison` covers generated `IMediator.Send`, CallSiteInlining `Dispatch_*`, and martinothamar.
 
 ## Membership
 
-Attributes and the `TimeWarpMediatorAssembly` opt-in: [generated-vs-legacy.md](./generated-vs-legacy.md#membership).
+A project that references Generators is a graph member. A library opts in with
+`[assembly: MediatorAssembly]`.
 
 ## Handler discovery and ordering
 
@@ -51,6 +49,5 @@ Attributes and the `TimeWarpMediatorAssembly` opt-in: [generated-vs-legacy.md](.
 | Typed exception cascade (`IRequestExceptionHandler`, `IRequestExceptionAction`) | later; member-assembly exception handlers/actions are **TWM009** |
 | TimeWarp.State NuGet switch | file after this milestone merges |
 | TimeWarp.ServiceGen | not on the 14.0.0 critical path |
-| `AddMediator()` auto-preferring the generated type | later coexistence polish; M1 uses `AddGeneratedMediator()` |
 
 GitHub issue [#52](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/52) stays **open** until a stable 14.0.0.

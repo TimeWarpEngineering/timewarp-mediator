@@ -7,8 +7,6 @@
     <!-- Disable strict compilation settings for samples -->
     <Nullable>disable</Nullable>
     <Features></Features>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <!-- RS0030: samples are console demos; Console stays readable for copy-paste and ITerminal adds a dependency. -->
     <NoWarn>$(NoWarn);RS0030</NoWarn>

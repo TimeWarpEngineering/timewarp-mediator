@@ -101,24 +101,8 @@ public class IncrementActionSetTests
     string generated = await fixture.Generated.Send(new Ping { Message = "hi" });
     string[] generatedOrder = PipelineLog.Events.ToArray();
 
-    PipelineLog.Clear();
-    ServiceCollection legacyServices = new();
-    legacyServices.AddMediator(cfg =>
-    {
-      cfg.RegisterServicesFromAssemblyContaining<Ping>();
-      cfg.AddOpenBehavior(typeof(OuterTrackingBehavior<,>));
-      cfg.AddOpenBehavior(typeof(InnerTrackingBehavior<,>));
-    });
-    await using ServiceProvider legacyProvider = legacyServices.BuildServiceProvider();
-    using IServiceScope legacyScope = legacyProvider.CreateScope();
-    TimeWarp.Mediator.Mediator legacy = new(legacyScope.ServiceProvider);
-    string legacyResult = await legacy.Send(new Ping { Message = "hi" });
-    string[] legacyOrder = PipelineLog.Events.ToArray();
-
     generated.ShouldBe("hi-pong");
-    legacyResult.ShouldBe("hi-pong");
     generatedOrder.ShouldBe(new[] { "outer-before", "inner-before", "handler", "inner-after", "outer-after" });
-    legacyOrder.ShouldBe(generatedOrder);
   }
 
   [Fact]

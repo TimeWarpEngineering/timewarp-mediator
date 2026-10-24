@@ -1,18 +1,17 @@
 # Versioning and release process
 
-This document describes how the four TimeWarp.Mediator NuGet packages are versioned, built and
+This document describes how the TimeWarp.Mediator NuGet packages are versioned, built and
 published. The TimeWarp-wide convention is the `tw-release` skill
 (`skills/tw-release/SKILL.md` in timewarp-flow). This page covers what this repository actually
 does, including where it differs from that skill.
 
 ## Packages
 
-All four packages share one version and are packed together by `dev pack`:
+The packages share one version and are packed together by `dev pack`:
 
 | Package | Project | Target |
 |---|---|---|
 | `TimeWarp.Mediator.Contracts` | `source/timewarp-mediator-contracts` | `net10.0` |
-| `TimeWarp.Mediator` | `source/timewarp-mediator` (ProjectReference to Contracts) | `net10.0` |
 | `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` (bundles the Analyzers DLL) | `netstandard2.0` |
 | `TimeWarp.Mediator.Analyzers` | `source/timewarp-mediator-analyzers` | `netstandard2.0` |
 
@@ -22,7 +21,7 @@ Each package packs its own `source/<project>/readme.md` as the nuget.org readme;
 fails when that readme's first heading is not the package id or it contains a relative link
 (nuget.org cannot resolve those). The repository `readme.md` is the GitHub page only.
 
-`dev pack` also requires `TimeWarp.Mediator` and `TimeWarp.Mediator.Contracts` to ship exactly one
+`dev pack` also requires `TimeWarp.Mediator.Contracts` to ship exactly one
 `lib/net10.0/` folder and the Generators nupkg to ship `buildTransitive/TimeWarp.Mediator.Generators.props`.
 It then runs the package smoke, `tests/timewarp-mediator-package-smoke`: a consumer project outside
 the solution that restores Contracts and Generators from `artifacts/packages` (into a throwaway
@@ -103,7 +102,7 @@ example a local `dev workflow --mode release`) it stops after pack and check-ver
    lists each refusal and its remedy. If `release` is missing from `./bin/dev --help`, the AOT
    binary is stale: run `./bin/dev self-install`, or use
    `dotnet run --file tools/dev-cli/dev.cs -- release`.
-4. **Watch.** The published Release starts the `publish` job. Confirm the four packages on
+4. **Watch.** The published Release starts the `publish` job. Confirm the packages on
    nuget.org.
 
 Do not run `gh release create` with a hand-typed tag; the tag guard rejects any tag that does not
@@ -151,6 +150,6 @@ Bootstrap the AOT CLI once per clone with `dotnet run --file tools/dev-cli/dev.c
 |---|---|
 | `./bin/dev workflow` | The CI pipeline locally: clean → build → test → pack. |
 | `./bin/dev workflow --mode release` | Release pipeline; pushes only when `NUGET_API_KEY` or `--api-key` is set. |
-| `./bin/dev pack` | Pack the four packages and run the nupkg layout checks. |
+| `./bin/dev pack` | Pack the packages and run the nupkg layout checks. |
 | `./bin/dev check-version` | Fail if `<Version>` is already on nuget.org. |
 | `./bin/dev release [--dry-run]` | Tag `v<Version>` and create the GitHub Release. |
