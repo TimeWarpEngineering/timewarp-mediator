@@ -1,10 +1,12 @@
 #region Purpose
-// Emits mediator.manifest.json v1 as the MediatorManifest.Json const (source generators cannot write loose files).
+// Emits mediator.manifest.json v2 as the MediatorManifest.Json const (source generators cannot write loose files).
 #endregion
 
 #region Design
-// JSON stays the single serialized manifest. The same static type exposes Request entries so a
-// host can read kind, response, scope, and the ordered behavior list without parsing JSON.
+// Version is 2 because the document has no profile field. A reader that still expects that field
+// sees the new version instead of a silent v1. JSON stays the single serialized manifest. The
+// same static type exposes Request entries so a host can read kind, response, scope, and the
+// ordered behavior list without parsing JSON.
 // Requests and each entry's Behaviors are ReadOnlyCollection wrappers over private arrays, so a
 // cast cannot mutate the process-wide manifest. Kind precedence matches Nuru's string matcher:
 // Query, then IdempotentCommand, then Command, then Action, otherwise Request. Every request
@@ -27,7 +29,7 @@ internal static class ManifestEmitter
     builder.AppendLine();
     builder.AppendLine("internal static class MediatorManifest");
     builder.AppendLine("{");
-    builder.AppendLine("    public const int Version = 1;");
+    builder.AppendLine("    public const int Version = 2;");
     builder.AppendLine("    public const string KindAction = \"Action\";");
     builder.AppendLine("    public const string KindCommand = \"Command\";");
     builder.AppendLine("    public const string KindQuery = \"Query\";");
@@ -46,7 +48,7 @@ internal static class ManifestEmitter
   {
     StringBuilder builder = new();
     builder.Append('{');
-    builder.Append("\"version\":1,");
+    builder.Append("\"version\":2,");
     builder.Append("\"namespace\":\"").Append(Escape(graph.Membership.GeneratedNamespace)).Append("\",");
     builder.Append("\"requests\":[");
     for (int i = 0; i < graph.Requests.Length; i++)

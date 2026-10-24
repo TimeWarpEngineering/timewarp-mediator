@@ -31,6 +31,19 @@ diagnostic ownership. TreatWarningsAsErrors, the banned-API analyzer, and Source
 Done when `./bin/dev workflow` is green on this branch and the changes are committed and
 pushed. Opening the pull request is the host open-pr node, not this walk.
 
+Round 1 still left that floor unprotected. The shipped analyzer and generator pin
+`Microsoft.CodeAnalysis.CSharp` 5.0.0 with `VersionOverride`, Dependabot ignores
+`Microsoft.CodeAnalysis.CSharp*`, and a compilation test fails unless the loaded
+`CSharpCompilation` assembly and the shipped `Microsoft.CodeAnalysis` reference are 5.0.
+The AOT sample treats every warning as an error, so IL2104, IL3053, and the other trim
+warnings fail the publish the same way IL2026 and IL3050 do. Release check-version names
+only `TimeWarp.Mediator` and `TimeWarp.Mediator.Generators`. Packing the analyzer drops
+the caller's `TargetFramework`, `RuntimeIdentifier`, and `SelfContained`. The manifest
+is version 2 because the profile field is gone. Member names skip notification handlers.
+Handlers with constructor parameters or required members still compile on the host path.
+The stale package docs stay on 021-007. The manifest shape change belongs in that
+release note.
+
 ## Requirements
 
 - Remove `TimeWarpMediatorProfile`, the Aot and Link emission paths, `ServiceGen`, TWM005 and
@@ -57,7 +70,13 @@ pushed. Opening the pull request is the host open-pr node, not this walk.
 - [x] `dev pack` asserts two packages; smoke consumer updated
 - [x] `documentation/diagnostics.md` updated
 - [x] `./bin/dev workflow` green
+- [x] Round-1 findings M1–M8 applied; M9 stays on 021-007
 - [ ] PR with merge commit
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8
+- Fix pass: M1–M8 applied on this id. M9 stays wontfix for 021-007.
 
 ## Notes
 
@@ -78,6 +97,19 @@ second nupkg and does not bundle the analyzer. Roslyn is pinned at `Microsoft.Co
 `agent.md`, the skill, migration, overview, and release notes stay for 021-007. The pull request
 is the host open-pr node.
 
+Round 1 findings M1–M8 are applied. The shipped analyzer and generator use
+`VersionOverride="5.0.0"` on `Microsoft.CodeAnalysis.CSharp`, Dependabot ignores
+`Microsoft.CodeAnalysis.CSharp*`, and `Compiler_IsTheDeclaredFloor` fails unless the loaded
+`CSharpCompilation` assembly and both shipped `Microsoft.CodeAnalysis` references are 5.0.
+The AOT sample sets `TreatWarningsAsErrors`, so IL2104, IL3053, and the other trim warnings
+fail publish along with IL2026 and IL3050. `checkVersionConfig.packages` is
+`TimeWarp.Mediator,TimeWarp.Mediator.Generators`. The analyzer pack target removes
+`TargetFramework`, `RuntimeIdentifier`, and `SelfContained`. The manifest is version 2
+because the profile field is gone; 021-007 should say that in the release notes. Member
+names skip notification handlers. `HandlerWithConstructorParameters_IsFineUnderHost` and
+`HandlerWithRequiredMember_IsFineUnderHost` compile on the host path. M9 stays wontfix:
+the stale docs and readmes remain 021-007's work.
+
 `ganda repo audit`: Passed 32, Failed 0, Skipped 2.
 
 ### How to validate
@@ -85,25 +117,28 @@ is the host open-pr node.
 Smoke: `./bin/dev workflow`
 
 Expect: the log ends with `Pipeline SUCCEEDED`. Analyzers 42 passed, generators 57 passed,
-compilation 53 passed, failed 0. NativeAOT publish of `timewarp-mediator-examples-aot` exits 0
-and prints `aot-pong` (the process exits 1 unless `StampBehavior` ran twice). Pack reports
-layout verified for `TimeWarp.Mediator.14.0.0.nupkg` and `TimeWarp.Mediator.Generators.14.0.0.nupkg`
-only. Package smoke prints `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`.
+compilation 56 passed, failed 0. NativeAOT publish of `timewarp-mediator-examples-aot` exits 0
+and its stdout contains `aot-pong` (the process exits 1 unless `StampBehavior` ran twice).
+Pack reports layout verified for `TimeWarp.Mediator.14.0.0.nupkg` and
+`TimeWarp.Mediator.Generators.14.0.0.nupkg` only. Package smoke prints
+`package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`.
 
 ### Review
 
-Round 1 is done (effort 3, roster general, two independent general passes). Disposition is
-pending a fix pass.
+Round 1 is done (effort 3, roster general, two independent general passes). The fix pass
+applied M1–M8. M9 stays wontfix. Round 2 is the host review node. Counts below are this
+pass's claim; `review/round-1/merged.md` stays the round-1 ledger.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 1 | 0 | 0 |
-| suggestion | 2 | 0 | 1 |
-| nit | 5 | 0 | 0 |
+| bug | 0 | 1 | 0 |
+| suggestion | 0 | 2 | 1 |
+| nit | 0 | 5 | 0 |
 
-- **M1 (bug):** nothing guards the Roslyn 5.0.0 floor. Dependabot or a central bump would ship
-  DLLs that the 10.0.100 SDK cannot load, and every gate would stay green.
-- **M9 (wontfix):** the stale docs and readmes are deferred to 021-007, which already owns them.
+- **M1–M8:** applied in this pass. M1 pins Roslyn 5.0.0 with `VersionOverride`, a Dependabot
+  ignore, and `Compiler_IsTheDeclaredFloor`.
+- **M9 (wontfix):** the stale docs and readmes stay on 021-007, which already owns them.
+  That release note should also record manifest version 2 (the profile field is gone).
 
 The implementation matches the original task and the implementer restatement. No misread was found.
 
@@ -121,3 +156,7 @@ Artifacts:
   Second general pass by sub-agent a489660e36348b5b0. The review oracle ran build, test, pack,
   AOT publish and a read-only audit. All were green. One bug and seven other findings are open,
   so a fix pass was requested (2026-10-24).
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-24T10:13:00Z
+- Fix pass: implement-fix-2 (grok, model grok-4.7). `./bin/dev workflow` Pipeline SUCCEEDED
+  (analyzers 42, generators 57, compilation 56). `ganda repo audit` Passed 32, Failed 0, Skipped 2.
+  M1–M8 applied; M9 left for 021-007 (2026-10-24).

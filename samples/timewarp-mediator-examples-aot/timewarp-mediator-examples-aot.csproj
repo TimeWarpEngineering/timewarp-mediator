@@ -12,7 +12,10 @@
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
     <IsTrimmable>true</IsTrimmable>
-    <!-- The section-9 gate: trim and AOT warnings fail this sample. Do not NoWarn IL2026 or IL3050. -->
+    <!-- Trim and AOT warnings fail this sample, including the package-collapse codes
+         IL2104 and IL3053. TreatWarningsAsErrors reaches ILLink and ILC. Do not NoWarn
+         IL2026 or IL3050. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors>$(WarningsAsErrors);IL2026;IL3050</WarningsAsErrors>
     <!-- PublishAot copies DocumentationFile from the RID output. The compiler writes it
          beside the TFM assembly, so the copy is MSB3030. This sample is not a package. -->

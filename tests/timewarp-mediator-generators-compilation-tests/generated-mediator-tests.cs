@@ -91,7 +91,7 @@ public sealed class GeneratedMediatorTests
     host.GetType("Custom.Generated.Mediator");
     host.Compilation.Assembly.GetTypeByMetadataName(HostCompiler.DefaultNamespace + ".Mediator").ShouldBeNull();
     ManifestDocument manifest = host.Manifest("Custom.Generated");
-    manifest.Version.ShouldBe(1);
+    manifest.Version.ShouldBe(2);
     manifest.Namespace.ShouldBe("Custom.Generated");
   }
 

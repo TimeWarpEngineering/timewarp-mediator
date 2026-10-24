@@ -1,5 +1,5 @@
 #region Purpose
-// Dispatch with no behaviors: the scoped cache throws once the scope is disposed.
+// Host dispatch without behaviors, including handlers that only the container constructs.
 #endregion
 
 #region Design
@@ -7,7 +7,8 @@
 // path is compiled here. HandlerCache is scoped and reused by the dispatcher instance. Each
 // handler slot is filled on the first send of that request, so a transient registration is
 // resolved once per cache and an unresolvable handler does not block the others. Synchronous
-// throws stay synchronous; 021-007 records that.
+// throws stay synchronous; 021-007 records that. Constructor parameters and required members
+// compile because registration is AddScoped, not a generated constructor call.
 #endregion
 
 using Microsoft.Extensions.DependencyInjection;
@@ -113,6 +114,22 @@ public sealed class HostDispatchTests
     IRequest<string> request = (IRequest<string>) Activator.CreateInstance(assembly.GetType("App.Boom", true)!)!;
 
     Should.Throw<InvalidOperationException>(() => sender.Send(request));
+  }
+
+  [Fact]
+  public void HandlerWithConstructorParameters_IsFineUnderHost()
+  {
+    HostCompilation host = HostCompiler.Compile("HostCtor", ConstructorSource);
+
+    Problems(host).ShouldBeEmpty();
+  }
+
+  [Fact]
+  public void HandlerWithRequiredMember_IsFineUnderHost()
+  {
+    HostCompilation host = HostCompiler.Compile("HostRequired", RequiredMemberSource);
+
+    Problems(host).ShouldBeEmpty();
   }
 
   private static Diagnostic[] Problems(HostCompilation host)
@@ -251,6 +268,108 @@ namespace App
     {
         public System.Threading.Tasks.ValueTask<string> Handle(Boom request, System.Threading.CancellationToken cancellationToken)
             => throw new System.InvalidOperationException(""sync"");
+    }
+}
+";
+
+  private const string ConstructorSource = @"
+using System.Threading;
+using System.Threading.Tasks;
+using TimeWarp.Mediator;
+
+namespace Ctors
+{
+    public sealed class Clock
+    {
+    }
+
+    public sealed class Dependent : IRequest<string>
+    {
+    }
+
+    public sealed class DependentHandler : IRequestHandler<Dependent, string>
+    {
+        private readonly Clock Clock;
+
+        public DependentHandler(Clock clock)
+        {
+            Clock = clock;
+        }
+
+        public ValueTask<string> Handle(Dependent request, CancellationToken cancellationToken) => ValueTask.FromResult(Clock.ToString()!);
+    }
+
+    public sealed class Hidden : IRequest<string>
+    {
+    }
+
+    public sealed class PrivateCtorHandler : IRequestHandler<Hidden, string>
+    {
+        private PrivateCtorHandler()
+        {
+        }
+
+        public ValueTask<string> Handle(Hidden request, CancellationToken cancellationToken) => ValueTask.FromResult(""hidden"");
+    }
+
+    public sealed class Optional : IRequest<string>
+    {
+    }
+
+    public sealed class OptionalCtorHandler : IRequestHandler<Optional, string>
+    {
+        public OptionalCtorHandler(int retries = 3)
+        {
+        }
+
+        public ValueTask<string> Handle(Optional request, CancellationToken cancellationToken) => ValueTask.FromResult(""optional"");
+    }
+
+    public sealed class Note : INotification
+    {
+    }
+
+    public sealed class DependentNoteHandler : INotificationHandler<Note>
+    {
+        public DependentNoteHandler(Clock clock)
+        {
+        }
+
+        public ValueTask Handle(Note notification, CancellationToken cancellationToken) => default;
+    }
+}
+";
+
+  private const string RequiredMemberSource = @"
+using System.Threading;
+using System.Threading.Tasks;
+using TimeWarp.Mediator;
+
+namespace Required
+{
+    public sealed class Ping : IRequest<string>
+    {
+    }
+
+    public sealed class RequiredMemberHandler : IRequestHandler<Ping, string>
+    {
+        public required string Name { get; init; }
+
+        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(Name);
+    }
+
+    public class RequiredBase
+    {
+        public required string Name { get; init; }
+    }
+
+    public sealed class DerivedPing : IRequest<string>
+    {
+    }
+
+    public sealed class DerivedRequiredHandler : RequiredBase, IRequestHandler<DerivedPing, string>
+    {
+        public ValueTask<string> Handle(DerivedPing request, CancellationToken cancellationToken) => ValueTask.FromResult(Name);
     }
 }
 ";

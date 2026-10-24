@@ -20,8 +20,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
-    <!-- Floor is the Roslyn that ships with the .NET 10 SDK (Microsoft.CodeAnalysis.CSharp 5.0.0). -->
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <!-- VersionOverride holds the compiler that ships with the oldest .NET 10 SDK.
+         A newer reference fails to load there (CS9057) even if the central pin moves. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" VersionOverride="5.0.0" PrivateAssets="all" />
     <!-- TimeWarp.SourceGenerators is removed so it does not run inside this Roslyn component. -->
     <PackageReference Remove="TimeWarp.SourceGenerators" />
   </ItemGroup>

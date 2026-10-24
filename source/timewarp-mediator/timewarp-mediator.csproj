@@ -19,9 +19,11 @@
 
   <!-- Pack the analyzer DLL into analyzers/dotnet/cs. _GetPackageFiles is the snapshot
        GenerateNuspec packs, so the item has to exist before that target. GetTargetPath
-       follows the analyzer project's own output. -->
+       follows the analyzer project's own output. RemoveProperties drops the caller's
+       TargetFramework, RuntimeIdentifier, and SelfContained so pack -r or -f does not
+       retarget the netstandard2.0 analyzer. -->
   <Target Name="AddMediatorAnalyzerToPackage" BeforeTargets="_GetPackageFiles">
-    <MSBuild Projects="$(MSBuildThisFileDirectory)..\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);DesignTimeBuild=false">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);DesignTimeBuild=false" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained">
       <Output TaskParameter="TargetOutputs" ItemName="MediatorAnalyzerTargetPath" />
     </MSBuild>
     <ItemGroup>

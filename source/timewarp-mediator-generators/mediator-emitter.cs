@@ -5,8 +5,7 @@
 #region Design
 // The host supplies IServiceProvider. Handlers and behaviors resolve from that provider in
 // compile-time order, and [assembly: MediatorBehavior] is always woven into Dispatch_*.
-// CallSiteInlining prototype is the public
-// static Dispatch_* method the interceptors would target.
+// The CallSiteInlining prototype is the public static Dispatch_* method interceptors target.
 // Send<TResponse> and Send<TRequest> (void) are type switches. Each arm returns the Dispatch_*
 // ValueTask. Unsafe.As reinterprets ValueTask<TConcrete> as ValueTask<TResponse> only when those
 // types are equal. A covariant IRequest<out T>, or a request that implements two IRequest<>

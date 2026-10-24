@@ -8,6 +8,8 @@
 // target Dispatch_global__Ns_Type directly). Every type in a colliding group gets a suffix of the
 // FNV-1a hash of its fully qualified name, so the result depends only on the type, not on graph
 // order. A further clash (vanishingly rare) appends an index in ordinal display-name order.
+// Notification handler types are omitted. No emitted member is named from them, and including
+// them would hash-suffix a Dispatch_* or Publish_* name that only collides with a handler.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -31,10 +33,6 @@ internal sealed class MemberNames
     {
       Add(types, seen, notification.NotificationType);
       Add(types, seen, notification.ScopeType);
-      foreach (INamedTypeSymbol handler in notification.HandlerTypes)
-      {
-        Add(types, seen, handler);
-      }
     }
 
     types.Sort((left, right) => string.CompareOrdinal(Fq(left), Fq(right)));
