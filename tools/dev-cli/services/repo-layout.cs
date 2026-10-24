@@ -7,6 +7,7 @@
 // PackageId/AssemblyName stay PascalCase (TimeWarp.Mediator*).
 // The package smoke project sits outside the slnx because it restores the
 // packed nupkgs from artifacts/packages, so it can only build after pack.
+// The reflection runtime is not packed. Contracts is the only lib package.
 #endregion
 
 namespace DevCli;
@@ -17,7 +18,6 @@ internal static class RepoLayout
 
   internal static readonly string[] PackableProjects =
   [
-    "source/timewarp-mediator/timewarp-mediator.csproj",
     "source/timewarp-mediator-contracts/timewarp-mediator-contracts.csproj",
     "source/timewarp-mediator-analyzers/timewarp-mediator-analyzers.csproj",
     "source/timewarp-mediator-generators/timewarp-mediator-generators.csproj"
@@ -28,7 +28,6 @@ internal static class RepoLayout
 
   internal static readonly (string PackageId, string[] RequiredEntries)[] PackageLayout =
   [
-    ("TimeWarp.Mediator", ["lib/net10.0/TimeWarp.Mediator.dll", .. LicenseEntries]),
     ("TimeWarp.Mediator.Contracts", ["lib/net10.0/TimeWarp.Mediator.Contracts.dll", .. LicenseEntries]),
     ("TimeWarp.Mediator.Analyzers", ["analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll", .. LicenseEntries]),
     ("TimeWarp.Mediator.Generators",
@@ -40,11 +39,11 @@ internal static class RepoLayout
     ])
   ];
 
-  // The only lib/ TFM folder a runtime package may ship (net10.0 floor). A stray
+  // The only lib/ TFM folder Contracts may ship (net10.0 floor). A stray
   // or missing folder changes what consumers on other TFMs resolve.
   internal const string LibTargetFramework = "net10.0";
 
-  internal static readonly string[] LibPackageIds = ["TimeWarp.Mediator", "TimeWarp.Mediator.Contracts"];
+  internal static readonly string[] LibPackageIds = ["TimeWarp.Mediator.Contracts"];
 
   internal const string PackageSmokeProject =
     "tests/timewarp-mediator-package-smoke/timewarp-mediator-package-smoke.csproj";
@@ -58,8 +57,7 @@ internal static class RepoLayout
 
   internal static readonly (string Name, string Project)[] BenchmarkProjects =
   [
-    ("comparison", "tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj"),
-    ("legacy", "tests/timewarp-mediator-benchmarks/timewarp-mediator-benchmarks.csproj")
+    ("comparison", "tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj")
   ];
 
   /// <summary>Reads the single <c>&lt;Version&gt;</c> from source/Directory.Build.props.</summary>

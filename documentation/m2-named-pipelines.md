@@ -5,10 +5,8 @@ Source-generated per-scope senders and publishers (milestone M2). Design SSOT: [
 Pipelines are **marker types**, not strings. Use empty types such as `ClientPipeline` /
 `ServerPipeline`. `[MediatorModule("Orders")]` does not name a pipeline.
 
-**Do not call `AddMediator()` for this stack.** Named pipelines exist only on the generated
-dispatcher: `AddGeneratedMediator()` (unscoped) and `AddGeneratedMediator<TScope>()` (one
-named pipeline). Two stacks, packages, and the not-a-drop-in status:
-[generated-vs-legacy.md](./generated-vs-legacy.md).
+Registration is `AddGeneratedMediator()` (unscoped) and `AddGeneratedMediator<TScope>()` (one
+named pipeline). Host packages are in [migration.md](../migration.md#generated-host).
 
 ## What shipped
 

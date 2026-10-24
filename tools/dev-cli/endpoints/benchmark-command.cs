@@ -20,7 +20,7 @@ namespace DevCli.Commands;
 [NuruRoute("benchmark", Description = "Run benchmarks (--record stores the baseline, --gate fails on regression)")]
 public sealed class BenchmarkCommand : ICommand<Unit>
 {
-  [Option("project", "p", Description = "Benchmark project: comparison (default) or legacy")]
+  [Option("project", "p", Description = "Benchmark project: comparison (default)")]
   public string? Project { get; set; }
 
   [Option("filter", "f", Description = "BenchmarkDotNet --filter glob (default: *)")]

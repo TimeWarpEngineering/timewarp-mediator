@@ -13,7 +13,7 @@ notes; replace that body with the draft.
 > dispatcher (`AddGeneratedMediator()`). Do not bump a 13.0.0 host to 14.0.0 and keep
 > `AddMediator(...)` expecting source generation, AOT-clean dispatch or named pipelines; those
 > need `AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()`. See
-> [generated-vs-legacy.md](../generated-vs-legacy.md) and
+> [generated-vs-legacy.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v14.0.0/documentation/generated-vs-legacy.md) and
 > [migration.md](../../migration.md#13x-reflection-to-14x-generated).
 
 ## 14.0.0
@@ -59,7 +59,7 @@ their analyzer payload does not depend on your app's target framework.
 `RequestExceptionProcessorBehavior<,>` and `RequestExceptionActionProcessorBehavior<,>` are
 annotated `[RequiresUnreferencedCode]` and `[RequiresDynamicCode]`. A trimmed or NativeAOT host
 that still calls them gets IL2026 / IL3050. The generated path does not. See
-[generated-vs-legacy.md](../generated-vs-legacy.md).
+[generated-vs-legacy.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v14.0.0/documentation/generated-vs-legacy.md).
 
 #### Smaller public API in the `TimeWarp.Mediator` runtime package
 

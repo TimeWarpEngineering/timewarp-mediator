@@ -1,5 +1,5 @@
 #region Purpose
-// Pack the four TimeWarp.Mediator NuGet packages and assert analyzer payload
+// Pack the TimeWarp.Mediator NuGet packages and assert analyzer payload
 #endregion
 #region Design
 // Maps Build.ps1 pack + Assert-NupkgContains. Output is artifacts/packages
@@ -10,6 +10,7 @@
 // the same way the PowerShell zip asserts did. NupkgReadmeCheck then requires
 // the package's own readme.md with only absolute links. The runtime packages
 // must ship exactly one lib/ TFM folder (RepoLayout.LibTargetFramework).
+// Contracts is the only lib package.
 // Last, the package smoke project restores Contracts + Generators from
 // artifacts/packages into a throwaway packages folder (the version is not
 // bumped per build, so the global cache could hold a stale nupkg of the same

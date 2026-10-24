@@ -1,5 +1,5 @@
 #region Purpose
-// Closed Ping/Pong used by legacy MakeGenericType, generated Mediator, and CallSiteInlining.
+// Closed Ping/Pong used by the generated Mediator and CallSiteInlining.
 #endregion
 
 using TimeWarp.Mediator;

@@ -87,9 +87,8 @@ reference, or set `TimeWarpMediatorProfile` to `Aot` when you do not use MS.DI.
 **Handler kind is not dispatched by the generated mediator.** A class in a member assembly
 implements `IStreamRequestHandler`, `IStreamPipelineBehavior`, `IRequestPreProcessor`,
 `IRequestPostProcessor`, `IRequestExceptionHandler`, or `IRequestExceptionAction`. The generated
-mediator never calls it, and `CreateStream` throws `NotSupportedException`. Use the
-reflection-based `AddMediator()` runtime for these, or move the logic into a request handler or
-an `IPipelineBehavior`.
+mediator never calls it, and `CreateStream` throws `NotSupportedException`. Move the logic
+into a request handler or an `IPipelineBehavior`.
 
 ## TWM010
 
