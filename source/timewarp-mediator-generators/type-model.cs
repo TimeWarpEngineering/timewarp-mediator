@@ -6,7 +6,9 @@
 // The model step cannot take a Compilation, or an unrelated edit re-runs it (Unchanged, not Cached).
 // Syntax and metadata steps copy everything emission and diagnostics need into this record.
 // Key is assembly name plus documentation id, so two assemblies can share a display name.
-// BaseKeys and InterfaceKeys use that same key so most-derived ordering matches symbol equality.
+// BaseKeys walk named types only. InterfaceKeys come from AllInterfaces on every ITypeSymbol,
+// so an array response still satisfies an interface constraint. TypeArguments keep the nested
+// shape a pipeline slot compares, such as Result<TRequest>.
 // Display is parameterless ToDisplayString; ErrorDisplay is CSharpErrorMessageFormat; FullyQualified
 // is FullyQualifiedFormat. Closed behaviors reuse those prefixes with the request and response substituted.
 #endregion
@@ -37,6 +39,8 @@ internal sealed record TypeModel(
     EquatableArray<string> InterfaceKeys,
     EquatableArray<string> InterfaceDefinitionKeys,
     EquatableArray<string> MediatorInterfaceNames,
+    int ArrayRank,
+    EquatableArray<TypeModel> TypeArguments,
     LocationInfo? Location) : IEquatable<TypeModel>;
 
 internal static class TypeModels
@@ -99,6 +103,8 @@ internal static class TypeModels
     List<string> interfaceKeys = new();
     List<string> interfaceDefinitionKeys = new();
     List<string> mediatorNames = new();
+    List<TypeModel> typeArguments = new();
+    int arrayRank = 0;
     if (type is INamedTypeSymbol named)
     {
       for (INamedTypeSymbol? current = named.BaseType; current is not null; current = current.BaseType)
@@ -107,14 +113,24 @@ internal static class TypeModels
         baseDefinitionKeys.Add(DefinitionKeyOf(current));
       }
 
-      foreach (INamedTypeSymbol iface in named.AllInterfaces)
+      foreach (ITypeSymbol argument in named.TypeArguments)
       {
-        interfaceKeys.Add(KeyOf(iface));
-        interfaceDefinitionKeys.Add(DefinitionKeyOf(iface));
-        if (iface.ContainingNamespace?.ToDisplayString() == "TimeWarp.Mediator")
-        {
-          mediatorNames.Add(iface.OriginalDefinition.Name);
-        }
+        typeArguments.Add(Create(argument, accessCompilation));
+      }
+    }
+    else if (type is IArrayTypeSymbol array)
+    {
+      arrayRank = array.Rank;
+      typeArguments.Add(Create(array.ElementType, accessCompilation));
+    }
+
+    foreach (INamedTypeSymbol iface in type.AllInterfaces)
+    {
+      interfaceKeys.Add(KeyOf(iface));
+      interfaceDefinitionKeys.Add(DefinitionKeyOf(iface));
+      if (iface.ContainingNamespace?.ToDisplayString() == "TimeWarp.Mediator")
+      {
+        mediatorNames.Add(iface.OriginalDefinition.Name);
       }
     }
 
@@ -144,6 +160,8 @@ internal static class TypeModels
         new EquatableArray<string>(interfaceKeys.ToImmutableArray()),
         new EquatableArray<string>(interfaceDefinitionKeys.ToImmutableArray()),
         new EquatableArray<string>(mediatorNames.ToImmutableArray()),
+        arrayRank,
+        new EquatableArray<TypeModel>(typeArguments.ToImmutableArray()),
         LocationOf(type, accessCompilation));
   }
 

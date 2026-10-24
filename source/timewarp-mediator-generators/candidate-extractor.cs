@@ -5,10 +5,13 @@
 #region Design
 // CreateSyntaxProvider, not ForAttributeWithMetadataName. The attribute API combines the full
 // Compilation into its transform, so an unrelated edit re-runs it and the model step is Unchanged
-// instead of Cached. The predicate ignores declarations with no base list and attributes whose
-// name is not MediatorBehavior, so an unrelated file adds no candidate.
-// Inherited handler bindings are left in the fact. The model step drops them once every member
-// assembly's facts are visible, including a base handler that lives in a referenced assembly.
+// rather than Cached. The type predicate ignores declarations with no base list.
+// The behavior predicate is every assembly-targeted attribute. ExtractBehavior keeps a fact only
+// when the symbol is MediatorBehavior, so a using-alias is kept.
+// Inherited handler bindings stay in the fact. CandidateGraph drops them once every member
+// assembly is visible, then dedupes one binding per request.
+// A type-parameter constraint is unsatisfiable: the symbol walk compares the concrete argument
+// to that type parameter and rejects the close.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -30,12 +33,43 @@ internal static class CandidateExtractor
 
   internal static bool IsBehaviorAttribute(SyntaxNode node, CancellationToken cancellationToken)
   {
-    if (node is not AttributeSyntax attribute)
+    if (node is not AttributeSyntax attribute || attribute.Parent is not AttributeListSyntax list)
     {
       return false;
     }
 
-    return attribute.Name.ToString().Contains("MediatorBehavior");
+    AttributeTargetSpecifierSyntax? target = list.Target;
+    return target is not null && target.Identifier.IsKind(SyntaxKind.AssemblyKeyword);
+  }
+
+  internal static bool IsRuntimeDeclaration(SyntaxNode node, CancellationToken cancellationToken)
+  {
+    if (node is not BaseTypeDeclarationSyntax declaration)
+    {
+      return false;
+    }
+
+    string name = declaration.Identifier.ValueText;
+    return name is "IMediator"
+        or "IServiceCollection"
+        or "ServiceCollectionServiceExtensions"
+        or "ServiceProviderServiceExtensions";
+  }
+
+  internal static string? ExtractRuntimeName(GeneratorSyntaxContext context, CancellationToken cancellationToken)
+  {
+    if (context.Node is not BaseTypeDeclarationSyntax declaration)
+    {
+      return null;
+    }
+
+    if (context.SemanticModel.GetDeclaredSymbol(declaration, cancellationToken) is not INamedTypeSymbol type)
+    {
+      return null;
+    }
+
+    string display = type.ToDisplayString();
+    return ReferencedAssemblyCandidates.IsRequiredRuntime(display) ? display : null;
   }
 
   internal static TypeFact? ExtractType(GeneratorSyntaxContext context, CancellationToken cancellationToken)
@@ -180,20 +214,19 @@ internal static class CandidateExtractor
     }
 
     INamedTypeSymbol? unit = compilation.GetTypeByMetadataName(UnitTypeName);
-    HashSet<string> bound = new(StringComparer.Ordinal);
     foreach (INamedTypeSymbol iface in type.AllInterfaces)
     {
       if (iface.OriginalDefinition.GetDocumentationCommentId() == RequestHandler2
           && iface.TypeArguments.Length == 2
           && iface.TypeArguments[0] is INamedTypeSymbol request
-          && iface.TypeArguments[1] is ITypeSymbol response
-          && bound.Add(TypeModels.KeyOf(request)))
+          && iface.TypeArguments[1] is ITypeSymbol response)
       {
         matches.Add(new HandlerMatch(
             TypeModels.Create(request, compilation),
             TypeModels.Create(response, compilation),
             false,
-            false));
+            false,
+            ScopeModel(request, compilation)));
       }
     }
 
@@ -201,13 +234,17 @@ internal static class CandidateExtractor
     {
       if (iface.OriginalDefinition.GetDocumentationCommentId() == RequestHandler1
           && iface.TypeArguments.Length == 1
-          && iface.TypeArguments[0] is INamedTypeSymbol request
-          && bound.Add(TypeModels.KeyOf(request)))
+          && iface.TypeArguments[0] is INamedTypeSymbol request)
       {
         TypeModel responseModel = unit is null
             ? TypeModels.Create(request, compilation)
             : TypeModels.Create(unit, compilation);
-        matches.Add(new HandlerMatch(TypeModels.Create(request, compilation), responseModel, true, false));
+        matches.Add(new HandlerMatch(
+            TypeModels.Create(request, compilation),
+            responseModel,
+            true,
+            false,
+            ScopeModel(request, compilation)));
       }
     }
 
@@ -217,11 +254,22 @@ internal static class CandidateExtractor
           && iface.TypeArguments.Length == 1
           && iface.TypeArguments[0] is INamedTypeSymbol notification)
       {
-        matches.Add(new HandlerMatch(TypeModels.Create(notification, compilation), null, false, true));
+        matches.Add(new HandlerMatch(
+            TypeModels.Create(notification, compilation),
+            null,
+            false,
+            true,
+            ScopeModel(notification, compilation)));
       }
     }
 
     return new EquatableArray<HandlerMatch>(matches.ToImmutableArray());
+  }
+
+  private static TypeModel? ScopeModel(INamedTypeSymbol message, Compilation compilation)
+  {
+    INamedTypeSymbol? scope = MessageGraphBuilder.ResolveScope(message);
+    return scope is null ? null : TypeModels.Create(scope, compilation);
   }
 
   private static bool IsConcreteRequest(INamedTypeSymbol type, TypeModel model, Compilation compilation)
@@ -254,10 +302,13 @@ internal static class CandidateExtractor
     foreach (ITypeParameterSymbol parameter in definition.TypeParameters)
     {
       List<ConstraintSlot> constraints = new();
+      bool hasTypeParameterConstraint = false;
       foreach (ITypeSymbol constraint in parameter.ConstraintTypes)
       {
         if (constraint is ITypeParameterSymbol)
         {
+          // where TRes : TReq. A concrete argument is not that type parameter, so the slot cannot close.
+          hasTypeParameterConstraint = true;
           continue;
         }
 
@@ -269,6 +320,7 @@ internal static class CandidateExtractor
           parameter.HasValueTypeConstraint,
           parameter.HasUnmanagedTypeConstraint,
           parameter.HasConstructorConstraint,
+          hasTypeParameterConstraint,
           new EquatableArray<ConstraintSlot>(constraints.ToImmutableArray())));
     }
 
@@ -297,10 +349,62 @@ internal static class CandidateExtractor
     if (argument is ITypeParameterSymbol parameter
         && SymbolEqualityComparer.Default.Equals(parameter.ContainingSymbol, definition))
     {
-      return new TypeArgSlot(parameter.Ordinal, null);
+      return new TypeArgSlot(parameter.Ordinal, null, null, 0, EquatableArray<TypeArgSlot>.Empty);
     }
 
-    return new TypeArgSlot(-1, TypeModels.KeyOf(argument));
+    if (argument is IArrayTypeSymbol array)
+    {
+      return new TypeArgSlot(
+          -1,
+          null,
+          null,
+          array.Rank,
+          new EquatableArray<TypeArgSlot>(ImmutableArray.Create(Slot(array.ElementType, definition))));
+    }
+
+    if (argument is INamedTypeSymbol named && named.TypeArguments.Length > 0 && ContainsBehaviorParameter(named, definition))
+    {
+      List<TypeArgSlot> arguments = new();
+      foreach (ITypeSymbol typeArgument in named.TypeArguments)
+      {
+        arguments.Add(Slot(typeArgument, definition));
+      }
+
+      return new TypeArgSlot(
+          -1,
+          null,
+          TypeModels.DefinitionKeyOf(named),
+          0,
+          new EquatableArray<TypeArgSlot>(arguments.ToImmutableArray()));
+    }
+
+    return new TypeArgSlot(-1, TypeModels.KeyOf(argument), null, 0, EquatableArray<TypeArgSlot>.Empty);
+  }
+
+  private static bool ContainsBehaviorParameter(ITypeSymbol type, INamedTypeSymbol definition)
+  {
+    if (type is ITypeParameterSymbol parameter)
+    {
+      return SymbolEqualityComparer.Default.Equals(parameter.ContainingSymbol, definition);
+    }
+
+    if (type is IArrayTypeSymbol array)
+    {
+      return ContainsBehaviorParameter(array.ElementType, definition);
+    }
+
+    if (type is INamedTypeSymbol named)
+    {
+      foreach (ITypeSymbol argument in named.TypeArguments)
+      {
+        if (ContainsBehaviorParameter(argument, definition))
+        {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private static string Prefix(string display)

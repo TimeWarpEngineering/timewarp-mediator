@@ -4,7 +4,10 @@
 
 #region Design
 // Same decisions as MessageGraphBuilder: member assemblies by name, handlers by display name,
-// one binding per request, inherited handler interfaces dropped, behaviors closed by constraint.
+// one binding per request, inherited handler interfaces dropped before that dedupe, behaviors
+// closed by constraint. Facts are ordered by assembly name, then discovery index, before byKey.
+// An inaccessible notification match does not suppress TWM001 for a request of the same type.
+// The host assembly name is ReferencedInput.HostAssemblyName, taken from the compilation.
 // The analyzer keeps the symbol walk. This path exists so the generator model step does not take
 // a Compilation. Display strings were copied from symbols at the syntax and metadata boundary,
 // so the emitters still print the same text.
@@ -16,9 +19,10 @@ internal static class CandidateGraph
 {
   internal static MediatorModel Create(HostInput host, ReferencedInput referenced, MembershipOptions options, CancellationToken cancellationToken)
   {
-    if (referenced.MissingRuntime.Length > 0)
+    string? missingRuntime = FirstMissingRuntime(referenced.MissingRuntime, host.DeclaredRuntime);
+    if (missingRuntime is not null)
     {
-      string metadataName = First(referenced.MissingRuntime);
+      string metadataName = missingRuntime;
       string hint = metadataName.StartsWith("TimeWarp.Mediator.", StringComparison.Ordinal)
           ? "Reference the TimeWarp.Mediator package"
           : "Reference Microsoft.Extensions.DependencyInjection.Abstractions";
@@ -32,23 +36,23 @@ internal static class CandidateGraph
           new EquatableArray<DiagnosticInfo>(ImmutableArray.Create(DiagnosticInfo.From(diagnostic))));
     }
 
-    List<TypeFact> facts = new();
-    facts.AddRange(host.Types);
-    facts.AddRange(referenced.Types);
+    List<TypeFact> facts = OrderFacts(host, referenced);
     Dictionary<string, TypeFact> byKey = new(StringComparer.Ordinal);
+    List<TypeFact> unique = new();
     foreach (TypeFact fact in facts)
     {
       cancellationToken.ThrowIfCancellationRequested();
       if (!byKey.ContainsKey(fact.Type.Key))
       {
         byKey.Add(fact.Type.Key, fact);
+        unique.Add(fact);
       }
     }
 
     HashSet<string> members = new(StringComparer.Ordinal);
-    if (options.HostAssemblyName.Length > 0)
+    if (referenced.HostAssemblyName.Length > 0)
     {
-      members.Add(options.HostAssemblyName);
+      members.Add(referenced.HostAssemblyName);
     }
 
     foreach (string name in referenced.MemberAssemblyNames)
@@ -60,13 +64,14 @@ internal static class CandidateGraph
     List<DiagnosticInfo> generatorDiagnostics = new();
     HashSet<string> reported = new(StringComparer.Ordinal);
     HashSet<string> dropped = new(StringComparer.Ordinal);
+    Dictionary<string, TypeModel> scopeByMessage = new(StringComparer.Ordinal);
     Dictionary<string, List<TypeModel>> handlersByRequest = new(StringComparer.Ordinal);
     Dictionary<string, TypeModel> responseByRequest = new(StringComparer.Ordinal);
     HashSet<string> voidRequests = new(StringComparer.Ordinal);
     Dictionary<string, List<TypeModel>> handlersByNotification = new(StringComparer.Ordinal);
     Dictionary<string, TypeModel> requests = new(StringComparer.Ordinal);
 
-    foreach (TypeFact fact in byKey.Values)
+    foreach (TypeFact fact in unique)
     {
       cancellationToken.ThrowIfCancellationRequested();
       if (!fact.Type.IsDiscoverable)
@@ -79,6 +84,7 @@ internal static class CandidateGraph
         requests[fact.Type.Key] = fact.Type;
       }
 
+      HashSet<string> boundRequests = new(StringComparer.Ordinal);
       foreach (HandlerMatch match in fact.Matches)
       {
         if (BoundByBase(fact.Type, match, byKey, members))
@@ -86,15 +92,31 @@ internal static class CandidateGraph
           continue;
         }
 
-        if (!Allows(fact.Type, reported, generatorDiagnostics, options)
-            || !Allows(match.Message, reported, generatorDiagnostics, options)
-            || (match.Response is not null && !Allows(match.Response, reported, generatorDiagnostics, options)))
+        TypeModel message = Prefer(match.Message, byKey);
+        if (match.MessageScope is not null && !scopeByMessage.ContainsKey(message.Key))
         {
-          dropped.Add(match.Message.Key);
+          scopeByMessage.Add(message.Key, match.MessageScope);
+        }
+
+        // Two-arity matches are listed first. BoundByBase runs before this dedupe, so an
+        // inherited interface does not consume the request and hide the derived class's own match.
+        if (!match.IsNotification && !boundRequests.Add(message.Key))
+        {
           continue;
         }
 
-        TypeModel message = Prefer(match.Message, byKey);
+        if (!Allows(fact.Type, reported, generatorDiagnostics, referenced.HostAssemblyName)
+            || !Allows(match.Message, reported, generatorDiagnostics, referenced.HostAssemblyName)
+            || (match.Response is not null && !Allows(match.Response, reported, generatorDiagnostics, referenced.HostAssemblyName)))
+        {
+          if (!match.IsNotification)
+          {
+            dropped.Add(match.Message.Key);
+          }
+
+          continue;
+        }
+
         if (match.IsNotification)
         {
           AddHandler(handlersByNotification, message, fact.Type);
@@ -146,7 +168,7 @@ internal static class CandidateGraph
         continue;
       }
 
-      if (!Allows(behavior.Definition, reported, generatorDiagnostics, options))
+      if (!Allows(behavior.Definition, reported, generatorDiagnostics, referenced.HostAssemblyName))
       {
         continue;
       }
@@ -202,11 +224,11 @@ internal static class CandidateGraph
 
       TypeModel requestType = RequestModel(pair.Key, requests, responseByRequest);
       TypeModel handlerType = pair.Value[0];
-      TypeModel? handlerScope = ScopeOf(handlerType, byKey);
-      TypeModel? requestScope = ScopeOf(requestType, byKey);
+      TypeModel? handlerScope = ScopeOf(handlerType, byKey, scopeByMessage);
+      TypeModel? requestScope = ScopeOf(requestType, byKey, scopeByMessage);
       ReportScopeMismatch(handlerType, handlerScope, requestType, requestScope, diagnostics);
       TypeModel? scopeType = handlerScope ?? requestScope;
-      if (!PipelineScopeAllowed(scopeType, reported, generatorDiagnostics, options))
+      if (!PipelineScopeAllowed(scopeType, reported, generatorDiagnostics, referenced.HostAssemblyName))
       {
         continue;
       }
@@ -245,13 +267,13 @@ internal static class CandidateGraph
     foreach (KeyValuePair<string, List<TypeModel>> pair in handlersByNotification)
     {
       TypeModel notification = NotificationModel(pair.Key, byKey, pair.Value);
-      TypeModel? notificationScope = ScopeOf(notification, byKey);
+      TypeModel? notificationScope = ScopeOf(notification, byKey, scopeByMessage);
       foreach (TypeModel handler in pair.Value)
       {
-        TypeModel? handlerScope = ScopeOf(handler, byKey);
+        TypeModel? handlerScope = ScopeOf(handler, byKey, scopeByMessage);
         ReportScopeMismatch(handler, handlerScope, notification, notificationScope, diagnostics);
         TypeModel? scopeType = handlerScope ?? notificationScope;
-        if (!PipelineScopeAllowed(scopeType, reported, generatorDiagnostics, options))
+        if (!PipelineScopeAllowed(scopeType, reported, generatorDiagnostics, referenced.HostAssemblyName))
         {
           continue;
         }
@@ -325,7 +347,7 @@ internal static class CandidateGraph
       return request;
     }
 
-    return responseByRequest[key];
+    throw new InvalidOperationException("Request '" + key + "' has a handler and no request model.");
   }
 
   private static string RequestDisplay(string key, Dictionary<string, TypeModel> requests)
@@ -410,11 +432,19 @@ internal static class CandidateGraph
     return false;
   }
 
-  private static TypeModel? ScopeOf(TypeModel type, Dictionary<string, TypeFact> facts)
+  private static TypeModel? ScopeOf(
+      TypeModel type,
+      Dictionary<string, TypeFact> facts,
+      Dictionary<string, TypeModel> scopeByMessage)
   {
-    if (facts.TryGetValue(type.Key, out TypeFact? fact))
+    if (facts.TryGetValue(type.Key, out TypeFact? fact) && fact.Scope is not null)
     {
       return fact.Scope;
+    }
+
+    if (scopeByMessage.TryGetValue(type.Key, out TypeModel? scope))
+    {
+      return scope;
     }
 
     return null;
@@ -445,16 +475,16 @@ internal static class CandidateGraph
       TypeModel? scopeType,
       HashSet<string> reported,
       List<DiagnosticInfo> generatorDiagnostics,
-      MembershipOptions options)
+      string hostAssemblyName)
   {
-    return scopeType is null || Allows(scopeType, reported, generatorDiagnostics, options);
+    return scopeType is null || Allows(scopeType, reported, generatorDiagnostics, hostAssemblyName);
   }
 
   private static bool Allows(
       TypeModel type,
       HashSet<string> reported,
       List<DiagnosticInfo> generatorDiagnostics,
-      MembershipOptions options)
+      string hostAssemblyName)
   {
     TypeModel? inaccessible = type.InaccessiblePart ?? (type.Accessible ? null : type);
     if (inaccessible is null)
@@ -466,10 +496,10 @@ internal static class CandidateGraph
     {
       generatorDiagnostics.Add(Info(
           DiagnosticDescriptors.InaccessibleMemberType,
-          inaccessible.Location ?? type.Location,
+          inaccessible.Location,
           inaccessible.ErrorDisplay,
           inaccessible.AssemblyName,
-          options.HostAssemblyName));
+          hostAssemblyName));
     }
 
     return false;
@@ -542,9 +572,8 @@ internal static class CandidateGraph
   {
     foreach (PipelineSlot pipeline in behavior.Pipelines)
     {
-      string? requestKey = Resolve(pipeline.Request, arguments);
-      string? responseKey = Resolve(pipeline.Response, arguments);
-      if (requestKey == requestType.Key && responseKey == responseType.Key)
+      if (SlotMatches(pipeline.Request, requestType, arguments)
+          && SlotMatches(pipeline.Response, responseType, arguments))
       {
         return true;
       }
@@ -553,14 +582,82 @@ internal static class CandidateGraph
     return false;
   }
 
-  private static string? Resolve(TypeArgSlot slot, TypeModel[] arguments)
+  private static bool SlotMatches(TypeArgSlot slot, TypeModel type, TypeModel[] arguments)
   {
     if (slot.ParameterIndex >= 0)
     {
-      return slot.ParameterIndex < arguments.Length ? arguments[slot.ParameterIndex].Key : null;
+      return slot.ParameterIndex < arguments.Length && arguments[slot.ParameterIndex].Key == type.Key;
     }
 
-    return slot.ConcreteKey;
+    if (slot.ArrayRank > 0)
+    {
+      if (type.ArrayRank != slot.ArrayRank || !TryArgument(slot.Arguments, 0, out TypeArgSlot element))
+      {
+        return false;
+      }
+
+      return TryTypeArgument(type.TypeArguments, 0, out TypeModel elementType)
+          && SlotMatches(element, elementType, arguments);
+    }
+
+    if (slot.GenericDefinitionKey is not null)
+    {
+      if (type.DefinitionKey != slot.GenericDefinitionKey || type.TypeArguments.Length != slot.Arguments.Length)
+      {
+        return false;
+      }
+
+      int index = 0;
+      foreach (TypeArgSlot child in slot.Arguments)
+      {
+        if (!TryTypeArgument(type.TypeArguments, index, out TypeModel childType) || !SlotMatches(child, childType, arguments))
+        {
+          return false;
+        }
+
+        index++;
+      }
+
+      return true;
+    }
+
+    return slot.ConcreteKey == type.Key;
+  }
+
+  private static bool TryArgument(EquatableArray<TypeArgSlot> slots, int index, out TypeArgSlot slot)
+  {
+    int current = 0;
+    foreach (TypeArgSlot candidate in slots)
+    {
+      if (current == index)
+      {
+        slot = candidate;
+        return true;
+      }
+
+      current++;
+    }
+
+    slot = null!;
+    return false;
+  }
+
+  private static bool TryTypeArgument(EquatableArray<TypeModel> types, int index, out TypeModel type)
+  {
+    int current = 0;
+    foreach (TypeModel candidate in types)
+    {
+      if (current == index)
+      {
+        type = candidate;
+        return true;
+      }
+
+      current++;
+    }
+
+    type = null!;
+    return false;
   }
 
   private static bool CanConstruct(EquatableArray<ParameterSlot> parameters, TypeModel[] arguments)
@@ -574,6 +671,11 @@ internal static class CandidateGraph
     {
       ParameterSlot parameter = parameters.ElementAt(i);
       TypeModel argument = arguments[i];
+      if (parameter.HasTypeParameterConstraint)
+      {
+        return false;
+      }
+
       if (parameter.ReferenceType && !argument.IsReferenceType)
       {
         return false;
@@ -665,10 +767,74 @@ internal static class CandidateGraph
       Display = behavior.DisplayPrefix + "<" + argumentsDisplay + ">",
       ErrorDisplay = behavior.ErrorDisplayPrefix + "<" + argumentsError + ">",
       Arity = arguments.Length,
+      ArrayRank = 0,
+      TypeArguments = new EquatableArray<TypeModel>(arguments.ToImmutableArray()),
       Location = null,
       InaccessiblePart = null,
       Accessible = true,
     };
+  }
+
+  private static List<TypeFact> OrderFacts(HostInput host, ReferencedInput referenced)
+  {
+    List<(string AssemblyName, int Index, TypeFact Fact)> ordered = new();
+    int index = 0;
+    foreach (TypeFact fact in host.Types)
+    {
+      ordered.Add((fact.Type.AssemblyName, index, fact));
+      index++;
+    }
+
+    foreach (TypeFact fact in referenced.Types)
+    {
+      ordered.Add((fact.Type.AssemblyName, index, fact));
+      index++;
+    }
+
+    ordered.Sort(static (left, right) =>
+    {
+      int name = string.CompareOrdinal(left.AssemblyName, right.AssemblyName);
+      if (name != 0)
+      {
+        return name;
+      }
+
+      return left.Index.CompareTo(right.Index);
+    });
+
+    List<TypeFact> facts = new();
+    foreach ((string _, int _, TypeFact fact) in ordered)
+    {
+      facts.Add(fact);
+    }
+
+    return facts;
+  }
+
+  private static string? FirstMissingRuntime(EquatableArray<string> missing, EquatableArray<string> declared)
+  {
+    foreach (string name in missing)
+    {
+      if (!Contains(declared, name))
+      {
+        return name;
+      }
+    }
+
+    return null;
+  }
+
+  private static bool Contains(EquatableArray<string> values, string candidate)
+  {
+    foreach (string value in values)
+    {
+      if (value == candidate)
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private static int CompareBehaviors(BehaviorFact left, BehaviorFact right)
@@ -697,16 +863,6 @@ internal static class CandidateGraph
     }
 
     return left.SourceIndex.CompareTo(right.SourceIndex);
-  }
-
-  private static string First(EquatableArray<string> values)
-  {
-    foreach (string value in values)
-    {
-      return value;
-    }
-
-    return string.Empty;
   }
 
   private static void SortByDisplay(List<TypeModel> types)

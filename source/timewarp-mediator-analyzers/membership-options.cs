@@ -7,8 +7,9 @@
 // does not invalidate anything downstream of it. IsGeneratorHost comes from the generator package's
 // props (TimeWarpMediatorGenerator=true): the analyzer then knows the generator reports
 // TWM001–TWM003 in this compilation and does not report them again.
-// HostAssemblyName is the compilation's assembly name. The generator uses it for InternalsVisibleTo
-// and manifest membership without taking a Compilation, which would bust the Cached step.
+// HostAssemblyName is the optional MSBuild TimeWarpMediatorAssemblyName property. The generator
+// does not read it: the compilation assembly name and public key are the host identity, because
+// this property is empty when a buildTransitive props file captures AssemblyName too early.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
@@ -36,7 +37,8 @@ public sealed class MembershipOptions : IEquatable<MembershipOptions>
   public bool IsGeneratorHost { get; }
 
   /// <summary>
-  /// MSBuild AssemblyName, exposed as TimeWarpMediatorAssemblyName.
+  /// MSBuild TimeWarpMediatorAssemblyName when the project sets that compiler-visible property.
+  /// The generator reads the compilation assembly name instead.
   /// </summary>
   public string HostAssemblyName { get; }
 

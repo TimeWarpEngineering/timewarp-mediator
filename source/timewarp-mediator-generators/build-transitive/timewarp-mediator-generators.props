@@ -5,13 +5,12 @@
     <!-- The generator runs here and reports TWM001-TWM003; the analyzer then leaves them to it. -->
     <TimeWarpMediatorGenerator>true</TimeWarpMediatorGenerator>
     <TimeWarpMediatorNamespace Condition="'$(TimeWarpMediatorNamespace)' == ''">TimeWarp.Mediator.Generated</TimeWarpMediatorNamespace>
-    <!-- Assembly name without a Compilation input, so InternalsVisibleTo and manifest membership stay cached. -->
-    <TimeWarpMediatorAssemblyName Condition="'$(TimeWarpMediatorAssemblyName)' == ''">$(AssemblyName)</TimeWarpMediatorAssemblyName>
+    <!-- Host name and public key are read from the compilation. A property set in this file is
+         evaluated before the SDK assigns AssemblyName, so package consumers would see an empty host. -->
   </PropertyGroup>
   <ItemGroup>
     <CompilerVisibleProperty Include="TimeWarpMediatorAssembly" />
     <CompilerVisibleProperty Include="TimeWarpMediatorGenerator" />
     <CompilerVisibleProperty Include="TimeWarpMediatorNamespace" />
-    <CompilerVisibleProperty Include="TimeWarpMediatorAssemblyName" />
   </ItemGroup>
 </Project>

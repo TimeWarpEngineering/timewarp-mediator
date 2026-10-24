@@ -4,11 +4,13 @@
 
 #region Design
 // MetadataReferencesProvider is cached when the host edits a file and leaves references alone.
-// The host assembly name comes from the compiler-visible TimeWarpMediatorAssemblyName property,
-// also cached. Accessibility is IsSymbolAccessibleWithin against a scratch compilation of that
-// name, so InternalsVisibleTo matches the host the same way the real compilation does.
-// Only assemblies with [assembly: MediatorAssembly] are walked. The host assembly is not one of
-// the references; its declarations come from the syntax providers.
+// HostIdentity is the compilation name and public key, an equal value on an unrelated edit, so
+// this step stays cached. The scratch compilation uses that name and WithCryptoPublicKey, so a
+// strong-named InternalsVisibleTo grant matches the host.
+// Duplicate metadata references of one assembly are skipped. Only assemblies with
+// [assembly: MediatorAssembly] are walked. The host assembly is not one of the references.
+// TWM008 checks these references, then the model step also accepts a host declaration of the
+// same metadata name, so a required type written in the host is not reported missing.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -23,15 +25,36 @@ internal static class ReferencedAssemblyCandidates
     "Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions",
   };
 
+  internal static bool IsRequiredRuntime(string displayName)
+  {
+    foreach (string metadataName in RequiredTypes)
+    {
+      if (metadataName == displayName)
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   internal static ReferencedInput Read(
       ImmutableArray<MetadataReference> references,
-      MembershipOptions options,
+      HostIdentity identity,
       CancellationToken cancellationToken)
   {
+    string assemblyName = identity.AssemblyName.Length == 0 ? "TimeWarpMediatorMetadata" : identity.AssemblyName;
+    CSharpCompilationOptions options = new(OutputKind.DynamicallyLinkedLibrary);
+    ImmutableArray<byte> publicKey = CopyKey(identity.PublicKey);
+    if (publicKey.Length > 0)
+    {
+      options = options.WithCryptoPublicKey(publicKey);
+    }
+
     CSharpCompilation scratch = CSharpCompilation.Create(
-        options.HostAssemblyName.Length == 0 ? "TimeWarpMediatorMetadata" : options.HostAssemblyName,
+        assemblyName,
         references: references,
-        options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        options: options);
 
     List<string> missing = new();
     foreach (string metadataName in RequiredTypes)
@@ -45,10 +68,16 @@ internal static class ReferencedAssemblyCandidates
     List<TypeFact> types = new();
     List<BehaviorFact> behaviors = new();
     List<string> members = new();
+    HashSet<IAssemblySymbol> seen = new(SymbolEqualityComparer.Default);
     foreach (MetadataReference reference in references)
     {
       cancellationToken.ThrowIfCancellationRequested();
       if (scratch.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assembly)
+      {
+        continue;
+      }
+
+      if (!seen.Add(assembly))
       {
         continue;
       }
@@ -67,7 +96,26 @@ internal static class ReferencedAssemblyCandidates
         new EquatableArray<TypeFact>(types.ToImmutableArray()),
         new EquatableArray<BehaviorFact>(behaviors.ToImmutableArray()),
         new EquatableArray<string>(members.ToImmutableArray()),
-        new EquatableArray<string>(missing.ToImmutableArray()));
+        new EquatableArray<string>(missing.ToImmutableArray()),
+        identity.AssemblyName);
+  }
+
+  private static ImmutableArray<byte> CopyKey(EquatableArray<byte> key)
+  {
+    if (key.Length == 0)
+    {
+      return ImmutableArray<byte>.Empty;
+    }
+
+    byte[] bytes = new byte[key.Length];
+    int index = 0;
+    foreach (byte item in key)
+    {
+      bytes[index] = item;
+      index++;
+    }
+
+    return ImmutableArray.Create(bytes);
   }
 
   private static void ReadAssembly(

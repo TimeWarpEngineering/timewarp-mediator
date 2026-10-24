@@ -5,8 +5,9 @@
 #region Design
 // A host runs the generator and the analyzer. TimeWarpMediatorGenerator=true makes the analyzer
 // leave TWM001–TWM003 to the generator. Diagnostics here are both.
-// TimeWarpMediatorAssemblyName is the compilation name. The generator keys host membership on
-// that property, so an in-memory host whose property is empty drops every host type.
+// The generator keys host membership on the compilation assembly name. The
+// TimeWarpMediatorAssemblyName property is still supplied so an empty value can be tested,
+// and it is not what decides membership.
 #endregion
 
 namespace TimeWarp.Mediator.Generators.Compilation.Tests;
@@ -35,20 +36,50 @@ internal static class HostCompiler
     return CompileWithReferences(assemblyName, source, GetBaseReferences().Concat(hostReferences));
   }
 
+  internal static HostCompilation Compile(
+      string assemblyName,
+      string source,
+      string hostAssemblyNameProperty,
+      params MetadataReference[] hostReferences)
+  {
+    return CompileWithReferences(
+        assemblyName,
+        source,
+        GetBaseReferences().Concat(hostReferences),
+        hostAssemblyNameProperty: hostAssemblyNameProperty);
+  }
+
+  internal static HostCompilation CompileSigned(
+      string assemblyName,
+      string source,
+      ImmutableArray<byte> publicKey,
+      params MetadataReference[] hostReferences)
+  {
+    CSharpCompilationOptions options = CompilationOptions.WithCryptoPublicKey(publicKey);
+    return CompileWithReferences(
+        assemblyName,
+        source,
+        GetBaseReferences().Concat(hostReferences),
+        compilationOptions: options);
+  }
+
   // Exact reference set, for hosts that are missing TimeWarp.Mediator or the MS.DI abstractions.
   internal static HostCompilation CompileWithReferences(
       string assemblyName,
       string source,
       IEnumerable<MetadataReference> references,
-      string generatedNamespace = DefaultNamespace)
+      string generatedNamespace = DefaultNamespace,
+      string? hostAssemblyNameProperty = null,
+      CSharpCompilationOptions? compilationOptions = null)
   {
     CSharpCompilation compilation = CSharpCompilation.Create(
         assemblyName,
         syntaxTrees: new[] { CSharpSyntaxTree.ParseText(source, ParseOptions) },
         references: references,
-        options: CompilationOptions);
+        options: compilationOptions ?? CompilationOptions);
+    string propertyName = hostAssemblyNameProperty ?? assemblyName;
 
-    GeneratorDriver driver = CreateDriver(generatedNamespace: generatedNamespace, assemblyName: assemblyName);
+    GeneratorDriver driver = CreateDriver(generatedNamespace: generatedNamespace, assemblyName: propertyName);
 
     driver.RunGeneratorsAndUpdateCompilation(
         compilation,
@@ -58,7 +89,7 @@ internal static class HostCompiler
     ImmutableArray<Diagnostic> analyzerDiagnostics = output
         .WithAnalyzers(
             ImmutableArray.Create<DiagnosticAnalyzer>(new TimeWarp.Mediator.Analyzers.RequestHandlerAnalyzer()),
-            new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(generatedNamespace, assemblyName)))
+            new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(generatedNamespace, propertyName)))
         .GetAnalyzerDiagnosticsAsync()
         .GetAwaiter()
         .GetResult();
