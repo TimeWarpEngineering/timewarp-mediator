@@ -90,7 +90,34 @@ and prints `aot-pong` (the process exits 1 unless `StampBehavior` ran twice). Pa
 layout verified for `TimeWarp.Mediator.14.0.0.nupkg` and `TimeWarp.Mediator.Generators.14.0.0.nupkg`
 only. Package smoke prints `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`.
 
+### Review
+
+Round 1 is done (effort 3, roster general, two independent general passes). Disposition is
+pending a fix pass.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 1 | 0 | 0 |
+| suggestion | 2 | 0 | 1 |
+| nit | 5 | 0 | 0 |
+
+- **M1 (bug):** nothing guards the Roslyn 5.0.0 floor. Dependabot or a central bump would ship
+  DLLs that the 10.0.100 SDK cannot load, and every gate would stay green.
+- **M9 (wontfix):** the stale docs and readmes are deferred to 021-007, which already owns them.
+
+The implementation matches the original task and the implementer restatement. No misread was found.
+
+Artifacts:
+- `review/review-framework.md`
+- `review/round-1/general.md`
+- `review/round-1/merged.md` (live ledger)
+
 ## Session
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
 - Implementation: implement oracle (2026-10-24). `./bin/dev workflow` Pipeline SUCCEEDED.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T09:58:29Z
+- Review oracle round 1: reviewer-claude (claude-opus-5-5, headless), effort 3, roster general.
+  Second general pass by sub-agent a489660e36348b5b0. The review oracle ran build, test, pack,
+  AOT publish and a read-only audit. All were green. One bug and seven other findings are open,
+  so a fix pass was requested (2026-10-24).
