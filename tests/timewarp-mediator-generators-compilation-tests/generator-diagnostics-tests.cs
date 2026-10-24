@@ -11,7 +11,7 @@ public sealed class GeneratorDiagnosticsTests
   {
     MetadataReference member = HostCompiler.CompileLibrary("InternalMember", InternalMemberSource);
 
-    HostCompilation host = HostCompiler.Compile("InternalHost", HostSource, "Host", member);
+    HostCompilation host = HostCompiler.Compile("InternalHost", HostSource, member);
 
     host.Diagnostics.ShouldNotContain(d => d.Id == "CS0122" || d.Id == "TWM001");
     Diagnostic error = Errors(host).ShouldHaveSingleItem();
@@ -31,7 +31,7 @@ public sealed class GeneratorDiagnosticsTests
             "[assembly: MediatorAssembly]",
             "[assembly: MediatorAssembly]\n[assembly: System.Runtime.CompilerServices.InternalsVisibleTo(\"VisibleHost\")]"));
 
-    HostCompilation host = HostCompiler.Compile("VisibleHost", HostSource, "Host", member);
+    HostCompilation host = HostCompiler.Compile("VisibleHost", HostSource, member);
 
     Errors(host).ShouldBeEmpty();
     host.Manifest().Request("Members.Hidden").Handler.ShouldBe("Members.HiddenHandler");
@@ -42,7 +42,7 @@ public sealed class GeneratorDiagnosticsTests
   {
     MetadataReference member = HostCompiler.CompileLibrary("ScopedMember", InternalScopeSource);
 
-    HostCompilation host = HostCompiler.Compile("ScopeHost", "namespace App { public sealed class Program { } }", "Host", member);
+    HostCompilation host = HostCompiler.Compile("ScopeHost", "namespace App { public sealed class Program { } }", member);
 
     host.Diagnostics.ShouldNotContain(d => d.Id == "CS0122" || d.Id == "TWM001");
     Diagnostic error = Errors(host).ShouldHaveSingleItem();
@@ -66,7 +66,6 @@ public sealed class GeneratorDiagnosticsTests
     HostCompilation host = HostCompiler.Compile(
         "VisibleScopeHost",
         "namespace App { public sealed class Program { } }",
-        "Host",
         member);
 
     Errors(host).ShouldBeEmpty();
@@ -80,15 +79,12 @@ public sealed class GeneratorDiagnosticsTests
     paid.Scope.ShouldBe("Members.HiddenPipeline");
   }
 
-  [Theory]
-  [InlineData("Host")]
-  [InlineData("Aot")]
-  public void MissingContracts_ReportsOnlyTwm008_AndEmitsNothing(string profile)
+  [Fact]
+  public void MissingContracts_ReportsOnlyTwm008_AndEmitsNothing()
   {
     HostCompilation host = HostCompiler.CompileWithReferences(
-        "NoContracts" + profile,
+        "NoContracts",
         "namespace App { public sealed class Program { } }",
-        profile,
         HostCompiler.GetSystemReferences());
 
     Diagnostic diagnostic = host.Diagnostics.Where(d => d.Severity >= DiagnosticSeverity.Warning).ShouldHaveSingleItem();
@@ -103,7 +99,6 @@ public sealed class GeneratorDiagnosticsTests
     HostCompilation host = HostCompiler.CompileWithReferences(
         "NoDiHost",
         HostSource,
-        "Host",
         ContractsOnly());
 
     Diagnostic diagnostic = host.Diagnostics.Where(d => d.Severity >= DiagnosticSeverity.Warning).ShouldHaveSingleItem();
@@ -113,34 +108,9 @@ public sealed class GeneratorDiagnosticsTests
   }
 
   [Fact]
-  public void AotWithoutDependencyInjection_Generates()
-  {
-    HostCompilation host = HostCompiler.CompileWithReferences("NoDiAot", HostSource, "Aot", ContractsOnly());
-
-    host.Diagnostics.ShouldNotContain(d => d.Severity >= DiagnosticSeverity.Warning);
-    host.GetType("TimeWarp.Mediator.Generated.Mediator");
-  }
-
-  [Fact]
-  public void PreProcessor_IsTwm009Warning()
-  {
-    HostCompilation host = HostCompiler.Compile(
-        "Unsupported",
-        UnsupportedSource,
-        "Host");
-
-    Errors(host).ShouldBeEmpty();
-    Diagnostic warning = host.Diagnostics.Where(d => d.Id == "TWM009").ShouldHaveSingleItem();
-    warning.Severity.ShouldBe(DiagnosticSeverity.Warning);
-    warning.GetMessage().ShouldContain("Shapes.AuditPreProcessor");
-    warning.GetMessage().ShouldContain("IRequestPreProcessor<TRequest>");
-    Span(warning).ShouldBe("AuditPreProcessor");
-  }
-
-  [Fact]
   public void BehaviorThatIsNotAPipelineBehavior_IsTwm010AtTheAttribute()
   {
-    HostCompilation host = HostCompiler.Compile("BadBehavior", BehaviorSource(NotABehavior), "Host");
+    HostCompilation host = HostCompiler.Compile("BadBehavior", BehaviorSource(NotABehavior));
 
     Errors(host).ShouldBeEmpty();
     Diagnostic warning = host.Diagnostics.Single(d => d.Id == "TWM010");
@@ -151,7 +121,7 @@ public sealed class GeneratorDiagnosticsTests
   [Fact]
   public void BehaviorClosingOverNoRequest_IsTwm011()
   {
-    HostCompilation host = HostCompiler.Compile("UnusedBehavior", BehaviorSource(ConstrainedBehavior), "Host");
+    HostCompilation host = HostCompiler.Compile("UnusedBehavior", BehaviorSource(ConstrainedBehavior));
 
     Errors(host).ShouldBeEmpty();
     Diagnostic warning = host.Diagnostics.Single(d => d.Id == "TWM011");
@@ -163,7 +133,7 @@ public sealed class GeneratorDiagnosticsTests
   [Fact]
   public void ScopedBehaviorForAnEmptyPipeline_IsTwm011()
   {
-    HostCompilation host = HostCompiler.Compile("EmptyPipeline", BehaviorSource(EmptyPipelineBehavior), "Host");
+    HostCompilation host = HostCompiler.Compile("EmptyPipeline", BehaviorSource(EmptyPipelineBehavior));
 
     Errors(host).ShouldBeEmpty();
     Diagnostic warning = host.Diagnostics.Single(d => d.Id == "TWM011");
@@ -173,7 +143,7 @@ public sealed class GeneratorDiagnosticsTests
   [Fact]
   public void BehaviorThatApplies_HasNoBehaviorDiagnostics()
   {
-    HostCompilation host = HostCompiler.Compile("GoodBehavior", BehaviorSource(OpenBehavior), "Host");
+    HostCompilation host = HostCompiler.Compile("GoodBehavior", BehaviorSource(OpenBehavior));
 
     host.Diagnostics.ShouldNotContain(d => d.Severity >= DiagnosticSeverity.Warning);
   }
@@ -272,39 +242,6 @@ namespace Members
     public sealed class PaidHandler : INotificationHandler<Paid>
     {
         public ValueTask Handle(Paid notification, CancellationToken cancellationToken) => default;
-    }
-}
-";
-
-  private const string UnsupportedSource = @"
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using TimeWarp.Mediator;
-using TimeWarp.Mediator.Pipeline;
-
-namespace TimeWarp.Mediator.Pipeline
-{
-    public interface IRequestPreProcessor<TRequest>
-    {
-        Task Process(TRequest request, CancellationToken cancellationToken);
-    }
-}
-
-namespace Shapes
-{
-    public sealed class Ping : IRequest<string>
-    {
-    }
-
-    public sealed class PingHandler : IRequestHandler<Ping, string>
-    {
-        public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(""pong"");
-    }
-
-    public sealed class AuditPreProcessor : IRequestPreProcessor<Ping>
-    {
-        public Task Process(Ping request, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }
 ";

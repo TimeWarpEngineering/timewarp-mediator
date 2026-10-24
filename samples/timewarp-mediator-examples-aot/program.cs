@@ -1,23 +1,46 @@
 #region Purpose
-// AOT/trim-analyzer-clean host that uses the generated Mediator with ServiceGen static fields.
+// NativeAOT host. The generated mediator takes IServiceProvider and weaves pipeline behaviors.
 #endregion
 
 [assembly: MediatorAssembly]
+[assembly: MediatorBehavior(typeof(StampBehavior))]
 
 internal static class Program
 {
   private static async Task<int> Main()
   {
-    Mediator mediator = new();
+    ServiceCollection services = new();
+    services.AddGeneratedMediator();
+    await using ServiceProvider provider = services.BuildServiceProvider();
+    using IServiceScope scope = provider.CreateScope();
+    IMediator mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
     Pong pong = await mediator.Send(new Ping("aot"));
-    object? boxed = await mediator.Send((object) new Ping("switch"));
-    if (pong.Message != "aot-pong" || boxed is not Pong boxedPong || boxedPong.Message != "switch-pong")
+    object? boxed = await mediator.Send((object)new Ping("switch"));
+    if (StampBehavior.Runs != 2
+        || pong.Message != "aot-pong"
+        || boxed is not Pong boxedPong
+        || boxedPong.Message != "switch-pong")
     {
       return 1;
     }
 
     Console.WriteLine(pong.Message);
     return 0;
+  }
+}
+
+public sealed class StampBehavior : IPipelineBehavior<Ping, Pong>
+{
+  public static int Runs;
+
+  public ValueTask<Pong> Handle(
+      Ping request,
+      MessageHandlerDelegate<Ping, Pong> next,
+      CancellationToken cancellationToken)
+  {
+    Runs++;
+    return next(request, cancellationToken);
   }
 }
 

@@ -1,12 +1,11 @@
 #region Purpose
 // Table-driven host shapes: each compiles under the generator with no warnings or errors and binds
-// the handlers the manifest lists, in every profile (013-012, G-23).
+// the handlers the manifest lists (013-012, G-23).
 #endregion
 
 #region Design
 // One row per source shape; the row names the request/notification bindings it must produce, so a
-// shape that compiles but silently drops a handler still fails. Profiles Host and Aot both run
-// because they emit different dispatch (service provider vs. ServiceGen fields).
+// shape that compiles but silently drops a handler still fails. There is one emission.
 #endregion
 
 namespace TimeWarp.Mediator.Generators.Compilation.Tests;
@@ -15,27 +14,23 @@ public sealed class ShapeMatrixTests
 {
   public static IEnumerable<object[]> Shapes()
   {
-    foreach (string profile in new[] { "Host", "Aot" })
+    foreach (string shape in ShapeSources.Keys)
     {
-      foreach (string shape in ShapeSources.Keys)
-      {
-        yield return new object[] { shape, profile };
-      }
+      yield return new object[] { shape };
     }
   }
 
   [Theory]
   [MemberData(nameof(Shapes))]
-  public void Shape_CompilesCleanAndBindsEveryHandler(string shape, string profile)
+  public void Shape_CompilesCleanAndBindsEveryHandler(string shape)
   {
     ShapeSource row = ShapeSources[shape];
 
-    HostCompilation host = HostCompiler.Compile("Shape" + shape + profile, row.Source, profile);
+    HostCompilation host = HostCompiler.Compile("Shape" + shape, row.Source);
 
     Diagnostic[] problems = host.Diagnostics.Where(d => d.Severity >= DiagnosticSeverity.Warning).ToArray();
     problems.ShouldBeEmpty(string.Join(Environment.NewLine, problems.Select(d => d.ToString())));
     ManifestDocument manifest = host.Manifest();
-    manifest.Profile.ShouldBe(profile);
     manifest.Requests.Select(r => r.Request + " => " + r.Handler).OrderBy(b => b, StringComparer.Ordinal)
         .ShouldBe(row.Requests.OrderBy(b => b, StringComparer.Ordinal));
     manifest.Notifications.Select(n => n.Notification + " => " + string.Join(", ", n.Handlers))

@@ -1,5 +1,5 @@
 #region Purpose
-// Collision-safe sanitized identifiers for Dispatch_*, Publish_*, ServiceGen fields, and scope suffixes.
+// Collision-safe sanitized identifiers for Dispatch_*, Publish_*, handler cache slots, and scope suffixes.
 #endregion
 
 #region Design

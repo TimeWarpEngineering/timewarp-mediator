@@ -1,5 +1,5 @@
 #region Purpose
-// Host-profile dispatch with no behaviors: the scoped cache throws once the scope is disposed.
+// Dispatch with no behaviors: the scoped cache throws once the scope is disposed.
 #endregion
 
 #region Design

@@ -7,7 +7,8 @@
 // PackageId/AssemblyName stay PascalCase (TimeWarp.Mediator*).
 // The package smoke project sits outside the slnx because it restores the
 // packed nupkgs from artifacts/packages, so it can only build after pack.
-// The reflection runtime is not packed. Contracts is the only lib package.
+// Two nupkgs: TimeWarp.Mediator (lib + TWM001–TWM004 analyzer) and
+// TimeWarp.Mediator.Generators. The analyzer project is not packed on its own.
 #endregion
 
 namespace DevCli;
@@ -18,8 +19,7 @@ internal static class RepoLayout
 
   internal static readonly string[] PackableProjects =
   [
-    "source/timewarp-mediator-contracts/timewarp-mediator-contracts.csproj",
-    "source/timewarp-mediator-analyzers/timewarp-mediator-analyzers.csproj",
+    "source/timewarp-mediator/timewarp-mediator.csproj",
     "source/timewarp-mediator-generators/timewarp-mediator-generators.csproj"
   ];
 
@@ -28,22 +28,25 @@ internal static class RepoLayout
 
   internal static readonly (string PackageId, string[] RequiredEntries)[] PackageLayout =
   [
-    ("TimeWarp.Mediator.Contracts", ["lib/net10.0/TimeWarp.Mediator.Contracts.dll", .. LicenseEntries]),
-    ("TimeWarp.Mediator.Analyzers", ["analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll", .. LicenseEntries]),
+    ("TimeWarp.Mediator",
+    [
+      "lib/net10.0/TimeWarp.Mediator.dll",
+      "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll",
+      .. LicenseEntries
+    ]),
     ("TimeWarp.Mediator.Generators",
     [
       "analyzers/dotnet/cs/TimeWarp.Mediator.Generators.dll",
-      "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll",
       "buildTransitive/TimeWarp.Mediator.Generators.props",
       .. LicenseEntries
     ])
   ];
 
-  // The only lib/ TFM folder Contracts may ship (net10.0 floor). A stray
+  // The only lib/ TFM folder TimeWarp.Mediator may ship (net10.0 floor). A stray
   // or missing folder changes what consumers on other TFMs resolve.
   internal const string LibTargetFramework = "net10.0";
 
-  internal static readonly string[] LibPackageIds = ["TimeWarp.Mediator.Contracts"];
+  internal static readonly string[] LibPackageIds = ["TimeWarp.Mediator"];
 
   internal const string PackageSmokeProject =
     "tests/timewarp-mediator-package-smoke/timewarp-mediator-package-smoke.csproj";

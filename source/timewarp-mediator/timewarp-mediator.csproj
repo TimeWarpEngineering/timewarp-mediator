@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>TimeWarp.Mediator contracts and analyzers: IRequest, ICommand, IQuery, INotification, their handler and pipeline-behavior interfaces, ISender/IPublisher/IMediator, the membership attributes the source generator reads, and TWM001–TWM004. Reference it from message libraries without depending on a dispatcher.</Description>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>TimeWarp.Mediator</RootNamespace>
+    <AssemblyName>TimeWarp.Mediator</AssemblyName>
+    <PackageId>TimeWarp.Mediator</PackageId>
+    <!-- Shipped package: every public member must be documented (root props suppress CS1591 for tests/samples). -->
+    <NoWarn>$(NoWarn.Replace('CS1591', ''))</NoWarn>
+    <!-- Derived from Apache-2.0 MediatR code (task 013-016); the packed notice names the Apache portion. -->
+    <PackageLicenseExpression>Unlicense AND Apache-2.0</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The analyzer is netstandard2.0 and must not become a compile reference of this net10.0 lib. -->
+    <ProjectReference Include="..\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Pack the analyzer DLL into analyzers/dotnet/cs. _GetPackageFiles is the snapshot
+       GenerateNuspec packs, so the item has to exist before that target. GetTargetPath
+       follows the analyzer project's own output. -->
+  <Target Name="AddMediatorAnalyzerToPackage" BeforeTargets="_GetPackageFiles">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);DesignTimeBuild=false">
+      <Output TaskParameter="TargetOutputs" ItemName="MediatorAnalyzerTargetPath" />
+    </MSBuild>
+    <ItemGroup>
+      <None Include="@(MediatorAnalyzerTargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs/%(Filename)%(Extension)" Visible="false" />
+    </ItemGroup>
+  </Target>
+
+</Project>

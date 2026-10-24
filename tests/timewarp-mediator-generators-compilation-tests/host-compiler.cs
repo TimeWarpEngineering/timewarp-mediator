@@ -3,8 +3,8 @@
 #endregion
 
 #region Design
-// The Generators package ships the analyzer and sets TimeWarpMediatorGenerator=true, so a host runs
-// both. Diagnostics here are the generator's plus the analyzer's on the generated compilation.
+// A host runs the generator and the analyzer. TimeWarpMediatorGenerator=true makes the analyzer
+// leave TWM001–TWM003 to the generator. Diagnostics here are both.
 #endregion
 
 namespace TimeWarp.Mediator.Generators.Compilation.Tests;
@@ -28,17 +28,15 @@ internal static class HostCompiler
   internal static HostCompilation Compile(
       string assemblyName,
       string source,
-      string profile = "Host",
       params MetadataReference[] hostReferences)
   {
-    return CompileWithReferences(assemblyName, source, profile, GetBaseReferences().Concat(hostReferences));
+    return CompileWithReferences(assemblyName, source, GetBaseReferences().Concat(hostReferences));
   }
 
-  // Exact reference set, for hosts that are missing Contracts or the MS.DI abstractions.
+  // Exact reference set, for hosts that are missing TimeWarp.Mediator or the MS.DI abstractions.
   internal static HostCompilation CompileWithReferences(
       string assemblyName,
       string source,
-      string profile,
       IEnumerable<MetadataReference> references,
       string generatedNamespace = DefaultNamespace)
   {
@@ -48,7 +46,7 @@ internal static class HostCompiler
         references: references,
         options: CompilationOptions);
 
-    GeneratorDriver driver = CreateDriver(profile, generatedNamespace: generatedNamespace);
+    GeneratorDriver driver = CreateDriver(generatedNamespace: generatedNamespace);
 
     driver.RunGeneratorsAndUpdateCompilation(
         compilation,
@@ -58,7 +56,7 @@ internal static class HostCompiler
     ImmutableArray<Diagnostic> analyzerDiagnostics = output
         .WithAnalyzers(
             ImmutableArray.Create<DiagnosticAnalyzer>(new TimeWarp.Mediator.Analyzers.RequestHandlerAnalyzer()),
-            new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(profile, generatedNamespace)))
+            new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, CreateOptionsProvider(generatedNamespace)))
         .GetAnalyzerDiagnosticsAsync()
         .GetAwaiter()
         .GetResult();
@@ -69,7 +67,6 @@ internal static class HostCompiler
   }
 
   internal static GeneratorDriver CreateDriver(
-      string profile = "Host",
       bool trackSteps = false,
       string generatedNamespace = DefaultNamespace)
   {
@@ -77,17 +74,16 @@ internal static class HostCompiler
         generators: new[] { new MediatorGenerator().AsSourceGenerator() },
         additionalTexts: null,
         parseOptions: ParseOptions,
-        optionsProvider: CreateOptionsProvider(profile, generatedNamespace),
+        optionsProvider: CreateOptionsProvider(generatedNamespace),
         driverOptions: new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: trackSteps));
   }
 
-  private static AnalyzerConfigOptionsProvider CreateOptionsProvider(string profile, string generatedNamespace)
+  private static AnalyzerConfigOptionsProvider CreateOptionsProvider(string generatedNamespace)
   {
     return new BuildPropertyOptionsProvider(new Dictionary<string, string>
     {
       ["build_property.TimeWarpMediatorAssembly"] = "true",
       ["build_property.TimeWarpMediatorGenerator"] = "true",
-      ["build_property.TimeWarpMediatorProfile"] = profile,
       ["build_property.TimeWarpMediatorNamespace"] = generatedNamespace,
     });
   }

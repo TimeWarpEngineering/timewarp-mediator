@@ -1,12 +1,12 @@
 #region Purpose
-// Generated mediator behavior beyond visibility: membership attributes, profile/namespace overrides,
+// Generated mediator behavior beyond visibility: membership attributes, namespace overrides,
 // TWM001–TWM003 from the generator, notification order and base-type delivery, guards (013-012, G-23).
 #endregion
 
 #region Design
-// Runtime cases use the Aot profile so the emitted Mediator has a parameterless constructor and needs
-// no service provider. Each test compiles and loads its own collectible assembly, so the static Log
-// in the snippet is never shared between tests.
+// The emitted Mediator takes IServiceProvider. Runtime cases register it with AddGeneratedMediator
+// and resolve it from a rooted scope so the scoped handler cache stays alive. Each test compiles
+// and loads its own collectible assembly, so the static Log in the snippet is never shared.
 #endregion
 
 namespace TimeWarp.Mediator.Generators.Compilation.Tests;
@@ -49,8 +49,8 @@ public sealed class GeneratedMediatorTests
     MetadataReference member = HostCompiler.CompileLibrary("MemberLibrary", MemberLibraryAttribute + ModuleLibrarySource);
     MetadataReference moduleOnly = HostCompiler.CompileLibrary("ModuleOnlyLibrary", ModuleLibrarySource);
 
-    HostCompilation linked = HostCompiler.Compile("MemberHost", PingSource, "Host", member);
-    HostCompilation unlinked = HostCompiler.Compile("ModuleOnlyHost", PingSource, "Host", moduleOnly);
+    HostCompilation linked = HostCompiler.Compile("MemberHost", PingSource, member);
+    HostCompilation unlinked = HostCompiler.Compile("ModuleOnlyHost", PingSource, moduleOnly);
 
     Problems(linked).ShouldBeEmpty();
     ManifestDocument manifest = linked.Manifest();
@@ -68,7 +68,6 @@ public sealed class GeneratedMediatorTests
     HostCompilation host = HostCompiler.Compile(
         "RuntimeModuleHost",
         PingSource,
-        "Aot",
         MetadataReference.CreateFromImage(image));
     Assembly assembly = Load(host, "RuntimeModuleHost", image);
     IMediator mediator = CreateMediator(assembly);
@@ -79,16 +78,12 @@ public sealed class GeneratedMediatorTests
     response.ShouldBe(42);
   }
 
-  [Theory]
-  [InlineData("Host")]
-  [InlineData("Aot")]
-  [InlineData("Link")]
-  public void ProfileAndNamespaceOverrides_AreHonored(string profile)
+  [Fact]
+  public void NamespaceOverride_IsHonored()
   {
     HostCompilation host = HostCompiler.CompileWithReferences(
-        "Override" + profile,
+        "OverrideNamespace",
         PingSource,
-        profile,
         HostCompiler.GetBaseReferences(),
         "Custom.Generated");
 
@@ -97,7 +92,6 @@ public sealed class GeneratedMediatorTests
     host.Compilation.Assembly.GetTypeByMetadataName(HostCompiler.DefaultNamespace + ".Mediator").ShouldBeNull();
     ManifestDocument manifest = host.Manifest("Custom.Generated");
     manifest.Version.ShouldBe(1);
-    manifest.Profile.ShouldBe(profile);
     manifest.Namespace.ShouldBe("Custom.Generated");
   }
 
@@ -138,7 +132,7 @@ public sealed class GeneratedMediatorTests
   [Fact]
   public async Task Publish_DeliversToBaseTypeHandlers_MostDerivedFirst_InDisplayNameOrder()
   {
-    HostCompilation host = HostCompiler.Compile("PublishOrder", NotificationSource, "Aot");
+    HostCompilation host = HostCompiler.Compile("PublishOrder", NotificationSource);
     Assembly assembly = Load(host, "PublishOrder");
     IMediator mediator = CreateMediator(assembly);
 
@@ -155,7 +149,7 @@ public sealed class GeneratedMediatorTests
   [Fact]
   public async Task StructRequest_IsDispatched()
   {
-    HostCompilation host = HostCompiler.Compile("StructDispatch", StructSource, "Aot");
+    HostCompilation host = HostCompiler.Compile("StructDispatch", StructSource);
     Assembly assembly = Load(host, "StructDispatch");
     IMediator mediator = CreateMediator(assembly);
 
@@ -167,7 +161,7 @@ public sealed class GeneratedMediatorTests
   [Fact]
   public async Task NullArguments_ThrowArgumentNullException()
   {
-    IMediator mediator = CreateMediator(HostCompiler.Compile("NullGuards", PingSource, "Aot"));
+    IMediator mediator = CreateMediator(HostCompiler.Compile("NullGuards", PingSource));
 
     await Should.ThrowAsync<ArgumentNullException>(async () => await mediator.Send((object) null!));
     await Should.ThrowAsync<ArgumentNullException>(async () => await mediator.Send((IRequest<string>) null!));
@@ -178,7 +172,7 @@ public sealed class GeneratedMediatorTests
   [Fact]
   public async Task UnknownRequest_ThrowsNoHandlerException()
   {
-    IMediator mediator = CreateMediator(HostCompiler.Compile("UnknownRequest", PingSource, "Aot"));
+    IMediator mediator = CreateMediator(HostCompiler.Compile("UnknownRequest", PingSource));
 
     await Should.ThrowAsync<NoHandlerException>(async () => await mediator.Send(new object()));
   }
@@ -186,7 +180,7 @@ public sealed class GeneratedMediatorTests
   [Fact]
   public void AddGeneratedMediatorWithUnknownScope_ThrowsArgumentException()
   {
-    HostCompilation host = HostCompiler.Compile("UnknownScope", PingSource + ScopedSource, "Host");
+    HostCompilation host = HostCompiler.Compile("UnknownScope", PingSource + ScopedSource);
     Problems(host).ShouldBeEmpty();
     Assembly assembly = Load(host, "UnknownScope");
     MethodInfo addScoped = assembly
@@ -216,14 +210,28 @@ public sealed class GeneratedMediatorTests
     return diagnostic.Location.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan);
   }
 
+  private static readonly List<object> Roots = new();
+
   private static IMediator CreateMediator(HostCompilation host)
   {
     return CreateMediator(Load(host, host.Compilation.AssemblyName!));
   }
 
+  // The scope stays rooted for the process. Disposing it drops the scoped handler cache before Send.
   private static IMediator CreateMediator(Assembly assembly)
   {
-    return (IMediator) Activator.CreateInstance(assembly.GetType(HostCompiler.DefaultNamespace + ".Mediator", true)!)!;
+    ServiceCollection services = new();
+    MethodInfo add = assembly
+        .GetType("TimeWarp.Mediator.Generated.TimeWarpMediatorGeneratedServiceCollectionExtensions", true)!
+        .GetMethods(BindingFlags.Public | BindingFlags.Static)
+        .Single(method => method.Name == "AddGeneratedMediator" && !method.IsGenericMethod);
+    add.Invoke(null, new object[] { services });
+    ServiceProvider provider = services.BuildServiceProvider();
+    IServiceScope scope = provider.CreateScope();
+    Roots.Add(provider);
+    Roots.Add(scope);
+    Type mediatorType = assembly.GetType(HostCompiler.DefaultNamespace + ".Mediator", true)!;
+    return (IMediator) scope.ServiceProvider.GetRequiredService(mediatorType);
   }
 
   private static string[] Events(Assembly assembly)

@@ -1,10 +1,16 @@
 # TimeWarp.Mediator diagnostics
 
-The analyzer package reports TWM001–TWM004. The generator package also reports TWM005–TWM011,
-which describe what the generated mediator can and cannot emit. Each diagnostic has one reporter:
-in a generator host the generator reports TWM001–TWM003 and the bundled analyzer skips them (the
-generator package sets `TimeWarpMediatorGenerator=true`); in a library the analyzer reports them. Each descriptor's help link
-points to its section here.
+`TimeWarp.Mediator` ships the analyzer (TWM001–TWM004) as an analyzer asset. A library that
+references that package and does not run the generator gets those four. `TimeWarp.Mediator.Generators`
+reports TWM007, TWM008, TWM010, and TWM011, and in a generator host it also reports TWM001–TWM003.
+The analyzer skips TWM001–TWM003 when `TimeWarpMediatorGenerator=true`, so each is reported once.
+TWM004 stays with the analyzer in both hosts and libraries. Each descriptor's help link points to
+its section here.
+
+There is one emission. The host supplies `IServiceProvider`, and registered pipeline behaviors are
+woven. TWM005 (behavior not woven) and TWM006 (handler not constructible with `new()`) described
+the removed Aot and Link profiles. TWM009 described stream, processor, and exception-handler kinds
+that 15.0 no longer ships. Those three ids are retired.
 
 | Id | Severity | Reported by | Summary |
 |----|----------|-------------|---------|
@@ -12,11 +18,8 @@ points to its section here.
 | [TWM002](#twm002) | Error | generator (host), analyzer (library) | Duplicate handler for request |
 | [TWM003](#twm003) | Error | generator (host), analyzer (library) | Handler and message belong to different pipelines |
 | [TWM004](#twm004) | Error | analyzer | Request is not a member of this sender pipeline |
-| [TWM005](#twm005) | Warning | generator (Aot/Link) | Pipeline behavior is not woven under the Aot profile |
-| [TWM006](#twm006) | Error | generator (Aot/Link) | Aot handler is not constructible with `new()` |
 | [TWM007](#twm007) | Error | generator | Member assembly type is not accessible from the host |
 | [TWM008](#twm008) | Error | generator | Generated mediator dependencies are not referenced |
-| [TWM009](#twm009) | Warning | generator | Handler kind is not dispatched by the generated mediator |
 | [TWM010](#twm010) | Warning | generator | Registered behavior is not a pipeline behavior |
 | [TWM011](#twm011) | Warning | generator | Registered behavior applies to no request |
 
@@ -54,18 +57,6 @@ cases are reported:
 A library sees only part of the graph, so it skips those two. `Send(object)` is never reported.
 It throws `NoHandlerException` at runtime.
 
-## TWM005
-
-**Pipeline behavior is not woven under the Aot profile.** Aot/Link dispatch calls handlers
-directly from static `ServiceGen` fields. `[assembly: MediatorBehavior]` registrations do not run
-and the manifest omits them. Use the Host profile for cross-cutting behaviors.
-
-## TWM006
-
-**Aot handler is not constructible with `new()`.** Aot/Link creates each handler once with
-`new Handler()`. Give it an accessible constructor with no required arguments. If it has
-`required` members, mark that constructor `[SetsRequiredMembers]`.
-
 ## TWM007
 
 **Member assembly type is not accessible from the host.** A handler, request, response,
@@ -76,19 +67,12 @@ notification, behavior, or pipeline scope marker in a referenced member assembly
 
 ## TWM008
 
-**Generated mediator dependencies are not referenced.** The generator needs
-`TimeWarp.Mediator.IMediator` (TimeWarp.Mediator.Contracts) and, under the Host profile,
-`Microsoft.Extensions.DependencyInjection.Abstractions`. When one is missing it generates
-nothing and reports this once, instead of `CS0234`/`CS0246` inside `.g.cs` files. Add the
-reference, or set `TimeWarpMediatorProfile` to `Aot` when you do not use MS.DI.
-
-## TWM009
-
-**Handler kind is not dispatched by the generated mediator.** A class in a member assembly
-implements `IStreamRequestHandler`, `IStreamPipelineBehavior`, `IRequestPreProcessor`,
-`IRequestPostProcessor`, `IRequestExceptionHandler`, or `IRequestExceptionAction`. The generated
-mediator never calls it, and `CreateStream` throws `NotSupportedException`. Move the logic
-into a request handler or an `IPipelineBehavior`.
+**Generated mediator dependencies are not referenced.** The generator emits code against
+`TimeWarp.Mediator` (`IMediator`) and `Microsoft.Extensions.DependencyInjection.Abstractions`
+(`IServiceCollection`, `ServiceCollectionServiceExtensions`, `ServiceProviderServiceExtensions`).
+When any of those types is missing it generates nothing and reports this once, instead of
+`CS0234`/`CS0246` inside `.g.cs` files. Reference the `TimeWarp.Mediator` package and
+`Microsoft.Extensions.DependencyInjection.Abstractions`.
 
 ## TWM010
 

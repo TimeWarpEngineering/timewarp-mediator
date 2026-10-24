@@ -1,6 +1,6 @@
 #region Purpose
-// TWM001–TWM011 descriptors shared by the analyzer-only package and the generator.
-// TWM005–TWM011 are generator-only: they describe what the host's generated mediator emits.
+// TWM001–TWM004, TWM007, TWM008, TWM010, and TWM011 descriptors shared by the analyzer and the generator.
+// TWM007, TWM008, TWM010, and TWM011 are generator-only: they describe what the host's generated mediator emits.
 #endregion
 
 #region Design
@@ -61,26 +61,6 @@ internal static class DiagnosticDescriptors
       description: "ISender<TScope>.Send only dispatches requests assigned to that TScope marker, and in a generator host the unscoped ISender/IMediator only dispatches unscoped requests. Use the matching sender, or Send(object), which throws NoHandlerException.",
       helpLinkUri: HelpLink("TWM004"));
 
-  internal static readonly DiagnosticDescriptor AotBehaviorNotWoven = new(
-      id: "TWM005",
-      title: "Pipeline behavior is not woven under the Aot profile",
-      messageFormat: "Behavior '{0}' is not woven under the '{1}' profile; Aot dispatch calls handlers directly and the manifest omits it",
-      category: Category,
-      defaultSeverity: DiagnosticSeverity.Warning,
-      isEnabledByDefault: true,
-      description: "The Aot/Link profile has no IServiceProvider and resolves handlers from static ServiceGen fields. [assembly: MediatorBehavior] registrations do not run in that profile. Use the Host profile for validation, transaction, or other cross-cutting behaviors.",
-      helpLinkUri: HelpLink("TWM005"));
-
-  internal static readonly DiagnosticDescriptor AotHandlerNotConstructible = new(
-      id: "TWM006",
-      title: "Aot handler is not constructible with new()",
-      messageFormat: "Handler '{0}' cannot be created with 'new()' under the '{1}' profile",
-      category: Category,
-      defaultSeverity: DiagnosticSeverity.Error,
-      isEnabledByDefault: true,
-      description: "The Aot/Link profile creates each handler once with 'new Handler()' into a static readonly ServiceGen field (a process-wide singleton). That call needs an accessible constructor with no required arguments. Required members must be set by that constructor (SetsRequiredMembers).",
-      helpLinkUri: HelpLink("TWM006"));
-
   internal static readonly DiagnosticDescriptor InaccessibleMemberType = new(
       id: "TWM007",
       title: "Member assembly type is not accessible from the host",
@@ -98,18 +78,8 @@ internal static class DiagnosticDescriptors
       category: Category,
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,
-      description: "The generator emits code against TimeWarp.Mediator.Contracts and, under the Host profile, Microsoft.Extensions.DependencyInjection.Abstractions. When either is missing it emits nothing and reports this once, instead of compile errors inside generated files.",
+      description: "The generator emits code against TimeWarp.Mediator and Microsoft.Extensions.DependencyInjection.Abstractions. When either is missing it emits nothing and reports this once, instead of compile errors inside generated files.",
       helpLinkUri: HelpLink("TWM008"));
-
-  internal static readonly DiagnosticDescriptor UnsupportedHandlerKind = new(
-      id: "TWM009",
-      title: "Handler kind is not dispatched by the generated mediator",
-      messageFormat: "'{0}' implements '{1}', which the generated mediator does not dispatch; it is ignored",
-      category: Category,
-      defaultSeverity: DiagnosticSeverity.Warning,
-      isEnabledByDefault: true,
-      description: "The generated mediator dispatches IRequestHandler, INotificationHandler, and [assembly: MediatorBehavior] pipeline behaviors. Pre/post processors and exception handlers/actions in member assemblies never run.",
-      helpLinkUri: HelpLink("TWM009"));
 
   internal static readonly DiagnosticDescriptor InvalidBehaviorRegistration = new(
       id: "TWM010",

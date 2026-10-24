@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\source\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" />
-    <ProjectReference Include="..\..\source\timewarp-mediator-contracts\timewarp-mediator-contracts.csproj" />
+    <ProjectReference Include="..\..\source\timewarp-mediator\timewarp-mediator.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,10 +1,11 @@
 #region Purpose
-// Outside-consumer smoke for the packed nupkgs: Contracts + Generators only, no TimeWarp.Mediator.
+// Outside-consumer smoke for the two packed nupkgs: TimeWarp.Mediator and TimeWarp.Mediator.Generators.
 #endregion
 #region Design
-// Compiles only if the Generators nupkg ships a working analyzer and its buildTransitive props
-// (the generated type lands in the default TimeWarp.Mediator.Generated namespace). Runs only if
-// the Contracts lib/ folder resolves for net10.0. Exit code 0 is the pass signal for dev pack.
+// Compiles only if TimeWarp.Mediator ships the TWM001–TWM004 analyzer and Generators ships a
+// working generator plus its buildTransitive props (the generated type lands in the default
+// TimeWarp.Mediator.Generated namespace). Runs only if the TimeWarp.Mediator lib/ folder resolves
+// for net10.0. Exit code 0 is the pass signal for dev pack.
 #endregion
 
 using System;

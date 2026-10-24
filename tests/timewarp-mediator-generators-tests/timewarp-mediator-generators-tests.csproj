@@ -12,7 +12,7 @@
   <Import Project="..\..\source\timewarp-mediator-generators\build-transitive\timewarp-mediator-generators.props" />
 
   <ItemGroup>
-    <ProjectReference Include="..\..\source\timewarp-mediator-contracts\timewarp-mediator-contracts.csproj" />
+    <ProjectReference Include="..\..\source\timewarp-mediator\timewarp-mediator.csproj" />
     <ProjectReference Include="..\..\source\timewarp-mediator-generators\timewarp-mediator-generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\source\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>

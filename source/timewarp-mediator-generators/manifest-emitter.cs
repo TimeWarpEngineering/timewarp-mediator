@@ -7,8 +7,8 @@
 // host can read kind, response, scope, and the ordered behavior list without parsing JSON.
 // Requests and each entry's Behaviors are ReadOnlyCollection wrappers over private arrays, so a
 // cast cannot mutate the process-wide manifest. Kind precedence matches Nuru's string matcher:
-// Query, then IdempotentCommand, then Command, then Action, otherwise Request. Aot/Link does
-// not weave behaviors (TWM005), so every request lists an empty behavior list in that profile.
+// Query, then IdempotentCommand, then Command, then Action, otherwise Request. Every request
+// lists the behaviors the emitter weaves, in that order.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -44,11 +44,9 @@ internal static class ManifestEmitter
 
   private static string BuildJson(MessageGraph graph)
   {
-    bool weavesBehaviors = !graph.IsAotProfile;
     StringBuilder builder = new();
     builder.Append('{');
     builder.Append("\"version\":1,");
-    builder.Append("\"profile\":\"").Append(Escape(graph.Membership.Profile)).Append("\",");
     builder.Append("\"namespace\":\"").Append(Escape(graph.Membership.GeneratedNamespace)).Append("\",");
     builder.Append("\"requests\":[");
     for (int i = 0; i < graph.Requests.Length; i++)
@@ -69,7 +67,7 @@ internal static class ManifestEmitter
         builder.Append("\"scope\":\"").Append(Escape(request.ScopeType.ToDisplayString())).Append("\",");
       }
       builder.Append("\"behaviors\":[");
-      for (int b = 0; weavesBehaviors && b < request.ClosedBehaviors.Length; b++)
+      for (int b = 0; b < request.ClosedBehaviors.Length; b++)
       {
         if (b > 0)
         {
@@ -150,7 +148,7 @@ internal static class ManifestEmitter
         builder.Append(CSharpString(request.ScopeType.ToDisplayString())).Append(", ");
       }
 
-      if (graph.IsAotProfile || request.ClosedBehaviors.Length == 0)
+      if (request.ClosedBehaviors.Length == 0)
       {
         builder.Append("NoBehaviors");
       }

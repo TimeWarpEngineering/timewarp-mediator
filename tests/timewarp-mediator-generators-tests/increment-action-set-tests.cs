@@ -19,7 +19,6 @@ public class IncrementActionSetTests
     ManifestDocument manifest = ManifestDocument.Parse(MediatorManifest.Json);
     MediatorManifest.Version.ShouldBe(1);
     manifest.Version.ShouldBe(1);
-    manifest.Profile.ShouldBe("Host");
     manifest.Namespace.ShouldBe("TimeWarp.Mediator.Generated");
     manifest.Membership.ShouldBe(new[] { "timewarp-mediator-generators-tests" });
     ManifestRequest increment = manifest.Request("TimeWarp.Mediator.Generators.Tests.State.CounterState.IncrementActionSet.Action");
