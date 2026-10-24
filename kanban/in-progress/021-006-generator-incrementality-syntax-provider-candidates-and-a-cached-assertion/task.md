@@ -55,8 +55,7 @@ finding F9; gate in section 9.
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12
 - Fix pass: M1–M12 implemented on this branch (a1979f8).
-- Round 2: M1–M12 verified fixed. New nits M13 and M14 are wontfix. 0 open. Disposition: accepted-exceptions.
-
+- Round 2: Done
 ## Notes
 
 Parent: 021. Depends on: 021-003 (emitter settled first so the pipeline refactor does not
