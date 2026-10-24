@@ -14,6 +14,36 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 public sealed class GeneratedMediatorTests
 {
   [Fact]
+  public void InterfaceSend_ReturnsDispatchWithoutBoxing_AndBehaviorsUseCachedDelegates()
+  {
+    HostCompilation host = HostCompiler.Compile("DispatchShape", StampBehaviorSource + PingSource);
+    Problems(host).ShouldBeEmpty();
+    string generated = string.Join(
+        "\n",
+        host.Compilation.SyntaxTrees
+            .Where(tree => tree.FilePath.Contains(".g.cs", StringComparison.Ordinal))
+            .Select(tree => tree.GetText().ToString()));
+    generated.ShouldContain("Unsafe.As<");
+    generated.ShouldContain("typeof(TResponse) == typeof(");
+    generated.ShouldContain("AdaptResponse<");
+    generated.ShouldNotContain("SendCore");
+    generated.ShouldNotContain("ThreadStatic");
+    generated.ShouldContain("private readonly global::TimeWarp.Mediator.MessageHandlerDelegate<");
+    generated.ShouldContain("[assembly: global::TimeWarp.Mediator.GeneratedMediatorAttribute(typeof(global::");
+    string registration = host.Compilation.SyntaxTrees
+        .Single(tree => tree.FilePath.Contains("MediatorServiceCollectionExtensions.g.cs", StringComparison.Ordinal))
+        .GetText()
+        .ToString();
+    registration.ShouldNotContain("IRequestHandler");
+    registration.ShouldNotContain("IPipelineBehavior");
+    registration.ShouldNotContain("INotificationHandler");
+    registration.ShouldContain(".Chain_");
+    registration.ShouldContain("namespace TimeWarp.Mediator.Generated;");
+    registration.ShouldContain("class TimeWarpMediatorGeneratedServiceCollectionExtensions");
+    host.Manifest().Request("App.Ping").Kind.ShouldBe("Request");
+  }
+
+  [Fact]
   public void ReferencedLibrary_JoinsTheGraphOnlyWithMediatorAssembly()
   {
     MetadataReference member = HostCompiler.CompileLibrary("MemberLibrary", MemberLibraryAttribute + ModuleLibrarySource);
@@ -160,7 +190,7 @@ public sealed class GeneratedMediatorTests
     Problems(host).ShouldBeEmpty();
     Assembly assembly = Load(host, "UnknownScope");
     MethodInfo addScoped = assembly
-        .GetType("Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions", true)!
+        .GetType("TimeWarp.Mediator.Generated.TimeWarpMediatorGeneratedServiceCollectionExtensions", true)!
         .GetMethods(BindingFlags.Public | BindingFlags.Static)
         .Single(m => m.Name == "AddGeneratedMediator" && m.IsGenericMethodDefinition);
     Microsoft.Extensions.DependencyInjection.ServiceCollection services = new();
@@ -222,6 +252,29 @@ public sealed class GeneratedMediatorTests
 
     return context.LoadFromStream(stream);
   }
+
+  private const string StampBehaviorSource = @"
+using System.Threading;
+using System.Threading.Tasks;
+using TimeWarp.Mediator;
+
+[assembly: MediatorBehavior(typeof(App.StampBehavior<,>))]
+
+namespace App
+{
+    public sealed class StampBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+        where TRequest : notnull
+    {
+        public ValueTask<TResponse> Handle(
+            TRequest request,
+            MessageHandlerDelegate<TRequest, TResponse> next,
+            CancellationToken cancellationToken)
+        {
+            return next(request, cancellationToken);
+        }
+    }
+}
+";
 
   private const string PingSource = @"
 namespace App

@@ -3,8 +3,12 @@
 #endregion
 
 #region Design
-// The manifest lists the pipeline that is emitted: Aot/Link does not weave behaviors (TWM005),
-// so every request lists an empty "behaviors" array in that profile.
+// JSON stays the single serialized manifest. The same static type exposes Request entries so a
+// host can read kind, response, scope, and the ordered behavior list without parsing JSON.
+// Requests and each entry's Behaviors are ReadOnlyCollection wrappers over private arrays, so a
+// cast cannot mutate the process-wide manifest. Kind precedence matches Nuru's string matcher:
+// Query, then IdempotentCommand, then Command, then Action, otherwise Request. Aot/Link does
+// not weave behaviors (TWM005), so every request lists an empty behavior list in that profile.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -24,8 +28,15 @@ internal static class ManifestEmitter
     builder.AppendLine("internal static class MediatorManifest");
     builder.AppendLine("{");
     builder.AppendLine("    public const int Version = 1;");
+    builder.AppendLine("    public const string KindAction = \"Action\";");
+    builder.AppendLine("    public const string KindCommand = \"Command\";");
+    builder.AppendLine("    public const string KindQuery = \"Query\";");
+    builder.AppendLine("    public const string KindIdempotentCommand = \"IdempotentCommand\";");
+    builder.AppendLine("    public const string KindRequest = \"Request\";");
     builder.AppendLine("    public const string Json =");
     builder.Append("        @\"").Append(json.Replace("\"", "\"\"")).AppendLine("\";");
+    builder.AppendLine();
+    EmitRequestEntries(builder, graph);
     builder.AppendLine("}");
 
     sources.Add(new GeneratedSource("MediatorManifest.g.cs", builder.ToString()));
@@ -50,6 +61,7 @@ internal static class ManifestEmitter
       RequestBinding request = graph.Requests[i];
       builder.Append('{');
       builder.Append("\"request\":\"").Append(Escape(request.RequestType.ToDisplayString())).Append("\",");
+      builder.Append("\"kind\":\"").Append(Kind(request.RequestType)).Append("\",");
       builder.Append("\"response\":\"").Append(Escape(request.ResponseType.ToDisplayString())).Append("\",");
       builder.Append("\"handler\":\"").Append(Escape(request.HandlerType.ToDisplayString())).Append("\",");
       if (request.ScopeType is not null)
@@ -113,6 +125,162 @@ internal static class ManifestEmitter
 
     builder.Append("]}");
     return builder.ToString();
+  }
+
+  private static void EmitRequestEntries(StringBuilder builder, MessageGraph graph)
+  {
+    builder.AppendLine("    private static readonly global::System.Collections.Generic.IReadOnlyList<string> NoBehaviors =");
+    builder.AppendLine("        new global::System.Collections.ObjectModel.ReadOnlyCollection<string>(global::System.Array.Empty<string>());");
+    builder.AppendLine();
+    builder.AppendLine("    private static readonly RequestEntry[] RequestEntries =");
+    builder.AppendLine("    [");
+    for (int i = 0; i < graph.Requests.Length; i++)
+    {
+      RequestBinding request = graph.Requests[i];
+      builder.Append("        new RequestEntry(");
+      builder.Append(CSharpString(request.RequestType.ToDisplayString())).Append(", ");
+      builder.Append(CSharpString(request.ResponseType.ToDisplayString())).Append(", ");
+      builder.Append(CSharpString(Kind(request.RequestType))).Append(", ");
+      if (request.ScopeType is null)
+      {
+        builder.Append("null, ");
+      }
+      else
+      {
+        builder.Append(CSharpString(request.ScopeType.ToDisplayString())).Append(", ");
+      }
+
+      if (graph.IsAotProfile || request.ClosedBehaviors.Length == 0)
+      {
+        builder.Append("NoBehaviors");
+      }
+      else
+      {
+        builder.Append("new global::System.Collections.ObjectModel.ReadOnlyCollection<string>(new string[] { ");
+        for (int b = 0; b < request.ClosedBehaviors.Length; b++)
+        {
+          if (b > 0)
+          {
+            builder.Append(", ");
+          }
+
+          builder.Append(CSharpString(request.ClosedBehaviors[b].ToDisplayString()));
+        }
+
+        builder.Append(" })");
+      }
+
+      builder.Append(')');
+      if (i + 1 < graph.Requests.Length)
+      {
+        builder.Append(',');
+      }
+
+      builder.AppendLine();
+    }
+
+    builder.AppendLine("    ];");
+    builder.AppendLine();
+    builder.AppendLine("    private static readonly global::System.Collections.ObjectModel.ReadOnlyCollection<RequestEntry> RequestList =");
+    builder.AppendLine("        new global::System.Collections.ObjectModel.ReadOnlyCollection<RequestEntry>(RequestEntries);");
+    builder.AppendLine();
+    builder.AppendLine("    public static global::System.Collections.Generic.IReadOnlyList<RequestEntry> Requests => RequestList;");
+    builder.AppendLine();
+    builder.AppendLine("    public static RequestEntry Request(string requestType)");
+    builder.AppendLine("    {");
+    builder.AppendLine("        for (int i = 0; i < RequestEntries.Length; i++)");
+    builder.AppendLine("        {");
+    builder.AppendLine("            if (string.Equals(RequestEntries[i].Request, requestType, global::System.StringComparison.Ordinal))");
+    builder.AppendLine("            {");
+    builder.AppendLine("                return RequestEntries[i];");
+    builder.AppendLine("            }");
+    builder.AppendLine("        }");
+    builder.AppendLine();
+    builder.AppendLine("        throw new global::System.ArgumentException(\"No manifest entry for '\" + requestType + \"'.\", nameof(requestType));");
+    builder.AppendLine("    }");
+    builder.AppendLine();
+    builder.AppendLine("    public readonly struct RequestEntry");
+    builder.AppendLine("    {");
+    builder.AppendLine("        public RequestEntry(string request, string response, string kind, string? scope, global::System.Collections.Generic.IReadOnlyList<string> behaviors)");
+    builder.AppendLine("        {");
+    builder.AppendLine("            Request = request;");
+    builder.AppendLine("            Response = response;");
+    builder.AppendLine("            Kind = kind;");
+    builder.AppendLine("            Scope = scope;");
+    builder.AppendLine("            Behaviors = behaviors;");
+    builder.AppendLine("        }");
+    builder.AppendLine();
+    builder.AppendLine("        public string Request { get; }");
+    builder.AppendLine();
+    builder.AppendLine("        public string Response { get; }");
+    builder.AppendLine();
+    builder.AppendLine("        public string Kind { get; }");
+    builder.AppendLine();
+    builder.AppendLine("        public string? Scope { get; }");
+    builder.AppendLine();
+    builder.AppendLine("        public global::System.Collections.Generic.IReadOnlyList<string> Behaviors { get; }");
+    builder.AppendLine("    }");
+  }
+
+  // Query, then IdempotentCommand, then Command, then Action. IIdempotentCommand is also ICommand.
+  private static string Kind(INamedTypeSymbol request)
+  {
+    bool query = false;
+    bool idempotentCommand = false;
+    bool command = false;
+    bool action = false;
+    foreach (INamedTypeSymbol iface in request.AllInterfaces)
+    {
+      if (iface.ContainingNamespace?.ToDisplayString() != "TimeWarp.Mediator")
+      {
+        continue;
+      }
+
+      string name = iface.OriginalDefinition.Name;
+      if (name == "IQuery")
+      {
+        query = true;
+      }
+      else if (name == "IIdempotentCommand")
+      {
+        idempotentCommand = true;
+      }
+      else if (name == "ICommand")
+      {
+        command = true;
+      }
+      else if (name == "IAction")
+      {
+        action = true;
+      }
+    }
+
+    if (query)
+    {
+      return "Query";
+    }
+
+    if (idempotentCommand)
+    {
+      return "IdempotentCommand";
+    }
+
+    if (command)
+    {
+      return "Command";
+    }
+
+    if (action)
+    {
+      return "Action";
+    }
+
+    return "Request";
+  }
+
+  private static string CSharpString(string value)
+  {
+    return "\"" + Escape(value) + "\"";
   }
 
   private static string Escape(string value)

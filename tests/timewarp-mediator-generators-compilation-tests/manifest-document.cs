@@ -89,6 +89,7 @@ internal sealed class ManifestDocument
         element.GetProperty("request").GetString()!,
         element.GetProperty("response").GetString()!,
         element.GetProperty("handler").GetString()!,
+        element.GetProperty("kind").GetString()!,
         element.TryGetProperty("scope", out JsonElement scope) ? scope.GetString() : null,
         Strings(element.GetProperty("behaviors")));
   }
@@ -109,11 +110,18 @@ internal sealed class ManifestDocument
 
 internal sealed class ManifestRequest
 {
-  public ManifestRequest(string request, string response, string handler, string? scope, IReadOnlyList<string> behaviors)
+  public ManifestRequest(
+      string request,
+      string response,
+      string handler,
+      string kind,
+      string? scope,
+      IReadOnlyList<string> behaviors)
   {
     Request = request;
     Response = response;
     Handler = handler;
+    Kind = kind;
     Scope = scope;
     Behaviors = behaviors;
   }
@@ -123,6 +131,8 @@ internal sealed class ManifestRequest
   public string Response { get; }
 
   public string Handler { get; }
+
+  public string Kind { get; }
 
   public string? Scope { get; }
 

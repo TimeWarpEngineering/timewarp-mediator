@@ -8,6 +8,7 @@
 #endregion
 
 using System;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,20 @@ string reply = await sender.Send(new SmokePing("package"));
 if (reply != "package-pong")
 {
   await Console.Error.WriteLineAsync($"Unexpected reply: {reply}");
+  return 1;
+}
+
+GeneratedMediatorAttribute? marker = typeof(Mediator).Assembly.GetCustomAttribute<GeneratedMediatorAttribute>();
+if (marker is null || marker.MediatorType != typeof(Mediator))
+{
+  await Console.Error.WriteLineAsync("GeneratedMediatorAttribute is missing or names a different mediator.");
+  return 1;
+}
+
+MediatorManifest.RequestEntry entry = MediatorManifest.Request(typeof(SmokePing).FullName!);
+if (entry.Kind != MediatorManifest.KindRequest || entry.Response != "string")
+{
+  await Console.Error.WriteLineAsync($"Unexpected manifest entry: {entry.Kind} -> {entry.Response}");
   return 1;
 }
 

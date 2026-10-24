@@ -29,6 +29,20 @@ public sealed class ArchiveOrder : IRequest
 {
 }
 
+public sealed class ScopedToken : IRequest<Guid>
+{
+}
+
+public sealed class ScopedTokenHandler : IRequestHandler<ScopedToken, Guid>
+{
+  public Guid Token { get; } = Guid.NewGuid();
+
+  public ValueTask<Guid> Handle(ScopedToken request, CancellationToken cancellationToken)
+  {
+    return ValueTask.FromResult(Token);
+  }
+}
+
 // One class, five handler interfaces: every one must bind and register.
 public sealed class OrderHandler
     : INotificationHandler<OrderPlaced>,

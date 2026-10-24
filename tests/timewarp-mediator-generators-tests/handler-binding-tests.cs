@@ -34,16 +34,17 @@ public class HandlerBindingTests
   }
 
   [Fact]
-  public void MultiInterfaceHandler_RegistersEveryInterface()
+  public void MultiInterfaceHandler_RegistersTheConcreteHandlerOnly()
   {
     using ServiceProvider provider = CreateProvider();
     using IServiceScope scope = provider.CreateScope();
 
-    scope.ServiceProvider.GetServices<INotificationHandler<OrderPlaced>>().Single().ShouldBeOfType<OrderHandler>();
-    scope.ServiceProvider.GetServices<INotificationHandler<OrderShipped>>().Single().ShouldBeOfType<OrderHandler>();
-    scope.ServiceProvider.GetService<IRequestHandler<GetOrderCount, int>>().ShouldBeOfType<OrderHandler>();
-    scope.ServiceProvider.GetService<IRequestHandler<GetOrderLabel, string>>().ShouldBeOfType<OrderHandler>();
-    scope.ServiceProvider.GetService<IRequestHandler<ArchiveOrder>>().ShouldBeOfType<OrderHandler>();
+    scope.ServiceProvider.GetRequiredService<OrderHandler>().ShouldBeOfType<OrderHandler>();
+    scope.ServiceProvider.GetService<INotificationHandler<OrderPlaced>>().ShouldBeNull();
+    scope.ServiceProvider.GetService<INotificationHandler<OrderShipped>>().ShouldBeNull();
+    scope.ServiceProvider.GetService<IRequestHandler<GetOrderCount, int>>().ShouldBeNull();
+    scope.ServiceProvider.GetService<IRequestHandler<GetOrderLabel, string>>().ShouldBeNull();
+    scope.ServiceProvider.GetService<IRequestHandler<ArchiveOrder>>().ShouldBeNull();
   }
 
   [Fact]
@@ -60,8 +61,10 @@ public class HandlerBindingTests
 
     total.ShouldBe(42m);
     BindingLog.Events.ShouldBe(new[] { "invoice:raised:InvoiceHandler", "invoice:paid" });
-    scope.ServiceProvider.GetServices<INotificationHandler<InvoiceRaised>>().Single().ShouldBeOfType<InvoiceHandler>();
-    scope.ServiceProvider.GetServices<INotificationHandler<InvoicePaid>>().Single().ShouldBeOfType<AuditedInvoiceHandler>();
+    scope.ServiceProvider.GetRequiredService<InvoiceHandler>().ShouldBeOfType<InvoiceHandler>();
+    scope.ServiceProvider.GetRequiredService<AuditedInvoiceHandler>().ShouldBeOfType<AuditedInvoiceHandler>();
+    scope.ServiceProvider.GetService<INotificationHandler<InvoiceRaised>>().ShouldBeNull();
+    scope.ServiceProvider.GetService<INotificationHandler<InvoicePaid>>().ShouldBeNull();
   }
 
   [Fact]
@@ -75,6 +78,26 @@ public class HandlerBindingTests
     await publisher.Publish(new RefundIssued());
 
     BindingLog.Events.ShouldBe(new[] { "refund:RefundIssuedHandler" });
+  }
+
+  [Fact]
+  public async Task ScopedHandler_StaysInsideTheScope()
+  {
+    ServiceCollection services = new();
+    services.AddGeneratedMediator();
+    await using ServiceProvider provider = services.BuildServiceProvider();
+    using IServiceScope first = provider.CreateScope();
+    using IServiceScope second = provider.CreateScope();
+    ISender firstSender = first.ServiceProvider.GetRequiredService<ISender>();
+    ISender secondSender = second.ServiceProvider.GetRequiredService<ISender>();
+
+    Guid firstToken = await firstSender.Send(new ScopedToken());
+    Guid firstAgain = await firstSender.Send(new ScopedToken());
+    Guid secondToken = await secondSender.Send(new ScopedToken());
+
+    firstAgain.ShouldBe(firstToken);
+    secondToken.ShouldNotBe(firstToken);
+    first.ServiceProvider.GetRequiredService<ScopedTokenHandler>().Token.ShouldBe(firstToken);
   }
 
   [Fact]

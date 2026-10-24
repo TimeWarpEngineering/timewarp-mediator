@@ -7,7 +7,7 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 public sealed class HostVisibilityTests
 {
   private const string GeneratedNamespace = "TimeWarp.Mediator.Generated";
-  private const string RegistrationType = "Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions";
+  private const string RegistrationType = "TimeWarp.Mediator.Generated.TimeWarpMediatorGeneratedServiceCollectionExtensions";
 
   [Theory]
   [InlineData("Host")]
@@ -141,6 +141,7 @@ namespace Consumer
 namespace HostC.Composition
 {
     using Microsoft.Extensions.DependencyInjection;
+    using TimeWarp.Mediator.Generated;
 
     public static class Startup
     {

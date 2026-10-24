@@ -12,6 +12,7 @@ global using TimeWarp.Mediator;
 global using TimeWarp.Mediator.Generated;
 global using TimeWarp.Mediator.Generators.Compilation.Tests;
 global using TimeWarp.Mediator.Generators.Tests.Bindings;
+global using TimeWarp.Mediator.Generators.Tests.Dispatch;
 global using TimeWarp.Mediator.Generators.Tests.Idempotency;
 global using TimeWarp.Mediator.Generators.Tests.Pipelines;
 global using TimeWarp.Mediator.Generators.Tests.Responses;

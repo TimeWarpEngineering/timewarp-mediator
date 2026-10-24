@@ -24,8 +24,15 @@ public class IncrementActionSetTests
     manifest.Membership.ShouldBe(new[] { "timewarp-mediator-generators-tests" });
     ManifestRequest increment = manifest.Request("TimeWarp.Mediator.Generators.Tests.State.CounterState.IncrementActionSet.Action");
     increment.Response.ShouldBe("TimeWarp.Mediator.Unit");
+    increment.Kind.ShouldBe("Action");
     increment.Handler.ShouldBe("TimeWarp.Mediator.Generators.Tests.State.CounterState.IncrementActionSet.Handler");
     increment.Scope.ShouldBeNull();
+    MediatorManifest.Request(increment.Request).Kind.ShouldBe(MediatorManifest.KindAction);
+    MediatorManifest.Request(increment.Request).Behaviors.ShouldBe(increment.Behaviors.ToArray());
+    GeneratedMediatorAttribute attribute = typeof(GeneratedMediator).Assembly
+        .GetCustomAttributes<GeneratedMediatorAttribute>()
+        .Single();
+    attribute.MediatorType.ShouldBe(typeof(GeneratedMediator));
     increment.Behaviors.ShouldContain(
         "TimeWarp.Mediator.Generators.Tests.State.StateTransactionBehavior<TimeWarp.Mediator.Generators.Tests.State.CounterState.IncrementActionSet.Action, TimeWarp.Mediator.Unit>");
   }
@@ -95,7 +102,16 @@ public class IncrementActionSetTests
     string[] generatedOrder = PipelineLog.Events.ToArray();
 
     PipelineLog.Clear();
-    TimeWarp.Mediator.Mediator legacy = new(fixture.Scope.ServiceProvider);
+    ServiceCollection legacyServices = new();
+    legacyServices.AddMediator(cfg =>
+    {
+      cfg.RegisterServicesFromAssemblyContaining<Ping>();
+      cfg.AddOpenBehavior(typeof(OuterTrackingBehavior<,>));
+      cfg.AddOpenBehavior(typeof(InnerTrackingBehavior<,>));
+    });
+    await using ServiceProvider legacyProvider = legacyServices.BuildServiceProvider();
+    using IServiceScope legacyScope = legacyProvider.CreateScope();
+    TimeWarp.Mediator.Mediator legacy = new(legacyScope.ServiceProvider);
     string legacyResult = await legacy.Send(new Ping { Message = "hi" });
     string[] legacyOrder = PipelineLog.Events.ToArray();
 
@@ -138,6 +154,7 @@ public class IncrementActionSetTests
     }
 
     manifest.Request("TimeWarp.Mediator.Generators.Tests.State.Ping").Response.ShouldBe("string");
+    manifest.Request("TimeWarp.Mediator.Generators.Tests.State.Ping").Kind.ShouldBe("Request");
   }
 
   private sealed class Fixture
