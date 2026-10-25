@@ -97,3 +97,4 @@ Ran 2026-10-26: `./bin/dev workflow` (mode Pr) exited 0 with that output.
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
 - Implementation: 2026-10-26 (implementer-grok). Wrote the 15.0 architecture page, migration guide, and release notes, and pointed the agent instructions and package readmes at that surface.
 - Audit: 2026-10-26. Appended `stacked-task-set*.resume.json` so the porcelain and routine-journal gitignore checks pass. `audit --fix` did not write the line.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T19:36:32Z
