@@ -1,81 +1,82 @@
 ---
 name: tw-mediator
-description: Add and use TimeWarp.Mediator - in-process request/response and notifications for .NET with a source-generated, trim and NativeAOT safe dispatcher. Use when adding TimeWarp.Mediator to a project, writing requests, handlers, notifications or pipeline behaviors, calling AddGeneratedMediator, setting up named pipelines (ISender<TScope>), or fixing TWM001-TWM011 diagnostics.
+description: Add and use TimeWarp.Mediator 15.0 - in-process request/response and notifications for .NET with one source-generated dispatcher. Use when adding TimeWarp.Mediator to a project, writing requests, handlers, notifications or pipeline behaviors, calling AddGeneratedMediator, setting up named pipelines (ISender<TScope>), reading MediatorManifest, or fixing TWM001-TWM004 and TWM007-TWM011.
 ---
 
 # TimeWarp.Mediator
 
-In-process messaging for .NET: `ISender.Send` (one handler) and `IPublisher.Publish` (many
-handlers). The dispatcher is source-generated. A host calls `AddGeneratedMediator()`.
+In-process messaging for .NET. `ISender.Send` reaches one handler. `IPublisher.Publish`
+reaches many handlers, sequentially. The dispatcher is source-generated. A host calls
+`AddGeneratedMediator()`. Handlers and behaviors return `ValueTask`.
 
-**Packages:** `TimeWarp.Mediator.Contracts`, `TimeWarp.Mediator.Generators`,
-`TimeWarp.Mediator.Analyzers`
+**Packages:** `TimeWarp.Mediator` (contracts and TWM001–TWM004) and `TimeWarp.Mediator.Generators`.
 **Repository:** https://github.com/TimeWarpEngineering/timewarp-mediator
 **Docs this skill links instead of repeating:**
-[m1-generated-mediator.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m1-generated-mediator.md),
+[architecture.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/architecture.md),
 [diagnostics.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md),
 [m2-named-pipelines.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m2-named-pipelines.md),
-[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
+[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/migration.md).
 
 ## 1. Dispatcher
 
-| | Generated host |
+| | 15.0 |
 |---|---|
-| Packages | `TimeWarp.Mediator.Contracts` + `TimeWarp.Mediator.Generators` |
-| Registration | `services.AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()` |
+| Packages | `TimeWarp.Mediator` + `TimeWarp.Mediator.Generators` |
+| Registration | `services.AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()` from the generated namespace |
 | Handler discovery | compile time, member assemblies only |
 | Missing / duplicate handler | build error (TWM001 / TWM002) |
-| Behaviors | `[assembly: MediatorBehavior(typeof(B<,>))]` |
+| Behaviors | `[assembly: MediatorBehavior(typeof(B<,>))]`, always woven. The host supplies `IServiceProvider` |
 | Named pipelines (`ISender<TScope>`) | yes |
-| Streams (`IStreamRequest<>`, `CreateStream`) | no (TWM009, throws `NotSupportedException`) |
-| Pre/post processors, exception handlers/actions | no (TWM009). Move the logic into a handler or `IPipelineBehavior` |
-| Trimming / NativeAOT | safe |
+| Streams, pre/post processors, exception handlers | removed with the reflection runtime |
+| Trimming / NativeAOT | safe, including woven behaviors |
 
-Steps: [migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
+There is one emission. `TimeWarpMediatorProfile` is removed.
 
-## 2. Minimal host (generated)
+## 2. Minimal host
 
-### Packages (central package management)
-
-Keep every TimeWarp.Mediator package on the same version. Generators does **not** bring
-Contracts with it, so reference both.
+Keep both packages on the same version. Generators does not bring `TimeWarp.Mediator` with it.
 
 ```xml
 <!-- Directory.Packages.props -->
 <ItemGroup>
-  <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="14.0.0" />
-  <PackageVersion Include="TimeWarp.Mediator.Generators" Version="14.0.0" />
-  <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+  <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.1" />
+  <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.1" />
+  <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
 </ItemGroup>
 ```
 
 ```xml
 <!-- host .csproj (net10.0) -->
 <ItemGroup>
-  <PackageReference Include="TimeWarp.Mediator.Contracts" />
+  <PackageReference Include="TimeWarp.Mediator" />
   <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="all" />
   <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 </ItemGroup>
 ```
 
+Use the version this repo is packing when it is not yet `15.0.0-beta.1`. 14.0.0 on nuget.org
+is the previous surface (`TimeWarp.Mediator.Contracts`, a separate analyzers package, `Task`
+handlers).
+
 ### Membership
 
-A project that references Generators is a graph member automatically
-(`TimeWarpMediatorAssembly=true` comes from the package props). A **library** that holds
-handlers, requests or behaviors for a host must opt in:
+A project that references Generators is a graph member
+(`TimeWarpMediatorAssembly=true` comes from the package props). A library that holds
+handlers or requests for a host opts in and does not reference Generators:
 
 ```csharp
 [assembly: MediatorAssembly]
 ```
 
-Such a library references Contracts plus `TimeWarp.Mediator.Analyzers` (not Generators), so it
-still fails the build on a missing handler.
+That library references `TimeWarp.Mediator`. The TWM001–TWM004 analyzer ships inside that
+package.
 
 ### Request, handler, send
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Mediator;
+using TimeWarp.Mediator.Generated;
 
 ServiceCollection services = new();
 services.AddGeneratedMediator();
@@ -89,16 +90,20 @@ public sealed record Ping(string Message) : IRequest<string>;
 
 public sealed class PingHandler : IRequestHandler<Ping, string>
 {
-  public Task<string> Handle(Ping request, CancellationToken cancellationToken) =>
-    Task.FromResult(request.Message + " pong");
+  public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) =>
+    ValueTask.FromResult(request.Message + " pong");
 }
 ```
 
-`AddGeneratedMediator()` is emitted into the `Microsoft.Extensions.DependencyInjection`
-namespace as an `internal` extension, so call it from the host's own code. Handlers and
-behaviors are registered **scoped**; resolve from a scope. CQRS markers (`ICommand`,
-`ICommand<T>`, `IQuery<T>`, `IAction`, `IIdempotentCommand<T>`) dispatch exactly like
-`IRequest`.
+`AddGeneratedMediator()` is an `internal` extension in the generated namespace
+(default `TimeWarp.Mediator.Generated`, class
+`TimeWarpMediatorGeneratedServiceCollectionExtensions`). Call it from the host. The
+dispatcher is transient. Handlers, behaviors, behavior chains, and `HandlerCache` are scoped.
+Resolve `ISender` from a scope.
+
+`ICommand`, `ICommand<T>`, `IQuery<T>`, `IAction`, and `IIdempotentCommand` /
+`IIdempotentCommand<T>` are markers. Handlers implement `IRequestHandler`. Kind is on
+`MediatorManifest`.
 
 ### Notifications
 
@@ -110,17 +115,15 @@ public sealed record OrderPlaced(int OrderId) : INotification;
 
 public sealed class EmailOnOrderPlaced : INotificationHandler<OrderPlaced>
 {
-  public Task Handle(OrderPlaced notification, CancellationToken cancellationToken) =>
-    Task.CompletedTask;
+  public ValueTask Handle(OrderPlaced notification, CancellationToken cancellationToken) =>
+    ValueTask.CompletedTask;
 }
 ```
 
-Generated `Publish` runs handlers sequentially in a fixed order. There is no pluggable
-`INotificationPublisher` on the generated stack.
+`Publish` awaits handlers sequentially in display-name order, most-derived notification type
+first, including handlers of base types and `INotification`.
 
 ### Pipeline behaviors
-
-Register at compile time with an assembly attribute, not in DI:
 
 ```csharp
 [assembly: MediatorBehavior(typeof(LoggingBehavior<,>))]
@@ -128,26 +131,29 @@ Register at compile time with an assembly attribute, not in DI:
 public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
   where TRequest : notnull
 {
-  public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+  public async ValueTask<TResponse> Handle(
+      TRequest request,
+      MessageHandlerDelegate<TRequest, TResponse> next,
+      CancellationToken cancellationToken)
   {
-    TResponse response = await next(cancellationToken);
+    TResponse response = await next(request, cancellationToken);
     return response;
   }
 }
 ```
 
-Generic constraints select which requests a behavior wraps (`where TRequest : ICommand`,
+Constraints select the requests a behavior wraps (`where TRequest : ICommand`,
 `where TRequest : IIdempotent`). A constraint that matches nothing is TWM011.
 
 ### Named pipelines
 
-Pipelines are empty **marker types**, never strings.
+Pipelines are empty marker types.
 
 ```csharp
 [assembly: MediatorBehavior(typeof(ClientStampBehavior<,>), Scope = typeof(ClientPipeline))]
 
-services.AddGeneratedMediator();                 // unscoped ISender / IPublisher / IMediator
-services.AddGeneratedMediator<ClientPipeline>(); // ISender<ClientPipeline> / IPublisher<ClientPipeline>
+services.AddGeneratedMediator();
+services.AddGeneratedMediator<ClientPipeline>();
 
 ISender<ClientPipeline> client = scope.ServiceProvider.GetRequiredService<ISender<ClientPipeline>>();
 string reply = await client.Send(new ClientPing());
@@ -162,46 +168,23 @@ public sealed class ClientPing : IRequest<string>
 }
 ```
 
-- `[MediatorScope]` goes on a type, a containing type, or the assembly (default for all its types).
-- A behavior without `Scope` applies to the unscoped pipeline only.
-- Each pipeline is registered separately; `AddGeneratedMediator()` does not dispatch scoped requests.
-- Re-entrant sends stay in a pipeline only if the handler injects `ISender<TScope>`.
-- `[MediatorModule("Orders")]` is graph membership, not a pipeline name.
+- `[MediatorScope]` goes on a type, a containing type, or the assembly.
+- A behavior without `Scope` runs on the unscoped pipeline only.
+- `AddGeneratedMediator()` does not dispatch scoped requests.
+- Re-entrant sends stay in a pipeline when the handler injects `ISender<TScope>`.
 
 Details: [m2-named-pipelines.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m2-named-pipelines.md).
 
-## 3. Profiles
+### Manifest
 
-Set with `<TimeWarpMediatorProfile>` in the host project. Default is `Host`.
+`MediatorManifest` is `internal` in the generated namespace. `Version` is 2. There is no
+profile field. `Request(displayName)` returns kind, response type, scope, and the ordered
+behavior list. The host assembly carries
+`[assembly: GeneratedMediator(typeof(Mediator))]`.
 
-- **Host** (default): emits `AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()`,
-  resolves handlers and behaviors from `IServiceProvider`, weaves `[MediatorBehavior]`. Needs
-  `Microsoft.Extensions.DependencyInjection.Abstractions` (TWM008 otherwise). Use this unless
-  you have a reason not to.
-- **Aot**: no `IServiceProvider`, no `AddGeneratedMediator()`. Construct `new Mediator()`
-  (namespace `TimeWarp.Mediator.Generated`); handlers are `new Handler()` process-wide
-  singletons in static fields, so keep them stateless. Behaviors are **not woven** (TWM005);
-  handlers need an accessible parameterless constructor (TWM006).
-- **Link**: today emits the same as Aot (same limits, same diagnostics).
+## 3. Diagnostics
 
-```xml
-<TimeWarpMediatorProfile>Aot</TimeWarpMediatorProfile>
-```
-
-```csharp
-using TimeWarp.Mediator.Generated;
-
-IMediator mediator = new Mediator();
-string reply = await mediator.Send(new Ping("aot"));
-```
-
-Aot/Link still emit `Sender_*` / `Publisher_*` for named pipelines, but there is no
-`AddGeneratedMediator<TScope>()`. Validation, transaction and logging behaviors need Host.
-Limits: [m1-generated-mediator.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m1-generated-mediator.md).
-
-## 4. Diagnostics TWM001-TWM011
-
-All are errors unless marked warning. Full text:
+Full text:
 [diagnostics.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md).
 
 | Id | Meaning | Fix |
@@ -209,66 +192,47 @@ All are errors unless marked warning. Full text:
 | TWM001 | Request in a member assembly has no handler | Add one `IRequestHandler`, or delete the request |
 | TWM002 | More than one handler for a request | Keep exactly one |
 | TWM003 | Handler and message name different `[MediatorScope]` markers | Make them match, or scope only one side |
-| TWM004 | `ISender<TScope>.Send` (or unscoped `ISender` in a host) sends a request from another pipeline | Inject the right `ISender<TScope>`, or move the request's scope |
-| TWM005 (warning) | Behavior not woven under Aot/Link | Use the Host profile, or drop the behavior |
-| TWM006 | Aot/Link handler not constructible with `new()` | Add an accessible parameterless ctor (`[SetsRequiredMembers]` for `required` members), or use Host |
-| TWM007 | Member-assembly type is `internal` / inaccessible from the host | Make it public, or `[assembly: InternalsVisibleTo("Host")]` in the member |
-| TWM008 | Contracts or, on Host, MS.DI Abstractions not referenced; nothing generated | Add Contracts. For the MS.DI gap, add Abstractions, or set the profile to `Aot` when the host does not use MS.DI |
-| TWM009 (warning) | Stream handler, pre/post processor or exception handler/action is never called | Move the logic into a handler or `IPipelineBehavior` |
-| TWM010 (warning) | `[MediatorBehavior]` type is not an `IPipelineBehavior<,>` | Fix the type or remove the registration |
-| TWM011 (warning) | Behavior's constraints match no request in its pipeline | Fix the constraints or `Scope`, or remove it |
+| TWM004 | `ISender<TScope>.Send` (or unscoped `ISender` in a host) sends a request from another pipeline | Inject the matching sender, or move the request |
+| TWM007 | Member-assembly type is inaccessible from the host | Make it public, or `[assembly: InternalsVisibleTo("Host")]` |
+| TWM008 | `TimeWarp.Mediator` or MS.DI Abstractions is missing. Nothing is generated | Reference `TimeWarp.Mediator` and `Microsoft.Extensions.DependencyInjection.Abstractions` |
+| TWM010 (warning) | `[MediatorBehavior]` type is not an `IPipelineBehavior<,>` | Fix the type or remove the attribute |
+| TWM011 (warning) | Behavior constraints match no request in its pipeline | Fix the constraints or `Scope`, or remove it |
 
-In a generator host the generator reports TWM001-TWM003; in a library the Analyzers package does.
+In a generator host the generator reports TWM001–TWM003. The analyzer reports TWM004 there,
+and TWM001–TWM004 in a library. TWM005, TWM006, and TWM009 are retired.
 
-## 5. Gotchas (from the beta dogfoods)
+## 4. Gotchas
 
-- **Generated types are `internal`.** `Mediator`, `Sender_*` / `Publisher_*`, `MediatorManifest`
-  and the `AddGeneratedMediator` extension class are internal to the compilation that emits
-  them. Other assemblies resolve `IMediator` / `ISender` / `IPublisher` from DI; they cannot call
-  the host's `AddGeneratedMediator()`. Register once, in the app.
-- **Friend of two hosts.** `InternalsVisibleTo` re-exposes the generated types, so a test
-  project that is a friend of two hosts sees two `Mediator` types and two
-  `AddGeneratedMediator()` (CS0436 / CS0121). Give one reference an alias and use
-  `extern alias`:
-
-  ```xml
-  <ProjectReference Include="..\server\server.csproj" Aliases="Server" />
-  ```
-
-  ```csharp
-  extern alias Server;
-  ```
-
-- **Libraries that host no handlers.** A library that references Generators (for example a
-  framework such as Nuru that flows the generator to apps) but must not be a graph host sets
-  `<TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>` and never calls
-  `AddGeneratedMediator()`; the app does.
-- **`TimeWarpMediatorNamespace`.** Generated types land in `TimeWarp.Mediator.Generated` by
-  default. Set `<TimeWarpMediatorNamespace>My.App.Mediation</TimeWarpMediatorNamespace>` to move
-  them (useful when two hosts' generated types meet in one compilation).
-- **net10.0 floor.** `TimeWarp.Mediator.Contracts` 14.x targets `net10.0` only. Projects that
-  cannot move stay on 13.x. Generators/Analyzers are netstandard2.0 but need Roslyn 4.8+
-  (CS9057 on older compilers).
-- **Streams are not dispatched.** `IStreamRequest<>` / `CreateStream` throw
-  `NotSupportedException` (TWM009). Move that work into a handler or `IPipelineBehavior`.
-- **Membership is opt-in.** A library without `[assembly: MediatorAssembly]` is left out of the
-  host graph. When its request types are outside the graph too, the host build stays clean and
-  `Send` throws `NoHandlerException`. TWM001 fires only when the request type is already in a
-  member assembly and no member handler binds it.
+- **Generated types are `internal`.** `Mediator`, `Sender_*`, `Publisher_*`,
+  `MediatorManifest`, and the `AddGeneratedMediator` class are internal to the compilation
+  that emits them. Other assemblies take `ISender` / `IPublisher` / `IMediator` from DI.
+- **Friend of two hosts.** `InternalsVisibleTo` re-exposes those types, so one test project
+  that is a friend of two hosts sees two `Mediator` types (CS0436 / CS0121). Alias one
+  reference and use `extern alias`, or give each host its own `TimeWarpMediatorNamespace`.
+- **Libraries that flow the generator.** A package such as Nuru that references Generators
+  and must not emit a mediator sets
+  `<TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>`. The app calls
+  `AddGeneratedMediator()`.
+- **`TimeWarpMediatorNamespace`.** Default `TimeWarp.Mediator.Generated`. Set it when two
+  hosts' generated types meet in one compilation.
+- **net10.0 floor.** `TimeWarp.Mediator` targets `net10.0`. Generators are `netstandard2.0`
+  and need `Microsoft.CodeAnalysis.CSharp` 5.0.0.
+- **`using static TimeWarp.Mediator.Unit`.** `Unit.ValueTask` hides
+  `System.Threading.Tasks.ValueTask`. It does not hide `Task`. Write `Unit.Value` and
+  `Unit.ValueTask`.
+- **Synchronous `Send` failures are thrown.** A null request, `NoHandlerException`, and a
+  handler that throws before returning a `ValueTask` escape `Send`. A faulted `ValueTask`
+  stays faulted until awaited. `Enumerable.Select` into `Task.WhenAll` does not capture the
+  synchronous throw.
+- **Membership is opt-in for libraries.** Without `[assembly: MediatorAssembly]`, a library's
+  handlers are left out. `Send` then throws `NoHandlerException`. TWM001 fires when the
+  request type is in a member assembly and no handler binds it.
 - **`Send(object)`** of a request from another pipeline compiles and throws
-  `NoHandlerException` at runtime; prefer typed `Send`.
+  `NoHandlerException` at runtime.
 
-## 6. Migrating to the generated host
+## 5. Migrating
 
-Steps:
-[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
-14.0.0 behavior that already shipped:
-[release-notes-v14.0.0.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/release-notes/release-notes-v14.0.0.md).
-
-- Packages: the host references Contracts + Generators. Handler libraries reference Contracts +
-  Analyzers and `[assembly: MediatorAssembly]`.
-- Behaviors: `[assembly: MediatorBehavior(...)]`.
-- Registration: `services.AddGeneratedMediator()` in the host project.
-- Clear every TWM009: move processors, streams, and exception handlers into handlers or behaviors.
-- Handlers and behaviors are scoped on the Host profile.
-- Inspect `MediatorManifest.Json` for the generated pipeline.
+[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/migration.md)
+has the package table and the TimeWarp.State, TimeWarp.Architecture, and TimeWarp.Nuru
+sections. Breaking changes with finding numbers:
+[15.0.0.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/release-notes/15.0.0.md).

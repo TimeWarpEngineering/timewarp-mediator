@@ -6,6 +6,30 @@ With one dispatcher and two packages the "two stacks" documentation set, the 13.
 guide and the agent instructions are wrong. Parent review task 021, finding F1 (docs rows in
 section 5) and section 6 (consumer impact).
 
+## Goal (implementer restatement)
+
+15.0 ships one generated dispatcher and two packages (`TimeWarp.Mediator` and
+`TimeWarp.Mediator.Generators`). The pages a consumer or an agent would follow still describe
+Host/Aot/Link profiles, a separate analyzers package, `Task` handlers, and `TimeWarpMediatorProfile`.
+This task rewrites that set so it matches the shapes 021-002 through 021-006 already shipped.
+
+Done when:
+
+- `documentation/architecture.md` is the single architecture page (contracts, dispatcher,
+  registration, `MediatorManifest`, membership, diagnostics) and the profile page
+  `documentation/m1-generated-mediator.md` is gone. `generated-vs-legacy.md` is already gone.
+- `documentation/migration.md` is the 15.0 migration page, with sections for TimeWarp.State,
+  TimeWarp.Architecture, and TimeWarp.Nuru, plus the `Unit.ValueTask` static-using note and the
+  synchronous-`Send` note from the task.
+- `documentation/release-notes/15.0.0.md` lists each breaking change with its parent finding
+  number and the replacement, including manifest version 2.
+- `agent.md` and `skills/tw-mediator/SKILL.md` describe the two packages, the one dispatcher,
+  the test tree, the build properties, and unsigned assemblies.
+- Each package `readme.md` matches those shapes and uses absolute links only.
+- The benchmarks page points at the 021-003 re-record.
+- `./bin/dev workflow` exits 0 (pack checks the readme links).
+- The changes are committed and pushed. Opening the pull request stays on the host open-pr node.
+
 ## Requirements
 
 - One architecture page replaces `generated-vs-legacy.md` and the profile docs: contracts,
@@ -26,12 +50,12 @@ section 5) and section 6 (consumer impact).
 
 ## Checklist
 
-- [ ] Architecture page written, old pages deleted
-- [ ] 15.0 migration page with three consumer sections
-- [ ] Release notes `15.0.0.md`
-- [ ] `agent.md` and tw-mediator skill updated
-- [ ] Package readmes updated
-- [ ] `./bin/dev workflow` green (pack asserts readme links)
+- [x] Architecture page written, old pages deleted
+- [x] 15.0 migration page with three consumer sections
+- [x] Release notes `15.0.0.md`
+- [x] `agent.md` and tw-mediator skill updated
+- [x] Package readmes updated
+- [x] `./bin/dev workflow` green (pack asserts readme links)
 - [ ] PR with merge commit
 
 ## Notes
@@ -52,6 +76,23 @@ faulted; `Send` does not throw that fault synchronously. 14.x `async` `Send` cap
 throws in the returned task. Callers that project `Send` inside `Enumerable.Select` (for example
 `Task.WhenAll`) must not assume a synchronous failure is captured. From 021-003 review M4.
 
+## Results
+
+`documentation/architecture.md` is the 15.0 contract: two packages, `ValueTask` handlers, one generated dispatcher, concrete registration, `MediatorManifest` version 2, membership attributes, and the live TWM ids. `documentation/m1-generated-mediator.md` (the profile page) is deleted. `generated-vs-legacy.md` was already gone. `documentation/migration.md` replaces the root `migration.md` and has TimeWarp.State, TimeWarp.Architecture, and TimeWarp.Nuru sections, the `Unit.ValueTask` static-using note, and the synchronous-`Send` note. `documentation/release-notes/15.0.0.md` lists each break with its parent finding and the replacement, including manifest version 2. `agent.md`, `skills/tw-mediator/SKILL.md`, the root readme, `documentation/overview.md`, `samples/readme.md`, and the three `source/*/readme.md` files match that surface. Packed readmes use absolute links. The comparison baseline page names the 021-003 re-record at `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`. 14.0 and 13.0 notes point at the tag blobs of the old migration guide.
+
+`ganda repo audit` passed with one advisory warning: `kanban-landed` says parent task 021 has no usable worktree. That folder task stays on the board while its children hold the worktrees. This walk did not change that claim.
+
+The pull request is the host open-pr node.
+
+### How to validate
+
+Smoke: `./bin/dev workflow`
+
+Expect: the log ends with `Pipeline SUCCEEDED`. Build 0 warnings. Tests passed: generators 57, analyzers 42, compilation 69, failed 0. Both samples verify, and the AOT sample prints `aot-pong`. Pack reports layout verified for `TimeWarp.Mediator.14.0.0.nupkg` and `TimeWarp.Mediator.Generators.14.0.0.nupkg` only (readme headings and absolute links included). Package smoke prints `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`.
+
+Ran 2026-10-26: `./bin/dev workflow` (mode Pr) exited 0 with that output.
+
 ## Session
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
+- Implementation: 2026-10-26 (implementer-grok). Wrote the 15.0 architecture page, migration guide, and release notes, and pointed the agent instructions and package readmes at that surface.

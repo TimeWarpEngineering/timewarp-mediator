@@ -1,6 +1,8 @@
 # Benchmark baseline: comparison
 
-Recorded by `./bin/dev benchmark --project comparison --record`. Do not edit by hand; re-record instead.
+Recorded by `./bin/dev benchmark --project comparison --record`. Do not edit the table by hand; re-record instead.
+
+This file is the 15.0 dispatcher baseline re-recorded on task 021-003. The architecture page links it from [architecture.md](../architecture.md#benchmarks). Interface Ping/Pong (`TimeWarpGeneratedInterfaceSend`) is 8.243 ns and 24 B. Void interface send (`TimeWarpGeneratedInterfaceSendUnit`) is 0 B. The State-shaped pipeline (`TimeWarpGeneratedStatePipeline`) is 0 B.
 
 The reflection row `TimeWarpLegacyMakeGenericType` was removed with the reflection runtime.
 Ratio in the remaining rows still uses that row as 1.00 until the next
@@ -8,6 +10,7 @@ Ratio in the remaining rows still uses that row as 1.00 until the next
 
 - Project: `tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj`
 - Commit: `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`
+- Task: 021-003
 - Date (UTC): 2026-10-23
 
 ## MediatorBenchmarks.DispatchBenchmarks

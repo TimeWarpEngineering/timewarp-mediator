@@ -79,7 +79,7 @@ types so two hosts in one compilation do not collide (CS0436 / CS0121). Detail i
 ## Migration
 
 Full matrix and steps:
-[migration.md — 13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
+[migration.md — 13.x reflection to 14.x generated](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v14.0.0/migration.md#13x-reflection-to-14x-generated).
 
 1. Reference `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators` at 14.0.0. Drop
    `TimeWarp.Mediator` when nothing calls `AddMediator()`. A handler library that does not run

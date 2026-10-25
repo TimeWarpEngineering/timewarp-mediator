@@ -1,15 +1,15 @@
 # TimeWarp.Mediator.Generators
 
-Source generator for TimeWarp Mediator 14.0. It emits an internal mediator so `Send` is a direct call: less time, fewer bytes, and a trim and NativeAOT safe path.
+Source generator for TimeWarp Mediator 15.0. It emits one internal mediator. `Send` returns the handler `ValueTask`. The host supplies `IServiceProvider`, and registered pipeline behaviors are woven. The path is trim and NativeAOT safe.
 
 ## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 14.0.0
-dotnet add package TimeWarp.Mediator.Generators --version 14.0.0
+dotnet add package TimeWarp.Mediator
+dotnet add package TimeWarp.Mediator.Generators
 ```
 
-Generators does not bring `TimeWarp.Mediator` with it. Keep both on 14.0.0. TWM001–TWM004 ship inside `TimeWarp.Mediator`. This package reports TWM007, TWM008, TWM010, and TWM011, and in a generator host it also reports TWM001–TWM003.
+Generators does not bring `TimeWarp.Mediator` with it. Keep both on the same version. TWM001–TWM004 ship inside `TimeWarp.Mediator`. This package reports TWM007, TWM008, TWM010, and TWM011, and in a generator host it also reports TWM001–TWM003.
 
 ## Example
 
@@ -26,23 +26,25 @@ services.AddGeneratedMediator();
 string reply = await provider.GetRequiredService<ISender>().Send(new Ping());
 ```
 
-The host that references this package is a graph member. A library opts in with `[assembly: MediatorAssembly]`. Register a pipeline behavior with `[assembly: MediatorBehavior(typeof(MyBehavior<,>))]`. The generated mediator takes `IServiceProvider`, and registered behaviors are woven.
+The host that references this package is a graph member. A library opts in with `[assembly: MediatorAssembly]` and does not reference this package. Register a pipeline behavior with `[assembly: MediatorBehavior(typeof(MyBehavior<,>))]`. `AddGeneratedMediator()` lives in the generated namespace (`TimeWarp.Mediator.Generated` unless `TimeWarpMediatorNamespace` is set).
 
 ## Migration
 
-14.0.0 is not a drop-in for 13.0.0.
+15.0 is a breaking release.
 
-- The host calls `AddGeneratedMediator()`.
-- `TimeWarp.Mediator` targets net10.0. The generator itself is netstandard2.0 because Roslyn loads it. The Roslyn floor is the compiler that ships with the .NET 10 SDK (`Microsoft.CodeAnalysis.CSharp` 5.0.0).
-- A missing or duplicate handler is a build error (TWM001, TWM002), not a runtime exception.
+- Handlers and `ISender` / `IPublisher` return `ValueTask`. Behaviors take `MessageHandlerDelegate<TRequest, TResponse>` and call `next(request, cancellationToken)`.
+- `TimeWarp.Mediator` targets net10.0. The generator itself is netstandard2.0 because Roslyn loads it. The Roslyn floor is `Microsoft.CodeAnalysis.CSharp` 5.0.0.
+- A missing or duplicate handler is a build error (TWM001, TWM002).
+- `TimeWarpMediatorProfile` is removed. Tooling reads `[assembly: GeneratedMediator(typeof(Mediator))]` and `MediatorManifest` version 2.
 
-Steps: [Generated host](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
+Steps: [Migration to 15.0](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/migration.md).
 
 ## Documentation
 
 - [Repository readme](https://github.com/TimeWarpEngineering/timewarp-mediator#readme)
-- [Generated mediator](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m1-generated-mediator.md)
+- [Architecture](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/architecture.md)
 - [Diagnostics](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md)
+- [15.0.0 release notes](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/release-notes/15.0.0.md)
 
 ## License
 

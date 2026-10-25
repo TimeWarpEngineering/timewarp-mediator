@@ -5,44 +5,47 @@ TimeWarp Mediator
 [![NuGet](https://img.shields.io/nuget/v/TimeWarp.Mediator.svg)](https://www.nuget.org/packages/TimeWarp.Mediator)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/TimeWarp.Mediator.svg)](https://www.nuget.org/packages/TimeWarp.Mediator)
 
-TimeWarp Mediator 14.0: in-process messaging for .NET with a source-generated dispatcher. The
-generated path is trim and NativeAOT safe. This project is a fork of
+TimeWarp Mediator 15.0: in-process messaging for .NET with one source-generated dispatcher.
+Handlers return `ValueTask`. The generated path is trim and NativeAOT safe, and pipeline
+behaviors are woven. This project is a fork of
 [MediatR](https://github.com/jbogard/MediatR) by Jimmy Bogard.
+
+14.0.0 on nuget.org is the previous surface. 15.0 is not a drop-in. See
+[migration.md](documentation/migration.md).
 
 ## Packages
 
 | Package | Use it for |
 |---------|------------|
-| [TimeWarp.Mediator.Contracts](https://www.nuget.org/packages/TimeWarp.Mediator.Contracts) | Message, handler and pipeline interfaces, `ISender` / `IPublisher` / `IMediator`, membership attributes. Needed by every host and message library. |
-| [TimeWarp.Mediator.Generators](https://www.nuget.org/packages/TimeWarp.Mediator.Generators) | Source generator for the compile-time mediator (`AddGeneratedMediator()`). Bundles the analyzers. |
-| [TimeWarp.Mediator.Analyzers](https://www.nuget.org/packages/TimeWarp.Mediator.Analyzers) | TWM001–TWM004 for libraries that do not run the generator. |
+| [TimeWarp.Mediator](https://www.nuget.org/packages/TimeWarp.Mediator) | Message, handler, and pipeline interfaces, `ISender` / `IPublisher` / `IMediator`, membership attributes, and the TWM001–TWM004 analyzer. Needed by every host and message library. |
+| [TimeWarp.Mediator.Generators](https://www.nuget.org/packages/TimeWarp.Mediator.Generators) | Source generator for the compile-time mediator (`AddGeneratedMediator()`), `MediatorManifest`, and `[GeneratedMediator]`. |
 
 ## Target framework
 
-`TimeWarp.Mediator.Contracts` 14.x targets **net10.0 only**. Stay on 13.x if you cannot move to
-net10.0 or newer. The Generators and Analyzers packages target netstandard2.0 because they run
-inside the compiler; they need Roslyn 4.8 or later.
+`TimeWarp.Mediator` targets **net10.0**. The generator targets netstandard2.0 because it runs
+inside the compiler. It needs the Roslyn that ships with the .NET 10 SDK
+(`Microsoft.CodeAnalysis.CSharp` 5.0.0).
 
-## Quick start: generated stack
+## Quick start
 
-Keep every TimeWarp.Mediator package on the same version.
+Keep both packages on the same version. Generators does not bring `TimeWarp.Mediator` with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator.Contracts --version 14.0.0
-dotnet add package TimeWarp.Mediator.Generators --version 14.0.0
+dotnet add package TimeWarp.Mediator
+dotnet add package TimeWarp.Mediator.Generators
 ```
 
-Those lines are the 14.0.0 stable install, which is what the packed package readmes describe.
-
 ```csharp
+using TimeWarp.Mediator.Generated;
+
 public sealed class Ping : IRequest<string>
 {
 }
 
 public sealed class PingHandler : IRequestHandler<Ping, string>
 {
-  public Task<string> Handle(Ping request, CancellationToken cancellationToken) =>
-    Task.FromResult("Pong");
+  public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) =>
+    ValueTask.FromResult("Pong");
 }
 
 services.AddGeneratedMediator();
@@ -51,32 +54,36 @@ ISender sender = provider.GetRequiredService<ISender>();
 string reply = await sender.Send(new Ping());
 ```
 
-The generated types and `AddGeneratedMediator()` are `internal` to the host project, so call it
-from the host's own code. Membership, named pipelines (`AddGeneratedMediator<TScope>()`) and the
-Aot profile: [m1-generated-mediator.md](./documentation/m1-generated-mediator.md) and
-[m2-named-pipelines.md](./documentation/m2-named-pipelines.md). Diagnostics:
-[diagnostics.md](./documentation/diagnostics.md).
+The generated types and `AddGeneratedMediator()` are `internal` to the host project. Call
+registration from the host. Resolve `ISender` from a scope: handlers are scoped. Named
+pipelines (`AddGeneratedMediator<TScope>()`):
+[m2-named-pipelines.md](documentation/m2-named-pipelines.md). The full contract:
+[architecture.md](documentation/architecture.md). Diagnostics:
+[diagnostics.md](documentation/diagnostics.md).
 
 ## Contracts
 
-`TimeWarp.Mediator.Contracts` holds the message, handler, and pipeline types:
+`TimeWarp.Mediator` holds the message, handler, and pipeline types:
 
-- `IRequest` / `IRequest<T>`, `INotification`, `IStreamRequest<T>`
-- CQRS markers and handlers: `ICommand` / `ICommand<T>`, `IQuery<T>`, `IAction`
-- Idempotency markers: `IIdempotent`, `IIdempotentCommand` / `IIdempotentCommand<T>` and their
-  handlers
+- `IRequest` / `IRequest<T>`, `INotification`
+- Markers: `ICommand` / `ICommand<T>`, `IQuery<T>`, `IAction`, `IIdempotent`,
+  `IIdempotentCommand` / `IIdempotentCommand<T>`
+- Handlers: `IRequestHandler<TRequest, TResponse>`, `IRequestHandler<TRequest>`,
+  `ActionHandler<TAction>`, `INotificationHandler<T>`
 - `ISender` / `ISender<TScope>`, `IPublisher` / `IPublisher<TScope>`, `IMediator`
-- Membership attributes: `MediatorAssembly`, `MediatorScope`, `MediatorBehavior`, `MediatorModule`
+- `MessageHandlerDelegate<TRequest, TResponse>`, `IPipelineBehavior<TRequest, TResponse>`
+- Membership: `MediatorAssembly`, `MediatorScope`, `MediatorBehavior`
+- `GeneratedMediatorAttribute`, `Unit`, `NoHandlerException`
 
-Reference only Contracts from an assembly that declares messages (API, gRPC, Blazor client).
-A generated host still needs Generators on the compilation that emits the mediator.
+Reference only `TimeWarp.Mediator` from an assembly that declares messages and does not emit
+a mediator. Opt in with `[assembly: MediatorAssembly]`.
 
 ### Idempotent commands
 
 Mark a command that is safe to retry with `IIdempotentCommand` / `IIdempotentCommand<T>`.
-`IQuery<T>` is already `IIdempotent`. The generated mediator dispatches it exactly like an `ICommand`; the
-marker is for your own behaviors (for example a retry policy). There is no idempotency-key
-enforcement or dedup store.
+`IQuery<T>` is already `IIdempotent`. Dispatch matches any other `IRequest`. The marker is
+for behaviors and for `MediatorManifest` kind data. There is no idempotency-key enforcement
+or dedup store. Handlers implement `IRequestHandler`.
 
 ```csharp
 public sealed class UpsertSetting : IIdempotentCommand<string>
@@ -85,38 +92,42 @@ public sealed class UpsertSetting : IIdempotentCommand<string>
   public string Value { get; set; } = string.Empty;
 }
 
-public sealed class UpsertSettingHandler : IIdempotentCommandHandler<UpsertSetting, string>
+public sealed class UpsertSettingHandler : IRequestHandler<UpsertSetting, string>
 {
-  public Task<string> Handle(UpsertSetting request, CancellationToken cancellationToken) =>
-    Task.FromResult(request.Key + "=" + request.Value);
+  public ValueTask<string> Handle(UpsertSetting request, CancellationToken cancellationToken) =>
+    ValueTask.FromResult(request.Key + "=" + request.Value);
 }
 
 public sealed class RetryIdempotentBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
   where TRequest : IIdempotent
 {
-  public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken) =>
-    next(cancellationToken); // wrap in your retry policy
+  public ValueTask<TResponse> Handle(
+      TRequest request,
+      MessageHandlerDelegate<TRequest, TResponse> next,
+      CancellationToken cancellationToken) =>
+    next(request, cancellationToken);
 }
 ```
 
 ## Migrating
 
-Host packages, registration, behaviors, and TWM009 are in
-[migration.md](./migration.md#generated-host).
+Package ids, `ValueTask` signatures, `Unit.ValueTask`, and the three consumer sections
+(TimeWarp.State, TimeWarp.Architecture, TimeWarp.Nuru) are in
+[migration.md](documentation/migration.md).
 
 ## Documentation
 
-- [diagnostics.md](./documentation/diagnostics.md): TWM001–TWM011
-- [m1-generated-mediator.md](./documentation/m1-generated-mediator.md),
-  [m2-named-pipelines.md](./documentation/m2-named-pipelines.md): generated dispatcher details
-- [overview.md](./documentation/overview.md): versioning, CI and releasing
-- Release notes: [14.0.0](./documentation/release-notes/release-notes-v14.0.0.md),
-  [13.0.0](./documentation/release-notes/release-notes-v13.0.0.md)
+- [architecture.md](documentation/architecture.md): contracts, dispatcher, registration, manifest, membership
+- [diagnostics.md](documentation/diagnostics.md): TWM001–TWM004 and TWM007, TWM008, TWM010, TWM011
+- [m2-named-pipelines.md](documentation/m2-named-pipelines.md): `ISender<TScope>`
+- [benchmarks/comparison-baseline.md](documentation/benchmarks/comparison-baseline.md): 021-003 baseline (commit `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`)
+- [overview.md](documentation/overview.md): versioning, CI and releasing
+- Release notes: [15.0.0](documentation/release-notes/15.0.0.md),
+  [14.0.0](documentation/release-notes/release-notes-v14.0.0.md),
+  [13.0.0](documentation/release-notes/release-notes-v13.0.0.md)
 
-**For AI agents:** Load the built-in [Mediator skill](skills/tw-mediator/SKILL.md) for:
-- A minimal generated host: requests, notifications, behaviors and named pipelines
-- Profiles (Host, Aot, Link) and TWM001–TWM011 fixes
-- Known gotchas and the generated-host migration
+**For AI agents:** Load the built-in [Mediator skill](skills/tw-mediator/SKILL.md) for a
+minimal host, named pipelines, `MediatorManifest`, TWM diagnostics, and the 15.0 migration.
 
 ## About this fork
 

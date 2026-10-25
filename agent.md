@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TimeWarp Mediator is a fork of the MediatR library that implements the mediator pattern for .NET applications. It provides in-process messaging, supporting request/response, commands, queries, notifications, and events with both synchronous and asynchronous patterns.
+TimeWarp Mediator is a fork of the MediatR library that implements the mediator pattern for .NET applications. 15.0 is one source-generated dispatcher and two packages. Handlers return `ValueTask`.
 
 ## Build Commands
 
@@ -19,11 +19,11 @@ dotnet run --file tools/dev-cli/dev.cs -- self-install
 |---|---|
 | `./bin/dev build [--clean] [--quiet]` | Build `timewarp-mediator.slnx` |
 | `./bin/dev test [--no-build] [--quiet]` | Run the test suite |
-| `./bin/dev pack [--no-build]` | Pack Contracts, Analyzers, and Generators to `artifacts/packages`, assert the nupkg layout (analyzer DLLs, buildTransitive props, a single `lib/net10.0` folder on Contracts, `notice`, `unlicense`, and the package's own `readme.md` with absolute links only), then build and run the package smoke consumer against those nupkgs |
+| `./bin/dev pack [--no-build]` | Pack `TimeWarp.Mediator` and `TimeWarp.Mediator.Generators` to `artifacts/packages`. Assert exactly those two nupkgs, the TWM001–TWM004 analyzer DLL inside `TimeWarp.Mediator`, `buildTransitive` props on Generators, a single `lib/net10.0` folder, `notice`, `unlicense`, and each package's own `readme.md` with absolute links only. Then build and run the package smoke consumer against those nupkgs |
 | `./bin/dev verify-samples [--no-build]` | Build every `samples/**/*.csproj`, then run each Exe sample and require exit code 0 (aot and named-pipelines also check their output) |
-| `./bin/dev benchmark [--project comparison] [--filter <glob>] [--record] [--gate]` | Run BenchmarkDotNet on the comparison project. `--record` rewrites `documentation/benchmarks/comparison-baseline.md` with commit SHA, date, tolerance, and the 15.0 target table. `--gate` re-runs `comparison` and fails when a `TimeWarp*` row exceeds that file. Not part of `workflow`. |
+| `./bin/dev benchmark [--project comparison] [--filter <glob>] [--record] [--gate]` | Run BenchmarkDotNet on the comparison project. `--record` rewrites `documentation/benchmarks/comparison-baseline.md`. `--gate` fails when a `TimeWarp*` row exceeds that file. The 15.0 record is task 021-003, commit `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`. Not part of `workflow` |
 | `./bin/dev workflow [--mode pr\|merge\|release]` | CI pipeline: clean → build → test → verify-samples → pack. Release mode: clean → build → pack → check-version → push |
-| `./bin/dev check-version [--strict]` | Fail if `<Version>` is already published on nuget.org |
+| `./bin/dev check-version [--strict]` | Fail if `<Version>` is already published on nuget.org for `TimeWarp.Mediator` or `TimeWarp.Mediator.Generators` |
 | `./bin/dev release [--dry-run]` | Tag `v<Version>` and create the GitHub Release |
 | `./bin/dev clean` | Clean the solution and build artifacts |
 
@@ -42,50 +42,74 @@ dotnet test tests/timewarp-mediator-generators-tests/timewarp-mediator-generator
 
 | Project | Package | Target | Contents |
 |---|---|---|---|
-| `timewarp-mediator-contracts` | `TimeWarp.Mediator.Contracts` | `net10.0` | `IRequest`, `ICommand`, `IQuery`, `IAction`, `INotification`, `IStreamRequest`, handler and pipeline-behavior interfaces, `ISender` / `IPublisher` / `IMediator` (and the `<TScope>` forms), membership attributes (`MediatorAssembly`, `MediatorScope`, `MediatorBehavior`, `MediatorModule`), `NoHandlerException`, `Unit` |
-| `timewarp-mediator-generators` | `TimeWarp.Mediator.Generators` | `netstandard2.0` | Source generator: compile-time message graph, `internal sealed Mediator`, named pipelines, `AddGeneratedMediator()`; bundles the Analyzers DLL; reports TWM005–TWM011 |
-| `timewarp-mediator-analyzers` | `TimeWarp.Mediator.Analyzers` | `netstandard2.0` | TWM001–TWM004 for libraries that do not run the generator |
+| `timewarp-mediator` | `TimeWarp.Mediator` | `net10.0` | `IRequest`, `ICommand`, `IQuery`, `IAction`, `IIdempotentCommand`, `INotification`, `IRequestHandler` / `INotificationHandler`, `ActionHandler<T>`, `IPipelineBehavior` / `MessageHandlerDelegate`, `ISender` / `IPublisher` / `IMediator` (and the `<TScope>` forms), `MediatorAssembly`, `MediatorScope`, `MediatorBehavior`, `GeneratedMediatorAttribute`, `NoHandlerException`, `Unit`. Packs the TWM001–TWM004 analyzer |
+| `timewarp-mediator-generators` | `TimeWarp.Mediator.Generators` | `netstandard2.0` | Source generator: compile-time message graph, `internal sealed Mediator`, named pipelines, `MediatorManifest` version 2, `AddGeneratedMediator()`. Reports TWM007, TWM008, TWM010, TWM011, and TWM001–TWM003 in a host |
+| `timewarp-mediator-analyzers` | none (asset of `TimeWarp.Mediator`) | `netstandard2.0` | TWM001–TWM004. Not a NuGet package |
 
 ### Dispatcher
 
-The dispatcher is source-generated. A host references Contracts and Generators and calls
-`AddGeneratedMediator()`. Trim and NativeAOT safe; the `Aot` profile dispatches through static
-fields. See `documentation/m1-generated-mediator.md`.
+One generated dispatcher. A host references `TimeWarp.Mediator` and
+`TimeWarp.Mediator.Generators` and calls `AddGeneratedMediator()` from
+`TimeWarp.Mediator.Generated` (or `TimeWarpMediatorNamespace`). The constructor takes
+`IServiceProvider`. Behaviors registered with `[assembly: MediatorBehavior]` are woven.
+`Send<TResponse>` and void `Send<TRequest>` return the handler `ValueTask` from a type switch.
+`Send(object)` and `Publish(object)` are the boxing paths. There is no reflection dispatcher,
+no `CreateStream`, and no `TimeWarpMediatorProfile`.
 
-Request/response is `ISender.Send()` (one handler). Notifications are `IPublisher.Publish()`
-(many handlers). `IPipelineBehavior<,>` runs on the Host profile. The Aot and Link profiles do
-not weave behaviors. `CreateStream` / `IStreamRequest<>` throw `NotSupportedException` and report
-TWM009. See `documentation/diagnostics.md`.
+`MediatorManifest` (version 2, no profile field) exposes per-request kind, response, scope,
+and the ordered behavior list. The host assembly is marked
+`[assembly: GeneratedMediator(typeof(Mediator))]`.
+
+See `documentation/architecture.md` and `documentation/diagnostics.md`.
 
 ## Test Architecture (`tests/`)
 
 - `timewarp-mediator-generators-tests`: generator golden files and dispatch tests
-- `timewarp-mediator-generators-compilation-tests`: generator incrementality and compilation tests
-- `timewarp-mediator-generators-roslyn-floor-tests`: compiles against Microsoft.CodeAnalysis.CSharp 4.8.0
-- `timewarp-mediator-analyzers-tests`: TWM analyzer tests
-- `timewarp-mediator-benchmarks-comparison`: BenchmarkDotNet (`./bin/dev benchmark`)
+- `timewarp-mediator-generators-compilation-tests`: compilation, host dispatch, and incrementality (`Cached` on an unrelated edit)
+- `timewarp-mediator-analyzers-tests`: TWM001–TWM004
+- `timewarp-mediator-benchmarks-comparison`: BenchmarkDotNet (`./bin/dev benchmark`). Baseline file `documentation/benchmarks/comparison-baseline.md`
 - `timewarp-mediator-package-smoke`: outside-consumer smoke over the packed nupkgs; not in the slnx, run by `dev pack`
 
-`samples/` holds the generated samples (AOT, named pipelines). See `samples/readme.md`.
+The reflection runtime tests and `timewarp-mediator-generators-roslyn-floor-tests` are removed.
+The Roslyn floor is asserted from the compilation tests (`Microsoft.CodeAnalysis.CSharp` 5.0.0).
+
+`samples/` holds the generated samples (AOT with a woven behavior, named pipelines). See `samples/readme.md`.
 
 ## Build Configuration
 
 ### Target Frameworks
-- `TimeWarp.Mediator.Contracts`: `net10.0` only (14.x floor; consumers on older runtimes stay on 13.x)
-- `TimeWarp.Mediator.Generators` and `TimeWarp.Mediator.Analyzers`: `netstandard2.0` (Roslyn loads them inside the compiler process, including .NET Framework MSBuild and Visual Studio hosts)
+
+- `TimeWarp.Mediator`: `net10.0`
+- `TimeWarp.Mediator.Generators` and the analyzer project: `netstandard2.0` (Roslyn loads them in-process, including .NET Framework MSBuild and Visual Studio)
 - Tests, benchmarks, samples and the dev CLI: `net10.0`
 
 ### Key Dependencies
-- Microsoft.Extensions.DependencyInjection (test, benchmark, sample and smoke hosts; version pinned in `Directory.Packages.props`). A Host-profile consumer needs `Microsoft.Extensions.DependencyInjection.Abstractions` (TWM008).
-- Microsoft.CodeAnalysis.CSharp 4.8.0 floor for the shipped analyzers/generators (`VersionOverride`)
+
+- `Microsoft.Extensions.DependencyInjection` for test, benchmark, sample, and smoke hosts (version pinned in `Directory.Packages.props`). A generated host needs `Microsoft.Extensions.DependencyInjection.Abstractions` (`IServiceCollection`, `IServiceProvider`). A missing reference is TWM008 and the generator emits nothing.
+- `Microsoft.CodeAnalysis.CSharp` 5.0.0 for the shipped analyzer and generator (`VersionOverride`). Dependabot ignores `Microsoft.CodeAnalysis.CSharp*`.
 
 ### Build Properties
+
 - `Directory.Build.props` (root): nullable, strict features, banned-API analyzer, Source Link,
-  and `TreatWarningsAsErrors`. `tests/` and `samples/` set `TreatWarningsAsErrors` back to `false`.
-  Assemblies are not strong-named. Analyzer and generator `InternalsVisibleTo` entries stay so
-  the generator and the incrementality tests can see internal symbols.
-- `source/Directory.Build.props`: the single `<Version>` and the package metadata.
-- No repo-wide `LangVersion` pin: `net10.0` projects use the SDK default (C# 14); the netstandard2.0 Roslyn projects set `latest`. Generator-emitted code stays conservative so consumers on older language versions still compile it.
+  and `TreatWarningsAsErrors`. `tests/` and `samples/` set `TreatWarningsAsErrors` back to
+  `false`. The AOT sample sets it back to `true` so trim and AOT warnings fail publish.
+  Product assemblies are unsigned. The reflection runtime's `.snk` left with that package
+  (review F16). Analyzer and generator `InternalsVisibleTo` entries stay so the generator and
+  the incrementality tests can see internal symbols. Those entries are not a product
+  strong-name key. A consumer that is itself strong-named still binds: the generator reads
+  the host name and public key from the compilation.
+- `source/Directory.Build.props`: the single `<Version>` and the shared package metadata.
+  `dev check-version` and `dev release` read that version for `TimeWarp.Mediator` and
+  `TimeWarp.Mediator.Generators`.
+- No repo-wide `LangVersion` pin: `net10.0` projects use the SDK default; the netstandard2.0
+  Roslyn projects set `latest`. Generator-emitted code stays conservative so consumers on
+  older language versions still compile it.
+- Generator MSBuild properties (from `TimeWarp.Mediator.Generators` buildTransitive props):
+  `TimeWarpMediatorAssembly` (default `true`; set `false` when a library must not emit a
+  mediator), `TimeWarpMediatorGenerator` (`true` on a generator reference; the analyzer then
+  skips TWM001–TWM003), `TimeWarpMediatorNamespace` (default `TimeWarp.Mediator.Generated`).
+  `TimeWarpMediatorProfile` and `TimeWarpMediatorAssemblyName` are removed. Host identity
+  comes from the compilation.
 
 ## Code Style
 
@@ -122,4 +146,5 @@ This repository tracks work on the live `kanban/` board. The legacy MediatR-rena
 ## Release Process
 
 See `documentation/overview.md` for versioning, CI and releasing (version bump PR, then
-`./bin/dev release`). Release notes live in `documentation/release-notes/`.
+`./bin/dev release`). Release notes live in `documentation/release-notes/`. The 15.0 break
+list is `documentation/release-notes/15.0.0.md`.

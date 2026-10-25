@@ -11,22 +11,24 @@ The packages share one version and are packed together by `dev pack`:
 
 | Package | Project | Target |
 |---|---|---|
-| `TimeWarp.Mediator.Contracts` | `source/timewarp-mediator-contracts` | `net10.0` |
-| `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` (bundles the Analyzers DLL) | `netstandard2.0` |
-| `TimeWarp.Mediator.Analyzers` | `source/timewarp-mediator-analyzers` | `netstandard2.0` |
+| `TimeWarp.Mediator` | `source/timewarp-mediator` (packs `TimeWarp.Mediator.Analyzers.dll` as an analyzer asset) | `net10.0` |
+| `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `netstandard2.0` |
 
-`dev pack` writes them to `artifacts/packages` and fails if the Analyzers or Generators nupkg has
-no analyzer DLL under `analyzers/dotnet/cs`, or if any nupkg is missing `notice` or `unlicense`.
-Each package packs its own `source/<project>/readme.md` as the nuget.org readme; `dev pack` also
-fails when that readme's first heading is not the package id or it contains a relative link
-(nuget.org cannot resolve those). The repository `readme.md` is the GitHub page only.
+`source/timewarp-mediator-analyzers` builds the TWM001–TWM004 analyzer. It is not a NuGet package.
 
-`dev pack` also requires `TimeWarp.Mediator.Contracts` to ship exactly one
-`lib/net10.0/` folder and the Generators nupkg to ship `buildTransitive/TimeWarp.Mediator.Generators.props`.
-It then runs the package smoke, `tests/timewarp-mediator-package-smoke`: a consumer project outside
-the solution that restores Contracts and Generators from `artifacts/packages` (into a throwaway
-packages folder, never the global cache), builds, and sends one request through the generated
-mediator. A broken buildTransitive props or TFM folder fails here instead of after publishing.
+`dev pack` writes the two nupkgs to `artifacts/packages` and fails if any other nupkg is there.
+`TimeWarp.Mediator` must contain `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` and exactly
+one `lib/net10.0/` folder. `TimeWarp.Mediator.Generators` must contain its generator DLL and
+`buildTransitive/TimeWarp.Mediator.Generators.props`. Each nupkg must contain `notice` and
+`unlicense`. Each package packs its own `source/<project>/readme.md` as the nuget.org readme;
+`dev pack` fails when that readme's first heading is not the package id or it contains a relative
+link (nuget.org cannot resolve those). The repository `readme.md` is the GitHub page only.
+
+`dev pack` then runs the package smoke, `tests/timewarp-mediator-package-smoke`: a consumer
+project outside the solution that restores `TimeWarp.Mediator` and
+`TimeWarp.Mediator.Generators` from `artifacts/packages` (into a throwaway packages folder, never
+the global cache), builds, and sends one request through the generated mediator. A broken
+buildTransitive props or TFM folder fails here instead of after publishing.
 
 ## Versioning
 
@@ -38,9 +40,10 @@ mediator. A broken buildTransitive props or TFM folder fails here instead of aft
 - **Prereleases are real releases.** Each prerelease (for example `14.0.0-beta.N`) goes through the same bump and release
   flow and is published to nuget.org as a prerelease. CI builds on `master` are not published
   anywhere; their packages are only uploaded as a `Packages-<run number>` workflow artifact.
-- `dev check-version` compares `<Version>` with what nuget.org already serves for the four
-  package ids. It fails when that version is already published. `--strict` also fails when the
-  source version is more than one prerelease increment ahead of the latest published version.
+- `dev check-version` compares `<Version>` with what nuget.org already serves for
+  `TimeWarp.Mediator` and `TimeWarp.Mediator.Generators`. It fails when that version is already
+  published. `--strict` also fails when the source version is more than one prerelease increment
+  ahead of the latest published version.
 
 ## CI: `.github/workflows/workflow.yml`
 
@@ -132,7 +135,7 @@ If the `NuGet login` step fails, the policy is missing or misconfigured on nuget
 
 ## Analyzer release tracking
 
-`TimeWarp.Mediator.Analyzers` uses Roslyn analyzer release tracking (RS2000–RS2008). New or changed
+The analyzer project `source/timewarp-mediator-analyzers` (shipped inside `TimeWarp.Mediator`, not as its own package) uses Roslyn analyzer release tracking (RS2000–RS2008). New or changed
 TWM rules go in `AnalyzerReleases.Unshipped.md`. Every release that publishes packages, including
 prereleases, moves those rows to `AnalyzerReleases.Shipped.md` and leaves Unshipped with only its
 header.
@@ -141,6 +144,7 @@ Release headers must parse as `System.Version` (RS2007 rejects `## Release 14.0.
 prerelease files its rows under its target version: every 14.0.0 beta adds to `## Release 14.0.0`
 and notes the beta in the Notes column (`RequestHasNoHandler, shipped in 14.0.0-beta.1`). Create the
 section if it does not exist yet. TWM001–TWM004 shipped in 14.0.0-beta.1; TWM005–TWM011 shipped in 14.0.0-beta.5.
+15.0 retires TWM005, TWM006, and TWM009. The live set is TWM001–TWM004, TWM007, TWM008, TWM010, and TWM011.
 
 ## Local commands
 

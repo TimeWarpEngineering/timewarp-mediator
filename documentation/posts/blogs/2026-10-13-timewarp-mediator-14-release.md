@@ -75,7 +75,7 @@ A lot. Read this before you bump a 13.0.0 host.
   `notice` and `unlicense` ship in every package.
 
 The steps, and the feature matrix, are in
-[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
+[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v14.0.0/migration.md#13x-reflection-to-14x-generated).
 From MediatR itself, the change is still the 13.x rename (`using MediatR` to
 `using TimeWarp.Mediator`, `AddMediatR` to `AddMediator`). That rename does not select the
 generated mediator.

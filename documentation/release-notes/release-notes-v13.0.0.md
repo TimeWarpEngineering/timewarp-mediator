@@ -45,7 +45,7 @@ Migrating from MediatR is straightforward:
 2. Replace `using MediatR;` with `using TimeWarp.Mediator;`
 3. Change `services.AddMediatR(...)` to `services.AddMediator(...)`
 
-See the [migration guide](./migration.md) for detailed instructions and automation scripts.
+See the [migration guide](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v13.0.0/migration.md) for detailed instructions and automation scripts.
 
 ## Breaking Changes
 
@@ -67,7 +67,7 @@ dotnet add package TimeWarp.Mediator.Contracts
 ## Links
 
 - [GitHub Repository](https://github.com/TimeWarpEngineering/timewarp-mediator)
-- [Migration Guide](./migration.md)
+- [Migration Guide](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v13.0.0/migration.md)
 - [Original MediatR](https://github.com/jbogard/MediatR)
 
 ## Future Plans

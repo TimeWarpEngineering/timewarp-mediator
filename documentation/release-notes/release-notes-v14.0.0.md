@@ -14,7 +14,7 @@ notes; replace that body with the draft.
 > `AddMediator(...)` expecting source generation, AOT-clean dispatch or named pipelines; those
 > need `AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()`. See
 > [generated-vs-legacy.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v14.0.0/documentation/generated-vs-legacy.md) and
-> [migration.md](../../migration.md#13x-reflection-to-14x-generated).
+> [migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v14.0.0/migration.md#13x-reflection-to-14x-generated).
 
 ## 14.0.0
 

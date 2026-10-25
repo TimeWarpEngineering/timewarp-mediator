@@ -98,4 +98,4 @@ Two things this snippet does not do:
   own reflection `Send` (69.0 ns, 224 B) is the one the launch card quotes.
 
 Matrix:
-[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#13x-reflection-to-14x-generated).
+[migration.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/v14.0.0/migration.md#13x-reflection-to-14x-generated).
