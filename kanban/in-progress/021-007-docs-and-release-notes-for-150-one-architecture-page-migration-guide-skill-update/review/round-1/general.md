@@ -1,6 +1,7 @@
 # Round 1 — general
 **Date:** 2026-10-26
 **Scope reviewed:** branch vs merge-base `24488ac`, all 23 changed files
+**Inputs:** the orchestrator's foreground checks (Issues 1–4), plus two read-only fact-check subagents: one on architecture and migration against the source, one on release notes, readmes, and agent docs. The orchestrator re-verified Issues 5–9 against the source before recording them. Subagent claims that could not be verified were dropped. Those include the claims about the State, Architecture, and Nuru repos, and `AddGeneratedMediator<TScope>` being absent when there are no scopes, which is minor.
 
 ## Summary
 
@@ -41,6 +42,45 @@ rules wrong. The nuget.org install lines now resolve to the 14.0.0 reflection ru
 - File: documentation/benchmarks/comparison-baseline.md:3–5 (and :13)
 - Description: This file is generated. `./bin/dev benchmark --record` rewrites the header from `tools/dev-cli/endpoints/benchmark-command.cs:161–165`, and the header still says "Do not edit by hand". The diff hand-edits that header: it rewords the instruction, adds a prose paragraph that repeats the numbers, and adds a `- Task: 021-003` line. The next `--record` silently erases all three, and the paragraph's numbers go stale against the table under it. The architecture page and the 15.0.0 notes already carry the 021-003 provenance and commit, which is the "benchmarks page points at the 021-003 re-record" requirement.
 - Suggestion: Revert the hand edits to the generated header. Keep the 021-003 provenance in architecture.md, 15.0.0.md, and agent.md, which already have it. If the baseline must name the task, have the recorder emit that line instead.
+- Status: open
+
+### Issue 5 — Severity: bug
+- File: documentation/architecture.md:154–157, :172, :176 (also documentation/migration.md:184–185; agent.md:108–109; skills/tw-mediator/SKILL.md:211–215)
+- Description: The docs say `TimeWarpMediatorAssembly=false` keeps a library that references Generators from emitting its own mediator. migration.md tells Nuru to keep it `false` for that reason, and the architecture table heading calls these "Build properties the generator reads". The generator never reads that property:
+  - `MediatorGenerator` passes `MembershipOptions` to `CandidateGraph.Create`.
+  - `CandidateGraph.Create` always adds the compilation as a member and calls `MediatorEmitter.Emit` / `ManifestEmitter.Emit` unconditionally (`candidate-graph.cs:52–55`, `:333–334`). The only early exit is TWM008.
+  - `IsMsBuildMember` is read only by the analyzer's `Membership.TryCreate` (`membership.cs:81`, `:111`).
+  - `TimeWarpMediatorGenerator` is analyzer-only too. Only `TimeWarpMediatorNamespace` reaches emission (`candidate-graph.cs:327`).
+
+  So a Nuru-style library with `false` still gets an internal `Mediator`, `MediatorManifest`, and `AddGeneratedMediator`. The Nuru dogfood that gates beta.1 would follow this advice.
+- Suggestion: Decide which side is wrong. If `false` should suppress emission (Nuru relies on it), that is a generator fix and the docs stay. Otherwise, state the actual behavior: the property only affects analyzer membership; a library avoids emitting a mediator by not referencing Generators; and the table is the build properties the *package* sets. Then rewrite the Nuru bullet to match.
+- Status: open
+
+### Issue 6 — Severity: bug
+- File: documentation/architecture.md:165–166 (also :92)
+- Description: The page says "The first attribute is outermost. `Order` is the tie-break; a lower value wraps the rest." The code does the reverse. `Order` is the primary sort key and source position is the tie-break (`candidate-graph.cs:179–180` comment and `CompareOrdered` at `:855`; `message-graph-builder.cs` sorts the same way). An attribute declared later with a lower `Order` is outermost. Separately, :92 says a multi-interface handler class is "registered once per interface". It is *bound* once per interface and *registered* once per concrete type: `AddScoped<Concrete>` is de-duplicated through `registered` at `mediator-emitter.cs:985–993`. :115 on the same page states this correctly.
+- Suggestion: Write "A lower `Order` is outermost. Declaration order breaks ties (the first attribute is outermost among equal `Order` values)." Change :92 to "bound once per interface; the concrete type is registered once."
+- Status: open
+
+### Issue 7 — Severity: suggestion
+- File: documentation/release-notes/15.0.0.md:26, :29
+- Description: The requirement is "every breaking change with its finding number". Two citations miss the finding that introduced the change. The typed-`Send` row cites F3 and F7, but the non-boxing type switch that returns the `Dispatch_*` `ValueTask` directly, which is the cause of the synchronous-throw change, is F2. The `[GeneratedMediator]`-replaces-`build_property.TimeWarpMediatorProfile` row cites only F11, but the parent review proposes that marker under F10 (review :311–315).
+- Suggestion: Cite F2 and F3 (F7 optional) on the `Send` row, and F10 and F11 on the `[GeneratedMediator]` row.
+- Status: open
+
+### Issue 8 — Severity: suggestion
+- File: readme.md:41–58 (also documentation/m2-named-pipelines.md:30–42)
+- Description: The rewritten quick start declares types and *then* top-level statements, which is CS8803. It also resolves `ISender` from the root `provider` (:53), and `provider` is never declared. Line :58 says "Resolve `ISender` from a scope: handlers are scoped." The m2 snippet puts `[assembly: …]` attributes after type declarations, which is CS1730. The ordering predates this diff, but both blocks were rewritten here, and the skill and m2 already show the `CreateScope()` form.
+- Suggestion: Put the statements first: build the provider, call `CreateScope()`, resolve `ISender` from `scope.ServiceProvider`, then declare the types. Move the `[assembly: …]` lines above the type declarations in m2.
+- Status: open
+
+### Issue 9 — Severity: nit
+- File: source/timewarp-mediator-analyzers/readme.md:40 (also skills/tw-mediator/SKILL.md:3; documentation/release-notes/15.0.0.md:19)
+- Description: These are stale phrases:
+  - The analyzer readme still says a missing handler fails the host "even when the library does not reference `TimeWarp.Mediator`". In 15.0 a library that declares `IRequest` must reference `TimeWarp.Mediator`, which carries the analyzer.
+  - The skill description's range "TWM007-TWM011" includes the retired TWM009.
+  - 15.0.0.md:19 calls the reflection runtime "the 14.x dispatcher". In 14.x the generated mediator was primary, and the runtime was the legacy dispatcher.
+- Suggestion: Drop the analyzer readme sentence's first clause. List "TWM007, TWM008, TWM010, TWM011" in the skill description. Say "the 13.x/14.x reflection dispatcher".
 - Status: open
 
 ## Verified (no finding)
