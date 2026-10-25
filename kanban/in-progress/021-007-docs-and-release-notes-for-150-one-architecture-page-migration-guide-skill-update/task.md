@@ -90,8 +90,7 @@ shipped, and the pages stay consistent with each other.
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9
 - Fix pass: M1–M9 implemented on this id. Round 2 is the host review node.
-- Round 2: Done. M1–M9 are fixed, and there are no new findings. Disposition is `clean`.
-
+- Round 2: Done
 ## Notes
 
 Parent: 021. Depends on: 021-002 through 021-006 (documents the final shapes). Last child
