@@ -84,6 +84,10 @@ throws in the returned task. Callers that project `Send` inside `Enumerable.Sele
 
 The pull request is the host open-pr node.
 
+### Review
+
+Round 1 ran at effort 3 with a general reviewer. The counts are 3 bug open, 1 suggestion open, and 0 nit. There is no disposition yet, and a fix pass is requested for M1–M4. M1: the `using static Unit` text describes hiding, but the compiler reports CS0229 ambiguity in expressions and leaves signatures alone. M2: the unpinned `dotnet add package` lines resolve to 14.0.0 stable. M3: the `TimeWarp.Mediator` readme misstates what that id was in 14.0.0. M4: the generated benchmark header was hand-edited. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
 ### How to validate
 
 Smoke: `./bin/dev workflow`
@@ -98,3 +102,4 @@ Ran 2026-10-26: `./bin/dev workflow` (mode Pr) exited 0 with that output.
 - Implementation: 2026-10-26 (implementer-grok). Wrote the 15.0 architecture page, migration guide, and release notes, and pointed the agent instructions and package readmes at that surface.
 - Audit: 2026-10-26. Appended `stacked-task-set*.resume.json` so the porcelain and routine-journal gitignore checks pass. `audit --fix` did not write the line.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T19:36:32Z
+- Review oracle round 1: 2026-10-26, Claude Opus 5.5 (headless print mode, session id not exposed). Effort 3, roster general. Four open findings (M1–M4). A fix pass is requested on this id.
