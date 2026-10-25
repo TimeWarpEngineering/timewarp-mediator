@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1350
-- Effort: 3
+- Lines changed: 289
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Scope — task 021-007
 
@@ -17,6 +17,13 @@
 **Effort:** 3, roster axis general
 **Reviewer roster:** general (review oracle, Claude Opus 5.5). Every claim was checked in the foreground against `source/`, `tools/dev-cli`, the parent review, the 14.0.0 release notes and tags, and a throwaway compile probe. Two read-only fact-check subagents covered (a) architecture and migration against the source and (b) release notes, readmes, and agent docs. The orchestrator re-verified their output against the source before merging it.
 **Session IDs:** review oracle, headless print mode, session id not exposed
+
+## Round 2 scope
+
+**Date:** 2026-10-26
+**Diff scope:** the round-1 fix pass `835b203..7b8074f`, 289 lines.
+**Effort:** 2, roster axis general. The budget above is this round's budget.
+**Reviewer roster:** general (review oracle, Claude Opus 5.5, headless print mode, session id not exposed). The reviewer re-checked prior ids M1–M9 against the delta and the generator and analyzer source.
 
 ## Ground rules
 

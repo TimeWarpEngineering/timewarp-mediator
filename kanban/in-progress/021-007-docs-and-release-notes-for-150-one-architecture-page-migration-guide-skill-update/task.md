@@ -90,6 +90,7 @@ shipped, and the pages stay consistent with each other.
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9
 - Fix pass: M1–M9 implemented on this id. Round 2 is the host review node.
+- Round 2: Done. M1–M9 are fixed, and there are no new findings. Disposition is `clean`.
 
 ## Notes
 
@@ -135,6 +136,16 @@ Round 1 ran at effort 3 with a general reviewer, backed by two read-only fact-ch
 - M8: quick start and m2 snippets put statements and assembly attributes where the compiler accepts them. A file-based probe of that shape compiled.
 - M9: stale phrases removed.
 
+Round 2 ran at effort 2 with a general reviewer over the fix delta `835b203..7b8074f`. It re-checked M1–M9 against the delta and the source (`CompareOrdered`, `membership.cs`, and the TWM008 emission gate in `candidate-graph.cs`). All nine are fixed, and there are no new findings.
+
+Final counts: bug 0 open / 5 fixed, suggestion 0 open / 3 fixed, nit 0 open / 1 fixed, wontfix 0.
+
+**Review disposition: clean** (2 rounds, final open 0). Paths:
+
+- `review/review-framework.md`
+- `review/round-2/merged.md`
+- `review/disposition.md`
+
 ### How to validate
 
 Smoke: `./bin/dev workflow`
@@ -152,3 +163,4 @@ Ran 2026-10-26 after the round-1 fix pass: `./bin/dev workflow` (mode Pr) exited
 - Review oracle round 1: 2026-10-26, Claude Opus 5.5 (headless print mode, session id not exposed). Effort 3, roster general plus two read-only fact-check subagents. Nine open findings (M1–M9). A fix pass is requested on this id.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-25T19:45:58Z
 - Fix pass: 2026-10-26 (implementer-grok). Corrected review round 1 findings M1–M9 in the docs. `./bin/dev workflow` exited 0. `ganda repo audit` still fails only `kanban-landed`, which the host land node clears.
+- Review oracle round 2: 2026-10-26, Claude Opus 5.5 (headless print mode, session id not exposed). Effort 2, roster general, scope `835b203..7b8074f`. M1–M9 are fixed, with 0 open and no new findings. Disposition is `clean`.
