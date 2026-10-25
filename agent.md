@@ -105,11 +105,12 @@ The Roslyn floor is asserted from the compilation tests (`Microsoft.CodeAnalysis
   Roslyn projects set `latest`. Generator-emitted code stays conservative so consumers on
   older language versions still compile it.
 - Generator MSBuild properties (from `TimeWarp.Mediator.Generators` buildTransitive props):
-  `TimeWarpMediatorAssembly` (default `true`; set `false` when a library must not emit a
-  mediator), `TimeWarpMediatorGenerator` (`true` on a generator reference; the analyzer then
-  skips TWM001–TWM003), `TimeWarpMediatorNamespace` (default `TimeWarp.Mediator.Generated`).
-  `TimeWarpMediatorProfile` and `TimeWarpMediatorAssemblyName` are removed. Host identity
-  comes from the compilation.
+  `TimeWarpMediatorNamespace` (default `TimeWarp.Mediator.Generated`; the generator reads this),
+  `TimeWarpMediatorAssembly` (default `true`; the analyzer reads this for membership; `false`
+  does not stop emission), `TimeWarpMediatorGenerator` (`true` on a generator reference; the
+  analyzer then skips TWM001–TWM003). A library avoids emission by not referencing
+  `TimeWarp.Mediator.Generators`. `TimeWarpMediatorProfile` and `TimeWarpMediatorAssemblyName`
+  are removed. Host identity comes from the compilation.
 
 ## Code Style
 

@@ -1,6 +1,6 @@
 ---
 name: tw-mediator
-description: Add and use TimeWarp.Mediator 15.0 - in-process request/response and notifications for .NET with one source-generated dispatcher. Use when adding TimeWarp.Mediator to a project, writing requests, handlers, notifications or pipeline behaviors, calling AddGeneratedMediator, setting up named pipelines (ISender<TScope>), reading MediatorManifest, or fixing TWM001-TWM004 and TWM007-TWM011.
+description: Add and use TimeWarp.Mediator 15.0 - in-process request/response and notifications for .NET with one source-generated dispatcher. Use when adding TimeWarp.Mediator to a project, writing requests, handlers, notifications or pipeline behaviors, calling AddGeneratedMediator, setting up named pipelines (ISender<TScope>), reading MediatorManifest, or fixing TWM001-TWM004, TWM007, TWM008, TWM010, and TWM011.
 ---
 
 # TimeWarp.Mediator
@@ -55,14 +55,16 @@ Keep both packages on the same version. Generators does not bring `TimeWarp.Medi
 ```
 
 Use the version this repo is packing when it is not yet `15.0.0-beta.1`. 14.0.0 on nuget.org
-is the previous surface (`TimeWarp.Mediator.Contracts`, a separate analyzers package, `Task`
-handlers).
+is the previous surface: the id `TimeWarp.Mediator` was the reflection runtime (`AddMediator`),
+contracts were `TimeWarp.Mediator.Contracts`, analyzers were a separate package, and handlers
+returned `Task`.
 
 ### Membership
 
-A project that references Generators is a graph member
-(`TimeWarpMediatorAssembly=true` comes from the package props). A library that holds
-handlers or requests for a host opts in and does not reference Generators:
+A project that references Generators emits a mediator. The generator package sets
+`TimeWarpMediatorAssembly=true`, which the analyzer reads as membership. The generator does
+not read that property. A library that holds handlers or requests for a host opts in and
+does not reference Generators:
 
 ```csharp
 [assembly: MediatorAssembly]
@@ -209,17 +211,19 @@ and TWM001–TWM004 in a library. TWM005, TWM006, and TWM009 are retired.
 - **Friend of two hosts.** `InternalsVisibleTo` re-exposes those types, so one test project
   that is a friend of two hosts sees two `Mediator` types (CS0436 / CS0121). Alias one
   reference and use `extern alias`, or give each host its own `TimeWarpMediatorNamespace`.
-- **Libraries that flow the generator.** A package such as Nuru that references Generators
-  and must not emit a mediator sets
-  `<TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>`. The app calls
-  `AddGeneratedMediator()`.
+- **Libraries do not reference Generators.** A reference to `TimeWarp.Mediator.Generators`
+  always emits a mediator in that compilation. `TimeWarpMediatorAssembly=false` does not
+  stop emission. A library such as Nuru references `TimeWarp.Mediator`, opts in with
+  `[assembly: MediatorAssembly]`, and leaves the generator reference on the app. The app
+  calls `AddGeneratedMediator()`.
 - **`TimeWarpMediatorNamespace`.** Default `TimeWarp.Mediator.Generated`. Set it when two
   hosts' generated types meet in one compilation.
 - **net10.0 floor.** `TimeWarp.Mediator` targets `net10.0`. Generators are `netstandard2.0`
   and need `Microsoft.CodeAnalysis.CSharp` 5.0.0.
-- **`using static TimeWarp.Mediator.Unit`.** `Unit.ValueTask` hides
-  `System.Threading.Tasks.ValueTask`. It does not hide `Task`. Write `Unit.Value` and
-  `Unit.ValueTask`.
+- **`using static TimeWarp.Mediator.Unit`.** Signatures are unaffected. A bare `ValueTask`
+  in an expression is ambiguous (CS0229). Write `Unit.ValueTask` for the value and
+  `System.Threading.Tasks.ValueTask` for the type's statics. The removed `Unit.Task`
+  property did not hide `Task`.
 - **Synchronous `Send` failures are thrown.** A null request, `NoHandlerException`, and a
   handler that throws before returning a `ValueTask` escape `Send`. A faulted `ValueTask`
   stays faulted until awaited. `Enumerable.Select` into `Task.WhenAll` does not capture the

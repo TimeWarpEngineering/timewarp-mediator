@@ -16,8 +16,10 @@ A project that references `TimeWarp.Mediator.Generators` already runs the genera
 Reference the contracts package. The analyzer comes with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.1
 ```
+
+Without `--version`, that command resolves 14.0.0, the reflection runtime. Drop the flag when 15.0 is the stable package.
 
 ## Example
 
@@ -37,7 +39,7 @@ The analyzer targets netstandard2.0 and needs the Roslyn that ships with the .NE
 
 ## Migration
 
-These analyzers do not register a mediator. The host that dispatches the messages in this library references `TimeWarp.Mediator.Generators` and calls `AddGeneratedMediator()`. A missing handler fails that host's build (TWM001) even when the library does not reference `TimeWarp.Mediator`. Reference `TimeWarp.Mediator` so the library fails its own build first.
+These analyzers do not register a mediator. The host that dispatches the messages in this library references `TimeWarp.Mediator.Generators` and calls `AddGeneratedMediator()`. A missing handler fails that host's build (TWM001). Reference `TimeWarp.Mediator` so the library fails its own build first.
 
 TWM005, TWM006, and TWM009 are retired. Streams and the Aot and Link profiles are removed.
 

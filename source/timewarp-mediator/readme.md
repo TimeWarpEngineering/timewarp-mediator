@@ -5,14 +5,24 @@ Message contracts and the TWM001–TWM004 analyzer for TimeWarp Mediator 15.0: r
 ## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.1
 ```
 
-A host also references `TimeWarp.Mediator.Generators` at the same version. This package ships the TWM001–TWM004 analyzer. There is no separate analyzers package. 14.0.0 on nuget.org is the previous surface (`TimeWarp.Mediator.Contracts` plus a separate analyzers package).
+Without `--version`, that command resolves 14.0.0. Through 14.0.0 this package id was the reflection runtime (`AddMediator`). The 14.0.0 contracts were `TimeWarp.Mediator.Contracts`, and the analyzers were `TimeWarp.Mediator.Analyzers`. 15.0 reuses this id for the contracts and the analyzer. A host also references `TimeWarp.Mediator.Generators` at the same version. This package ships the TWM001–TWM004 analyzer. There is no separate analyzers package.
 
 ## Example
 
 ```csharp
+using Microsoft.Extensions.DependencyInjection;
+using TimeWarp.Mediator;
+using TimeWarp.Mediator.Generated;
+
+ServiceCollection services = new();
+services.AddGeneratedMediator();
+using ServiceProvider provider = services.BuildServiceProvider();
+using IServiceScope scope = provider.CreateScope();
+string reply = await scope.ServiceProvider.GetRequiredService<ISender>().Send(new Ping());
+
 public sealed class Ping : IRequest<string> { }
 
 public sealed class PingHandler : IRequestHandler<Ping, string>
@@ -20,9 +30,6 @@ public sealed class PingHandler : IRequestHandler<Ping, string>
   public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) =>
     ValueTask.FromResult("Pong");
 }
-
-services.AddGeneratedMediator();
-string reply = await provider.GetRequiredService<ISender>().Send(new Ping());
 ```
 
 `AddGeneratedMediator()` is emitted into the host project by `TimeWarp.Mediator.Generators`, in the generated namespace (`TimeWarp.Mediator.Generated` unless the host sets `TimeWarpMediatorNamespace`). Call it from the host. Reference only this package from a project that declares messages and does not dispatch them. That project still gets TWM001–TWM004, and it opts in with `[assembly: MediatorAssembly]`.
@@ -32,7 +39,7 @@ string reply = await provider.GetRequiredService<ISender>().Send(new Ping());
 15.0 is a breaking release. Handlers return `ValueTask`. The host calls `AddGeneratedMediator()` and supplies `IServiceProvider`. Registered pipeline behaviors are woven.
 
 - This package targets net10.0.
-- The package id is `TimeWarp.Mediator`. The 14.0.0 id `TimeWarp.Mediator.Contracts` is gone, and so is the reflection runtime that used this id in 13.x.
+- Through 14.0.0 the id `TimeWarp.Mediator` was the reflection runtime (`AddMediator`). 15.0 reuses that id for the contracts and the analyzer. The 14.0.0 contracts id `TimeWarp.Mediator.Contracts` is gone, and so is `AddMediator`.
 - From MediatR: change `using MediatR;` to `using TimeWarp.Mediator;`.
 
 Steps: [Migration to 15.0](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/migration.md).

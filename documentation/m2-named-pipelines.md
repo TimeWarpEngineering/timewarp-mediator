@@ -29,6 +29,10 @@ Sample: `samples/timewarp-mediator-examples-named-pipelines`.
 ```csharp
 using TimeWarp.Mediator.Generated;
 
+[assembly: MediatorAssembly]
+[assembly: MediatorBehavior(typeof(ClientStampBehavior<,>), Scope = typeof(ClientPipeline))]
+[assembly: MediatorBehavior(typeof(ServerStampBehavior<,>), Scope = typeof(ServerPipeline))]
+
 public sealed class ClientPipeline
 {
 }
@@ -36,10 +40,6 @@ public sealed class ClientPipeline
 public sealed class ServerPipeline
 {
 }
-
-[assembly: MediatorAssembly]
-[assembly: MediatorBehavior(typeof(ClientStampBehavior<,>), Scope = typeof(ClientPipeline))]
-[assembly: MediatorBehavior(typeof(ServerStampBehavior<,>), Scope = typeof(ServerPipeline))]
 
 [MediatorScope(typeof(ClientPipeline))]
 public sealed class ClientPing : IRequest<string>
@@ -53,6 +53,7 @@ public sealed class ServerPing : IRequest<string>
 ```
 
 ```csharp
+ServiceCollection services = new();
 services.AddGeneratedMediator();
 services.AddGeneratedMediator<ClientPipeline>();
 services.AddGeneratedMediator<ServerPipeline>();

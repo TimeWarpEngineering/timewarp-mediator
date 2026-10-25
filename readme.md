@@ -31,12 +31,25 @@ inside the compiler. It needs the Roslyn that ships with the .NET 10 SDK
 Keep both packages on the same version. Generators does not bring `TimeWarp.Mediator` with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator
-dotnet add package TimeWarp.Mediator.Generators
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.1
+dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.1
 ```
 
+Without `--version`, `dotnet add package TimeWarp.Mediator` resolves 14.0.0, the reflection
+runtime. Drop the flag when 15.0 is the stable package, and keep it equal to `<Version>` until
+then.
+
 ```csharp
+using Microsoft.Extensions.DependencyInjection;
+using TimeWarp.Mediator;
 using TimeWarp.Mediator.Generated;
+
+ServiceCollection services = new();
+services.AddGeneratedMediator();
+using ServiceProvider provider = services.BuildServiceProvider();
+using IServiceScope scope = provider.CreateScope();
+ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+string reply = await sender.Send(new Ping());
 
 public sealed class Ping : IRequest<string>
 {
@@ -47,11 +60,6 @@ public sealed class PingHandler : IRequestHandler<Ping, string>
   public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) =>
     ValueTask.FromResult("Pong");
 }
-
-services.AddGeneratedMediator();
-
-ISender sender = provider.GetRequiredService<ISender>();
-string reply = await sender.Send(new Ping());
 ```
 
 The generated types and `AddGeneratedMediator()` are `internal` to the host project. Call

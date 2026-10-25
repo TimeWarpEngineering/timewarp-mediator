@@ -16,6 +16,10 @@ The contract reference is [architecture.md](architecture.md). Diagnostics are
 | `TimeWarp.Mediator.Generators` | `TimeWarp.Mediator.Generators` at the same version as `TimeWarp.Mediator` |
 | `TimeWarp.Mediator` (the reflection runtime) | removed. There is no `AddMediator` |
 
+15.0 reuses the package id `TimeWarp.Mediator`. Through 14.0.0 that id was the reflection
+runtime (`AddMediator`). The 14.0.0 contracts lived in `TimeWarp.Mediator.Contracts`, and
+the analyzers were `TimeWarp.Mediator.Analyzers`.
+
 A host references `TimeWarp.Mediator` and `TimeWarp.Mediator.Generators`. A library that
 declares messages and does not emit a mediator references `TimeWarp.Mediator` only and keeps
 `[assembly: MediatorAssembly]`.
@@ -63,11 +67,12 @@ public ValueTask<TResponse> Handle(
 
 `Unit.Task` is removed. Completed work is `Unit.ValueTask`. `Unit.Value` is unchanged.
 
-Under `using static TimeWarp.Mediator.Unit`, the name `ValueTask` binds to the property
-`Unit.ValueTask` and hides `System.Threading.Tasks.ValueTask`. The name `Task` still means
-`System.Threading.Tasks.Task` (the removed `Unit.Task` property used to hide it). Write the
-qualified names `Unit.Value` and `Unit.ValueTask`. Write `System.Threading.Tasks.ValueTask`
-when the code needs the type.
+Under `using static TimeWarp.Mediator.Unit`, signatures are unaffected. `ValueTask` and
+`ValueTask<T>` in type position still bind to `System.Threading.Tasks.ValueTask`. A bare
+`ValueTask` in an expression is ambiguous (CS0229). Write `Unit.ValueTask` for the completed
+value and `System.Threading.Tasks.ValueTask.FromResult` (or another static member) for the
+type. The removed `Unit.Task` property followed the same rule: it did not hide
+`System.Threading.Tasks.Task`.
 
 ## Send failures
 
@@ -112,8 +117,10 @@ response, scope, and ordered behaviors are `MediatorManifest.Requests` /
 `MediatorManifest.Request(displayName)`. Kind precedence is `IQuery`, then
 `IIdempotentCommand`, then `ICommand`, then `IAction`, otherwise `Request`.
 
-`TimeWarpMediatorAssembly`, `TimeWarpMediatorGenerator`, and `TimeWarpMediatorNamespace` remain.
-Details are in [architecture.md](architecture.md).
+`TimeWarpMediatorNamespace` is the property the generator reads (default
+`TimeWarp.Mediator.Generated`). `TimeWarpMediatorAssembly` and `TimeWarpMediatorGenerator`
+are analyzer membership and diagnostic ownership. Setting `TimeWarpMediatorAssembly` to
+`false` does not stop emission. Details are in [architecture.md](architecture.md).
 
 ## TimeWarp.State
 
@@ -167,9 +174,9 @@ marker rename.
   `IQueryHandler<X, Unit>`, and `IIdempotentCommandHandler<X, Unit>` to
   `IRequestHandler<X, Unit>`. The markers `ICommand<T>`, `IQuery<T>`, and
   `IIdempotentCommand<T>` stay. The handler returns `ValueTask<T>`.
-- Replace `Unit.Task` with `Unit.ValueTask`. Prefer the qualified names `Unit.Value` and
-  `Unit.ValueTask` under `using static TimeWarp.Mediator.Unit`, because `ValueTask` is shadowed
-  and `Task` is not.
+- Replace `Unit.Task` with `Unit.ValueTask`. Under `using static TimeWarp.Mediator.Unit`,
+  signatures are unaffected. A bare `ValueTask` in an expression is ambiguous (CS0229). Write
+  `Unit.ValueTask` for the value and `System.Threading.Tasks.ValueTask` for the type's statics.
 - Message-kind detection reads `MediatorManifest` (`KindQuery`, `KindIdempotentCommand`,
   `KindCommand`, `KindAction`, `KindRequest`, or `RequestEntry.Kind`) instead of matching
   interface names. Precedence matches the old string matcher, including idempotent command
@@ -181,8 +188,11 @@ marker rename.
 - Detect the generated mediator with `[assembly: GeneratedMediator(typeof(Mediator))]` on the
   app assembly. `TimeWarpMediatorProfile` is removed, so a check for the Aot or Link profile
   no longer says whether `AddGeneratedMediator` exists.
-- Keep `<TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>` on the Nuru library that
-  flows the generator into apps. The app is the graph member.
+- Do not reference `TimeWarp.Mediator.Generators` from the Nuru library. A Generators
+  reference emits a mediator in that compilation. `TimeWarpMediatorAssembly=false` does not
+  stop emission. Reference Generators from the app, and call `AddGeneratedMediator()` there.
+  The library references `TimeWarp.Mediator` and uses `[assembly: MediatorAssembly]` when its
+  messages belong in the app graph.
 - Package references: `TimeWarp.Mediator` plus `TimeWarp.Mediator.Generators`. The separate
   analyzers package id is gone.
 

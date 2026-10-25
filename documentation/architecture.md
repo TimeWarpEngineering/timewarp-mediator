@@ -89,9 +89,9 @@ own dispatches through the first bound supertype in that order.
 
 Handler discovery:
 
-- A class that implements several handler interfaces is registered once per interface. When a
-  class implements both `IRequestHandler<T, TResponse>` and `IRequestHandler<T>` for the same
-  `T`, the two-arity binding wins.
+- A class that implements several handler interfaces is bound once per interface. The concrete
+  type is registered once. When a class implements both `IRequestHandler<T, TResponse>` and
+  `IRequestHandler<T>` for the same `T`, the two-arity binding wins.
 - A concrete non-generic base that already handles an interface is not bound again on a derived
   class. Abstract and open-generic bases are not bound, so each closed derived class binds.
 - Member assemblies are walked in ordinal order of assembly name. Handler lists are sorted by
@@ -151,10 +151,16 @@ profile.
 
 ## Membership
 
-A project that references `TimeWarp.Mediator.Generators` is a graph member. The package sets
-`TimeWarpMediatorAssembly` to `true` unless the project sets it to `false`. A library that
-declares messages for some other host opts in with `[assembly: MediatorAssembly]` and does not
-reference the generator.
+A project that references `TimeWarp.Mediator.Generators` emits a mediator for that
+compilation. The generator includes the host and emits unless TWM008 stops it because a
+runtime assembly is missing. It does not read `TimeWarpMediatorAssembly`. A library avoids
+emission by not referencing Generators. It opts into a host's graph with
+`[assembly: MediatorAssembly]`.
+
+The generator package sets `TimeWarpMediatorAssembly` to `true` unless the project sets it
+to `false`. The analyzer reads that property. `true`, or `[assembly: MediatorAssembly]`, puts
+the compilation in the analyzer's member set. `false` does not stop the generator from
+emitting.
 
 `[MediatorScope(typeof(TScope))]` on a type, a containing type, or the assembly assigns that
 pipeline. A type-level marker wins. Types with no marker join the unscoped default pipeline.
@@ -162,20 +168,21 @@ pipeline. A type-level marker wins. Types with no marker join the unscoped defau
 `AddGeneratedMediator<ClientPipeline>()` for the named one. Worked example:
 [m2-named-pipelines.md](m2-named-pipelines.md).
 
-`[assembly: MediatorBehavior(typeof(Behavior<,>), order)]` weaves a behavior. The first
-attribute is outermost. `Order` is the tie-break; a lower value wraps the rest. Omitted
-`Scope` means the unscoped pipeline only. A scoped pipeline does not run unscoped behaviors.
+`[assembly: MediatorBehavior(typeof(Behavior<,>), order)]` weaves a behavior. A lower `Order`
+is outermost. Declaration order breaks ties: among equal `Order` values, the first attribute
+is outermost. Omitted `Scope` means the unscoped pipeline only. A scoped pipeline does not
+run unscoped behaviors.
 Open generics close per request when the constraints match. A type that is not an
 `IPipelineBehavior<,>` is TWM010 and is dropped. A behavior that closes over no request in its
 pipeline is TWM011.
 
-Build properties the generator reads:
+Build properties:
 
-| Property | Meaning |
-|---|---|
-| `TimeWarpMediatorAssembly` | `true` puts this compilation in the graph. Default `true` on a generator reference. Set `false` when a library flows the generator to apps and must not emit its own mediator |
-| `TimeWarpMediatorGenerator` | Set `true` by the generator package. The analyzer then skips TWM001–TWM003 so the generator reports them once. TWM004 stays with the analyzer |
-| `TimeWarpMediatorNamespace` | Generated namespace. Default `TimeWarp.Mediator.Generated`. Set a distinct value on each host that shares a compilation |
+| Property | Read by | Meaning |
+|---|---|---|
+| `TimeWarpMediatorNamespace` | generator | Generated namespace. Default `TimeWarp.Mediator.Generated`. Set a distinct value on each host that shares a compilation |
+| `TimeWarpMediatorAssembly` | analyzer | Analyzer membership. Default `true` on a generator reference. Does not control emission |
+| `TimeWarpMediatorGenerator` | analyzer | `true` on a generator reference. The analyzer then skips TWM001–TWM003 so the generator reports them once. TWM004 stays with the analyzer |
 
 `TimeWarpMediatorProfile` is removed. The host assembly name and public key come from the
 compilation, so a strong-named `InternalsVisibleTo` grant still matches the host.
@@ -202,7 +209,8 @@ processor, and exception-handler kinds. Those three ids are retired.
 
 The comparison baseline re-recorded on task 021-003 is
 [benchmarks/comparison-baseline.md](benchmarks/comparison-baseline.md) (commit
-`c5e4a3a6a6155b6f5ed322379a59559be58fc69a`).
+`c5e4a3a6a6155b6f5ed322379a59559be58fc69a`). The recorded Ratio column still uses the removed
+reflection row `TimeWarpLegacyMakeGenericType` as 1.00.
 
 | Row | Mean | Allocated |
 |---|---|---|
