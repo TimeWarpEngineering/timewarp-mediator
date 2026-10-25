@@ -80,7 +80,7 @@ throws in the returned task. Callers that project `Send` inside `Enumerable.Sele
 
 `documentation/architecture.md` is the 15.0 contract: two packages, `ValueTask` handlers, one generated dispatcher, concrete registration, `MediatorManifest` version 2, membership attributes, and the live TWM ids. `documentation/m1-generated-mediator.md` (the profile page) is deleted. `generated-vs-legacy.md` was already gone. `documentation/migration.md` replaces the root `migration.md` and has TimeWarp.State, TimeWarp.Architecture, and TimeWarp.Nuru sections, the `Unit.ValueTask` static-using note, and the synchronous-`Send` note. `documentation/release-notes/15.0.0.md` lists each break with its parent finding and the replacement, including manifest version 2. `agent.md`, `skills/tw-mediator/SKILL.md`, the root readme, `documentation/overview.md`, `samples/readme.md`, and the three `source/*/readme.md` files match that surface. Packed readmes use absolute links. The comparison baseline page names the 021-003 re-record at `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`. 14.0 and 13.0 notes point at the tag blobs of the old migration guide.
 
-`ganda repo audit` passed with one advisory warning: `kanban-landed` says parent task 021 has no usable worktree. That folder task stays on the board while its children hold the worktrees. This walk did not change that claim.
+`.gitignore` ignores `stacked-task-set*.resume.json`. A clean-tree `ganda repo audit` failed `kanban-porcelain-gitignore` and `routine-journals-gitignore` without that line. `ganda repo audit --fix` reported both checks fixed and wrote nothing, because its predicate still treats the older journal globs as complete. The appended block is the one that predicate's writer would have added. After the line is present those two checks pass. `kanban-landed` stays an error on a full audit: this branch's kitchen differs from origin-home, which the host land node writes, and parent task 021 has no usable worktree. Attest of this task worktree records that check as a warning and still signs.
 
 The pull request is the host open-pr node.
 
@@ -96,3 +96,4 @@ Ran 2026-10-26: `./bin/dev workflow` (mode Pr) exited 0 with that output.
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-23)
 - Implementation: 2026-10-26 (implementer-grok). Wrote the 15.0 architecture page, migration guide, and release notes, and pointed the agent instructions and package readmes at that surface.
+- Audit: 2026-10-26. Appended `stacked-task-set*.resume.json` so the porcelain and routine-journal gitignore checks pass. `audit --fix` did not write the line.
