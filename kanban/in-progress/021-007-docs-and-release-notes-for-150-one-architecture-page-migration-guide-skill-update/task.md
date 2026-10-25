@@ -30,6 +30,33 @@ Done when:
 - `./bin/dev workflow` exits 0 (pack checks the readme links).
 - The changes are committed and pushed. Opening the pull request stays on the host open-pr node.
 
+Fix pass for review round 1: the nine open findings are corrected against the code that
+shipped, and the pages stay consistent with each other.
+
+- M1: under `using static TimeWarp.Mediator.Unit`, signatures still bind to
+  `System.Threading.Tasks.ValueTask`. A bare `ValueTask` in an expression is ambiguous.
+  The same rule applied to the removed `Unit.Task` property. The migration page (both
+  places), the 15.0.0 F8 row, and the skill gotcha say that.
+- M2: `dotnet add package` lines pin `--version 15.0.0-beta.1`, matching the skill's
+  `Directory.Packages.props` example, so they do not resolve stable 14.0.0.
+- M3: through 14.0.0 the id `TimeWarp.Mediator` was the reflection runtime. 15.0 reuses
+  that id for the contracts and the analyzer. The migration table, the package readme, and
+  the skill's previous-surface list say so.
+- M4: the comparison baseline header matches what `dev benchmark --record` writes. The
+  021-003 provenance stays on the architecture page, the release notes, and `agent.md`.
+- M5: `TimeWarpMediatorAssembly` is analyzer membership. The generator does not read it and
+  always emits for a Generators reference. A library avoids emission by not referencing
+  Generators. The Nuru bullet and the property table match that.
+- M6: a lower `Order` is outermost, and declaration order breaks ties. A handler class is
+  bound once per interface and registered once per concrete type.
+- M7: the typed-`Send` row cites F2 and F3 (F7 kept). The `[GeneratedMediator]` row cites
+  F10 and F11.
+- M8: the root quick start puts statements first and resolves `ISender` from a scope. The
+  m2 sample puts `[assembly: …]` above the type declarations.
+- M9: the analyzer readme drops the impossible "does not reference TimeWarp.Mediator"
+  clause, the skill description lists live diagnostic ids, and the release notes call the
+  old runtime the 13.x/14.x reflection dispatcher.
+
 ## Requirements
 
 - One architecture page replaces `generated-vs-legacy.md` and the profile docs: contracts,
@@ -56,7 +83,13 @@ Done when:
 - [x] `agent.md` and tw-mediator skill updated
 - [x] Package readmes updated
 - [x] `./bin/dev workflow` green (pack asserts readme links)
+- [x] Review round 1 findings M1–M9 corrected in the docs
 - [ ] PR with merge commit
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9
+- Fix pass: M1–M9 implemented on this id. Round 2 is the host review node.
 
 ## Notes
 
@@ -64,10 +97,11 @@ Parent: 021. Depends on: 021-002 through 021-006 (documents the final shapes). L
 before `15.0.0-beta.1`; the consumer dogfood tasks (State, Architecture, Nuru) live in their
 own repos and gate the beta push.
 
-Migration page: under `using static TimeWarp.Mediator.Unit`, `Unit.ValueTask` does not hide
-`System.Threading.Tasks.Task` (the removed `Unit.Task` property did). It does shadow
-`System.Threading.Tasks.ValueTask`. Tell callers to use the qualified names `Unit.Value` and
-`Unit.ValueTask`. From 021-002 review M2.
+Migration page: under `using static TimeWarp.Mediator.Unit`, signatures still bind to
+`System.Threading.Tasks.ValueTask`. A bare `ValueTask` in an expression is ambiguous
+(CS0229). Write `Unit.ValueTask` for the value and `System.Threading.Tasks.ValueTask` for
+the type's statics. The removed `Unit.Task` property did not hide `Task`. Corrected in the
+round-1 fix pass; the 021-002 review M2 note had described this as hiding.
 
 Migration page: typed `Send` and `Dispatch_*` return the handler `ValueTask` directly. A null
 argument, `NoHandlerException`, and a handler that throws before returning a `ValueTask` leave
@@ -78,19 +112,36 @@ throws in the returned task. Callers that project `Send` inside `Enumerable.Sele
 
 ## Results
 
-`documentation/architecture.md` is the 15.0 contract: two packages, `ValueTask` handlers, one generated dispatcher, concrete registration, `MediatorManifest` version 2, membership attributes, and the live TWM ids. `documentation/m1-generated-mediator.md` (the profile page) is deleted. `generated-vs-legacy.md` was already gone. `documentation/migration.md` replaces the root `migration.md` and has TimeWarp.State, TimeWarp.Architecture, and TimeWarp.Nuru sections, the `Unit.ValueTask` static-using note, and the synchronous-`Send` note. `documentation/release-notes/15.0.0.md` lists each break with its parent finding and the replacement, including manifest version 2. `agent.md`, `skills/tw-mediator/SKILL.md`, the root readme, `documentation/overview.md`, `samples/readme.md`, and the three `source/*/readme.md` files match that surface. Packed readmes use absolute links. The comparison baseline page names the 021-003 re-record at `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`. 14.0 and 13.0 notes point at the tag blobs of the old migration guide.
+`documentation/architecture.md` is the 15.0 contract: two packages, `ValueTask` handlers, one generated dispatcher, concrete registration, `MediatorManifest` version 2, membership attributes, and the live TWM ids. `documentation/m1-generated-mediator.md` (the profile page) is deleted. `generated-vs-legacy.md` was already gone. `documentation/migration.md` replaces the root `migration.md` and has TimeWarp.State, TimeWarp.Architecture, and TimeWarp.Nuru sections, the `Unit.ValueTask` static-using note, and the synchronous-`Send` note. `documentation/release-notes/15.0.0.md` lists each break with its parent finding and the replacement, including manifest version 2. `agent.md`, `skills/tw-mediator/SKILL.md`, the root readme, `documentation/overview.md`, `samples/readme.md`, and the three `source/*/readme.md` files match that surface. Packed readmes use absolute links. The comparison baseline header is the recorder's header. Its commit is `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`. The architecture page and the 15.0.0 notes name that re-record as task 021-003. 14.0 and 13.0 notes point at the tag blobs of the old migration guide.
 
 `.gitignore` ignores `stacked-task-set*.resume.json`. A clean-tree `ganda repo audit` failed `kanban-porcelain-gitignore` and `routine-journals-gitignore` without that line. `ganda repo audit --fix` reported both checks fixed and wrote nothing, because its predicate still treats the older journal globs as complete. The appended block is the one that predicate's writer would have added. After the line is present those two checks pass. `kanban-landed` stays an error on a full audit: this branch's kitchen differs from origin-home, which the host land node writes, and parent task 021 has no usable worktree. Attest of this task worktree records that check as a warning and still signs.
 
 The pull request is the host open-pr node.
 
+Round 1 fix pass corrected M1–M9 in the docs. Install lines pin `--version 15.0.0-beta.1`. The `using static Unit` note now says signatures still bind and a bare `ValueTask` in an expression is CS0229. The package id `TimeWarp.Mediator` is described as the reflection runtime through 14.0.0 and as the contracts package in 15.0. The comparison baseline header matches `dev benchmark --record`; the 021-003 commit stays on the architecture page and in the release notes, and the Ratio-column note moved there with it. `TimeWarpMediatorAssembly` is documented as analyzer membership. The generator does not read it, so a library avoids emission by not referencing Generators. That is the shipped shape from 021-006, so this docs task did not change the generator. Behavior `Order` is the primary key, and a handler is bound per interface and registered once. The typed-`Send` row cites F2, F3, and F7. The `[GeneratedMediator]` row cites F10 and F11. Quick-start statements come first and resolve `ISender` from a scope. m2 assembly attributes precede the types. The analyzer readme, the skill's diagnostic list, and the "13.x/14.x reflection dispatcher" phrase are updated.
+
+`ganda repo audit` on 2026-10-26 still fails only `kanban-landed`: this branch's kitchen differs from origin-home, which the host land node writes, and parent task 021 has no usable worktree. The other 32 checks passed (2 skipped).
+
+### Review
+
+Round 1 ran at effort 3 with a general reviewer, backed by two read-only fact-check subagents. The counts were 5 bug open, 3 suggestion open, and 1 nit open. The fix pass above addresses M1–M9. Disposition is the host's review round 2.
+- M1: `using static Unit` is CS0229 in an expression. Signatures are unchanged. Confirmed with a net10.0 file-based probe (`ValueTask<int>` and bare `ValueTask` return types compile; `ValueTask` in an expression is CS0229).
+- M2: install lines pin `15.0.0-beta.1`.
+- M3: the id-reuse sentence is on the migration page, the contracts readme, and the skill.
+- M4: the benchmark header matches the recorder.
+- M5: docs match the generator. Emission is not gated on `TimeWarpMediatorAssembly`.
+- M6: lower `Order` is outermost. Registration is once per concrete type.
+- M7: finding citations updated.
+- M8: quick start and m2 snippets put statements and assembly attributes where the compiler accepts them. A file-based probe of that shape compiled.
+- M9: stale phrases removed.
+
 ### How to validate
 
 Smoke: `./bin/dev workflow`
 
-Expect: the log ends with `Pipeline SUCCEEDED`. Build 0 warnings. Tests passed: generators 57, analyzers 42, compilation 69, failed 0. Both samples verify, and the AOT sample prints `aot-pong`. Pack reports layout verified for `TimeWarp.Mediator.14.0.0.nupkg` and `TimeWarp.Mediator.Generators.14.0.0.nupkg` only (readme headings and absolute links included). Package smoke prints `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`.
+Expect: the log ends with `Pipeline SUCCEEDED`. Build 0 warnings. Tests passed: generators 57, analyzers 42, compilation 69, failed 0. Both samples verify (the AOT verifier expects `aot-pong`). Pack reports layout verified for `TimeWarp.Mediator.14.0.0.nupkg` and `TimeWarp.Mediator.Generators.14.0.0.nupkg` only (readme headings and absolute links included). Package smoke prints `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`.
 
-Ran 2026-10-26: `./bin/dev workflow` (mode Pr) exited 0 with that output.
+Ran 2026-10-26 after the round-1 fix pass: `./bin/dev workflow` (mode Pr) exited 0. Build 0 warnings. Tests passed: generators 57, analyzers 42, compilation 69, failed 0. Samples verified. Pack layout verified for both 14.0.0 packages. Package smoke printed `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`. The workflow transcript did not echo the `aot-pong` token; the sample step succeeded, and that step fails unless the AOT sample prints it.
 
 ## Session
 
@@ -98,3 +149,6 @@ Ran 2026-10-26: `./bin/dev workflow` (mode Pr) exited 0 with that output.
 - Implementation: 2026-10-26 (implementer-grok). Wrote the 15.0 architecture page, migration guide, and release notes, and pointed the agent instructions and package readmes at that surface.
 - Audit: 2026-10-26. Appended `stacked-task-set*.resume.json` so the porcelain and routine-journal gitignore checks pass. `audit --fix` did not write the line.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T19:36:32Z
+- Review oracle round 1: 2026-10-26, Claude Opus 5.5 (headless print mode, session id not exposed). Effort 3, roster general plus two read-only fact-check subagents. Nine open findings (M1–M9). A fix pass is requested on this id.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-25T19:45:58Z
+- Fix pass: 2026-10-26 (implementer-grok). Corrected review round 1 findings M1–M9 in the docs. `./bin/dev workflow` exited 0. `ganda repo audit` still fails only `kanban-landed`, which the host land node clears.
