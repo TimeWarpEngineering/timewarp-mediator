@@ -54,7 +54,7 @@ Keep both packages on the same version. Generators does not bring `TimeWarp.Medi
 </ItemGroup>
 ```
 
-Use the version this repo is packing when it is not yet `15.0.0-beta.1`. 14.0.0 on nuget.org
+Use the version this repo is packing, currently `15.0.0-beta.1`. 14.0.0 on nuget.org
 is the previous surface: the id `TimeWarp.Mediator` was the reflection runtime (`AddMediator`),
 contracts were `TimeWarp.Mediator.Contracts`, analyzers were a separate package, and handlers
 returned `Task`.
