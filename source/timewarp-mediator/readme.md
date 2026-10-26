@@ -1,18 +1,28 @@
 # TimeWarp.Mediator
 
-Message contracts and analyzers for TimeWarp Mediator 14.0: requests, commands, queries, notifications, pipeline types, and TWM001–TWM004.
+Message contracts and the TWM001–TWM004 analyzer for TimeWarp Mediator 15.0: requests, commands, queries, notifications, and pipeline types.
 
 ## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 14.0.0
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.1
 ```
 
-A host also needs `TimeWarp.Mediator.Generators` at the same version. Keep every TimeWarp.Mediator package on 14.0.0. This package ships the TWM001–TWM004 analyzer. There is no separate analyzers package.
+Without `--version`, that command resolves 14.0.0. Through 14.0.0 this package id was the reflection runtime (`AddMediator`). The 14.0.0 contracts were `TimeWarp.Mediator.Contracts`, and the analyzers were `TimeWarp.Mediator.Analyzers`. 15.0 reuses this id for the contracts and the analyzer. A host also references `TimeWarp.Mediator.Generators` at the same version. This package ships the TWM001–TWM004 analyzer. There is no separate analyzers package.
 
 ## Example
 
 ```csharp
+using Microsoft.Extensions.DependencyInjection;
+using TimeWarp.Mediator;
+using TimeWarp.Mediator.Generated;
+
+ServiceCollection services = new();
+services.AddGeneratedMediator();
+using ServiceProvider provider = services.BuildServiceProvider();
+using IServiceScope scope = provider.CreateScope();
+string reply = await scope.ServiceProvider.GetRequiredService<ISender>().Send(new Ping());
+
 public sealed class Ping : IRequest<string> { }
 
 public sealed class PingHandler : IRequestHandler<Ping, string>
@@ -20,29 +30,26 @@ public sealed class PingHandler : IRequestHandler<Ping, string>
   public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) =>
     ValueTask.FromResult("Pong");
 }
-
-services.AddGeneratedMediator();
-string reply = await provider.GetRequiredService<ISender>().Send(new Ping());
 ```
 
-`AddGeneratedMediator()` is emitted into the host project by `TimeWarp.Mediator.Generators`. Call it from the host. Reference only this package from a project that declares messages and does not dispatch them; that project still gets TWM001–TWM004.
+`AddGeneratedMediator()` is emitted into the host project by `TimeWarp.Mediator.Generators`, in the generated namespace (`TimeWarp.Mediator.Generated` unless the host sets `TimeWarpMediatorNamespace`). Call it from the host. Reference only this package from a project that declares messages and does not dispatch them. That project still gets TWM001–TWM004, and it opts in with `[assembly: MediatorAssembly]`.
 
 ## Migration
 
-14.0.0 is not a drop-in for 13.0.0.
+15.0 is a breaking release. Handlers return `ValueTask`. The host calls `AddGeneratedMediator()` and supplies `IServiceProvider`. Registered pipeline behaviors are woven.
 
-- This package targets net10.0 only. Stay on 13.0.0 if you cannot.
-- The package id is `TimeWarp.Mediator`. The old `TimeWarp.Mediator.Contracts` id is gone.
-- A host calls `AddGeneratedMediator()` and supplies `IServiceProvider`. Registered pipeline behaviors are woven.
+- This package targets net10.0.
+- Through 14.0.0 the id `TimeWarp.Mediator` was the reflection runtime (`AddMediator`). 15.0 reuses that id for the contracts and the analyzer. The 14.0.0 contracts id `TimeWarp.Mediator.Contracts` is gone, and so is `AddMediator`.
 - From MediatR: change `using MediatR;` to `using TimeWarp.Mediator;`.
 
-Steps: [Generated host](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
+Steps: [Migration to 15.0](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/migration.md).
 
 ## Documentation
 
 - [Repository readme](https://github.com/TimeWarpEngineering/timewarp-mediator#readme)
-- [Generated mediator](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m1-generated-mediator.md)
+- [Architecture](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/architecture.md)
 - [Diagnostics](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md)
+- [15.0.0 release notes](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/release-notes/15.0.0.md)
 
 ## License
 

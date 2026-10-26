@@ -1,27 +1,38 @@
-# M2 named pipelines (`ISender<TScope>`)
+# Named pipelines (`ISender<TScope>`)
 
-Source-generated per-scope senders and publishers (milestone M2). Design SSOT: [`design/2026-06-17-source-gen-aot-rewrite-spec.md`](design/2026-06-17-source-gen-aot-rewrite-spec.md) §9.1.
+Per-scope senders and publishers. The contract page is [architecture.md](architecture.md).
+Host packages are in [migration.md](migration.md).
 
-Pipelines are **marker types**, not strings. Use empty types such as `ClientPipeline` /
-`ServerPipeline`. `[MediatorModule("Orders")]` does not name a pipeline.
+Pipelines are marker types, not strings. Use empty types such as `ClientPipeline` and
+`ServerPipeline`.
 
-Registration is `AddGeneratedMediator()` (unscoped) and `AddGeneratedMediator<TScope>()` (one
-named pipeline). Host packages are in [migration.md](../migration.md#generated-host).
+## What you register
 
-## What shipped
+- `ISender<TScope>` and `IPublisher<TScope>` dispatch only the members of that marker.
+- `[MediatorScope(typeof(TScope))]` on a request, a handler, a containing type, or the assembly
+  assigns the pipeline. A type-level marker wins. No marker means the unscoped default.
+- `[assembly: MediatorBehavior(typeof(MyBehavior<,>), Scope = typeof(ClientPipeline))]` assigns
+  a behavior to one pipeline. Omitted `Scope` is the unscoped default only. A scoped pipeline
+  does not run unscoped behaviors.
+- The generator emits `Sender_{TScope}` and `Publisher_{TScope}` with type-switched dispatch
+  disjoint from each other and from unscoped `Mediator`.
+- `AddGeneratedMediator()` registers the unscoped sender. `AddGeneratedMediator<TScope>()`
+  registers one named pipeline. Both extensions are `internal` in the host's generated
+  namespace. Call them from the host.
+- **TWM003** is a handler/request scope mismatch. **TWM004** is a typed `Send` of a request
+  from another pipeline. `Send(object)` of a wrong-scope request throws `NoHandlerException`.
 
-- Contracts: `ISender<TScope>` / `IPublisher<TScope>` (marker-type pipelines) and `[MediatorScope(typeof(TScope))]`.
-- `[assembly: MediatorBehavior(typeof(MyBehavior<,>), Scope = typeof(ClientPipeline))]` assigns a behavior to one pipeline. Omitted `Scope` is the unscoped default pipeline only.
-- Generator emits `Sender_{TScope}` and `Publisher_{TScope}` with type-switched dispatch disjoint from each other and from unscoped `Mediator`.
-- Host registration: `AddGeneratedMediator()` (unscoped) and `AddGeneratedMediator<TScope>()` (one named pipeline). MS.DI resolves each independently.
-- Analyzer: **TWM003** handler/request scope mismatch; **TWM004** typed `ISender<TScope>.Send` of a request from another pipeline (compile error). `Send(object)` of a wrong-scope request throws `NoHandlerException`.
-- Sample: `samples/timewarp-mediator-examples-named-pipelines` — `ClientPipeline` + `ServerPipeline` in one host.
+Sample: `samples/timewarp-mediator-examples-named-pipelines`.
 
-`[MediatorModule("Orders")]` remains graph membership (the declaring assembly joins the linker). It does **not** name a pipeline.
-
-## Marker types (`ClientPipeline` / `ServerPipeline`)
+## Marker types
 
 ```csharp
+using TimeWarp.Mediator.Generated;
+
+[assembly: MediatorAssembly]
+[assembly: MediatorBehavior(typeof(ClientStampBehavior<,>), Scope = typeof(ClientPipeline))]
+[assembly: MediatorBehavior(typeof(ServerStampBehavior<,>), Scope = typeof(ServerPipeline))]
+
 public sealed class ClientPipeline
 {
 }
@@ -29,10 +40,6 @@ public sealed class ClientPipeline
 public sealed class ServerPipeline
 {
 }
-
-[assembly: MediatorAssembly]
-[assembly: MediatorBehavior(typeof(ClientStampBehavior<,>), Scope = typeof(ClientPipeline))]
-[assembly: MediatorBehavior(typeof(ServerStampBehavior<,>), Scope = typeof(ServerPipeline))]
 
 [MediatorScope(typeof(ClientPipeline))]
 public sealed class ClientPing : IRequest<string>
@@ -46,23 +53,30 @@ public sealed class ServerPing : IRequest<string>
 ```
 
 ```csharp
+ServiceCollection services = new();
 services.AddGeneratedMediator();
 services.AddGeneratedMediator<ClientPipeline>();
 services.AddGeneratedMediator<ServerPipeline>();
 
 ServiceProvider provider = services.BuildServiceProvider();
-ISender<ClientPipeline> client = provider.GetRequiredService<ISender<ClientPipeline>>();
-ISender<ServerPipeline> server = provider.GetRequiredService<ISender<ServerPipeline>>();
+using IServiceScope scope = provider.CreateScope();
+ISender<ClientPipeline> client = scope.ServiceProvider.GetRequiredService<ISender<ClientPipeline>>();
+ISender<ServerPipeline> server = scope.ServiceProvider.GetRequiredService<ISender<ServerPipeline>>();
 ```
 
-Sample: `samples/timewarp-mediator-examples-named-pipelines`.
+Behaviors return `ValueTask<TResponse>` and call `next(request, cancellationToken)`. See
+[migration.md](migration.md).
 
-## TimeWarp.State switch (later task)
+## TimeWarp.State
 
-When TimeWarp.State moves onto this package, inject `ISender<ClientPipeline>` on the Blazor client and `ISender<ServerPipeline>` on the server. Do not share one `IMediator` and filter inside behaviors. That switch is tracked in TimeWarp.State, not here.
+TimeWarp.State injects `ISender<ClientPipeline>` on the Blazor client and can inject
+`ISender<ServerPipeline>` on the server. The two pipelines do not share one `IMediator`.
+The 15.0 signature changes for State are in [migration.md](migration.md#timewarpstate).
 
 ## Coexistence
 
-A host that only registers the unscoped sender (`AddGeneratedMediator()`) does not dispatch scoped handlers. Register `AddGeneratedMediator<ClientPipeline>()` (and/or server) in the same container when both pipelines live in one process.
+A host that only calls `AddGeneratedMediator()` does not dispatch scoped handlers. Register
+each named pipeline in the same container when both live in one process.
 
-Re-entrant `Send` stays in the same pipeline when the handler injects `ISender<TScope>`. Injecting unscoped `ISender` is a different pipeline.
+Re-entrant `Send` stays in the same pipeline when the handler injects `ISender<TScope>`.
+Injecting unscoped `ISender` is a different pipeline.

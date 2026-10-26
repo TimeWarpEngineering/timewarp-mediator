@@ -1,6 +1,6 @@
 # TimeWarp.Mediator.Analyzers
 
-Roslyn analyzers for TimeWarp Mediator libraries that declare requests and handlers and do not run the source generator. The analyzer DLL ships inside the `TimeWarp.Mediator` package. This project is not a separate NuGet package.
+Roslyn analyzers for TimeWarp Mediator libraries that declare requests and handlers and do not run the source generator. The analyzer DLL ships inside the `TimeWarp.Mediator` package at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll`. This project is not a NuGet package.
 
 | Id | Summary |
 |----|---------|
@@ -13,9 +13,13 @@ A project that references `TimeWarp.Mediator.Generators` already runs the genera
 
 ## Install
 
+Reference the contracts package. The analyzer comes with it.
+
 ```bash
-dotnet add package TimeWarp.Mediator --version 14.0.0
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.1
 ```
+
+Without `--version`, that command resolves 14.0.0, the reflection runtime. Drop the flag when 15.0 is the stable package.
 
 ## Example
 
@@ -35,14 +39,16 @@ The analyzer targets netstandard2.0 and needs the Roslyn that ships with the .NE
 
 ## Migration
 
-14.0.0 is not a drop-in for 13.0.0. These analyzers do not register a mediator. The host that dispatches the messages in this library references `TimeWarp.Mediator.Generators` and calls `AddGeneratedMediator()`. A missing handler fails that host's build (TWM001) even when the library does not reference `TimeWarp.Mediator`. Reference `TimeWarp.Mediator` so the library fails its own build first.
+These analyzers do not register a mediator. The host that dispatches the messages in this library references `TimeWarp.Mediator.Generators` and calls `AddGeneratedMediator()`. A missing handler fails that host's build (TWM001). Reference `TimeWarp.Mediator` so the library fails its own build first.
 
-Steps: [Generated host](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/migration.md#generated-host).
+TWM005, TWM006, and TWM009 are retired. Streams and the Aot and Link profiles are removed.
+
+Steps: [Migration to 15.0](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/migration.md).
 
 ## Documentation
 
 - [Repository readme](https://github.com/TimeWarpEngineering/timewarp-mediator#readme)
-- [Generated mediator](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/m1-generated-mediator.md)
+- [Architecture](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/architecture.md)
 - [Diagnostics](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/diagnostics.md)
 
 ## License

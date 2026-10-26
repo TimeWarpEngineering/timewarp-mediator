@@ -2,10 +2,6 @@
 
 Recorded by `./bin/dev benchmark --project comparison --record`. Do not edit by hand; re-record instead.
 
-The reflection row `TimeWarpLegacyMakeGenericType` was removed with the reflection runtime.
-Ratio in the remaining rows still uses that row as 1.00 until the next
-`./bin/dev benchmark --project comparison --record`.
-
 - Project: `tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj`
 - Commit: `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`
 - Date (UTC): 2026-10-23
