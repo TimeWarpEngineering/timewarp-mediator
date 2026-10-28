@@ -11,6 +11,22 @@ newer compiler in the 11 SDK loads them.
 
 Depends on: 022 (same `Directory.Packages.props`; land 022 first and build on it).
 
+## Goal (implementer restatement)
+
+Build this repo with the .NET 11 RC3 SDK and ship `TimeWarp.Mediator` for both `net10.0` and `net11.0`. The generator and analyzer stay `netstandard2.0`. This adds a newer target; it does not lower the floor.
+
+Acceptance:
+
+- `TimeWarp.Mediator` multi-targets `net10.0;net11.0`. The generator and analyzer projects stay `netstandard2.0`.
+- The generator tests, compilation tests, analyzer tests, comparison benchmark, samples, and package-smoke consumer multi-target the same two frameworks. The AOT sample publishes on both, and trim and AOT warnings fail that publish.
+- `Microsoft.Extensions.DependencyInjection` is the 10.0 line on `net10.0` and `11.0.0-rc.3.26522.148` on `net11.0`. A `net10.0` host does not restore the 11 RC package.
+- `global.json` pins SDK `11.0.100-rc.3` with `rollForward: latestFeature` and `allowPrerelease: true`. CI installs `11.0.x` at preview quality and still installs `10.0.x` so the net10.0 runtime pack restores.
+- `dev pack` requires exactly `lib/net10.0` and `lib/net11.0` for `TimeWarp.Mediator`. The smoke consumer pongs on both. Generators layout stays as it is.
+- A net11.0 comparison run is stored in `documentation/benchmarks/comparison-baseline-net11.md`. `comparison-baseline.md` stays the net10.0 gate record.
+- `./bin/dev workflow` is green on this SDK: clean, a build with 0 warnings, tests and samples on both frameworks, and a pack of the two nupkgs.
+- `<Version>` stays `15.0.0-beta.1`. A follow-up task records the GA swap (`11.0.100`, DI `11.0.0`, drop `dotnet-quality: preview`) for when .NET 11 ships. The dev CLI target is stated in Results either way.
+- `ganda repo audit` is clean. Product changes are committed and pushed.
+
 ## Requirements
 
 - `source/timewarp-mediator/timewarp-mediator.csproj`: `<TargetFrameworks>net10.0;net11.0</TargetFrameworks>`.
