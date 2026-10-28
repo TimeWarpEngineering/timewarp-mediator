@@ -30,6 +30,20 @@ the stream row from the original body is dropped.
 What remains is the opt-in singleton mode and the benchmark-suite gaps. The interface send
 target (≤ 1.5× martinothamar, ≤ 24 B) is already met; do not regress it.
 
+## Goal (implementer restatement)
+
+The 15.0 dispatcher already hits the interface-send target (about 8.2 ns and 24 B, within 1.5× of martinothamar). This task does not bring back the costs 15.0 removed: `Task` handlers, an async wrapper, per-send pipeline closures, or a scoped `GetRequiredService` on every send.
+
+Done means:
+
+- `AddGeneratedMediator` and `AddGeneratedMediator<TScope>` take one optional `ServiceLifetime` argument, default `Transient`, so today's calls stay transient. `Scoped` is one mediator per scope. `Singleton` is one mediator for the container, and the `HandlerCache` that instance already resolves lives with it. Handlers, behaviors, and chains stay scoped. Architecture docs say singleton is only correct when every handler and behavior is singleton or transient and has no scoped dependency (`DbContext`, per-request services), and that the generator cannot check that. Nothing on the send path validates it.
+- A `TimeWarpGeneratedSingletonSend` row and a compilation test that singleton resolves the same `Mediator` across scopes and transient does not. Measure that row against the cached transient send on net10.0. If it is not faster, do not keep the API; record the numbers and a recommendation.
+- Like-for-like rows: `MartinothamarScopedSend` whose handler takes the same scoped dependency as `TimeWarpGeneratedScopedSend`, a martinothamar singleton row when that library can do it and the TimeWarp singleton row exists, and a MediatR `Send` on the same `Ping`. Handler bodies and lifetimes match inside each pair. The interface-send target does not regress.
+- `./bin/dev benchmark --aot` publishes the comparison project with `PublishAot` and runs the `TimeWarp*` rows. Numbers go in `documentation/benchmarks/comparison-baseline-aot.md` and are not gated.
+- `comparison-baseline.md` is re-recorded on net10.0 with BenchmarkDotNet 0.15.8, then `./bin/dev benchmark --gate` is green. Tolerances stay 50% on time and no extra bytes.
+- `.github/workflows/workflow.yml` has a `benchmark` job that runs `./bin/dev benchmark --gate` on net10.0 on a weekly schedule and `workflow_dispatch`, not on every pull request, unless three consecutive runner results sit inside the tolerance. The decision is in `documentation/overview.md` and `## Results`.
+- `ganda repo audit --fix` is committed, `./bin/dev workflow` is green on net10.0 and net11.0, and `<Version>` stays `15.0.0-beta.2`.
+
 ## Requirements
 
 ### Opt-in singleton mediator (never the default)
@@ -111,6 +125,7 @@ target (≤ 1.5× martinothamar, ≤ 24 B) is already met; do not regress it.
 
 - Created: 1509100 (2026-10-13)
 - Refreshed: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-28)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a1828a-fa21-7a71-b50c-41a406199c83, max-turns 500, Done — 2026-10-28T13:21:44Z
 
 ## Implementation Notes
 
