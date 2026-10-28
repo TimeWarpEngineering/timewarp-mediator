@@ -31,8 +31,8 @@ inside the compiler. It needs the Roslyn that ships with the .NET 10 SDK or newe
 Keep both packages on the same version. Generators does not bring `TimeWarp.Mediator` with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.1
-dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.1
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.2
+dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.2
 ```
 
 Without `--version`, `dotnet add package TimeWarp.Mediator` resolves 14.0.0, the reflection

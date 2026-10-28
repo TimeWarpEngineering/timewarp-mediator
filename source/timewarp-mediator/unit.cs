@@ -1,5 +1,19 @@
 // Modified by Steven T. Cramer
 
+#region Purpose
+// Void stand-in for a handler that returns no value.
+#endregion
+
+#region Design
+// ValueTask is an expression-bodied getter with no backing field. A static
+// auto-property would emit a field of type ValueTask<Unit> on Unit. ValueTask<T>
+// stores a T, so that field is a recursive type. CoreCLR loads it. The Mono
+// WebAssembly loader throws TypeLoadException. A completed ValueTask<T> is the
+// value itself, so the getter does not allocate.
+// Unit.ValueTask shadows System.Threading.Tasks.ValueTask under using static Unit.
+// Call sites write Unit.ValueTask. A signature still binds to the framework type.
+#endregion
+
 namespace TimeWarp.Mediator;
 
 /// <summary>
@@ -15,13 +29,16 @@ public readonly struct Unit : IEquatable<Unit>
   public static ref readonly Unit Value => ref Instance;
 
   /// <summary>
-  /// Cached completed task of <see cref="Value"/>.
+  /// Completed <see cref="System.Threading.Tasks.ValueTask{T}"/> of <see cref="Value"/>.
+  /// The getter has no backing field. A static field of type <see cref="System.Threading.Tasks.ValueTask{T}"/>
+  /// of <see cref="Unit"/> on <see cref="Unit"/> is a recursive type, and the Mono
+  /// WebAssembly loader rejects it.
   /// Under <c>using static TimeWarp.Mediator.Unit</c> this name does not hide
   /// <see cref="System.Threading.Tasks.Task"/> (the removed <c>Unit.Task</c> property did).
   /// It does shadow <see cref="System.Threading.Tasks.ValueTask"/>.
   /// Prefer the qualified names <c>Unit.Value</c> and <c>Unit.ValueTask</c>.
   /// </summary>
-  public static System.Threading.Tasks.ValueTask<Unit> ValueTask { get; } = new(Instance);
+  public static System.Threading.Tasks.ValueTask<Unit> ValueTask => new(Instance);
 
   /// <summary>
   /// Returns a hash code for this instance.
