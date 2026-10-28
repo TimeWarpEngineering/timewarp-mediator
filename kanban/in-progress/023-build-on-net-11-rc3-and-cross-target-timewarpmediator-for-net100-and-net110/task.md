@@ -27,6 +27,12 @@ Acceptance:
 - `<Version>` stays `15.0.0-beta.1`. A follow-up task records the GA swap (`11.0.100`, DI `11.0.0`, drop `dotnet-quality: preview`) for when .NET 11 ships. The dev CLI target is stated in Results either way.
 - `ganda repo audit` is clean. Product changes are committed and pushed.
 
+Fix pass for review round 1:
+
+The six hosts that multi-target `net10.0;net11.0` (generator tests, compilation tests, analyzer tests, the comparison benchmark, the named-pipelines sample, and the AOT sample) do not set `RollForward` to `LatestMajor`. A `net10.0` leg stays on the 10 runtime after 11.0.0 GA is installed. Results state that a net10.0 leg runs on the 10 runtime.
+
+`./bin/dev benchmark --gate` runs once with BenchmarkDotNet `0.16.0-preview.2` against `documentation/benchmarks/comparison-baseline.md`. Results record whether that gate passed or failed.
+
 ## Requirements
 
 - `source/timewarp-mediator/timewarp-mediator.csproj`: `<TargetFrameworks>net10.0;net11.0</TargetFrameworks>`.
@@ -72,12 +78,18 @@ Acceptance:
 - [x] net11.0 benchmark numbers recorded without overwriting the net10.0 baseline
 - [x] `./bin/dev workflow` green on both TFMs
 - [x] GA follow-up task created and linked in Results
+- [x] Six multi-targeted hosts omit `RollForward=LatestMajor`
+- [x] net10.0 `--gate` result recorded on BenchmarkDotNet `0.16.0-preview.2`
 ### Documentation
 - [x] `agent.md` Target Frameworks and Key Dependencies sections updated
 - [x] `documentation/overview.md` build/CI notes mention the SDK pin
 ### Review
 - [ ] Code Review
 - [ ] PR with merge commit
+
+## Review
+
+- Round 1: M1 and M2 were open. This fix pass removed `RollForward=LatestMajor` and recorded the gate result. Round 2 has not run.
 
 ## Notes
 
@@ -97,6 +109,9 @@ Acceptance:
 - Created: cockpit session 04be23b7 (2026-10-28), Steven: "update to dotnet 11 RC3 and cross compile for 10 and 11"
 - Implementation: task-work implementer (2026-10-28), SDK `11.0.100-rc.3.26522.148`
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18173-1861-7083-969b-a43c4d28f820, max-turns 500, Done — 2026-10-28T08:16:46Z
+- Review oracle round 1: claude-opus-5-5 (ganda task work, headless), effort 2, roster general, 2026-10-28. 2 open (M1 suggestion, M2 nit); fix pass requested
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-28T08:20:33Z
+- Fix pass: implement-fix-2 (2026-10-28), SDK `11.0.100-rc.3.26522.148`. Dropped `RollForward=LatestMajor` from the six multi-targeted hosts. `./bin/dev benchmark --gate` failed two monomorphic rows against the 0.15.8 baseline. The baseline file was left unchanged.
 
 ## Results
 
@@ -131,6 +146,19 @@ GA follow-up: task 023-001, in `kanban/to-do/` on origin-home, depends on 023. W
 
 `ganda repo audit --fix` also landed this kitchen onto origin-home. The advisory `kanban-landed` warning for claim 021 (no usable worktree) is another id; this task does not own that claim.
 
+### Fix pass (review round 1)
+
+M1. The six multi-targeted hosts no longer set `<RollForward>LatestMajor</RollForward>`: generator tests, compilation tests, analyzer tests, the comparison benchmark, named-pipelines, and the AOT sample. Their Release `runtimeconfig.json` files omit `rollForward`, so the host keeps the minor compatibility range. A net10.0 leg runs on the 10 runtime. `COREHOST_TRACE` for named-pipelines `dotnet run -c Release -f net10.0 --no-build` chose `Microsoft.NETCore.App/10.0.14`. The same sample on `net11.0` chose `Microsoft.NETCore.App/11.0.0-rc.3.26522.148` and printed `client:hello` / `server:hello` on both. `UseSharedCompilation=false dotnet build timewarp-mediator.slnx -c Release` reported 0 warnings and 0 errors. `dotnet test timewarp-mediator.slnx -c Release --no-build` passed generators-tests 57, analyzers-tests 42, and compilation-tests 69 on `net10.0` and on `net11.0`, failed 0.
+
+M2. `./bin/dev benchmark --gate` ran on BenchmarkDotNet `0.16.0-preview.2` against `documentation/benchmarks/comparison-baseline.md` (BenchmarkDotNet `0.15.8`, commit `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`). The local `./bin/dev` was refreshed with `dotnet run --file tools/dev-cli/dev.cs -- self-install` first, because the previous publish omitted `--framework` and could not select `net10.0`. The gate host and the job both reported `.NET 10.0.14`. The gate failed (exit 1). Allocated bytes matched the baseline. Two means exceeded the 50% limit:
+
+| Method | Baseline | Limit | Measured |
+| --- | ---: | ---: | ---: |
+| TimeWarpGeneratedMonomorphicSend | 5.016 ns | 7.524 ns | 10.509 ns |
+| TimeWarpGeneratedMonomorphicSendUnit | 3.885 ns | 5.828 ns | 8.063 ns |
+
+The other nine `TimeWarp*` rows stayed inside the limit. `comparison-baseline.md` was not rewritten. Task 023-001 still owns the move off `0.16.0-preview.2`.
+
 ### How to validate
 
 Smoke: `UseSharedCompilation=false dotnet run --file tools/dev-cli/dev.cs -- workflow` on SDK `11.0.100-rc.3.26522.148`.
@@ -138,3 +166,11 @@ Smoke: `UseSharedCompilation=false dotnet run --file tools/dev-cli/dev.cs -- wor
 Expect: the log ends with `Pipeline SUCCEEDED`. Release build reports 0 warnings and 0 errors. generators-tests 57 passed, analyzers-tests 42 passed, and compilation-tests 69 passed, each on `net10.0` and on `net11.0`, failed 0. The AOT sample publishes and runs on both frameworks. named-pipelines runs on both. Pack layout is verified for `TimeWarp.Mediator.15.0.0-beta.1.nupkg` and `TimeWarp.Mediator.Generators.15.0.0-beta.1.nupkg`. Package smoke prints `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator` on `net10.0` and on `net11.0`.
 
 The same command was run again after the BenchmarkDotNet `0.16.0-preview.2` pin and the Nuru `4.0.0-beta.7` pin. It ended with `Pipeline SUCCEEDED`: build 0 warnings and 0 errors, the same test counts on both frameworks, both sample publishes and runs, both package layouts verified, and `package-pong` on both frameworks.
+
+Smoke: `COREHOST_TRACE=1 dotnet run --project samples/timewarp-mediator-examples-named-pipelines/timewarp-mediator-examples-named-pipelines.csproj -c Release -f net10.0 --no-build`, then `./bin/dev benchmark --gate`.
+
+Expect: named-pipelines prints `client:hello` and `server:hello`, and the apphost trace chooses `Microsoft.NETCore.App/10.0.14`. The net10.0 `runtimeconfig.json` has no `rollForward` property. The gate log names `.NET 10.0.14` for `[Host]` and `Job-LGHQEI`, then prints `Benchmark gate failed:` for `TimeWarpGeneratedMonomorphicSend` (10.509 ns, limit 7.524 ns) and `TimeWarpGeneratedMonomorphicSendUnit` (8.063 ns, limit 5.828 ns). Exit code 1. `documentation/benchmarks/comparison-baseline.md` is unchanged.
+
+### Review
+
+Round 1 ran at effort 2 with one general reviewer. It found 0 bugs, 1 suggestion (M1: `RollForward=LatestMajor` on the six multi-targeted hosts), and 1 nit (M2: the `--gate` run on BenchmarkDotNet 0.16 preview was not recorded). This fix pass removed that property and recorded the gate failure above. Round 2 has not run. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
