@@ -4,12 +4,14 @@
 #region Design
 // Samples are also in timewarp-mediator.slnx, so `dev build` already compiles
 // them; `dev workflow` passes --no-build and only runs them. Standalone, the
-// command builds each samples/**/*.csproj first. Every Exe sample then runs
-// with `dotnet run --no-build` and must exit 0; RepoLayout.SampleExpectedOutput
-// adds a stdout check for the generated-stack samples (aot, named-pipelines).
-// The AOT sample is the exception: `dotnet run` does not exercise PublishAot,
-// so this command publishes it and runs the native binary. A sample that hangs
-// fails after SampleTimeout. NativeAOT publish gets AotPublishTimeout.
+// command builds each samples/**/*.csproj first (every TargetFrameworks entry).
+// Every Exe sample then runs once per framework with `dotnet run -f <tfm>
+// --no-build` and must exit 0; RepoLayout.SampleExpectedOutput adds a stdout
+// check for the generated-stack samples (aot, named-pipelines). The AOT sample
+// is the exception: `dotnet run` does not exercise PublishAot, so this command
+// publishes it per framework into its own output directory and runs that native
+// binary. A sample that hangs fails after SampleTimeout. NativeAOT publish gets
+// AotPublishTimeout.
 #endregion
 
 namespace DevCli.Commands;
@@ -75,12 +77,23 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
       foreach (string project in runnable)
       {
         string sampleName = Path.GetFileNameWithoutExtension(project);
-        bool ran = sampleName == AotSampleName
-          ? await PublishAndRunAotAsync(repoRoot, project, ct)
-          : await RunAsync(repoRoot, project, ct);
-        if (!ran)
+        string[] frameworks = ReadTargetFrameworks(project);
+        if (frameworks.Length == 0)
         {
+          Terminal.WriteErrorLine($"No TargetFramework in {Path.GetRelativePath(repoRoot, project)}".Red());
+          Environment.ExitCode = 1;
           return Unit.Value;
+        }
+
+        foreach (string framework in frameworks)
+        {
+          bool ran = sampleName == AotSampleName
+            ? await PublishAndRunAotAsync(repoRoot, project, framework, ct)
+            : await RunAsync(repoRoot, project, framework, ct);
+          if (!ran)
+          {
+            return Unit.Value;
+          }
         }
       }
 
@@ -113,11 +126,15 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
       return true;
     }
 
-    private async Task<bool> PublishAndRunAotAsync(string repoRoot, string project, CancellationToken ct)
+    private async Task<bool> PublishAndRunAotAsync(
+      string repoRoot,
+      string project,
+      string framework,
+      CancellationToken ct)
     {
       string relativePath = Path.GetRelativePath(repoRoot, project);
-      string outputDir = Path.Combine(repoRoot, "artifacts", "publish", AotSampleName);
-      Terminal.WriteLine($"Publishing {relativePath} (NativeAOT)...");
+      string outputDir = Path.Combine(repoRoot, "artifacts", "publish", AotSampleName, framework);
+      Terminal.WriteLine($"Publishing {relativePath} ({framework}, NativeAOT)...");
 
       using CancellationTokenSource publishTimeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
       publishTimeout.CancelAfter(AotPublishTimeout);
@@ -128,6 +145,7 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
         publish = await DotNet.Publish()
           .WithProject(project)
           .WithConfiguration("Release")
+          .WithFramework(framework)
           .WithOutput(outputDir)
           .WithNoValidation()
           .CaptureAsync(publishTimeout.Token);
@@ -182,11 +200,11 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
       return AcceptSampleOutput(output, AotSampleName, relativePath);
     }
 
-    private async Task<bool> RunAsync(string repoRoot, string project, CancellationToken ct)
+    private async Task<bool> RunAsync(string repoRoot, string project, string framework, CancellationToken ct)
     {
       string relativePath = Path.GetRelativePath(repoRoot, project);
       string sampleName = Path.GetFileNameWithoutExtension(project);
-      Terminal.WriteLine($"Running {relativePath}...");
+      Terminal.WriteLine($"Running {relativePath} ({framework})...");
 
       using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
       timeout.CancelAfter(SampleTimeout);
@@ -197,6 +215,7 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
         output = await DotNet.Run()
           .WithProject(project)
           .WithConfiguration("Release")
+          .WithFramework(framework)
           .WithNoBuild()
           .WithNoValidation()
           .CaptureAsync(timeout.Token);
@@ -238,6 +257,23 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
       return XDocument.Load(project)
         .Descendants("OutputType")
         .Any(element => string.Equals(element.Value.Trim(), "Exe", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string[] ReadTargetFrameworks(string project)
+    {
+      XDocument document = XDocument.Load(project);
+      string? frameworks = document.Descendants("TargetFrameworks")
+        .Select(element => element.Value.Trim())
+        .FirstOrDefault(value => value.Length > 0);
+      if (!string.IsNullOrEmpty(frameworks))
+      {
+        return frameworks.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+      }
+
+      string? framework = document.Descendants("TargetFramework")
+        .Select(element => element.Value.Trim())
+        .FirstOrDefault(value => value.Length > 0);
+      return string.IsNullOrEmpty(framework) ? [] : [framework];
     }
   }
 }

@@ -11,6 +11,9 @@ name: CI/CD
 #
 # No path filters: every master commit gets a CI run, which the release
 # green-CI guard depends on.
+# SDK: global.json pins 11.0.100-rc.3 (latestFeature, prerelease allowed).
+# Each job installs 10.0.x on the GA channel and 11.0.x at preview quality.
+# 10.0.x stays so the net10.0 targeting pack and runtime restore.
 on:
   push:
     branches: [ master, main ]
@@ -63,11 +66,16 @@ jobs:
           fetch-depth: 0  # Full history required for SourceLink / version metadata
           persist-credentials: false
 
-      - name: Setup .NET
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: |
-            10.0.x
+          dotnet-version: 10.0.x
+
+      - name: Setup .NET 11
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 11.0.x
+          dotnet-quality: preview
 
       # No packages.lock.json in this repo, so setup-dotnet's built-in cache
       # (lock-file keyed) cannot be used; key on central package versions + projects.
@@ -151,12 +159,18 @@ jobs:
           fi
           echo "Release guards passed ($green successful CI run(s) for $sha)."
 
-      - name: Setup .NET
+      - name: Setup .NET 10
         if: inputs.mode != 'probe'
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: |
-            10.0.x
+          dotnet-version: 10.0.x
+
+      - name: Setup .NET 11
+        if: inputs.mode != 'probe'
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 11.0.x
+          dotnet-quality: preview
 
       - name: NuGet login (OIDC Trusted Publishing)
         id: nuget-login

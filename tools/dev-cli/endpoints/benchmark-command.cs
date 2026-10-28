@@ -4,15 +4,18 @@
 #region Design
 // Runs tests/<project> in Release through BenchmarkSwitcher, so --filter reaches
 // BenchmarkDotNet unchanged (its default config already exports the GitHub
-// markdown report). Results land in artifacts/benchmarks/<name>/ (not
-// the BenchmarkDotNet.Artifacts/ default) so `dev clean` owns them. --record
-// copies the GitHub-flavored report to documentation/benchmarks/<name>-baseline.md
-// under a header with the commit SHA, a dirty-tree flag and the UTC date;
-// BenchmarkDotNet's own block records the host (CPU, OS, runtime). Not part of
-// `dev workflow`: shared CI runners are too noisy for a stored number.
-// --gate (comparison only) re-runs that project and fails when a TimeWarp* row
-// exceeds the recorded baseline. Tolerance and the 15.0 target table are written
-// by --record; see BenchmarkGate.
+// markdown report). --framework selects the host TFM (default
+// RepoLayout.GateTargetFramework, net10.0). Results land in
+// artifacts/benchmarks/<name>/<framework>/ (not the BenchmarkDotNet.Artifacts/
+// default) so `dev clean` owns them. --record on net10.0 copies the
+// GitHub-flavored report to documentation/benchmarks/<name>-baseline.md.
+// Any other framework writes <name>-baseline-<label>.md (net11.0 -> net11) and
+// leaves the net10.0 gate file alone. The header carries the commit SHA, the
+// framework, a dirty-tree flag and the UTC date; BenchmarkDotNet's own block
+// records the host (CPU, OS, runtime). Not part of `dev workflow`: shared CI
+// runners are too noisy for a stored number. --gate (comparison only) re-runs
+// net10.0 and fails when a TimeWarp* row exceeds comparison-baseline.md.
+// Tolerance and the 15.0 target table are written by --record; see BenchmarkGate.
 #endregion
 
 namespace DevCli.Commands;
@@ -23,10 +26,13 @@ public sealed class BenchmarkCommand : ICommand<Unit>
   [Option("project", "p", Description = "Benchmark project: comparison (default)")]
   public string? Project { get; set; }
 
+  [Option("framework", Description = "Target framework: net10.0 (default) or net11.0. net11.0 --record writes comparison-baseline-net11.md")]
+  public string? Framework { get; set; }
+
   [Option("filter", "f", Description = "BenchmarkDotNet --filter glob (default: *)")]
   public string? Filter { get; set; }
 
-  [Option("record", "r", Description = "Write the report to documentation/benchmarks/<project>-baseline.md")]
+  [Option("record", "r", Description = "Write the report. net10.0 updates comparison-baseline.md; another TFM writes a separate file")]
   public bool Record { get; set; }
 
   [Option("gate", "g", Description = "Fail when a TimeWarp* comparison row exceeds the recorded baseline")]
@@ -73,6 +79,25 @@ public sealed class BenchmarkCommand : ICommand<Unit>
         return Unit.Value;
       }
 
+      string framework = string.IsNullOrWhiteSpace(command.Framework)
+        ? RepoLayout.GateTargetFramework
+        : command.Framework.Trim();
+      if (!RepoLayout.LibTargetFrameworks.Contains(framework, StringComparer.Ordinal))
+      {
+        string knownFrameworks = string.Join(", ", RepoLayout.LibTargetFrameworks);
+        Terminal.WriteErrorLine($"Unknown framework '{framework}'. Known: {knownFrameworks}".Red());
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
+
+      if (command.Gate && !string.Equals(framework, RepoLayout.GateTargetFramework, StringComparison.Ordinal))
+      {
+        Terminal.WriteErrorLine(
+          $"The regression gate reads documentation/benchmarks/comparison-baseline.md, the {RepoLayout.GateTargetFramework} record. Omit --framework or pass {RepoLayout.GateTargetFramework}.".Red());
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
+
       (string Name, string Project) match = RepoLayout.BenchmarkProjects
         .FirstOrDefault(candidate => string.Equals(candidate.Name, name, StringComparison.OrdinalIgnoreCase));
       if (match.Project is null)
@@ -83,17 +108,18 @@ public sealed class BenchmarkCommand : ICommand<Unit>
         return Unit.Value;
       }
 
-      string artifactsPath = Path.Combine(repoRoot, "artifacts", "benchmarks", match.Name);
+      string artifactsPath = Path.Combine(repoRoot, "artifacts", "benchmarks", match.Name, framework);
       if (Directory.Exists(artifactsPath))
       {
         Directory.Delete(artifactsPath, true);
       }
 
       string filter = string.IsNullOrWhiteSpace(command.Filter) ? "*" : command.Filter;
-      Terminal.WriteLine($"Running {match.Project} (filter {filter})...");
+      Terminal.WriteLine($"Running {match.Project} ({framework}, filter {filter})...");
       int exitCode = await DotNet.Run()
         .WithProject(Path.Combine(repoRoot, match.Project))
         .WithConfiguration("Release")
+        .WithFramework(framework)
         .WithArguments("--filter", filter, "--artifacts", artifactsPath)
         .WithNoValidation()
         .RunAsync(ct);
@@ -105,7 +131,7 @@ public sealed class BenchmarkCommand : ICommand<Unit>
         return Unit.Value;
       }
 
-      if (command.Record && !await RecordAsync(repoRoot, match.Name, match.Project, artifactsPath, ct))
+      if (command.Record && !await RecordAsync(repoRoot, match.Name, match.Project, framework, artifactsPath, ct))
       {
         return Unit.Value;
       }
@@ -123,6 +149,7 @@ public sealed class BenchmarkCommand : ICommand<Unit>
       string repoRoot,
       string name,
       string project,
+      string framework,
       string artifactsPath,
       CancellationToken ct)
     {
@@ -155,12 +182,17 @@ public sealed class BenchmarkCommand : ICommand<Unit>
       }
 
       bool dirty = status.Stdout.Trim().Length > 0;
+      bool gateFile = string.Equals(framework, RepoLayout.GateTargetFramework, StringComparison.Ordinal);
+      string recordCommand = gateFile
+        ? $"./bin/dev benchmark --project {name} --record"
+        : $"./bin/dev benchmark --project {name} --framework {framework} --record";
       System.Text.StringBuilder baseline = new();
       baseline.AppendLine($"# Benchmark baseline: {name}");
       baseline.AppendLine();
-      baseline.AppendLine("Recorded by `./bin/dev benchmark --project " + name + " --record`. Do not edit by hand; re-record instead.");
+      baseline.AppendLine($"Recorded by `{recordCommand}`. Do not edit by hand; re-record instead.");
       baseline.AppendLine();
       baseline.AppendLine($"- Project: `{project}`");
+      baseline.AppendLine($"- Framework: `{framework}`");
       baseline.AppendLine($"- Commit: `{sha.Stdout.Trim()}`{(dirty ? " (working tree had uncommitted changes)" : string.Empty)}");
       baseline.AppendLine($"- Date (UTC): {DateTime.UtcNow:yyyy-MM-dd}");
       baseline.AppendLine();
@@ -173,15 +205,21 @@ public sealed class BenchmarkCommand : ICommand<Unit>
         baseline.AppendLine();
       }
 
-      if (string.Equals(name, "comparison", StringComparison.OrdinalIgnoreCase))
+      if (string.Equals(name, "comparison", StringComparison.OrdinalIgnoreCase) && gateFile)
       {
         baseline.AppendLine(BenchmarkGate.BaselineSuffix().TrimEnd());
+        baseline.AppendLine();
+      }
+      else if (string.Equals(name, "comparison", StringComparison.OrdinalIgnoreCase))
+      {
+        baseline.AppendLine(
+          $"This file records `{framework}`. The regression gate reads `documentation/benchmarks/comparison-baseline.md` (`{RepoLayout.GateTargetFramework}`) and does not use these numbers.");
         baseline.AppendLine();
       }
 
       string outputDirectory = Path.Combine(repoRoot, "documentation", "benchmarks");
       Directory.CreateDirectory(outputDirectory);
-      string outputPath = Path.Combine(outputDirectory, $"{name}-baseline.md");
+      string outputPath = Path.Combine(outputDirectory, BaselineFileName(name, framework));
       await File.WriteAllTextAsync(outputPath, baseline.ToString().ReplaceLineEndings("\n"), ct);
       Terminal.WriteLine($"Recorded {Path.GetRelativePath(repoRoot, outputPath)}");
       return true;
@@ -231,6 +269,20 @@ public sealed class BenchmarkCommand : ICommand<Unit>
 
       Terminal.WriteLine("Benchmark gate passed.".Green());
       return true;
+    }
+
+    // net10.0 keeps comparison-baseline.md (the gate file). net11.0 writes
+    // comparison-baseline-net11.md and does not replace that gate file.
+    private static string BaselineFileName(string name, string framework)
+    {
+      if (string.Equals(framework, RepoLayout.GateTargetFramework, StringComparison.Ordinal))
+      {
+        return $"{name}-baseline.md";
+      }
+
+      int dot = framework.IndexOf('.');
+      string label = dot < 0 ? framework : framework[..dot];
+      return $"{name}-baseline-{label}.md";
     }
   }
 }

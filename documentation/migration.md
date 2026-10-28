@@ -24,7 +24,7 @@ A host references `TimeWarp.Mediator` and `TimeWarp.Mediator.Generators`. A libr
 declares messages and does not emit a mediator references `TimeWarp.Mediator` only and keeps
 `[assembly: MediatorAssembly]`.
 
-`TimeWarp.Mediator` targets `net10.0`. The generator is `netstandard2.0` because Roslyn loads
+`TimeWarp.Mediator` targets `net10.0` and `net11.0`. The generator is `netstandard2.0` because Roslyn loads
 it. The Roslyn floor is `Microsoft.CodeAnalysis.CSharp` 5.0.0.
 
 The host calls `AddGeneratedMediator()` from the generated namespace

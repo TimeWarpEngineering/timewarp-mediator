@@ -46,7 +46,7 @@ Keep both packages on the same version. Generators does not bring `TimeWarp.Medi
 ```
 
 ```xml
-<!-- host .csproj (net10.0) -->
+<!-- host .csproj (net10.0 or net11.0) -->
 <ItemGroup>
   <PackageReference Include="TimeWarp.Mediator" />
   <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="all" />
@@ -218,7 +218,7 @@ and TWM001–TWM004 in a library. TWM005, TWM006, and TWM009 are retired.
   calls `AddGeneratedMediator()`.
 - **`TimeWarpMediatorNamespace`.** Default `TimeWarp.Mediator.Generated`. Set it when two
   hosts' generated types meet in one compilation.
-- **net10.0 floor.** `TimeWarp.Mediator` targets `net10.0`. Generators are `netstandard2.0`
+- **net10.0 floor.** `TimeWarp.Mediator` targets `net10.0` and `net11.0`. Generators are `netstandard2.0`
   and need `Microsoft.CodeAnalysis.CSharp` 5.0.0.
 - **`using static TimeWarp.Mediator.Unit`.** Signatures are unaffected. A bare `ValueTask`
   in an expression is ambiguous (CS0229). Write `Unit.ValueTask` for the value and

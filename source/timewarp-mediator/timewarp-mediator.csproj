@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>TimeWarp.Mediator contracts and analyzers: IRequest, ICommand, IQuery, INotification, their handler and pipeline-behavior interfaces, ISender/IPublisher/IMediator, the membership attributes the source generator reads, and TWM001–TWM004. Reference it from message libraries without depending on a dispatcher.</Description>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
     <AssemblyName>TimeWarp.Mediator</AssemblyName>
     <PackageId>TimeWarp.Mediator</PackageId>
@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- The analyzer is netstandard2.0 and must not become a compile reference of this net10.0 lib. -->
+    <!-- The analyzer is netstandard2.0 and must not become a compile reference of this library. -->
     <ProjectReference Include="..\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
   </ItemGroup>
 
