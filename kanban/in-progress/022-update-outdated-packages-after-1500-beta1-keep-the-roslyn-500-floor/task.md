@@ -8,6 +8,19 @@ Roslyn floor from task 021-005 and must stay at 5.0.0: the shipped analyzer and 
 to load inside the 10.0.100 SDK compiler. Bump everything else in one PR so Dependabot stops
 opening five separate ones.
 
+## Goal (implementer restatement)
+
+Move the five central package pins that `ganda nuget outdated` reported on 2026-10-28 up to those latest versions in this one change, so Dependabot does not open a separate pull request for each pin. This is not a release: the product `<Version>` stays `15.0.0-beta.1`.
+
+The two Roslyn compiler packages stay at 5.0.0. That is the compiler the oldest .NET 10 SDK (10.0.100) can load, and the shipped analyzer and generator have to load there. The project `VersionOverride`, the Dependabot ignore for `Microsoft.CodeAnalysis.CSharp*`, and the `Compiler_IsTheDeclaredFloor` test stay as they are.
+
+Acceptance criteria:
+
+- `Directory.Packages.props` pins `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` at 4.0.0-beta.6, `Microsoft.Extensions.DependencyInjection` at 10.0.14, `Microsoft.NET.Test.Sdk` at 18.11.0, and `Microsoft.SourceLink.GitHub` at 10.0.403. `Microsoft.CodeAnalysis.CSharp` and `Microsoft.CodeAnalysis.CSharp.Workspaces` remain 5.0.0. `Compiler_IsTheDeclaredFloor` still passes.
+- `ganda repo audit --fix` is applied, its changes are committed, and `ganda repo audit` exits 0.
+- The AOT dev binary is rebuilt on the new `TimeWarp.Nuru.DevCli` pin, and `./bin/dev --capabilities` lists every command named in `agent.md`.
+- `./bin/dev workflow` is green: clean, build with 0 warnings, tests, sample verification (the AOT sample publishes with trim and AOT warnings as errors), and pack of the two nupkgs with package smoke succeeding.
+
 ## Requirements
 
 - `Directory.Packages.props` bumps:
@@ -35,11 +48,11 @@ opening five separate ones.
 ## Checklist
 
 ### Implementation
-- [ ] Five pins bumped in `Directory.Packages.props`; Roslyn rows untouched at 5.0.0
-- [ ] `ganda repo audit --fix` applied and committed
-- [ ] dev-cli self-install rebuilt; `./bin/dev --capabilities` complete
-- [ ] `./bin/dev workflow` green (0 warnings)
-- [ ] `Compiler_IsTheDeclaredFloor` still passes
+- [x] Five pins bumped in `Directory.Packages.props`; Roslyn rows untouched at 5.0.0
+- [x] `ganda repo audit --fix` applied and committed
+- [x] dev-cli self-install rebuilt; `./bin/dev --capabilities` complete
+- [x] `./bin/dev workflow` green (0 warnings)
+- [x] `Compiler_IsTheDeclaredFloor` still passes
 ### Review
 - [ ] Code Review
 - [ ] PR with merge commit
@@ -55,9 +68,29 @@ opening five separate ones.
 
 ## Implementation Notes
 
-- 
+- `ganda nuget outdated` on 2026-10-28 matched the five pins in the requirements. `TimeWarp.Nuru` 4.0.0-beta.6 did not require a dev-cli call-site change.
+- The branch was behind origin/master by kanban lands only (task 022 board move already on master, plus task 023). Merged that before the pin bump.
+- `VersionOverride` on the analyzer and generator projects, the Dependabot ignore for `Microsoft.CodeAnalysis.CSharp*`, and `Compiler_IsTheDeclaredFloor` were left in place.
+
+## Results
+
+`Directory.Packages.props` now pins `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` at 4.0.0-beta.6, `Microsoft.Extensions.DependencyInjection` at 10.0.14, `Microsoft.NET.Test.Sdk` at 18.11.0, and `Microsoft.SourceLink.GitHub` at 10.0.403. `Microsoft.CodeAnalysis.CSharp` and `Microsoft.CodeAnalysis.CSharp.Workspaces` stay at 5.0.0. `<Version>` stays `15.0.0-beta.1` (pack wrote `TimeWarp.Mediator.15.0.0-beta.1.nupkg` and `TimeWarp.Mediator.Generators.15.0.0-beta.1.nupkg`).
+
+`dotnet run --file tools/dev-cli/dev.cs -- self-install` rebuilt `./bin/dev`. `--capabilities` lists `benchmark`, `build`, `pack`, `test`, `verify-samples`, `workflow`, `check-version`, `clean`, `release`, and `self-install`, which covers every command named in `agent.md`.
+
+`./bin/dev workflow --mode pr` succeeded: clean, build with 0 warnings and 0 errors, tests 57 + 42 + 69 passed, both samples verified (the AOT sample published), pack of the two nupkgs, and `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`. `Compiler_IsTheDeclaredFloor` passed on its own (1/1) after that run.
+
+`ganda repo audit --fix` scaffolded root `glossary.md` from the embedded template and refreshed `.githooks/pre-push.cs` so an empty ref list is allowed. The following audit exits 0. One advisory remains: `kanban-landed` warns that claim 021 has no usable worktree. That claim is not this task, and `--fix` landed 0 kitchens.
+
+### How to validate
+
+Smoke: `ganda nuget outdated`, then `./bin/dev workflow --mode pr`, then `dotnet test tests/timewarp-mediator-generators-compilation-tests/timewarp-mediator-generators-compilation-tests.csproj --filter Compiler_IsTheDeclaredFloor -c Release`.
+
+Expect: outdated lists only `Microsoft.CodeAnalysis.CSharp` and `Microsoft.CodeAnalysis.CSharp.Workspaces` (5.0.0 → 5.9.0); the five bumped packages are current and the `TimeWarp.Mediator` rows stay skipped. Workflow prints `0 Warning(s)`, tests 57 + 42 + 69 passed, `Samples verified successfully!`, both `15.0.0-beta.1` nupkgs, `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`, and `Pipeline SUCCEEDED`. The filter reports `Passed: 1`.
 
 ## Session
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-28)
 - Created: cockpit session 04be23b7 (2026-10-28) from Steven's ganda nuget outdated run
+- Implementation: 01a18153-dc43-76d1-93d8-fac4fe3ce8f9 (2026-10-28). Audit `--fix` added `glossary.md` and updated `.githooks/pre-push.cs`. Left the `kanban-landed` advisory for claim 021 (no usable worktree; not this task).
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18153-dc43-76d1-93d8-fac4fe3ce8f9, max-turns 500, Done — 2026-10-28T07:14:53Z
