@@ -105,13 +105,13 @@ Done means:
 - [x] `documentation/architecture.md` singleton-mode section cites the paired numbers
 - [x] `documentation/overview.md` benchmark CI note; `agent.md` benchmark row
 ### Review
-- [ ] Code Review
+- [x] Code Review
 - [ ] PR with merge commit
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5. Fix pass below addresses them. Round 2 is the host's next node.
-
+- Round 2: Done
 ## Results
 
 Singleton stays off the public API. A paired net10.0 run (BenchmarkDotNet 0.15.8, IterationCount=8, WarmupCount=3, same job) measured a transient dispatcher that the benchmark resolves once against a singleton dispatcher:
@@ -136,6 +136,13 @@ The `benchmark` job stays on the weekly schedule (`17 6 * * 1` UTC) and on `work
 `./bin/dev workflow` (mode Pr: clean, build, test, verify-samples, pack) exited 0 on 2026-10-28. Tests passed on net10.0 and net11.0 (generators 61, analyzers 42, compilation 69 on each TFM). Both sample frameworks ran. Pack produced `TimeWarp.Mediator.15.0.0-beta.2`, and the package smoke printed `package-pong` on net10.0 and net11.0.
 
 `ganda repo audit --fix` landed kitchen 020 onto origin-home. A following `ganda repo audit` passes. The remaining `kanban-landed` line is an advisory that task 021 has no usable worktree. That claim is outside this id.
+
+### Review disposition
+
+- Disposition: **clean**. Two rounds, reviewer roster `general` (reviewer-claude, claude-opus-5-5), effort 2.
+- Final counts: bug 3 fixed, suggestion 1 fixed, nit 1 fixed. 0 open, 0 wontfix.
+- Round 2 reran `./bin/dev build`, `./bin/dev test`, and `ganda repo audit` (passed; the only output was the task 021 worktree advisory). It also published and ran the AOT lane to `/tmp` independently, and allocations matched `comparison-baseline-aot.md` on every row.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -167,6 +174,8 @@ Expect: `--gate` prints `Benchmark gate passed.` `documentation/benchmarks/compa
   Reviewer checks: `dev build` and `dev test` pass, `ganda repo audit` passes, and an AOT publish and run to `/tmp` succeeds.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session b80304cc-f4e2-47c9-abcb-60204f9acb8b, max-turns 120 — 2026-10-28T13:25:41Z
 - Fix pass (implement-fix-2): closed M1–M5. Re-recorded the net10.0 baseline from the committed singleton martinothamar row, `./bin/dev benchmark --gate` passed, and `./bin/dev benchmark --aot` wrote `comparison-baseline-aot.md` after the non-boxing sink. `./bin/dev workflow` passed on net10.0 and net11.0. Recommendation: leave `AddGeneratedMediator` transient. `ganda repo audit --fix` landed this kitchen; the only leftover audit line is the task 021 worktree advisory.
+
+- Review oracle round 2: reviewer-claude (claude-opus-5-5), effort 2, roster general — 2026-10-28. Fix delta `6362884..f42f012` reviewed. M1–M5 are fixed and there are no new findings. Disposition is clean. See `review/round-2/merged.md` and `review/disposition.md`.
 
 ## Implementation Notes
 
