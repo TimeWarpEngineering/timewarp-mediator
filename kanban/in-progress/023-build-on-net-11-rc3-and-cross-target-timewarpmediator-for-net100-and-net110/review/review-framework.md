@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 75
+- Lines changed: 111
 - Effort: 1
 - TCB hits: none
 - Roster axes: general
@@ -33,3 +33,7 @@
 ## Round 3 scope
 
 **Diff scope:** delta `0448d20..4563d15` (round-2 `base.sha` to head) plus the working tree, effort 1, roster general, turn cap 80. Re-verify round-2 M1, M2, and M3. The delta is kitchen-only: the round-2 landing commit.
+
+## Round 4 scope
+
+**Diff scope:** delta `4563d15..1862f53` (round-3 `base.sha` to head): `ee2cc5b` (`Directory.Packages.props`, `agent.md`) and `1862f53` (kitchen). Effort 1, roster general, turn cap 80. Re-verify round-3 M1, M2, and M3.
