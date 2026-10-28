@@ -4,7 +4,7 @@
 
   <!-- Single owner of <Version> and package metadata for the product packages. -->
   <PropertyGroup Label="Package Metadata">
-    <Version>15.0.0-beta.1</Version>
+    <Version>15.0.0-beta.2</Version>
     <Authors>Steven T. Cramer</Authors>
     <Product>TimeWarp Mediator</Product>
     <Copyright>Copyright 2014-2025 Jimmy Bogard (original MediatR, Apache-2.0); 2025-2026 TimeWarp Engineering (Unlicense)</Copyright>
