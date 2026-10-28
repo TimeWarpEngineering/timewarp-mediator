@@ -19,6 +19,8 @@
 // --aot publishes the comparison project with PublishAot (BenchmarkAot=true)
 // and runs the TimeWarp* methods. BenchmarkDotNet is not in that compilation.
 // The report is documentation/benchmarks/comparison-baseline-aot.md and is not gated.
+// The header states that each row is invoked through a delegate. A failed publish or
+// run assigns that process exit code directly.
 #endregion
 
 namespace DevCli.Commands;
@@ -207,7 +209,7 @@ public sealed class BenchmarkCommand : ICommand<Unit>
         Terminal.WriteErrorLine(publish.Stdout);
         Terminal.WriteErrorLine(publish.Stderr);
         Terminal.WriteErrorLine("Native AOT publish failed.".Red());
-        Environment.ExitCode = publish.ExitCode == 0 ? 1 : publish.ExitCode;
+        Environment.ExitCode = publish.ExitCode;
         return;
       }
 
@@ -226,7 +228,7 @@ public sealed class BenchmarkCommand : ICommand<Unit>
         Terminal.WriteErrorLine(run.Stdout);
         Terminal.WriteErrorLine(run.Stderr);
         Terminal.WriteErrorLine("Native AOT benchmark run failed.".Red());
-        Environment.ExitCode = run.ExitCode == 0 ? 1 : run.ExitCode;
+        Environment.ExitCode = run.ExitCode;
         return;
       }
 
@@ -259,7 +261,7 @@ public sealed class BenchmarkCommand : ICommand<Unit>
       baseline.AppendLine($"- Commit: `{sha.Stdout.Trim()}`{(dirty ? " (working tree had uncommitted changes)" : string.Empty)}");
       baseline.AppendLine($"- Date (UTC): {DateTime.UtcNow:yyyy-MM-dd}");
       baseline.AppendLine();
-      baseline.AppendLine("BenchmarkDotNet's NativeAotToolchain is not used. The BenchmarkDotNet package is omitted from this publish (`BenchmarkAot=true`), and a small runner calls the `TimeWarp*` methods. These numbers are not gated.");
+      baseline.AppendLine("BenchmarkDotNet's NativeAotToolchain is not used. The BenchmarkDotNet package is omitted from this publish (`BenchmarkAot=true`), and a small runner calls the `TimeWarp*` methods. Each iteration invokes the row through a delegate, so the mean includes that call. The result is stored in a generic static field and is not boxed. These numbers are not gated.");
       baseline.AppendLine();
       baseline.AppendLine(run.Stdout.Trim());
       baseline.AppendLine();

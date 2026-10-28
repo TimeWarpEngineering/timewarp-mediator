@@ -6,11 +6,12 @@ extern alias scopedmartin;
 #endregion
 
 #region Design
-// Each external row names its TimeWarp pair in a comment. MartinothamarGenerated is
-// Transient, matching AddGeneratedMediator(). The scoped martinothamar row lives in
-// another compilation because that generator emits one ServiceLifetime. A singleton
-// TimeWarp row was measured and was not faster than this cached transient path, so it
-// is not part of the suite. MediatR is excluded from the PublishAot build (BENCHMARK_AOT).
+// Each external row names its TimeWarp pair in a comment. MartinothamarGenerated keeps
+// that generator's default Singleton. Forcing Transient made the held instance about
+// five times slower on net10.0, which is not the path their users run. TimeWarp stays
+// transient; the benchmark resolves it once. The scoped row is the lifetime-aligned
+// pair and lives in another compilation because that generator emits one
+// ServiceLifetime. MediatR is excluded from the PublishAot build (BENCHMARK_AOT).
 #endregion
 
 using TimeWarp.Mediator;
@@ -65,9 +66,9 @@ public class DispatchBenchmarks
     ServiceCollection martinServices = new();
     // Assemblies limits this compilation's generator to MartinPing. Empty means every
     // referenced assembly, which would emit the extern-aliased satellite handlers.
+    // ServiceLifetime stays the generator default, Singleton.
     martinServices.AddMediator(options =>
     {
-      options.ServiceLifetime = ServiceLifetime.Transient;
       options.Assemblies = [typeof(MartinPing)];
     });
     MartinothamarMediator = martinServices.BuildServiceProvider().GetRequiredService<global::Mediator.IMediator>();
@@ -180,7 +181,8 @@ public class DispatchBenchmarks
     return GeneratedSender.Send(UpdateProfileRequest);
   }
 
-  // Pairs with TimeWarpGeneratedInterfaceSend. Transient, not martinothamar's Singleton default.
+  // Pairs with TimeWarpGeneratedInterfaceSend. Same handler body. Their mediator is the
+  // generator default, Singleton. TimeWarp's dispatcher is transient and resolved once.
 #if !BENCHMARK_AOT
   [Benchmark]
 #endif
