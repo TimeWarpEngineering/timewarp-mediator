@@ -13,7 +13,8 @@ Follow-up to 023. When .NET 11 ships (expected November 2026), replace the RC3 S
 - `global.json`: pin SDK `11.0.100`. Drop the `rc.3` band. Keep `rollForward: latestFeature`. Drop `allowPrerelease` once the pin is a GA SDK.
 - `Directory.Packages.props`: the `net11.0` `Microsoft.Extensions.DependencyInjection` pin becomes `11.0.0`. Leave the `net10.0` pin on the 10.0 line. A net10.0 host still must not restore an 11 package.
 - `.github/workflows/workflow.yml`: remove `dotnet-quality: preview` from the `11.0.x` setup-dotnet step. Keep the `10.0.x` install so the net10.0 targeting pack and runtime still restore.
-- BenchmarkDotNet is `0.16.0-preview.2` on the comparison project because 0.15.8 throws on a net11.0 host. When 0.16.0 stable is on NuGet, move that pin off the preview. Do not re-record `documentation/benchmarks/comparison-baseline.md` (the net10.0 gate from 021-003) as part of that bump.
+- BenchmarkDotNet is pinned per target framework: `0.15.8` on `net10.0` and `0.16.0-preview.2` on `net11.0`. `0.15.8` recorded `documentation/benchmarks/comparison-baseline.md`. `0.15.8` throws on a net11.0 host before it measures, so the net11.0 leg stays on the preview until `0.16.0` stable is on NuGet. Move only the `net11.0` pin off the preview. Leave the `net10.0` pin on `0.15.8`.
+- Keep `./bin/dev benchmark --gate` green. That gate is the net10.0 check against `comparison-baseline.md`. On 2026-10-28 it passed on BenchmarkDotNet `0.15.8` and .NET 10.0.14, and it had failed on `0.16.0-preview.2` for the two monomorphic rows. Do not re-record `comparison-baseline.md` as part of the stable bump. A later move of the `net10.0` pin has to re-run the gate and leave it green: stay on `0.15.8`, or re-record that file only after Steven approves the new numbers.
 - `<Version>` is unchanged by this swap. This is not a release.
 - `./bin/dev workflow` is green on the GA SDK after the swap.
 
@@ -21,7 +22,8 @@ Follow-up to 023. When .NET 11 ships (expected November 2026), replace the RC3 S
 
 - [ ] SDK pin is `11.0.100` and CI no longer asks for preview quality
 - [ ] net11.0 DependencyInjection pin is `11.0.0`; net10.0 pin stays on 10.0
-- [ ] BenchmarkDotNet preview pin replaced when 0.16.0 stable exists, without rewriting the net10.0 gate file
+- [ ] net11.0 BenchmarkDotNet pin is off the preview when 0.16.0 stable exists; net10.0 stays on 0.15.8
+- [ ] `./bin/dev benchmark --gate` is green. Re-record `comparison-baseline.md` only after Steven approves the new numbers
 - [ ] `./bin/dev workflow` green
 
 ## Notes
@@ -33,3 +35,4 @@ Follow-up to 023. When .NET 11 ships (expected November 2026), replace the RC3 S
 
 - Created: 3691297 (2026-10-28)
 - Spec: task 023 implementer (2026-10-28)
+- Gate item: task 023 implement-fix-4 (2026-10-28). The net10.0 gate passed on BenchmarkDotNet 0.15.8. This task keeps that gate green when the net11.0 pin leaves the preview.
