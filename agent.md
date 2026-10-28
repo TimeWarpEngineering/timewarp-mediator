@@ -19,9 +19,9 @@ dotnet run --file tools/dev-cli/dev.cs -- self-install
 |---|---|
 | `./bin/dev build [--clean] [--quiet]` | Build `timewarp-mediator.slnx` |
 | `./bin/dev test [--no-build] [--quiet]` | Run the test suite |
-| `./bin/dev pack [--no-build]` | Pack `TimeWarp.Mediator` and `TimeWarp.Mediator.Generators` to `artifacts/packages`. Assert exactly those two nupkgs, the TWM001–TWM004 analyzer DLL inside `TimeWarp.Mediator`, `buildTransitive` props on Generators, a single `lib/net10.0` folder, `notice`, `unlicense`, and each package's own `readme.md` with absolute links only. Then build and run the package smoke consumer against those nupkgs |
+| `./bin/dev pack [--no-build]` | Pack `TimeWarp.Mediator` and `TimeWarp.Mediator.Generators` to `artifacts/packages`. Assert exactly those two nupkgs, the TWM001–TWM004 analyzer DLL inside `TimeWarp.Mediator`, `buildTransitive` props on Generators, exactly `lib/net10.0` and `lib/net11.0`, `notice`, `unlicense`, and each package's own `readme.md` with absolute links only. Then build and run the package smoke consumer on both frameworks; each run must print `package-pong` |
 | `./bin/dev verify-samples [--no-build]` | Build every `samples/**/*.csproj`, then run each Exe sample and require exit code 0 (aot and named-pipelines also check their output) |
-| `./bin/dev benchmark [--project comparison] [--filter <glob>] [--record] [--gate]` | Run BenchmarkDotNet on the comparison project. `--record` rewrites `documentation/benchmarks/comparison-baseline.md`. `--gate` fails when a `TimeWarp*` row exceeds that file. The 15.0 record is task 021-003, commit `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`. Not part of `workflow` |
+| `./bin/dev benchmark [--project comparison] [--framework net10.0\|net11.0] [--filter <glob>] [--record] [--gate]` | Run BenchmarkDotNet on the comparison project. The default framework is `net10.0`. `--record` on `net10.0` rewrites `documentation/benchmarks/comparison-baseline.md`. `--framework net11.0 --record` writes `documentation/benchmarks/comparison-baseline-net11.md` and leaves the net10.0 gate file alone. `--gate` runs `net10.0` and fails when a `TimeWarp*` row exceeds `comparison-baseline.md`. The 15.0 record is task 021-003, commit `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`. Not part of `workflow` |
 | `./bin/dev workflow [--mode pr\|merge\|release]` | CI pipeline: clean → build → test → verify-samples → pack. Release mode: clean → build → pack → check-version → push |
 | `./bin/dev check-version [--strict]` | Fail if `<Version>` is already published on nuget.org for `TimeWarp.Mediator` or `TimeWarp.Mediator.Generators` |
 | `./bin/dev release [--dry-run]` | Tag `v<Version>` and create the GitHub Release |
@@ -42,7 +42,7 @@ dotnet test tests/timewarp-mediator-generators-tests/timewarp-mediator-generator
 
 | Project | Package | Target | Contents |
 |---|---|---|---|
-| `timewarp-mediator` | `TimeWarp.Mediator` | `net10.0` | `IRequest`, `ICommand`, `IQuery`, `IAction`, `IIdempotentCommand`, `INotification`, `IRequestHandler` / `INotificationHandler`, `ActionHandler<T>`, `IPipelineBehavior` / `MessageHandlerDelegate`, `ISender` / `IPublisher` / `IMediator` (and the `<TScope>` forms), `MediatorAssembly`, `MediatorScope`, `MediatorBehavior`, `GeneratedMediatorAttribute`, `NoHandlerException`, `Unit`. Packs the TWM001–TWM004 analyzer |
+| `timewarp-mediator` | `TimeWarp.Mediator` | `net10.0;net11.0` | `IRequest`, `ICommand`, `IQuery`, `IAction`, `IIdempotentCommand`, `INotification`, `IRequestHandler` / `INotificationHandler`, `ActionHandler<T>`, `IPipelineBehavior` / `MessageHandlerDelegate`, `ISender` / `IPublisher` / `IMediator` (and the `<TScope>` forms), `MediatorAssembly`, `MediatorScope`, `MediatorBehavior`, `GeneratedMediatorAttribute`, `NoHandlerException`, `Unit`. Packs the TWM001–TWM004 analyzer |
 | `timewarp-mediator-generators` | `TimeWarp.Mediator.Generators` | `netstandard2.0` | Source generator: compile-time message graph, `internal sealed Mediator`, named pipelines, `MediatorManifest` version 2, `AddGeneratedMediator()`. Reports TWM007, TWM008, TWM010, TWM011, and TWM001–TWM003 in a host |
 | `timewarp-mediator-analyzers` | none (asset of `TimeWarp.Mediator`) | `netstandard2.0` | TWM001–TWM004. Not a NuGet package |
 
@@ -79,13 +79,14 @@ The Roslyn floor is asserted from the compilation tests (`Microsoft.CodeAnalysis
 
 ### Target Frameworks
 
-- `TimeWarp.Mediator`: `net10.0`
+- `TimeWarp.Mediator`: `net10.0;net11.0`
 - `TimeWarp.Mediator.Generators` and the analyzer project: `netstandard2.0` (Roslyn loads them in-process, including .NET Framework MSBuild and Visual Studio)
-- Tests, benchmarks, samples and the dev CLI: `net10.0`
+- Tests, benchmarks, samples, and the package smoke consumer: `net10.0;net11.0`
+- Dev CLI (`tools/dev-cli/dev.cs`): `net10.0`, pinned with `#:property TargetFramework=net10.0`. `TimeWarp.Nuru` 4.0.0-beta.6 ships `lib/net10.0` only. `global.json` pins the SDK to `11.0.100-rc.3` (`rollForward: latestFeature`, `allowPrerelease: true`). CI installs `11.0.x` with `dotnet-quality: preview` and keeps `10.0.x` so the net10.0 runtime pack restores.
 
 ### Key Dependencies
 
-- `Microsoft.Extensions.DependencyInjection` for test, benchmark, sample, and smoke hosts (version pinned in `Directory.Packages.props`). A generated host needs `Microsoft.Extensions.DependencyInjection.Abstractions` (`IServiceCollection`, `IServiceProvider`). A missing reference is TWM008 and the generator emits nothing.
+- `Microsoft.Extensions.DependencyInjection` for test, benchmark, sample, and smoke hosts. `Directory.Packages.props` pins `10.0.14` when `$(TargetFramework)` is `net10.0` and `11.0.0-rc.3.26522.148` when it is `net11.0`. A net10.0 host does not restore the 11 RC. A generated host needs `Microsoft.Extensions.DependencyInjection.Abstractions` (`IServiceCollection`, `IServiceProvider`). A missing reference is TWM008 and the generator emits nothing.
 - `Microsoft.CodeAnalysis.CSharp` 5.0.0 for the shipped analyzer and generator (`VersionOverride`). Dependabot ignores `Microsoft.CodeAnalysis.CSharp*`.
 
 ### Build Properties
@@ -101,7 +102,7 @@ The Roslyn floor is asserted from the compilation tests (`Microsoft.CodeAnalysis
 - `source/Directory.Build.props`: the single `<Version>` and the shared package metadata.
   `dev check-version` and `dev release` read that version for `TimeWarp.Mediator` and
   `TimeWarp.Mediator.Generators`.
-- No repo-wide `LangVersion` pin: `net10.0` projects use the SDK default; the netstandard2.0
+- No repo-wide `LangVersion` pin: `net10.0` and `net11.0` projects use the SDK default; the netstandard2.0
   Roslyn projects set `latest`. Generator-emitted code stays conservative so consumers on
   older language versions still compile it.
 - Generator MSBuild properties (from `TimeWarp.Mediator.Generators` buildTransitive props):

@@ -1,7 +1,7 @@
 # Samples
 
-Every sample targets `net10.0`. `./bin/dev verify-samples` builds each one and runs every
-executable sample. A non-zero exit code fails the command, and `dev workflow` runs it on every
+Every sample targets `net10.0` and `net11.0`. `./bin/dev verify-samples` builds each one and runs every
+executable sample on both frameworks. The AOT sample publishes on both, with trim and AOT warnings as errors. A non-zero exit code fails the command, and `dev workflow` runs it on every
 pull request.
 
 Reference `TimeWarp.Mediator` and `TimeWarp.Mediator.Generators`. Registration is

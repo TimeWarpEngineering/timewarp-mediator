@@ -11,14 +11,14 @@ The packages share one version and are packed together by `dev pack`:
 
 | Package | Project | Target |
 |---|---|---|
-| `TimeWarp.Mediator` | `source/timewarp-mediator` (packs `TimeWarp.Mediator.Analyzers.dll` as an analyzer asset) | `net10.0` |
+| `TimeWarp.Mediator` | `source/timewarp-mediator` (packs `TimeWarp.Mediator.Analyzers.dll` as an analyzer asset) | `net10.0;net11.0` |
 | `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `netstandard2.0` |
 
 `source/timewarp-mediator-analyzers` builds the TWM001–TWM004 analyzer. It is not a NuGet package.
 
 `dev pack` writes the two nupkgs to `artifacts/packages` and fails if any other nupkg is there.
 `TimeWarp.Mediator` must contain `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` and exactly
-one `lib/net10.0/` folder. `TimeWarp.Mediator.Generators` must contain its generator DLL and
+the `lib/net10.0/` and `lib/net11.0/` folders. `TimeWarp.Mediator.Generators` must contain its generator DLL and
 `buildTransitive/TimeWarp.Mediator.Generators.props`. Each nupkg must contain `notice` and
 `unlicense`. Each package packs its own `source/<project>/readme.md` as the nuget.org readme;
 `dev pack` fails when that readme's first heading is not the package id or it contains a relative
@@ -50,6 +50,12 @@ buildTransitive props or TFM folder fails here instead of after publishing.
 The workflow is a thin trigger; the pipeline itself is `dev workflow` (C#, in `tools/dev-cli`).
 Every step runs `dotnet run --file tools/dev-cli/dev.cs -- …`, so CI does not need a
 pre-installed `./bin/dev`.
+
+`global.json` pins the SDK to `11.0.100-rc.3` with `rollForward: latestFeature` and
+`allowPrerelease: true`. Each job's `setup-dotnet` steps install `10.0.x` on the GA channel
+and `11.0.x` with `dotnet-quality: preview`. The `10.0.x` install stays so the `net10.0`
+targeting pack and runtime restore. `dotnet-quality: preview` is not applied to `10.0.x`.
+When .NET 11 ships, replace the RC pins with `11.0.100` / `11.0.0` and drop the preview quality.
 
 | Trigger | Job | What runs |
 |---|---|---|

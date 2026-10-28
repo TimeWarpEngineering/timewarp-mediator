@@ -8,11 +8,11 @@ Host, Aot, or Link profile.
 
 | Package | Project | Target | What a reference does |
 |---|---|---|---|
-| `TimeWarp.Mediator` | `source/timewarp-mediator` | `net10.0` | Contracts, `Unit`, membership attributes, `GeneratedMediatorAttribute`, and the TWM001–TWM004 analyzer DLL at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` |
+| `TimeWarp.Mediator` | `source/timewarp-mediator` | `net10.0;net11.0` | Contracts, `Unit`, membership attributes, `GeneratedMediatorAttribute`, and the TWM001–TWM004 analyzer DLL at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` |
 | `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `netstandard2.0` | Source generator. Emits the dispatcher, `MediatorManifest`, and `AddGeneratedMediator`. Reports TWM007, TWM008, TWM010, and TWM011, and TWM001–TWM003 in a generator host |
 
 The analyzer project `source/timewarp-mediator-analyzers` stays in the tree because the analyzer
-is `netstandard2.0` and the contracts library is `net10.0`. It is not a NuGet package.
+is `netstandard2.0` and the contracts library is `net10.0` and `net11.0`. It is not a NuGet package.
 `TimeWarp.Mediator.Generators` does not bundle that analyzer DLL. A library that only declares
 messages references `TimeWarp.Mediator` and gets TWM001–TWM004. A host references both packages
 at the same version.

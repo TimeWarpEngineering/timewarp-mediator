@@ -9,12 +9,14 @@
 // notice/unlicense, fails the command
 // the same way the PowerShell zip asserts did. NupkgReadmeCheck then requires
 // the package's own readme.md with only absolute links. TimeWarp.Mediator
-// must ship exactly one lib/ TFM folder (RepoLayout.LibTargetFramework).
-// The artifacts directory must contain exactly the two PackageLayout nupkgs.
-// Last, the package smoke project restores TimeWarp.Mediator + Generators from
-// artifacts/packages into a throwaway packages folder (the version is not
-// bumped per build, so the global cache could hold a stale nupkg of the same
-// version), then builds and runs as an outside consumer would.
+// must ship exactly the lib/ folders in RepoLayout.LibTargetFrameworks
+// (net10.0 and net11.0). The artifacts directory must contain exactly the two
+// PackageLayout nupkgs. Last, the package smoke project restores
+// TimeWarp.Mediator + Generators from artifacts/packages into a throwaway
+// packages folder (the version is not bumped per build, so the global cache
+// could hold a stale nupkg of the same version), then builds and runs on each
+// of those frameworks as an outside consumer would. Each run must print
+// package-pong.
 #endregion
 
 namespace DevCli.Commands;
@@ -152,10 +154,10 @@ public sealed class PackCommand : ICommand<Unit>
         if (RepoLayout.LibPackageIds.Contains(packageId, StringComparer.Ordinal))
         {
           string[] libFolders = FindLibTargetFrameworks(nupkgPath);
-          if (libFolders is not [RepoLayout.LibTargetFramework])
+          if (!libFolders.SequenceEqual(RepoLayout.LibTargetFrameworks, StringComparer.Ordinal))
           {
             Terminal.WriteErrorLine(
-              $"{Path.GetFileName(nupkgPath)} lib/ folders are [{string.Join(", ", libFolders)}], expected [{RepoLayout.LibTargetFramework}]".Red());
+              $"{Path.GetFileName(nupkgPath)} lib/ folders are [{string.Join(", ", libFolders)}], expected [{string.Join(", ", RepoLayout.LibTargetFrameworks)}]".Red());
             Environment.ExitCode = 1;
             return false;
           }
@@ -196,23 +198,30 @@ public sealed class PackCommand : ICommand<Unit>
       }
 
       Terminal.WriteLine($"\nRunning package smoke against {version} from artifacts/packages...");
-      CommandOutput output = await DotNet.Run()
-        .WithProject(Path.Combine(RepoRoot, RepoLayout.PackageSmokeProject))
-        .WithConfiguration("Release")
-        .WithProperty("TimeWarpMediatorVersion", version)
-        .WithProperty("RestorePackagesPath", packagesPath)
-        .WithNoValidation()
-        .CaptureAsync(Ct);
-
-      if (output.ExitCode != 0)
+      foreach (string framework in RepoLayout.LibTargetFrameworks)
       {
-        Terminal.WriteErrorLine(output.Combined);
-        Terminal.WriteErrorLine("Package smoke failed: the packed nupkgs do not build or run in a clean consumer.".Red());
-        Environment.ExitCode = 1;
-        return false;
+        Terminal.WriteLine($"Package smoke ({framework})...");
+        CommandOutput output = await DotNet.Run()
+          .WithProject(Path.Combine(RepoRoot, RepoLayout.PackageSmokeProject))
+          .WithConfiguration("Release")
+          .WithFramework(framework)
+          .WithProperty("TimeWarpMediatorVersion", version)
+          .WithProperty("RestorePackagesPath", packagesPath)
+          .WithNoValidation()
+          .CaptureAsync(Ct);
+
+        if (output.ExitCode != 0 || !output.Stdout.Contains("package-pong", StringComparison.Ordinal))
+        {
+          Terminal.WriteErrorLine(output.Combined);
+          Terminal.WriteErrorLine(
+            $"Package smoke failed on {framework}: the packed nupkgs do not build or pong in a clean consumer.".Red());
+          Environment.ExitCode = output.ExitCode == 0 ? 1 : output.ExitCode;
+          return false;
+        }
+
+        Terminal.WriteLine(output.Stdout.Trim());
       }
 
-      Terminal.WriteLine(output.Stdout.Trim());
       return true;
     }
 

@@ -22,9 +22,9 @@ behaviors are woven. This project is a fork of
 
 ## Target framework
 
-`TimeWarp.Mediator` targets **net10.0**. The generator targets netstandard2.0 because it runs
-inside the compiler. It needs the Roslyn that ships with the .NET 10 SDK
-(`Microsoft.CodeAnalysis.CSharp` 5.0.0).
+`TimeWarp.Mediator` targets **net10.0 and net11.0**. The generator targets netstandard2.0 because it runs
+inside the compiler. It needs the Roslyn that ships with the .NET 10 SDK or newer
+(`Microsoft.CodeAnalysis.CSharp` 5.0.0 is the floor).
 
 ## Quick start
 
