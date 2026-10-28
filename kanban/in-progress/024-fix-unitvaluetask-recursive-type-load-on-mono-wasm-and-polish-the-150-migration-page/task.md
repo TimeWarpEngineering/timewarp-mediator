@@ -94,6 +94,7 @@ that cost the implementer real time. Fold them in while the page is open.
 - Review oracle round 1: general reviewer (claude-opus-5-5, headless `ganda task work`), effort 2 by diff. Fix pass requested for M1–M3 — 2026-10-28
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session 4a0e8efe-3d0b-4f4e-8bad-61b9702ab892, max-turns 120 — 2026-10-28T10:46:56Z
 - Fix pass: implement-fix-2 closed M1, M2, and M3 (2026-10-28)
+- Review oracle round 2: general reviewer (claude-opus-5-5, headless `ganda task work`), effort 2. M1–M3 fixed, no new findings. Disposition clean — 2026-10-28
 
 ## Results
 
@@ -115,19 +116,19 @@ Expect: exit 0. generators-tests 61 passed, analyzers-tests 42 passed, and compi
 
 ### Review
 
-Round 1 had one reviewer, general, at effort 2: one bug and two nits. The fix pass closed all three. Round 2 has not run. `review/round-1/merged.md` still records the open round-1 disposition.
+Disposition: **clean**. Two rounds ran, each with one general reviewer (claude-opus-5-5) at effort 2. Round 1 raised one bug (M1) and two nits (M2, M3). Fix pass `cd587ef` closed all three. Round 2 re-verified them and found nothing new. Final counts: bug 1 fixed, nit 2 fixed, 0 open, 0 wontfix. `./bin/dev test --quiet` passes.
 
 - M1: `IncrementHandler` in `documentation/migration.md` returns `ValueTask.CompletedTask`. `tests/timewarp-mediator-generators-tests/increment-handler.cs` compiles that shape.
 - M2: the Nuru bullet lists the JSON kind strings `"Query"`, `"IdempotentCommand"`, `"Command"`, `"Action"`, and `"Request"`.
 - M3: `documentation/migration.md` and `documentation/release-notes/15.0.0-beta.2.md` cite CS0433 for a library that references two hosts, and name CS0436 as the source-versus-imported case.
 
-Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
-- Fix pass: M1, M2, and M3 addressed. Round 2 has not run.
-
+- Fix pass: M1, M2, and M3 addressed.
+- Round 2: Done
 ## Notes
 
 - Blocker verified at tag `v15.0.0-beta.1` and on `origin/master` (same line).
