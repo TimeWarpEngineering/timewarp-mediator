@@ -50,8 +50,12 @@
   </ItemGroup>
 
   <ItemGroup Label="Benchmarks">
-    <!-- 0.15.8 throws on a net11.0 host (RuntimeMoniker.NotRecognized) before it measures. -->
-    <PackageVersion Include="BenchmarkDotNet" Version="0.16.0-preview.2" />
+    <!-- 0.15.8 throws on a net11.0 host (RuntimeMoniker.NotRecognized) before it measures.
+         net10.0 stays on 0.15.8, the tool that recorded comparison-baseline.md, so the
+         regression gate measures with that tool. net11.0 uses 0.16.0-preview.2, which can
+         name the 11 runtime. -->
+    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.16.0-preview.2" Condition="'$(TargetFramework)' == 'net11.0'" />
     <PackageVersion Include="Mediator.Abstractions" Version="3.0.2" />
     <PackageVersion Include="Mediator.SourceGenerator" Version="3.0.2" />
   </ItemGroup>
