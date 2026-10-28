@@ -101,6 +101,8 @@ BenchmarkDotNet is pinned per target framework: `0.15.8` when `$(TargetFramework
 - Round 2: Blocked — open M3
 - Round 3 (2026-10-28, effort 1, general): the delta `0448d20..4563d15` is kitchen-only. No fix pass for M3 has landed. M1 and M2 stay fixed and M3 stays open. The `## Goal (implementer restatement)` has no fix-pass item for M3 yet, so the next implementer pass should add one. Fix pass requested for M3.
 - Round 3: Blocked — open M3
+- Round 4 (2026-10-28, effort 1, general): M3 fixed by the per-framework BenchmarkDotNet pin and the green `0.15.8` gate. No new findings. Disposition clean
+- Round 4: Done
 ## Notes
 
 - Consumers (TimeWarp.State, TimeWarp.Architecture, TimeWarp.Nuru) stay on net10.0 and keep
@@ -123,6 +125,7 @@ BenchmarkDotNet is pinned per target framework: `0.15.8` when `$(TargetFramework
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-28T08:20:33Z
 - Review oracle round 2: claude-opus-5-5 (ganda task work, headless), effort 1, roster general, max-turns 80, 2026-10-28. M1 and M2 fixed. 1 open (M3 suggestion). Fix pass requested
 - Review oracle round 3: claude-opus-5-5 (ganda task work, headless), effort 1, roster general, max-turns 80, 2026-10-28. The delta is kitchen-only. M3 is still open. Fix pass requested
+- Review oracle round 4: claude-opus-5-5 (ganda task work, headless), effort 1, roster general, max-turns 80, 2026-10-28. M3 fixed, no new findings. Disposition clean
 - Fix pass: implement-fix-2 (2026-10-28), SDK `11.0.100-rc.3.26522.148`. Dropped `RollForward=LatestMajor` from the six multi-targeted hosts. `./bin/dev benchmark --gate` failed two monomorphic rows against the 0.15.8 baseline. The baseline file was left unchanged.
 - Fix pass: implement-fix-4 (2026-10-28), SDK `11.0.100-rc.3.26522.148`. Pinned BenchmarkDotNet per framework. `./bin/dev benchmark --gate` passed on `0.15.8` (exit 0). Published the gate item on task 023-001 (`origin/master` `d544794`).
 
@@ -213,4 +216,6 @@ Round 2 ran at effort 1 with one general reviewer, scoped to `e1cdd00..0448d20`.
 
 Round 3 ran at effort 1 with one general reviewer, scoped to `0448d20..4563d15`. That delta is kitchen-only. `Directory.Packages.props` still pins BenchmarkDotNet `0.16.0-preview.2` for every TFM, and task 023-001 still has no item to get the gate green. M3 stays open. Counts: bug 0; suggestion 1 open and 1 fixed; nit 1 fixed. Review disposition: pending (M3 open). `review/disposition.md` is not written yet. Files: `review/round-3/general.md`, `review/round-3/merged.md`.
 
-Implement-fix-4 addressed that suggestion. The net10.0 pin is BenchmarkDotNet `0.15.8`, the gate passed, and task 023-001 on origin-home (`d544794`) has the checklist item that keeps the gate green. Round 4 has not run.
+Implement-fix-4 addressed that suggestion. The net10.0 pin is BenchmarkDotNet `0.15.8`, the gate passed, and task 023-001 on origin-home (`d544794`) has the checklist item that keeps the gate green.
+
+Round 4 ran at effort 1 with one general reviewer, scoped to `4563d15..1862f53`. M3 is fixed: `dotnet list package` resolves BenchmarkDotNet `0.15.8` on net10.0 and `0.16.0-preview.2` on net11.0, Results record the green gate, and `d544794` is on `origin/master`. M1 and M2 stay fixed. No new findings. Final counts: bug 0; suggestion 2 fixed; nit 1 fixed; 0 open, 0 wontfix. Review disposition: **clean** (4 rounds). Files: `review/review-framework.md`, `review/round-4/general.md`, `review/round-4/merged.md`, `review/disposition.md`.
