@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 602
-- Effort: 2
+- Lines changed: 165
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -25,3 +25,7 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 scope
+
+**Diff scope:** fix delta `e1cdd00..0448d20` (round-1 `base.sha` to head), effort 1, roster general. Re-verify round-1 M1 and M2 and scan the fix delta.
