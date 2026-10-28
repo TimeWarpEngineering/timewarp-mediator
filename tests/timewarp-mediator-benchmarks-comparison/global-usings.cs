@@ -4,9 +4,11 @@
 global using System;
 global using System.Threading;
 global using System.Threading.Tasks;
+#if !BENCHMARK_AOT
 global using BenchmarkDotNet.Attributes;
 global using BenchmarkDotNet.Jobs;
 global using BenchmarkDotNet.Running;
+#endif
 global using MartinothamarBenchmarks;
 global using MediatorBenchmarks;
 global using Microsoft.Extensions.DependencyInjection;

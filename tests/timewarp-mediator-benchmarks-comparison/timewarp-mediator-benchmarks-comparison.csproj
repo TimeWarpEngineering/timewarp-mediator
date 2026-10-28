@@ -12,14 +12,33 @@
 
   <Import Project="..\..\source\timewarp-mediator-generators\build-transitive\timewarp-mediator-generators.props" />
 
+  <!-- PublishAot lane. BenchmarkDotNet's host is not part of that compilation.
+       dev benchmark aot sets BenchmarkAot and publishes this project. -->
+  <PropertyGroup Condition="'$(BenchmarkAot)' == 'true'">
+    <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <DefineConstants>$(DefineConstants);BENCHMARK_AOT</DefineConstants>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors>$(WarningsAsErrors);IL2026;IL3050</WarningsAsErrors>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\source\timewarp-mediator\timewarp-mediator.csproj" />
     <ProjectReference Include="..\..\source\timewarp-mediator-generators\timewarp-mediator-generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\source\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <!-- The alias keeps that assembly's generated AddMediator extension out of this compilation. -->
+    <ProjectReference Include="..\timewarp-mediator-benchmarks-martinothamar-scoped\timewarp-mediator-benchmarks-martinothamar-scoped.csproj">
+      <Aliases>scopedmartin</Aliases>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="BenchmarkDotNet" Condition="'$(BenchmarkAot)' != 'true'" />
+    <PackageReference Include="MediatR" Condition="'$(BenchmarkAot)' != 'true'" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Condition="'$(BenchmarkAot)' != 'true'" />
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Mediator.SourceGenerator">
       <PrivateAssets>all</PrivateAssets>

@@ -123,6 +123,19 @@ It does not register `IRequestHandler<>`, `IPipelineBehavior<,>`, or `INotificat
 Resolve `ISender` from an `IServiceScope`. Handlers and the cache are scoped. The dispatcher
 uses the provider it was resolved from.
 
+### Mediator lifetime
+
+`AddGeneratedMediator()` and `AddGeneratedMediator<TScope>()` do not take a
+`ServiceLifetime`. The dispatcher is transient. Handlers, behaviors, chains, and
+`HandlerCache` are scoped.
+
+A singleton dispatcher was measured on net10.0 against a transient dispatcher that the
+benchmark resolves once and then reuses (task 020, BenchmarkDotNet 0.15.8). The two sends
+allocated the same 24 B, and the means sat inside each other's noise. `LiveCache` already
+keeps the handler for the life of that instance, so a singleton registration does not
+change `Send`. It is not offered. Disposing the scope disposes the cache, and the next
+send on that instance throws `ObjectDisposedException`.
+
 ## MediatorManifest
 
 The same generated namespace contains `internal static class MediatorManifest`.

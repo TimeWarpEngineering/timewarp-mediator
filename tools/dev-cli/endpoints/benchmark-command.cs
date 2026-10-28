@@ -16,6 +16,9 @@
 // runners are too noisy for a stored number. --gate (comparison only) re-runs
 // net10.0 and fails when a TimeWarp* row exceeds comparison-baseline.md.
 // Tolerance and the 15.0 target table are written by --record; see BenchmarkGate.
+// --aot publishes the comparison project with PublishAot (BenchmarkAot=true)
+// and runs the TimeWarp* methods. BenchmarkDotNet is not in that compilation.
+// The report is documentation/benchmarks/comparison-baseline-aot.md and is not gated.
 #endregion
 
 namespace DevCli.Commands;
@@ -38,6 +41,9 @@ public sealed class BenchmarkCommand : ICommand<Unit>
   [Option("gate", "g", Description = "Fail when a TimeWarp* comparison row exceeds the recorded baseline")]
   public bool Gate { get; set; }
 
+  [Option("aot", Description = "Publish the comparison project with PublishAot and record comparison-baseline-aot.md (not gated)")]
+  public bool Aot { get; set; }
+
   public sealed class Handler : ICommandHandler<BenchmarkCommand, Unit>
   {
     private readonly ITerminal Terminal;
@@ -58,9 +64,9 @@ public sealed class BenchmarkCommand : ICommand<Unit>
       }
 
       string name = string.IsNullOrWhiteSpace(command.Project) ? "comparison" : command.Project.Trim();
-      if (command.Record && command.Gate)
+      if ((command.Record ? 1 : 0) + (command.Gate ? 1 : 0) + (command.Aot ? 1 : 0) > 1)
       {
-        Terminal.WriteErrorLine("Pass either --record or --gate, not both.".Red());
+        Terminal.WriteErrorLine("Pass only one of --record, --gate, or --aot.".Red());
         Environment.ExitCode = 1;
         return Unit.Value;
       }
@@ -98,6 +104,28 @@ public sealed class BenchmarkCommand : ICommand<Unit>
         return Unit.Value;
       }
 
+      if (command.Aot && !string.Equals(name, "comparison", StringComparison.OrdinalIgnoreCase))
+      {
+        Terminal.WriteErrorLine("The AOT lane applies to the comparison project only.".Red());
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
+
+      if (command.Aot && !string.IsNullOrWhiteSpace(command.Filter) && command.Filter.Trim() != "*")
+      {
+        Terminal.WriteErrorLine("--aot runs every TimeWarp* row. Omit --filter.".Red());
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
+
+      if (command.Aot && !string.Equals(framework, RepoLayout.GateTargetFramework, StringComparison.Ordinal))
+      {
+        Terminal.WriteErrorLine(
+          $"--aot records documentation/benchmarks/comparison-baseline-aot.md on {RepoLayout.GateTargetFramework}. Omit --framework or pass {RepoLayout.GateTargetFramework}.".Red());
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
+
       (string Name, string Project) match = RepoLayout.BenchmarkProjects
         .FirstOrDefault(candidate => string.Equals(candidate.Name, name, StringComparison.OrdinalIgnoreCase));
       if (match.Project is null)
@@ -105,6 +133,12 @@ public sealed class BenchmarkCommand : ICommand<Unit>
         string known = string.Join(", ", RepoLayout.BenchmarkProjects.Select(candidate => candidate.Name));
         Terminal.WriteErrorLine($"Unknown benchmark project '{name}'. Known: {known}".Red());
         Environment.ExitCode = 1;
+        return Unit.Value;
+      }
+
+      if (command.Aot)
+      {
+        await RunAotAsync(repoRoot, match.Project, framework, ct);
         return Unit.Value;
       }
 
@@ -143,6 +177,114 @@ public sealed class BenchmarkCommand : ICommand<Unit>
 
       Terminal.WriteLine($"\nBenchmark results: {Path.GetRelativePath(repoRoot, artifactsPath)}".Green());
       return Unit.Value;
+    }
+
+    private async Task RunAotAsync(string repoRoot, string project, string framework, CancellationToken ct)
+    {
+      string rid = HostRid();
+      string output = Path.Combine(repoRoot, "artifacts", "benchmarks", "comparison", "aot-" + framework);
+      if (Directory.Exists(output))
+      {
+        Directory.Delete(output, true);
+      }
+
+      Terminal.WriteLine($"Publishing {project} ({framework}, {rid}, PublishAot)...");
+      CommandOutput publish = await Shell.Builder("dotnet")
+        .WithArguments(
+          "publish",
+          Path.Combine(repoRoot, project),
+          "-c", "Release",
+          "-f", framework,
+          "-r", rid,
+          "-p:BenchmarkAot=true",
+          "-o", output,
+          "--nologo")
+        .WithWorkingDirectory(repoRoot)
+        .WithNoValidation()
+        .CaptureAsync(ct);
+      if (publish.ExitCode != 0)
+      {
+        Terminal.WriteErrorLine(publish.Stdout);
+        Terminal.WriteErrorLine(publish.Stderr);
+        Terminal.WriteErrorLine("Native AOT publish failed.".Red());
+        Environment.ExitCode = publish.ExitCode == 0 ? 1 : publish.ExitCode;
+        return;
+      }
+
+      string exe = Path.Combine(output, "timewarp-mediator-benchmarks-comparison");
+      if (OperatingSystem.IsWindows())
+      {
+        exe += ".exe";
+      }
+
+      CommandOutput run = await Shell.Builder(exe)
+        .WithWorkingDirectory(output)
+        .WithNoValidation()
+        .CaptureAsync(ct);
+      if (run.ExitCode != 0)
+      {
+        Terminal.WriteErrorLine(run.Stdout);
+        Terminal.WriteErrorLine(run.Stderr);
+        Terminal.WriteErrorLine("Native AOT benchmark run failed.".Red());
+        Environment.ExitCode = run.ExitCode == 0 ? 1 : run.ExitCode;
+        return;
+      }
+
+      CommandOutput sha = await Shell.Builder("git")
+        .WithArguments("rev-parse", "HEAD")
+        .WithWorkingDirectory(repoRoot)
+        .WithNoValidation()
+        .CaptureAsync(ct);
+      CommandOutput status = await Shell.Builder("git")
+        .WithArguments("status", "--porcelain", "--untracked-files=no")
+        .WithWorkingDirectory(repoRoot)
+        .WithNoValidation()
+        .CaptureAsync(ct);
+      if (sha.ExitCode != 0 || status.ExitCode != 0)
+      {
+        Terminal.WriteErrorLine("Could not read the commit SHA from git.".Red());
+        Environment.ExitCode = 1;
+        return;
+      }
+
+      bool dirty = status.Stdout.Trim().Length > 0;
+      System.Text.StringBuilder baseline = new();
+      baseline.AppendLine("# Benchmark baseline: comparison (Native AOT)");
+      baseline.AppendLine();
+      baseline.AppendLine("Recorded by `./bin/dev benchmark --project comparison --aot`. Do not edit by hand; re-record instead.");
+      baseline.AppendLine();
+      baseline.AppendLine($"- Project: `{project}`");
+      baseline.AppendLine($"- Framework: `{framework}`");
+      baseline.AppendLine($"- RID: `{rid}`");
+      baseline.AppendLine($"- Commit: `{sha.Stdout.Trim()}`{(dirty ? " (working tree had uncommitted changes)" : string.Empty)}");
+      baseline.AppendLine($"- Date (UTC): {DateTime.UtcNow:yyyy-MM-dd}");
+      baseline.AppendLine();
+      baseline.AppendLine("BenchmarkDotNet's NativeAotToolchain is not used. The BenchmarkDotNet package is omitted from this publish (`BenchmarkAot=true`), and a small runner calls the `TimeWarp*` methods. These numbers are not gated.");
+      baseline.AppendLine();
+      baseline.AppendLine(run.Stdout.Trim());
+      baseline.AppendLine();
+
+      string outputDirectory = Path.Combine(repoRoot, "documentation", "benchmarks");
+      Directory.CreateDirectory(outputDirectory);
+      string outputPath = Path.Combine(outputDirectory, "comparison-baseline-aot.md");
+      await File.WriteAllTextAsync(outputPath, baseline.ToString().ReplaceLineEndings("\n"), ct);
+      Terminal.WriteLine($"Recorded {Path.GetRelativePath(repoRoot, outputPath)}".Green());
+      Terminal.WriteLine(run.Stdout);
+    }
+
+    private static string HostRid()
+    {
+      string os = OperatingSystem.IsLinux() ? "linux"
+        : OperatingSystem.IsMacOS() ? "osx"
+        : OperatingSystem.IsWindows() ? "win"
+        : throw new PlatformNotSupportedException("Native AOT publish needs linux, osx, or win.");
+      string arch = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture switch
+      {
+        System.Runtime.InteropServices.Architecture.X64 => "x64",
+        System.Runtime.InteropServices.Architecture.Arm64 => "arm64",
+        _ => throw new PlatformNotSupportedException("Native AOT publish needs x64 or arm64.")
+      };
+      return os + "-" + arch;
     }
 
     private async Task<bool> RecordAsync(

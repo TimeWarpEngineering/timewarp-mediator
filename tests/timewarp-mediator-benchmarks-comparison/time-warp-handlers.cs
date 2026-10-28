@@ -7,6 +7,9 @@ using TimeWarp.Mediator;
 namespace MediatorBenchmarks;
 
 public sealed class Ping : IRequest<Pong>
+#if !BENCHMARK_AOT
+    , MediatR.IRequest<Pong>
+#endif
 {
   public string Message { get; set; } = "hi";
 }

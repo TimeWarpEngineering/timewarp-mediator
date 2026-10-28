@@ -128,7 +128,7 @@ Package ids, `ValueTask` signatures, `Unit.ValueTask`, and the three consumer se
 - [architecture.md](documentation/architecture.md): contracts, dispatcher, registration, manifest, membership
 - [diagnostics.md](documentation/diagnostics.md): TWM001–TWM004 and TWM007, TWM008, TWM010, TWM011
 - [m2-named-pipelines.md](documentation/m2-named-pipelines.md): `ISender<TScope>`
-- [benchmarks/comparison-baseline.md](documentation/benchmarks/comparison-baseline.md): 021-003 baseline (commit `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`)
+- [benchmarks/comparison-baseline.md](documentation/benchmarks/comparison-baseline.md): net10.0 gate (`./bin/dev benchmark --gate`). [comparison-baseline-net11.md](documentation/benchmarks/comparison-baseline-net11.md) and [comparison-baseline-aot.md](documentation/benchmarks/comparison-baseline-aot.md) are records, not gates.
 - [overview.md](documentation/overview.md): versioning, CI and releasing
 - Release notes: [15.0.0](documentation/release-notes/15.0.0.md),
   [14.0.0](documentation/release-notes/release-notes-v14.0.0.md),
