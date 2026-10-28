@@ -50,7 +50,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Benchmarks">
-    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+    <!-- 0.15.8 throws on a net11.0 host (RuntimeMoniker.NotRecognized) before it measures. -->
+    <PackageVersion Include="BenchmarkDotNet" Version="0.16.0-preview.2" />
     <PackageVersion Include="Mediator.Abstractions" Version="3.0.2" />
     <PackageVersion Include="Mediator.SourceGenerator" Version="3.0.2" />
   </ItemGroup>
