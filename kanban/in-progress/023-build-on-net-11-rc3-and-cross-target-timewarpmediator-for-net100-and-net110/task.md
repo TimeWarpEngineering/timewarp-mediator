@@ -89,8 +89,9 @@ The six hosts that multi-target `net10.0;net11.0` (generator tests, compilation 
 
 ## Review
 
-- Round 1: M1 and M2 were open. This fix pass removed `RollForward=LatestMajor` and recorded the gate result. Round 2 has not run.
-
+- Round 1: M1 and M2 were open. This fix pass removed `RollForward=LatestMajor` and recorded the gate result.
+- Round 2 (2026-10-28, effort 1, general): M1 and M2 fixed. M3 (suggestion) is open: the net10.0 `--gate` is red on the BenchmarkDotNet preview, and no task owns getting it green again. Fix pass requested.
+- Round 2: Blocked — open M3
 ## Notes
 
 - Consumers (TimeWarp.State, TimeWarp.Architecture, TimeWarp.Nuru) stay on net10.0 and keep
@@ -111,6 +112,7 @@ The six hosts that multi-target `net10.0;net11.0` (generator tests, compilation 
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18173-1861-7083-969b-a43c4d28f820, max-turns 500, Done — 2026-10-28T08:16:46Z
 - Review oracle round 1: claude-opus-5-5 (ganda task work, headless), effort 2, roster general, 2026-10-28. 2 open (M1 suggestion, M2 nit); fix pass requested
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-28T08:20:33Z
+- Review oracle round 2: claude-opus-5-5 (ganda task work, headless), effort 1, roster general, max-turns 80, 2026-10-28. M1 and M2 fixed. 1 open (M3 suggestion). Fix pass requested
 - Fix pass: implement-fix-2 (2026-10-28), SDK `11.0.100-rc.3.26522.148`. Dropped `RollForward=LatestMajor` from the six multi-targeted hosts. `./bin/dev benchmark --gate` failed two monomorphic rows against the 0.15.8 baseline. The baseline file was left unchanged.
 
 ## Results
@@ -173,4 +175,6 @@ Expect: named-pipelines prints `client:hello` and `server:hello`, and the apphos
 
 ### Review
 
-Round 1 ran at effort 2 with one general reviewer. It found 0 bugs, 1 suggestion (M1: `RollForward=LatestMajor` on the six multi-targeted hosts), and 1 nit (M2: the `--gate` run on BenchmarkDotNet 0.16 preview was not recorded). This fix pass removed that property and recorded the gate failure above. Round 2 has not run. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 1 ran at effort 2 with one general reviewer. It found 0 bugs, 1 suggestion (M1: `RollForward=LatestMajor` on the six multi-targeted hosts), and 1 nit (M2: the `--gate` run on BenchmarkDotNet 0.16 preview was not recorded). This fix pass removed that property and recorded the gate failure above.
+
+Round 2 ran at effort 1 with one general reviewer, scoped to `e1cdd00..0448d20`. M1 and M2 are fixed. One new finding is open: M3, a suggestion. The net10.0 `--gate` is red on BenchmarkDotNet `0.16.0-preview.2` against the `0.15.8` baseline, and no task owns getting it green again. The fix is to pin `0.15.8` on net10.0, re-run the gate, and record the result. Counts so far: bug 0; suggestion 1 open and 1 fixed; nit 1 fixed. Review disposition: pending, because M3 is open, so `review/disposition.md` is not written yet. Files: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`.
