@@ -1,5 +1,13 @@
 # Fix Unit.ValueTask recursive type load on Mono WASM and polish the 15.0 migration page
 
+## Goal (implementer restatement)
+
+`Unit.ValueTask` is a static auto-property, so the `Unit` struct has a backing field of type `ValueTask<Unit>`. Mono's WebAssembly loader treats that field as a recursive type and throws `TypeLoadException` on the first `ISender.Send`. CoreCLR accepts the same type. Replace the auto-property with an expression-bodied getter that has no backing field, and add a reflection test that fails if `Unit` again declares a static field of type `ValueTask<Unit>`.
+
+The same change fills the gaps timewarp-state task 128 recorded against `documentation/migration.md`: the generated-namespace using, the internal `MediatorManifest` handoff (keep the type internal; the host passes the JSON string), the absent `profile` key, which package takes `PrivateAssets`, the `IActionHandler<>` replacement signature, `ValueTask<T>` conversion limits, `TimeWarpMediatorAssembly=false` in the checklist at the top, and a `using static TimeWarp.Mediator.Unit` example that compiles.
+
+`<Version>` becomes `15.0.0-beta.2`, with a release-notes entry. Publishing the package is after merge (`tw-release`). This walk does not cut the release. This repo has no Blazor WebAssembly lane, so the load proof stays timewarp-state task 128 after it re-pins beta.2.
+
 ## Description
 
 `TimeWarp.Mediator` 15.0.0-beta.1 cannot run under Blazor WebAssembly. The first
@@ -31,47 +39,47 @@ that cost the implementer real time. Fold them in while the page is open.
 
 ### Blocker
 
-- [ ] Replace the auto-property with a getter that has no backing field on `Unit`:
+- [x] Replace the auto-property with a getter that has no backing field on `Unit`:
       `public static ValueTask<Unit> ValueTask => new(Instance);` (a completed
       `ValueTask<T>` is a struct wrapping the value, so allocation is unchanged).
       Alternative if a cached instance is wanted: keep the field on a separate
       `static class` and expose it from `Unit`.
-- [ ] Add a test that `typeof(Unit)` declares no static field whose type is
+- [x] Add a test that `typeof(Unit)` declares no static field whose type is
       `ValueTask<Unit>` (reflection, runs on CoreCLR, guards the regression without a
       WASM lane).
-- [ ] Verify under Mono WASM if a lane exists (package smoke or a Blazor WASM sample);
+- [x] Verify under Mono WASM if a lane exists (package smoke or a Blazor WASM sample);
       otherwise note in `## Results` that timewarp-state task 128 e2e is the proof.
 
 ### Migration page (`documentation/migration.md`)
 
-- [ ] `AddGeneratedMediator()` lives in `TimeWarp.Mediator.Generated` (or
+- [x] `AddGeneratedMediator()` lives in `TimeWarp.Mediator.Generated` (or
       `TimeWarpMediatorNamespace`). State it needs an explicit `using` or a global using;
       it is not an implicit using. Show the one-line snippet.
-- [ ] `MediatorManifest` is `internal` to the generating assembly. A library (State's
+- [x] `MediatorManifest` is `internal` to the generating assembly. A library (State's
       `LogTimeWarpStateMiddleware`, `PipelineBehaviorRegistry`) cannot read it directly;
       the host must hand it over (State takes the JSON string). Document the handoff
       pattern or expose a public accessor. Decide which and record the decision.
-- [ ] The page says the JSON has no profile field; also state there is no `profile` key
+- [x] The page says the JSON has no profile field; also state there is no `profile` key
       at all and what callers that switched on Aot/Link should do instead.
-- [ ] Analyzers do not flow transitively. `PrivateAssets="all"` on `TimeWarp.Mediator`
+- [x] Analyzers do not flow transitively. `PrivateAssets="all"` on `TimeWarp.Mediator`
       (not just Generators) drops the runtime DLL from publish. A host that needs
       DevTools or any runtime type must reference `TimeWarp.Mediator` directly without
       `PrivateAssets`. Add a "which package, which PrivateAssets" table.
-- [ ] `IActionHandler<>` is gone (table row exists); add the replacement signature with
+- [x] `IActionHandler<>` is gone (table row exists); add the replacement signature with
       `ValueTask` return so a reader does not have to guess.
-- [ ] `ValueTask<T>` ergonomics section: no implicit conversion from `Task<T>`, no
+- [x] `ValueTask<T>` ergonomics section: no implicit conversion from `Task<T>`, no
       `ContinueWith`, `Task.WhenAll` needs `.AsTask()`. One short example each.
-- [ ] `TimeWarpMediatorAssembly=false` is analyzer membership only and does not stop
+- [x] `TimeWarpMediatorAssembly=false` is analyzer membership only and does not stop
       emission (page already says this under Generators); surface it in the quick
       checklist near the top, not only at line ~192.
-- [ ] Note the dev-cli / Nuru pattern: `using static TimeWarp.Mediator.Unit` plus Nuru
+- [x] Note the dev-cli / Nuru pattern: `using static TimeWarp.Mediator.Unit` plus Nuru
       works; `Unit.ValueTask` must be qualified in expressions (CS0229). Already partly
       covered; make sure the example compiles.
 
 ### Release
 
-- [ ] Bump `source/Directory.Build.props` `<Version>` to `15.0.0-beta.2`.
-- [ ] Release-notes entry under `documentation/release-notes/` for beta.2 (WASM fix,
+- [x] Bump `source/Directory.Build.props` `<Version>` to `15.0.0-beta.2`.
+- [x] Release-notes entry under `documentation/release-notes/` for beta.2 (WASM fix,
       migration-page updates).
 - [ ] After merge: `tw-release` cut beta.2, then timewarp-state task 128 re-pins and
       re-runs `ganda task work 128`.
@@ -79,6 +87,26 @@ that cost the implementer real time. Fold them in while the page is open.
 ## Session
 
 - Created: 259f62af-98bf-4133-8bba-2f8a32eb7caa (2026-10-28)
+- Implementation: 01a18213-753b-7270-8ac6-6e294b102e35 (2026-10-28)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18213-753b-7270-8ac6-6e294b102e35, max-turns 500, Done — 2026-10-28T10:44:06Z
+
+## Results
+
+`Unit.ValueTask` is an expression-bodied getter, `public static ValueTask<Unit> ValueTask => new(Instance)`. `typeof(Unit)` declares no static field of type `ValueTask<Unit>`. `UnitValueTaskTests` asserts that, compiles the three `ValueTask<T>` ergonomics snippets from the migration page, and runs `NuruStyleUnitHandler`, which returns `Unit.ValueTask` under `using static TimeWarp.Mediator.Unit`.
+
+`MediatorManifest` stays `internal`. The migration page records that decision and the handoff: the generating assembly passes `MediatorManifest.Json` to the library. A public type would collide (CS0436) when one compilation references two hosts. `HostVisibilityTests` already requires `Accessibility.Internal`.
+
+This repo has no Blazor WebAssembly project and no browser package-smoke lane. The load proof is timewarp-state task 128 after it re-pins `15.0.0-beta.2` and re-runs its WebAssembly e2e lane.
+
+`<Version>` is `15.0.0-beta.2`. Install lines in the root readme, the three package readmes, and `skills/tw-mediator` pin that version. `./bin/dev check-version` reports source is one prerelease ahead of NuGet `15.0.0-beta.1`. Cutting the package is `tw-release` after merge, then timewarp-state task 128 re-pins. That checklist item stays open.
+
+`ganda repo audit` exits 0. Advisory: `kanban-landed` warns that task 021 has no usable worktree. That claim is not this id.
+
+### How to validate
+
+Smoke: `./bin/dev test` and `dotnet test tests/timewarp-mediator-generators-tests/timewarp-mediator-generators-tests.csproj --filter FullyQualifiedName~UnitValueTaskTests`
+
+Expect: exit 0. generators-tests 60 passed, analyzers-tests 42 passed, and compilation-tests 69 passed, each on `net10.0` and `net11.0`. `Unit_DeclaresNoStaticFieldOfTypeValueTaskOfUnit` passes on both. `./bin/dev check-version` prints `Version in source: 15.0.0-beta.2` and `safe to release`. WebAssembly proof is timewarp-state task 128 e2e after the re-pin.
 
 ## Notes
 
