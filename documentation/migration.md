@@ -159,7 +159,7 @@ public abstract class ActionHandler<TAction> : IRequestHandler<TAction>
 public sealed class IncrementHandler : ActionHandler<Increment.Action>
 {
   public override ValueTask Handle(Increment.Action request, CancellationToken cancellationToken) =>
-    Unit.ValueTask;
+    ValueTask.CompletedTask;
 }
 ```
 
@@ -190,7 +190,7 @@ are analyzer membership and diagnostic ownership. Setting `TimeWarpMediatorAssem
 `false` does not stop emission. A library that must not emit does not reference
 `TimeWarp.Mediator.Generators`. Details are in [architecture.md](architecture.md).
 
-`MediatorManifest` stays `internal` to the assembly that references Generators. A library cannot name the type. A public manifest would give a compilation that references two hosts two types with the same name (CS0436). The host reads the JSON and passes that string. TimeWarp.State's log and pipeline registry take the string. Each generating assembly has its own manifest, so a server host and a client host each pass their own JSON. There is no cross-assembly accessor.
+`MediatorManifest` stays `internal` to the assembly that references Generators. A library cannot name the type. A public manifest would give a library that references two hosts two types with the same name (CS0433). CS0436 applies when a source type conflicts with an imported type. The host reads the JSON and passes that string. TimeWarp.State's log and pipeline registry take the string. Each generating assembly has its own manifest, so a server host and a client host each pass their own JSON. There is no cross-assembly accessor.
 
 ```csharp
 using TimeWarp.Mediator.Generated;
@@ -265,9 +265,11 @@ public sealed class PingHandler : IRequestHandler<Ping, Unit>
     Unit.ValueTask;
 }
 ```
-- Message-kind detection reads the manifest JSON the app passes (`KindQuery`, `KindIdempotentCommand`,
-  `KindCommand`, `KindAction`, `KindRequest`). `MediatorManifest` is internal to the app assembly, so the Nuru library cannot name it. Precedence matches the old string matcher, including idempotent command
-  before command. The document has no `profile` key. Do not switch on `Aot` or `Link`.
+- Message-kind detection reads the `kind` strings in the manifest JSON the app passes: `"Query"`,
+  `"IdempotentCommand"`, `"Command"`, `"Action"`, and `"Request"`. `MediatorManifest` is internal to
+  the app assembly, so the Nuru library cannot name that type. Precedence matches the old string
+  matcher, including idempotent command before command. The document has no `profile` key. Do not
+  switch on `Aot` or `Link`.
 - The generated mediator always takes `IServiceProvider`, and `AddGeneratedMediator()` is
   always emitted for a graph member. `__GetMediator()` should construct a small
   `IServiceProvider` over Nuru's static graph and pass that provider to the generated

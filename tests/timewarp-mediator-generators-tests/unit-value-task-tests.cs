@@ -48,4 +48,13 @@ public class UnitValueTaskTests
     Unit completedValue = await completed;
     completedValue.ShouldBe(Unit.Value);
   }
+
+  [Fact]
+  public async Task ActionHandler_ReturnsCompletedValueTask()
+  {
+    IncrementHandler handler = new();
+    ValueTask completed = handler.Handle(new Increment.Action(), CancellationToken.None);
+    completed.IsCompletedSuccessfully.ShouldBeTrue();
+    await completed;
+  }
 }

@@ -8,6 +8,8 @@ The same change fills the gaps timewarp-state task 128 recorded against `documen
 
 `<Version>` becomes `15.0.0-beta.2`, with a release-notes entry. Publishing the package is after merge (`tw-release`). This walk does not cut the release. This repo has no Blazor WebAssembly lane, so the load proof stays timewarp-state task 128 after it re-pins beta.2.
 
+Review round 1 stays in that acceptance. The `IncrementHandler` sample returns `ValueTask.CompletedTask`, and a generators-test `ActionHandler<T>` subclass compiles that shape. `Handle` is a non-generic `ValueTask`, so `Unit.ValueTask` (`ValueTask<Unit>`) does not belong there. The Nuru section lists the JSON kind strings `"Query"`, `"IdempotentCommand"`, `"Command"`, `"Action"`, and `"Request"`. `documentation/migration.md` and `documentation/release-notes/15.0.0-beta.2.md` cite CS0433 when a library references two hosts. CS0436 is the conflict between a source type and an imported type.
+
 ## Description
 
 `TimeWarp.Mediator` 15.0.0-beta.1 cannot run under Blazor WebAssembly. The first
@@ -89,12 +91,15 @@ that cost the implementer real time. Fold them in while the page is open.
 - Created: 259f62af-98bf-4133-8bba-2f8a32eb7caa (2026-10-28)
 - Implementation: 01a18213-753b-7270-8ac6-6e294b102e35 (2026-10-28)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18213-753b-7270-8ac6-6e294b102e35, max-turns 500, Done — 2026-10-28T10:44:06Z
+- Review oracle round 1: general reviewer (claude-opus-5-5, headless `ganda task work`), effort 2 by diff. Fix pass requested for M1–M3 — 2026-10-28
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session 4a0e8efe-3d0b-4f4e-8bad-61b9702ab892, max-turns 120 — 2026-10-28T10:46:56Z
+- Fix pass: implement-fix-2 closed M1, M2, and M3 (2026-10-28)
 
 ## Results
 
-`Unit.ValueTask` is an expression-bodied getter, `public static ValueTask<Unit> ValueTask => new(Instance)`. `typeof(Unit)` declares no static field of type `ValueTask<Unit>`. `UnitValueTaskTests` asserts that, compiles the three `ValueTask<T>` ergonomics snippets from the migration page, and runs `NuruStyleUnitHandler`, which returns `Unit.ValueTask` under `using static TimeWarp.Mediator.Unit`.
+`Unit.ValueTask` is an expression-bodied getter, `public static ValueTask<Unit> ValueTask => new(Instance)`. `typeof(Unit)` declares no static field of type `ValueTask<Unit>`. `UnitValueTaskTests` asserts that, compiles the three `ValueTask<T>` ergonomics snippets from the migration page, runs `NuruStyleUnitHandler`, and runs `IncrementHandler`. `IncrementHandler` matches the migration-page `ActionHandler<T>` sample and returns `ValueTask.CompletedTask`.
 
-`MediatorManifest` stays `internal`. The migration page records that decision and the handoff: the generating assembly passes `MediatorManifest.Json` to the library. A public type would collide (CS0436) when one compilation references two hosts. `HostVisibilityTests` already requires `Accessibility.Internal`.
+`MediatorManifest` stays `internal`. The migration page records that decision and the handoff: the generating assembly passes `MediatorManifest.Json` to the library. A public type would collide (CS0433) when a library references two hosts. CS0436 is the conflict between a source type and an imported type. `HostVisibilityTests` already requires `Accessibility.Internal` and rejects CS0433, CS0436, and CS0121.
 
 This repo has no Blazor WebAssembly project and no browser package-smoke lane. The load proof is timewarp-state task 128 after it re-pins `15.0.0-beta.2` and re-runs its WebAssembly e2e lane.
 
@@ -106,7 +111,22 @@ This repo has no Blazor WebAssembly project and no browser package-smoke lane. T
 
 Smoke: `./bin/dev test` and `dotnet test tests/timewarp-mediator-generators-tests/timewarp-mediator-generators-tests.csproj --filter FullyQualifiedName~UnitValueTaskTests`
 
-Expect: exit 0. generators-tests 60 passed, analyzers-tests 42 passed, and compilation-tests 69 passed, each on `net10.0` and `net11.0`. `Unit_DeclaresNoStaticFieldOfTypeValueTaskOfUnit` passes on both. `./bin/dev check-version` prints `Version in source: 15.0.0-beta.2` and `safe to release`. WebAssembly proof is timewarp-state task 128 e2e after the re-pin.
+Expect: exit 0. generators-tests 61 passed, analyzers-tests 42 passed, and compilation-tests 69 passed, each on `net10.0` and `net11.0`. `Unit_DeclaresNoStaticFieldOfTypeValueTaskOfUnit` and `ActionHandler_ReturnsCompletedValueTask` pass on both. `./bin/dev check-version` prints `Version in source: 15.0.0-beta.2` and `safe to release`. WebAssembly proof is timewarp-state task 128 e2e after the re-pin.
+
+### Review
+
+Round 1 had one reviewer, general, at effort 2: one bug and two nits. The fix pass closed all three. Round 2 has not run. `review/round-1/merged.md` still records the open round-1 disposition.
+
+- M1: `IncrementHandler` in `documentation/migration.md` returns `ValueTask.CompletedTask`. `tests/timewarp-mediator-generators-tests/increment-handler.cs` compiles that shape.
+- M2: the Nuru bullet lists the JSON kind strings `"Query"`, `"IdempotentCommand"`, `"Command"`, `"Action"`, and `"Request"`.
+- M3: `documentation/migration.md` and `documentation/release-notes/15.0.0-beta.2.md` cite CS0433 for a library that references two hosts, and name CS0436 as the source-versus-imported case.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
+- Fix pass: M1, M2, and M3 addressed. Round 2 has not run.
 
 ## Notes
 
