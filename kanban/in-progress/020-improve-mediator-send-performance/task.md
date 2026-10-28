@@ -32,17 +32,17 @@ target (≤ 1.5× martinothamar, ≤ 24 B) is already met; do not regress it.
 
 ## Goal (implementer restatement)
 
-The 15.0 dispatcher already hits the interface-send target (about 8.2 ns and 24 B, within 1.5× of martinothamar). This task does not bring back the costs 15.0 removed: `Task` handlers, an async wrapper, per-send pipeline closures, or a scoped `GetRequiredService` on every send.
+The 15.0 send path already meets the interface-send target: within 1.5× of martinothamar and at most 24 B. This task records that path honestly and fills the benchmark gaps around it. It does not put back `Task` handlers, an async wrapper, per-send pipeline closures, or a scoped resolve on every send.
 
 Done means:
 
-- `AddGeneratedMediator` and `AddGeneratedMediator<TScope>` take one optional `ServiceLifetime` argument, default `Transient`, so today's calls stay transient. `Scoped` is one mediator per scope. `Singleton` is one mediator for the container, and the `HandlerCache` that instance already resolves lives with it. Handlers, behaviors, and chains stay scoped. Architecture docs say singleton is only correct when every handler and behavior is singleton or transient and has no scoped dependency (`DbContext`, per-request services), and that the generator cannot check that. Nothing on the send path validates it.
-- A `TimeWarpGeneratedSingletonSend` row and a compilation test that singleton resolves the same `Mediator` across scopes and transient does not. Measure that row against the cached transient send on net10.0. If it is not faster, do not keep the API; record the numbers and a recommendation.
-- Like-for-like rows: `MartinothamarScopedSend` whose handler takes the same scoped dependency as `TimeWarpGeneratedScopedSend`, a martinothamar singleton row when that library can do it and the TimeWarp singleton row exists, and a MediatR `Send` on the same `Ping`. Handler bodies and lifetimes match inside each pair. The interface-send target does not regress.
-- `./bin/dev benchmark --aot` publishes the comparison project with `PublishAot` and runs the `TimeWarp*` rows. Numbers go in `documentation/benchmarks/comparison-baseline-aot.md` and are not gated.
-- `comparison-baseline.md` is re-recorded on net10.0 with BenchmarkDotNet 0.15.8, then `./bin/dev benchmark --gate` is green. Tolerances stay 50% on time and no extra bytes.
-- `.github/workflows/workflow.yml` has a `benchmark` job that runs `./bin/dev benchmark --gate` on net10.0 on a weekly schedule and `workflow_dispatch`, not on every pull request, unless three consecutive runner results sit inside the tolerance. The decision is in `documentation/overview.md` and `## Results`.
-- `ganda repo audit --fix` is committed, `./bin/dev workflow` is green on net10.0 and net11.0, and `<Version>` stays `15.0.0-beta.2`.
+- Singleton is not a public registration. A paired net10.0 run (BenchmarkDotNet 0.15.8) of a singleton dispatcher against a transient dispatcher that the benchmark resolves once sits inside the noise at the same 24 B. `AddGeneratedMediator` stays parameterless and transient. `## Results` holds the numbers and the recommendation to Steven to leave that API out. `documentation/architecture.md` cites those numbers.
+- External rows match the path users run. `MartinothamarGenerated` keeps that generator's Singleton default. Forcing Transient made that row about five times slower and is not what this gate should store. `MartinothamarScopedSend` uses the same scoped dependency as `TimeWarpGeneratedScopedSend`, in its own compilation because that generator emits one lifetime. `MediatRSend` sends the same `Ping`. Handler bodies match inside each pair. The interface-send gate does not regress.
+- `comparison-baseline.md` is re-recorded on net10.0 from the committed tree after that lifetime fix, with BenchmarkDotNet 0.15.8. `./bin/dev benchmark --gate` is green on that file. Tolerances stay 50% on mean time and no extra bytes.
+- `./bin/dev benchmark --aot` publishes the comparison project with `PublishAot` and writes `documentation/benchmarks/comparison-baseline-aot.md`. The runner stores each result in a generic static field so a value-type result is not boxed, and the file header says the mean includes a delegate call. Those numbers are not gated.
+- The `benchmark` job in `.github/workflows/workflow.yml` runs `./bin/dev benchmark --gate` on net10.0 on a weekly schedule and on `workflow_dispatch`, not on pull requests. Three consecutive hosted-runner results inside the tolerance were not collected, so the job stays off the pull-request path. That decision is in `documentation/overview.md` and `## Results`.
+- A failed AOT publish or AOT run assigns that process exit code directly.
+- `ganda repo audit` is clean, `./bin/dev workflow` is green on net10.0 and net11.0, and `<Version>` stays `15.0.0-beta.2`.
 
 ## Requirements
 
@@ -108,6 +108,10 @@ Done means:
 - [ ] Code Review
 - [ ] PR with merge commit
 
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5
+
 ## Notes
 
 - Original findings (2026-10-13) for history: 14.0 send 29.9 ns / 96 B, 72 of the 96 B from
@@ -126,6 +130,11 @@ Done means:
 - Created: 1509100 (2026-10-13)
 - Refreshed: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-28)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a1828a-fa21-7a71-b50c-41a406199c83, max-turns 500, Done — 2026-10-28T13:21:44Z
+- Review oracle round 1: reviewer-claude (claude-opus-5-5), effort 2, roster general — 2026-10-28.
+  Five findings are open: M1, M2, and M3 are bugs, M4 is a suggestion, and M5 is a nit. A fix pass is needed. See `review/round-1/merged.md`.
+  The implementer reported Done but left the baseline re-record and the martinothamar lifetime fix uncommitted.
+  Reviewer checks: `dev build` and `dev test` pass, `ganda repo audit` passes, and an AOT publish and run to `/tmp` succeeds.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session b80304cc-f4e2-47c9-abcb-60204f9acb8b, max-turns 120 — 2026-10-28T13:25:41Z
 
 ## Implementation Notes
 
