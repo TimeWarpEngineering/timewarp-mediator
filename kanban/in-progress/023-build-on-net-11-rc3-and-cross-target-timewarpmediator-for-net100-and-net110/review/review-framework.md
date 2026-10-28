@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 165
+- Lines changed: 75
 - Effort: 1
 - TCB hits: none
 - Roster axes: general
@@ -29,3 +29,7 @@
 ## Round 2 scope
 
 **Diff scope:** fix delta `e1cdd00..0448d20` (round-1 `base.sha` to head), effort 1, roster general. Re-verify round-1 M1 and M2 and scan the fix delta.
+
+## Round 3 scope
+
+**Diff scope:** delta `0448d20..4563d15` (round-2 `base.sha` to head) plus the working tree, effort 1, roster general, turn cap 80. Re-verify round-2 M1, M2, and M3. The delta is kitchen-only: the round-2 landing commit.

@@ -33,6 +33,10 @@ The six hosts that multi-target `net10.0;net11.0` (generator tests, compilation 
 
 `./bin/dev benchmark --gate` runs once with BenchmarkDotNet `0.16.0-preview.2` against `documentation/benchmarks/comparison-baseline.md`. Results record whether that gate passed or failed.
 
+Fix pass for review round 4 (M3):
+
+BenchmarkDotNet is pinned per target framework: `0.15.8` when `$(TargetFramework)` is `net10.0`, and `0.16.0-preview.2` when it is `net11.0`. The net10.0 leg is the tool that recorded `documentation/benchmarks/comparison-baseline.md`. `./bin/dev benchmark --gate` runs again on that pin. Results record pass or fail, and name the BenchmarkDotNet version the gate host printed. The `agent.md` benchmark row and the `Directory.Packages.props` comment match the pin. If the gate still fails on `0.15.8`, Results call that a regression and a task owns getting the gate green. If the per-framework pin does not restore or run, Results say why. Either way, a task has an explicit item to get `./bin/dev benchmark --gate` green again.
+
 ## Requirements
 
 - `source/timewarp-mediator/timewarp-mediator.csproj`: `<TargetFrameworks>net10.0;net11.0</TargetFrameworks>`.
@@ -80,6 +84,9 @@ The six hosts that multi-target `net10.0;net11.0` (generator tests, compilation 
 - [x] GA follow-up task created and linked in Results
 - [x] Six multi-targeted hosts omit `RollForward=LatestMajor`
 - [x] net10.0 `--gate` result recorded on BenchmarkDotNet `0.16.0-preview.2`
+- [x] BenchmarkDotNet is `0.15.8` on `net10.0` and `0.16.0-preview.2` on `net11.0`
+- [x] net10.0 `--gate` passed on BenchmarkDotNet `0.15.8`
+- [x] Task 023-001 owns keeping `./bin/dev benchmark --gate` green
 ### Documentation
 - [x] `agent.md` Target Frameworks and Key Dependencies sections updated
 - [x] `documentation/overview.md` build/CI notes mention the SDK pin
@@ -92,6 +99,8 @@ The six hosts that multi-target `net10.0;net11.0` (generator tests, compilation 
 - Round 1: M1 and M2 were open. This fix pass removed `RollForward=LatestMajor` and recorded the gate result.
 - Round 2 (2026-10-28, effort 1, general): M1 and M2 fixed. M3 (suggestion) is open: the net10.0 `--gate` is red on the BenchmarkDotNet preview, and no task owns getting it green again. Fix pass requested.
 - Round 2: Blocked — open M3
+- Round 3 (2026-10-28, effort 1, general): the delta `0448d20..4563d15` is kitchen-only. No fix pass for M3 has landed. M1 and M2 stay fixed and M3 stays open. The `## Goal (implementer restatement)` has no fix-pass item for M3 yet, so the next implementer pass should add one. Fix pass requested for M3.
+- Round 3: Blocked — open M3
 ## Notes
 
 - Consumers (TimeWarp.State, TimeWarp.Architecture, TimeWarp.Nuru) stay on net10.0 and keep
@@ -113,7 +122,9 @@ The six hosts that multi-target `net10.0;net11.0` (generator tests, compilation 
 - Review oracle round 1: claude-opus-5-5 (ganda task work, headless), effort 2, roster general, 2026-10-28. 2 open (M1 suggestion, M2 nit); fix pass requested
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-28T08:20:33Z
 - Review oracle round 2: claude-opus-5-5 (ganda task work, headless), effort 1, roster general, max-turns 80, 2026-10-28. M1 and M2 fixed. 1 open (M3 suggestion). Fix pass requested
+- Review oracle round 3: claude-opus-5-5 (ganda task work, headless), effort 1, roster general, max-turns 80, 2026-10-28. The delta is kitchen-only. M3 is still open. Fix pass requested
 - Fix pass: implement-fix-2 (2026-10-28), SDK `11.0.100-rc.3.26522.148`. Dropped `RollForward=LatestMajor` from the six multi-targeted hosts. `./bin/dev benchmark --gate` failed two monomorphic rows against the 0.15.8 baseline. The baseline file was left unchanged.
+- Fix pass: implement-fix-4 (2026-10-28), SDK `11.0.100-rc.3.26522.148`. Pinned BenchmarkDotNet per framework. `./bin/dev benchmark --gate` passed on `0.15.8` (exit 0). Published the gate item on task 023-001 (`origin/master` `d544794`).
 
 ## Results
 
@@ -127,7 +138,7 @@ The dev CLI stays `net10.0` (`#:property TargetFramework=net10.0` on `tools/dev-
 
 `dev pack` requires exactly `lib/net10.0` and `lib/net11.0` for `TimeWarp.Mediator`. The generators layout is unchanged.
 
-BenchmarkDotNet `0.15.8` throws on a net11.0 host (`GetRuntimeVersion` for `RuntimeMoniker.NotRecognized`) before it measures. The comparison project pins `0.16.0-preview.2`, which runs the same out-of-process job. `documentation/benchmarks/comparison-baseline.md` is still the net10.0 gate record from 021-003 (commit `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`). The net11.0 record is `documentation/benchmarks/comparison-baseline-net11.md`, commit `d84a8549902bcd8504b4dc2068e6d50a34edd3a6`, 2026-10-28, SDK `11.0.100-rc.3.26522.148`, runtime `11.0.0-rc.3.26522.148`, warmup 3, iteration 8. The gate does not read that file. Means:
+BenchmarkDotNet `0.15.8` throws on a net11.0 host (`GetRuntimeVersion` for `RuntimeMoniker.NotRecognized`) before it measures. The comparison project pins BenchmarkDotNet per framework: `0.15.8` on `net10.0` and `0.16.0-preview.2` on `net11.0`. The preview runs the net11.0 job. The net10.0 gate uses `0.15.8`. `documentation/benchmarks/comparison-baseline.md` is still the net10.0 gate record from 021-003 (commit `c5e4a3a6a6155b6f5ed322379a59559be58fc69a`). The net11.0 record is `documentation/benchmarks/comparison-baseline-net11.md`, commit `d84a8549902bcd8504b4dc2068e6d50a34edd3a6`, 2026-10-28, SDK `11.0.100-rc.3.26522.148`, runtime `11.0.0-rc.3.26522.148`, warmup 3, iteration 8. The gate does not read that file. Means:
 
 | Method | Mean | Allocated |
 | --- | ---: | ---: |
@@ -144,7 +155,7 @@ BenchmarkDotNet `0.15.8` throws on a net11.0 host (`GetRuntimeVersion` for `Runt
 | TimeWarpGeneratedArchitectureSend | 91.508 ns | 24 B |
 | MartinothamarGenerated | 12.000 ns | 24 B |
 
-GA follow-up: task 023-001, in `kanban/to-do/` on origin-home, depends on 023. When .NET 11 ships (expected November 2026), swap the `global.json` pin to `11.0.100`, the net11.0 DependencyInjection pin to `11.0.0`, and drop `dotnet-quality: preview`. That task also moves BenchmarkDotNet off `0.16.0-preview.2` when `0.16.0` stable is on NuGet, and it does not rewrite the net10.0 gate file.
+GA follow-up: task 023-001, in `kanban/to-do/` on origin-home, depends on 023. When .NET 11 ships (expected November 2026), swap the `global.json` pin to `11.0.100`, the net11.0 DependencyInjection pin to `11.0.0`, and drop `dotnet-quality: preview`. That task moves the net11.0 BenchmarkDotNet pin off `0.16.0-preview.2` when `0.16.0` stable is on NuGet. It leaves the net10.0 pin on `0.15.8` and keeps `./bin/dev benchmark --gate` green. It does not rewrite the net10.0 gate file unless Steven approves a re-record. The gate item is on origin-home as `d544794`.
 
 `ganda repo audit --fix` also landed this kitchen onto origin-home. The advisory `kanban-landed` warning for claim 021 (no usable worktree) is another id; this task does not own that claim.
 
@@ -161,6 +172,21 @@ M2. `./bin/dev benchmark --gate` ran on BenchmarkDotNet `0.16.0-preview.2` again
 
 The other nine `TimeWarp*` rows stayed inside the limit. `comparison-baseline.md` was not rewritten. Task 023-001 still owns the move off `0.16.0-preview.2`.
 
+### Fix pass (review round 4)
+
+M3. `Directory.Packages.props` pins BenchmarkDotNet `0.15.8` when `$(TargetFramework)` is `net10.0` and `0.16.0-preview.2` when it is `net11.0`. `dotnet list package` on `tests/timewarp-mediator-benchmarks-comparison` shows those resolved versions. `UseSharedCompilation=false dotnet build tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj -c Release` reported 0 warnings and 0 errors on both frameworks. The per-framework pin restores and builds.
+
+`./bin/dev benchmark --gate` ran on BenchmarkDotNet `0.15.8` against `documentation/benchmarks/comparison-baseline.md`. The summary names `BenchmarkDotNet v0.15.8`, SDK `11.0.100-rc.3.26522.148`, `[Host]` `.NET 10.0.14`, and `Job-LGHQEI` `.NET 10.0.14`, warmup 3, iteration 8. The gate printed `Benchmark gate passed` and exited 0. `comparison-baseline.md` was not rewritten. The two rows that failed on `0.16.0-preview.2` are inside the 50% limit on `0.15.8`:
+
+| Method | Baseline | Limit | 0.16.0-preview.2 | 0.15.8 |
+| --- | ---: | ---: | ---: | ---: |
+| TimeWarpGeneratedMonomorphicSend | 5.016 ns | 7.524 ns | 10.509 ns | 5.239 ns |
+| TimeWarpGeneratedMonomorphicSendUnit | 3.885 ns | 5.828 ns | 8.063 ns | 4.042 ns |
+
+The preview tool caused that failure. The `agent.md` benchmark row and the props comment name both pins.
+
+Task 023-001 owns keeping the gate green. Its checklist item is: `./bin/dev benchmark --gate` is green, and `comparison-baseline.md` is re-recorded only after Steven approves the new numbers. The net11.0 pin may move to `0.16.0` stable. The net10.0 pin stays `0.15.8` unless that re-record is approved. That kitchen is on origin-home as `d544794`.
+
 ### How to validate
 
 Smoke: `UseSharedCompilation=false dotnet run --file tools/dev-cli/dev.cs -- workflow` on SDK `11.0.100-rc.3.26522.148`.
@@ -173,8 +199,18 @@ Smoke: `COREHOST_TRACE=1 dotnet run --project samples/timewarp-mediator-examples
 
 Expect: named-pipelines prints `client:hello` and `server:hello`, and the apphost trace chooses `Microsoft.NETCore.App/10.0.14`. The net10.0 `runtimeconfig.json` has no `rollForward` property. The gate log names `.NET 10.0.14` for `[Host]` and `Job-LGHQEI`, then prints `Benchmark gate failed:` for `TimeWarpGeneratedMonomorphicSend` (10.509 ns, limit 7.524 ns) and `TimeWarpGeneratedMonomorphicSendUnit` (8.063 ns, limit 5.828 ns). Exit code 1. `documentation/benchmarks/comparison-baseline.md` is unchanged.
 
+That gate failure is the BenchmarkDotNet `0.16.0-preview.2` run from the round-1 fix pass. The round-4 smoke below is the current check.
+
+Smoke: `dotnet list tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj package`, then `./bin/dev benchmark --gate`.
+
+Expect: the net10.0 row requests BenchmarkDotNet `0.15.8` and resolves `0.15.8`. The net11.0 row requests `0.16.0-preview.2` and resolves `0.16.0-preview.2`. The gate summary names `BenchmarkDotNet v0.15.8`, SDK `11.0.100-rc.3.26522.148`, and `.NET 10.0.14` for `[Host]` and `Job-LGHQEI`. It prints `Benchmark gate passed` and exits 0. `TimeWarpGeneratedMonomorphicSend` mean is 5.239 ns. `TimeWarpGeneratedMonomorphicSendUnit` mean is 4.042 ns. `documentation/benchmarks/comparison-baseline.md` is unchanged.
+
 ### Review
 
 Round 1 ran at effort 2 with one general reviewer. It found 0 bugs, 1 suggestion (M1: `RollForward=LatestMajor` on the six multi-targeted hosts), and 1 nit (M2: the `--gate` run on BenchmarkDotNet 0.16 preview was not recorded). This fix pass removed that property and recorded the gate failure above.
 
 Round 2 ran at effort 1 with one general reviewer, scoped to `e1cdd00..0448d20`. M1 and M2 are fixed. One new finding is open: M3, a suggestion. The net10.0 `--gate` is red on BenchmarkDotNet `0.16.0-preview.2` against the `0.15.8` baseline, and no task owns getting it green again. The fix is to pin `0.15.8` on net10.0, re-run the gate, and record the result. Counts so far: bug 0; suggestion 1 open and 1 fixed; nit 1 fixed. Review disposition: pending, because M3 is open, so `review/disposition.md` is not written yet. Files: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`.
+
+Round 3 ran at effort 1 with one general reviewer, scoped to `0448d20..4563d15`. That delta is kitchen-only. `Directory.Packages.props` still pins BenchmarkDotNet `0.16.0-preview.2` for every TFM, and task 023-001 still has no item to get the gate green. M3 stays open. Counts: bug 0; suggestion 1 open and 1 fixed; nit 1 fixed. Review disposition: pending (M3 open). `review/disposition.md` is not written yet. Files: `review/round-3/general.md`, `review/round-3/merged.md`.
+
+Implement-fix-4 addressed that suggestion. The net10.0 pin is BenchmarkDotNet `0.15.8`, the gate passed, and task 023-001 on origin-home (`d544794`) has the checklist item that keeps the gate green. Round 4 has not run.
