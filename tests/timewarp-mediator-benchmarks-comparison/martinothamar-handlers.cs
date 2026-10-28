@@ -20,6 +20,6 @@ public sealed class MartinPingHandler : IRequestHandler<MartinPing, MartinPong>
 {
   public ValueTask<MartinPong> Handle(MartinPing request, CancellationToken cancellationToken)
   {
-    return new ValueTask<MartinPong>(new MartinPong { Message = request.Message });
+    return ValueTask.FromResult(new MartinPong { Message = request.Message });
   }
 }

@@ -22,7 +22,7 @@ reaches many handlers, sequentially. The dispatcher is source-generated. A host 
 | | 15.0 |
 |---|---|
 | Packages | `TimeWarp.Mediator` + `TimeWarp.Mediator.Generators` |
-| Registration | `services.AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()` from the generated namespace |
+| Registration | `services.AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()` from the generated namespace. The dispatcher is transient |
 | Handler discovery | compile time, member assemblies only |
 | Missing / duplicate handler | build error (TWM001 / TWM002) |
 | Behaviors | `[assembly: MediatorBehavior(typeof(B<,>))]`, always woven. The host supplies `IServiceProvider` |
@@ -100,8 +100,10 @@ public sealed class PingHandler : IRequestHandler<Ping, string>
 `AddGeneratedMediator()` is an `internal` extension in the generated namespace
 (default `TimeWarp.Mediator.Generated`, class
 `TimeWarpMediatorGeneratedServiceCollectionExtensions`). Call it from the host. The
-dispatcher is transient. Handlers, behaviors, behavior chains, and `HandlerCache` are scoped.
-Resolve `ISender` from a scope.
+dispatcher is transient. Handlers, behaviors, behavior chains, and `HandlerCache` are
+scoped. A singleton dispatcher was not faster than a reused transient instance on the
+net10.0 send benchmark, so the method does not take a `ServiceLifetime`
+(why: task 020 measurement 2026-10-28). Resolve `ISender` from a scope.
 
 `ICommand`, `ICommand<T>`, `IQuery<T>`, `IAction`, and `IIdempotentCommand` /
 `IIdempotentCommand<T>` are markers. Handlers implement `IRequestHandler`. Kind is on

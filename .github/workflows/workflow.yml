@@ -14,6 +14,7 @@ name: CI/CD
 # SDK: global.json pins 11.0.100-rc.3 (latestFeature, prerelease allowed).
 # Each job installs 10.0.x on the GA channel and 11.0.x at preview quality.
 # 10.0.x stays so the net10.0 targeting pack and runtime restore.
+# benchmark job: weekly and workflow_dispatch mode=benchmark. Not on pull requests.
 on:
   push:
     branches: [ master, main ]
@@ -21,15 +22,18 @@ on:
     branches: [ master, main, 'feature/**']
   release:
     types: [published]
+  schedule:
+    - cron: '17 6 * * 1'
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Pipeline mode. merge = build and test only (default). release = break-glass publish; also requires confirm and must run on the release tag. probe = trusted-publishing check only (OIDC login, no build, no publish).'
+        description: 'Pipeline mode. merge = build and test only (default). release = break-glass publish; also requires confirm and must run on the release tag. probe = trusted-publishing check only (OIDC login, no build, no publish). benchmark = net10.0 comparison gate only.'
         type: choice
         options:
           - merge
           - release
           - probe
+          - benchmark
         default: merge
       confirm:
         description: 'Break-glass guard: type the word release to confirm publishing when mode is release. Ignored otherwise.'
@@ -187,3 +191,39 @@ jobs:
         env:
           NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release
+
+  # Off the pull-request path until three consecutive hosted runs stay inside the gate.
+  benchmark:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'benchmark')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup .NET 11
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 11.0.x
+          dotnet-quality: preview
+
+      - name: Cache NuGet packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj', 'tools/dev-cli/**', 'nuget.config') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Benchmark gate (net10.0)
+        run: dotnet run --file tools/dev-cli/dev.cs -- benchmark --gate

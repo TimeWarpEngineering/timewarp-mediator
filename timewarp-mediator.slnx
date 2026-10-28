@@ -11,6 +11,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/timewarp-mediator-analyzers-tests/timewarp-mediator-analyzers-tests.csproj" />
     <Project Path="tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj" />
+    <Project Path="tests/timewarp-mediator-benchmarks-martinothamar-scoped/timewarp-mediator-benchmarks-martinothamar-scoped.csproj" />
     <Project Path="tests/timewarp-mediator-generators-compilation-tests/timewarp-mediator-generators-compilation-tests.csproj" />
     <Project Path="tests/timewarp-mediator-generators-tests/timewarp-mediator-generators-tests.csproj" />
   </Folder>

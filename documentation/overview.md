@@ -61,6 +61,7 @@ When .NET 11 ships, replace the RC pins with `11.0.100` / `11.0.0` and drop the 
 |---|---|---|
 | push to `master`, pull request to `master` | `ci` | `dev workflow`: clean → build → test → verify-samples (runs every sample) → pack (layout gate and package smoke). Uploads `Packages-<run number>`. |
 | `workflow_dispatch` with `mode=merge` (default) | `ci` | Same as above. Never publishes. |
+| `workflow_dispatch` with `mode=benchmark`, and a weekly Monday schedule (`17 6 * * 1` UTC) | `benchmark` | `dev benchmark --gate` on `net10.0`. Not part of pull requests. The gate tolerance is 50% on mean time and no extra bytes. Three consecutive hosted-runner results inside that tolerance were not collected, so the job stays off the pull-request path. |
 | GitHub Release published | `publish` | Release guards → OIDC login → `dev workflow --mode release`: clean → build → pack → check-version → push. |
 | `workflow_dispatch` with `mode=release` and `confirm=release` | `publish` | Break-glass. Same as a release; see below. |
 | `workflow_dispatch` with `mode=probe` | `publish` | OIDC login only. No checkout, build or push. |
