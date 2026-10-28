@@ -32,7 +32,8 @@
 // behaviors, and HandlerCache when a request has none. Handler and behavior interfaces are not
 // registered; MediatorManifest carries that graph.
 // The dispatcher stays transient. A singleton dispatcher was measured against this cached
-// transient path on net10.0 (task 020, BenchmarkDotNet 0.15.8) and was not faster, so
+// transient path on net10.0 (task 020, BenchmarkDotNet 0.15.8): singleton 9.776 ns,
+// reused transient 10.320 ns, both 24 B, inside each other's noise.
 // AddGeneratedMediator does not take a ServiceLifetime.
 // Unscoped Mediator is the default pipeline (no [MediatorScope]). Each TScope gets its own
 // Sender and Publisher with a disjoint type switch — no runtime "is this my message?" filter.

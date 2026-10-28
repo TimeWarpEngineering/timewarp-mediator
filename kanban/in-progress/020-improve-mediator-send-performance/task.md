@@ -94,23 +94,54 @@ Done means:
 ## Checklist
 
 ### Implementation
-- [ ] `AddGeneratedMediator(ServiceLifetime)` with transient default; singleton documented
-- [ ] Singleton row, compilation test, measured gain recorded (or recommendation to drop)
-- [ ] MartinothamarScopedSend, MediatR and (if possible) martinothamar singleton rows
-- [ ] Native AOT lane and `comparison-baseline-aot.md`
-- [ ] `comparison-baseline.md` re-recorded on 0.15.8; `--gate` green
-- [ ] `benchmark` CI job on dispatch and schedule (or per-PR with evidence)
-- [ ] `./bin/dev workflow` green on net10.0 and net11.0
+- [x] `AddGeneratedMediator` stays parameterless and transient. Singleton was measured and is not part of the API
+- [x] Paired singleton measurement recorded, with the recommendation to leave the parameter off
+- [x] `MartinothamarGenerated` stays that generator's Singleton default; `MartinothamarScopedSend` and `MediatRSend` are in the baseline
+- [x] Native AOT lane and `comparison-baseline-aot.md` (generic sink, delegate overhead in the header)
+- [x] `comparison-baseline.md` re-recorded on 0.15.8 from commit `a5129e1`; `--gate` green
+- [x] `benchmark` CI job on dispatch and schedule. Three hosted-runner results were not collected, so it stays off pull requests
+- [x] `./bin/dev workflow` green on net10.0 and net11.0
 ### Documentation
-- [ ] `documentation/architecture.md` singleton-mode section
-- [ ] `documentation/overview.md` benchmark CI note; `agent.md` benchmark row
+- [x] `documentation/architecture.md` singleton-mode section cites the paired numbers
+- [x] `documentation/overview.md` benchmark CI note; `agent.md` benchmark row
 ### Review
 - [ ] Code Review
 - [ ] PR with merge commit
 
 ## Review
 
-- Round 1: Blocked — open M1, M2, M3, M4, M5
+- Round 1: Blocked — open M1, M2, M3, M4, M5. Fix pass below addresses them. Round 2 is the host's next node.
+
+## Results
+
+Singleton stays off the public API. A paired net10.0 run (BenchmarkDotNet 0.15.8, IterationCount=8, WarmupCount=3, same job) measured a transient dispatcher that the benchmark resolves once against a singleton dispatcher:
+
+| Row | Mean | Error | Allocated |
+| --- | ---: | ---: | ---: |
+| TimeWarpGeneratedInterfaceSend (reused transient) | 10.320 ns | 0.578 ns | 24 B |
+| TimeWarpGeneratedSingletonSend | 9.776 ns | 0.884 ns | 24 B |
+
+The ratio is 0.95 and the ratio standard deviation is 0.05. The 0.544 ns gap sits inside the singleton error bar. Both rows allocate 24 B. `LiveCache` already keeps the handler for the life of the instance the benchmark holds, so a singleton registration does not change `Send`. Recommendation to Steven: do not add a `ServiceLifetime` parameter. It buys nothing on this path, and disposing the scope disposes that cache (`ObjectDisposedException` on the next send). `documentation/architecture.md` cites this table.
+
+`MartinothamarGenerated` is that generator's Singleton default again. Forcing Transient had recorded 42.790 ns and 112 B, which is not the path their users run. The re-record from commit `a5129e19c5fb2a6bed40f183db40020111db8856` (clean tree, BenchmarkDotNet 0.15.8, net10.0) stores 9.370 ns (error 1.429 ns) and 24 B. `TimeWarpGeneratedInterfaceSend` in that same file is 8.480 ns (error 0.261 ns) and 24 B, inside 1.5× of martinothamar and at the 24 B cap. The earlier uncommitted record had raised that row to 10.116 ns with a ±2.31 ns error. The host was sharing the CPU (load above 4). `TimeWarpGeneratedMonomorphicSend` in the stored file is 5.061 ns, matching the previous 5.016 ns mean, with a wider ±2.725 ns error.
+
+`./bin/dev benchmark --gate` on that file printed `Benchmark gate passed.` (2026-10-28, net10.0, 14 benchmarks, run time 00:02:51). Tolerances are unchanged: 50% on mean time, no extra bytes. External rows are not gated.
+
+`./bin/dev benchmark --aot` wrote `documentation/benchmarks/comparison-baseline-aot.md` at commit `3c5c08c47a408b1907e4f358bc4a4e5ad297e315` (clean tree, `linux-x64`, net10.0). The header states that each iteration goes through a delegate and that the result is stored in a generic static field. Allocations that the old boxing sink had inflated now match BenchmarkDotNet: `TimeWarpGeneratedMonomorphicSendUnit` 0 B (was 24 B) and `TimeWarpGeneratedArchitectureSend` 24 B (was 56 B). The AOT numbers are not gated.
+
+The `benchmark` job stays on the weekly schedule (`17 6 * * 1` UTC) and on `workflow_dispatch` with `mode=benchmark`. Three consecutive hosted-runner results inside the tolerance were not collected, so the job stays off pull requests. That decision is in `documentation/overview.md`.
+
+`<Version>` stays `15.0.0-beta.2`.
+
+`./bin/dev workflow` (mode Pr: clean, build, test, verify-samples, pack) exited 0 on 2026-10-28. Tests passed on net10.0 and net11.0 (generators 61, analyzers 42, compilation 69 on each TFM). Both sample frameworks ran. Pack produced `TimeWarp.Mediator.15.0.0-beta.2`, and the package smoke printed `package-pong` on net10.0 and net11.0.
+
+`ganda repo audit --fix` landed kitchen 020 onto origin-home. A following `ganda repo audit` passes. The remaining `kanban-landed` line is an advisory that task 021 has no usable worktree. That claim is outside this id.
+
+### How to validate
+
+Smoke: from this worktree, run `./bin/dev benchmark --gate`, then `./bin/dev benchmark --aot`, then `./bin/dev workflow`.
+
+Expect: `--gate` prints `Benchmark gate passed.` `documentation/benchmarks/comparison-baseline-aot.md` lists `TimeWarpGeneratedMonomorphicSendUnit` at 0 B and `TimeWarpGeneratedArchitectureSend` at 24 B, and its header says the mean includes a delegate call. `./bin/dev workflow` exits 0 on net10.0 and net11.0.
 
 ## Notes
 
@@ -135,6 +166,7 @@ Done means:
   The implementer reported Done but left the baseline re-record and the martinothamar lifetime fix uncommitted.
   Reviewer checks: `dev build` and `dev test` pass, `ganda repo audit` passes, and an AOT publish and run to `/tmp` succeeds.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session b80304cc-f4e2-47c9-abcb-60204f9acb8b, max-turns 120 — 2026-10-28T13:25:41Z
+- Fix pass (implement-fix-2): closed M1–M5. Re-recorded the net10.0 baseline from the committed singleton martinothamar row, `./bin/dev benchmark --gate` passed, and `./bin/dev benchmark --aot` wrote `comparison-baseline-aot.md` after the non-boxing sink. `./bin/dev workflow` passed on net10.0 and net11.0. Recommendation: leave `AddGeneratedMediator` transient. `ganda repo audit --fix` landed this kitchen; the only leftover audit line is the task 021 worktree advisory.
 
 ## Implementation Notes
 

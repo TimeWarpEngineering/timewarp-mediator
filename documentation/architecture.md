@@ -129,9 +129,11 @@ uses the provider it was resolved from.
 `ServiceLifetime`. The dispatcher is transient. Handlers, behaviors, chains, and
 `HandlerCache` are scoped.
 
-A singleton dispatcher was measured on net10.0 against a transient dispatcher that the
-benchmark resolves once and then reuses (task 020, BenchmarkDotNet 0.15.8). The two sends
-allocated the same 24 B, and the means sat inside each other's noise. `LiveCache` already
+A paired net10.0 measurement (task 020 `## Results`, BenchmarkDotNet 0.15.8,
+IterationCount=8) compares a singleton dispatcher with a transient dispatcher that the
+benchmark resolves once. The reused transient send is 10.320 ns (error 0.578 ns, 24 B).
+The singleton send is 9.776 ns (error 0.884 ns, 24 B). The ratio is 0.95 and the ratio
+standard deviation is 0.05, so the means sit inside each other's noise. `LiveCache` already
 keeps the handler for the life of that instance, so a singleton registration does not
 change `Send`. It is not offered. Disposing the scope disposes the cache, and the next
 send on that instance throws `ObjectDisposedException`.
