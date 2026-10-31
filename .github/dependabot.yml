@@ -12,10 +12,6 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    # The shipped analyzer and generator reference this compiler. A newer package
-    # fails to load on the 10.0.100 SDK (CS9057). Workspaces stays on the same pin.
-    ignore:
-      - dependency-name: "Microsoft.CodeAnalysis.CSharp*"
     groups:
       nuget:
         patterns: [ "*" ]

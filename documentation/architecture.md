@@ -17,8 +17,7 @@ is `netstandard2.0` and the contracts library is `net10.0` and `net11.0`. It is 
 messages references `TimeWarp.Mediator` and gets TWM001–TWM004. A host references both packages
 at the same version.
 
-Generators and the analyzer load inside Roslyn. The floor is `Microsoft.CodeAnalysis.CSharp`
-5.0.0, the compiler that ships with the .NET 10 SDK.
+Generators and the analyzer load inside Roslyn. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 ## Contracts
 

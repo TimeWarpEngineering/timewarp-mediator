@@ -32,7 +32,7 @@ declares messages and does not emit a mediator references `TimeWarp.Mediator` on
 `[assembly: MediatorAssembly]`.
 
 `TimeWarp.Mediator` targets `net10.0` and `net11.0`. The generator is `netstandard2.0` because Roslyn loads
-it. The Roslyn floor is `Microsoft.CodeAnalysis.CSharp` 5.0.0.
+it. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 The host calls `AddGeneratedMediator()` from the generated namespace. That namespace is not an implicit using. Add this line in the file that calls the method:
 
