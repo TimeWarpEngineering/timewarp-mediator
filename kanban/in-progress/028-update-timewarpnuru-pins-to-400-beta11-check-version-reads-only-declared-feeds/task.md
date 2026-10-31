@@ -105,6 +105,7 @@ Expect: check-version prints `Version in source: 15.0.0-beta.4`, `Latest NuGet v
 ## Session
 
 - Implementation: implementer-grok (2026-10-31). Pinned Nuru 4.0.0-beta.11, set `<Version>` to 15.0.0-beta.4, and recorded the unpublished beta.3 in the release note.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a191dd-ea04-7630-8508-2ef54750d554, max-turns 500, Done — 2026-10-31T12:19:00Z
 
 ## Addendum: also bump to 15.0.0-beta.4 (Steven, 2026-10-31)
 
