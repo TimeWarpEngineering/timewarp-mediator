@@ -1,4 +1,4 @@
-# Task 028: Update TimeWarp.Nuru pins to 4.0.0-beta.11 (check-version reads only declared feeds)
+# Task 028: Update TimeWarp.Nuru pins to 4.0.0-beta.11 and bump to 15.0.0-beta.4
 
 ## Description
 
@@ -56,3 +56,39 @@ beta.3-vs-beta.4 decision and the release are a follow-up.
 ## Results
 
 (implementer fills in)
+
+## Addendum: also bump to 15.0.0-beta.4 (Steven, 2026-10-31)
+
+Steven chose beta.4 over re-cutting beta.3, so this task also carries the version bump. The
+two paragraphs above that say "pin bump only" and "does not change `<Version>`" are superseded
+by this section. Tag `v15.0.0-beta.3` and its GitHub Release still stay untouched.
+
+- `source/Directory.Build.props`: `<Version>15.0.0-beta.4</Version>`.
+- Every install line and pin that names the packed version moves to `15.0.0-beta.4`: `readme.md`
+  (two `dotnet add package` lines and the release-notes link), `source/timewarp-mediator/readme.md`,
+  `source/timewarp-mediator-generators/readme.md` (two lines), `source/timewarp-mediator-analyzers/readme.md`,
+  and `skills/tw-mediator/SKILL.md` (two `PackageVersion` lines and the "currently" sentence).
+  `git grep '15\.0\.0-beta\.3' -- ':!kanban'` afterwards must hit only `documentation/release-notes/`
+  text that is deliberately historical (see next bullet).
+- Release notes: `git mv documentation/release-notes/15.0.0-beta.3.md documentation/release-notes/15.0.0-beta.4.md`.
+  Retitle it `# TimeWarp.Mediator 15.0.0-beta.4` and add one paragraph at the top: 15.0.0-beta.3 was
+  tagged on 2026-10-31 but never published, because the release pipeline's version check
+  (`TimeWarp.Nuru.DevCli` 4.0.0-beta.10) read the org GitHub Packages feed without a token and
+  refused to push; beta.4 is that content with the dev tooling moved to DevCli 4.0.0-beta.11
+  (`check-version` reads only nuget.org), and the shipped packages are unchanged since beta.2.
+  Fix the two links that point at `15.0.0-beta.3.md`: `readme.md` release-notes list and
+  `documentation/release-notes/15.0.0.md` (the F14 row). Do not edit older release-note files
+  or kanban history.
+- `./bin/dev check-version` (with the no-credential environment from the first section) must print
+  `Version in source: 15.0.0-beta.4`, `Latest NuGet version: 15.0.0-beta.2`, and `safe to release`.
+  Paste that output under `## Results` too.
+- `./bin/dev workflow` packs both `15.0.0-beta.4` nupkgs and the smoke prints `package-pong` on
+  both frameworks.
+- This walk does not tag or create a GitHub Release. The cut is `./bin/dev release` from master
+  after merge.
+
+Extra checklist items:
+
+- [ ] `<Version>` is `15.0.0-beta.4`; readmes and SKILL.md pin it; no stray `beta.3` pins outside release notes
+- [ ] `15.0.0-beta.4.md` exists via `git mv`, explains the unpublished beta.3, and both links point at it
+- [ ] `check-version` says `15.0.0-beta.4` is safe to release
