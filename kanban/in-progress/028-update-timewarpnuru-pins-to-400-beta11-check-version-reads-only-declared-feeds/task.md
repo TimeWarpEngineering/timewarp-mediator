@@ -47,7 +47,7 @@ beta.3-vs-beta.4 decision and the release are a follow-up.
 ## Review
 
 - Round 1: M1 fixed in `documentation/release-notes/15.0.0-beta.4.md`. The host runs review round 2.
-
+- Round 2: Done
 ## Notes
 
 - Release run failure text, for reference:
@@ -120,6 +120,13 @@ beta.3 tag. `git diff v15.0.0-beta.2 HEAD` drops `VersionOverride="5.0.0"` on th
 analyzer. Files: `review/review-framework.md`, `review/round-1/general.md`,
 `review/round-1/merged.md`. The host runs review round 2.
 
+Round 2 (effort 1, roster general) reviewed the delta since round 1 (`27376d1..HEAD`, product
+commit a1a07fc). It found M1 fixed: `git diff v15.0.0-beta.3 HEAD -- source/ Directory.Packages.props`
+changes only the Nuru pins and the version strings, so "ships what beta.3 would have shipped" is
+accurate. Round 2 raised no new findings. Final counts: bug 1 fixed, 0 open; no suggestions,
+nits, or wontfix. **Disposition: clean** (2 rounds). Files: `review/round-2/general.md`,
+`review/round-2/merged.md`, `review/disposition.md`.
+
 The reviewer reran `check-version` with no GitHub credentials and got the same output as above,
 exit 0. The reviewer also confirmed in the DevCli beta.11 package that `NuGetVersionService`,
 `IRepoConfigService`, and `IPackableProjectService` are still `internal`.
@@ -139,6 +146,7 @@ exit 0. The reviewer also confirmed in the DevCli beta.11 package that `NuGetVer
 - Review oracle round 1: claude-opus-5-5 (Claude Code, headless), effort 2, roster general, max-turns 120. Result: Blocked, fix pass needed for open finding M1 — 2026-10-31
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 46e09f3f-84c2-4e63-8a20-73fbc33e486a, max-turns 120 — 2026-10-31T12:21:22Z
 - Fix pass (review round 1 M1): implementer-grok (2026-10-31). The beta.4 note now says beta.4 ships what beta.3 would have shipped and that only the dev tooling changed.
+- Review oracle round 2: claude-opus-5-5 (Claude Code, headless), effort 1, roster general, max-turns 80. Result: Done, disposition clean, 0 open — 2026-10-31
 
 ## Addendum: also bump to 15.0.0-beta.4 (Steven, 2026-10-31)
 
