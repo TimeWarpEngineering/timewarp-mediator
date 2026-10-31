@@ -30,8 +30,8 @@ inside the compiler. The packages need a .NET SDK whose compiler is at least the
 Keep both packages on the same version. Generators does not bring `TimeWarp.Mediator` with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.2
-dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.2
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.3
+dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.3
 ```
 
 Without `--version`, `dotnet add package TimeWarp.Mediator` resolves 14.0.0, the reflection
