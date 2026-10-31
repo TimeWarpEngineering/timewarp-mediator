@@ -46,8 +46,12 @@ untouched; this is not a release.
 - [x] `./bin/dev workflow` green on net10.0 and net11.0 (0 warnings)
 - [x] `Compiler_IsTheDeclaredFloor` still passes
 ### Review
-- [ ] Code Review
+- [x] Code Review
 - [ ] PR with merge commit
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -114,6 +118,17 @@ Build: 0 warnings, 0 errors. Tests on both TFMs: generators 61, analyzers 42, co
 `ganda repo audit --fix` changed nothing and the audit passes. One advisory remains:
 claim 021 has no usable worktree.
 
+### Review disposition
+
+One review round ran at effort 2 with one reviewer (general). It found no bugs, suggestions
+or nits, so 0 are open, 0 fixed and 0 wontfix. The disposition is **clean**. The reviewer
+confirmed that DevCli beta.10 changed `NuGetVersionService`, `IRepoConfigService` and
+`IPackableProjectService` from public (beta.7) to internal, and these are source-shipped
+content. That is why `WorkflowCommand.Handler` had to become internal. The reviewer reran
+`Compiler_IsTheDeclaredFloor`, and it passed on net10.0 and net11.0. Paths:
+`review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+`review/disposition.md`.
+
 ### How to validate
 
 Smoke: from this worktree, run `ganda nuget outdated`, then `./bin/dev workflow`.
@@ -129,3 +144,5 @@ A filtered `Compiler_IsTheDeclaredFloor` run reports `Passed: 1` on net10.0 and 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-31)
 - Implementation: 01a1909c-12db-7a41-beb8-989af33e6cdf (2026-10-31)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1909c-12db-7a41-beb8-989af33e6cdf, max-turns 500, Done — 2026-10-31T06:27:52Z
+- Review oracle: Claude Opus 5.5 (claude-opus-5-5), headless print mode, effort 2, roster general, max-turns 120. Round 1 disposition clean (0 findings) on 2026-10-31.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 355bce30-8c70-43bc-b601-946b9858da40, max-turns 120 — 2026-10-31T06:29:57Z
