@@ -35,7 +35,7 @@ public sealed class PingHandler : IRequestHandler<Ping, string>
 }
 ```
 
-The analyzer targets netstandard2.0 and needs the Roslyn that ships with the .NET 10 SDK or newer (`Microsoft.CodeAnalysis.CSharp` 5.0.0 is the floor). `TimeWarp.Mediator` targets net10.0 and net11.0.
+The analyzer targets netstandard2.0. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing. `TimeWarp.Mediator` targets net10.0 and net11.0.
 
 ## Migration
 

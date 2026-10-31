@@ -71,7 +71,7 @@ See `documentation/architecture.md` and `documentation/diagnostics.md`.
 - `timewarp-mediator-package-smoke`: outside-consumer smoke over the packed nupkgs; not in the slnx, run by `dev pack`
 
 The reflection runtime tests and `timewarp-mediator-generators-roslyn-floor-tests` are removed.
-The Roslyn floor is asserted from the compilation tests (`Microsoft.CodeAnalysis.CSharp` 5.0.0).
+`ReferencedCompiler_IsNotNewerThanTheSdkCompiler` in the compilation tests fails when the shipped generator references a `Microsoft.CodeAnalysis` assembly newer than the SDK compiler.
 
 `samples/` holds the generated samples (AOT with a woven behavior, named pipelines). See `samples/readme.md`.
 
@@ -87,7 +87,7 @@ The Roslyn floor is asserted from the compilation tests (`Microsoft.CodeAnalysis
 ### Key Dependencies
 
 - `Microsoft.Extensions.DependencyInjection` for test, benchmark, sample, and smoke hosts. `Directory.Packages.props` pins `10.0.14` when `$(TargetFramework)` is `net10.0` and `11.0.0-rc.3.26522.148` when it is `net11.0`. A net10.0 host does not restore the 11 RC. A generated host needs `Microsoft.Extensions.DependencyInjection.Abstractions` (`IServiceCollection`, `IServiceProvider`). A missing reference is TWM008 and the generator emits nothing.
-- `Microsoft.CodeAnalysis.CSharp` 5.0.0 for the shipped analyzer and generator (`VersionOverride`). Dependabot ignores `Microsoft.CodeAnalysis.CSharp*`.
+- `Microsoft.CodeAnalysis.CSharp` for the shipped analyzer and generator, at the central pin. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 ### Build Properties
 

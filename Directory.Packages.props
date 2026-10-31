@@ -32,17 +32,17 @@
 
   <ItemGroup Label="Product">
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
-    <!-- 5.0.0 is the stable compiler package that matches the Roslyn shipped with the
-         oldest .NET 10 SDK (10.0.100). Shipped components VersionOverride this pin, and
-         Dependabot ignores Microsoft.CodeAnalysis.CSharp* so a weekly bump cannot move it. -->
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <!-- The pin may be any version the SDK in global.json can load.
+         ReferencedCompiler_IsNotNewerThanTheSdkCompiler fails when the referenced
+         compiler is newer than that SDK. -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
     <!-- Conditioned on $(TargetFramework) so a net10.0 host never restores the 11 RC. -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" Condition="'$(TargetFramework)' == 'net10.0'" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.3.26522.148" Condition="'$(TargetFramework)' == 'net11.0'" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.9.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />

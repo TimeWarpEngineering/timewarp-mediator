@@ -38,7 +38,7 @@ public sealed class PingHandler : IRequestHandler<Ping, string>
 
 15.0 is a breaking release. Handlers return `ValueTask`. The host calls `AddGeneratedMediator()` and supplies `IServiceProvider`. Registered pipeline behaviors are woven.
 
-- This package targets net10.0 and net11.0.
+- This package targets net10.0 and net11.0. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
 - Through 14.0.0 the id `TimeWarp.Mediator` was the reflection runtime (`AddMediator`). 15.0 reuses that id for the contracts and the analyzer. The 14.0.0 contracts id `TimeWarp.Mediator.Contracts` is gone, and so is `AddMediator`.
 - From MediatR: change `using MediatR;` to `using TimeWarp.Mediator;`.
 

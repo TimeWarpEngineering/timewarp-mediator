@@ -220,8 +220,7 @@ and TWM001–TWM004 in a library. TWM005, TWM006, and TWM009 are retired.
   calls `AddGeneratedMediator()`.
 - **`TimeWarpMediatorNamespace`.** Default `TimeWarp.Mediator.Generated`. Set it when two
   hosts' generated types meet in one compilation.
-- **net10.0 floor.** `TimeWarp.Mediator` targets `net10.0` and `net11.0`. Generators are `netstandard2.0`
-  and need `Microsoft.CodeAnalysis.CSharp` 5.0.0.
+- **SDK compiler.** The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
 - **`using static TimeWarp.Mediator.Unit`.** Signatures are unaffected. A bare `ValueTask`
   in an expression is ambiguous (CS0229). Write `Unit.ValueTask` for the value and
   `System.Threading.Tasks.ValueTask` for the type's statics. The removed `Unit.Task`

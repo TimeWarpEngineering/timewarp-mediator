@@ -23,8 +23,7 @@ behaviors are woven. This project is a fork of
 ## Target framework
 
 `TimeWarp.Mediator` targets **net10.0 and net11.0**. The generator targets netstandard2.0 because it runs
-inside the compiler. It needs the Roslyn that ships with the .NET 10 SDK or newer
-(`Microsoft.CodeAnalysis.CSharp` 5.0.0 is the floor).
+inside the compiler. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 ## Quick start
 
@@ -131,6 +130,7 @@ Package ids, `ValueTask` signatures, `Unit.ValueTask`, and the three consumer se
 - [benchmarks/comparison-baseline.md](documentation/benchmarks/comparison-baseline.md): net10.0 gate (`./bin/dev benchmark --gate`). [comparison-baseline-net11.md](documentation/benchmarks/comparison-baseline-net11.md) and [comparison-baseline-aot.md](documentation/benchmarks/comparison-baseline-aot.md) are records, not gates.
 - [overview.md](documentation/overview.md): versioning, CI and releasing
 - Release notes: [15.0.0](documentation/release-notes/15.0.0.md),
+  [15.0.0-beta.3](documentation/release-notes/15.0.0-beta.3.md),
   [14.0.0](documentation/release-notes/release-notes-v14.0.0.md),
   [13.0.0](documentation/release-notes/release-notes-v13.0.0.md)
 
