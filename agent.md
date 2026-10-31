@@ -82,7 +82,7 @@ The reflection runtime tests and `timewarp-mediator-generators-roslyn-floor-test
 - `TimeWarp.Mediator`: `net10.0;net11.0`
 - `TimeWarp.Mediator.Generators` and the analyzer project: `netstandard2.0` (Roslyn loads them in-process, including .NET Framework MSBuild and Visual Studio)
 - Tests, benchmarks, samples, and the package smoke consumer: `net10.0;net11.0`
-- Dev CLI (`tools/dev-cli/dev.cs`): `net10.0`, pinned with `#:property TargetFramework=net10.0`. `TimeWarp.Nuru` 4.0.0-beta.10 ships `lib/net10.0` only. `global.json` pins the SDK to `11.0.100-rc.3` (`rollForward: latestFeature`, `allowPrerelease: true`). CI installs `11.0.x` with `dotnet-quality: preview` and keeps `10.0.x` so the net10.0 runtime pack restores.
+- Dev CLI (`tools/dev-cli/dev.cs`): `net10.0`, pinned with `#:property TargetFramework=net10.0`. `TimeWarp.Nuru` 4.0.0-beta.11 ships `lib/net10.0` only. `global.json` pins the SDK to `11.0.100-rc.3` (`rollForward: latestFeature`, `allowPrerelease: true`). CI installs `11.0.x` with `dotnet-quality: preview` and keeps `10.0.x` so the net10.0 runtime pack restores.
 
 ### Key Dependencies
 
