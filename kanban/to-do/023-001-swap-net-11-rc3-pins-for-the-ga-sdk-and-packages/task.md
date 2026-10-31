@@ -30,6 +30,7 @@ Follow-up to 023. When .NET 11 ships (expected November 2026), replace the RC3 S
 
 - Parent: 023.
 - 023 recorded the net11.0 comparison numbers in `documentation/benchmarks/comparison-baseline-net11.md`. That file is not the regression gate.
+- Dependabot's NuGet updater cannot install the SDK that `global.json` pins (`11.0.100-rc.3`): run 41181970758 on 2026-10-31 failed with `dotnet_install: Error: Could not find .NET Core SDK with version = 11.0.100-rc.3` and then `Missing SDK, check global.json locations vs. job directories`. It had not run on NuGet since the pin landed in task 023 on 2026-10-28, so this is the first failure, not a regression from task 026. Weekly NuGet Dependabot PRs are off until this task moves `global.json` to the GA `11.0.100`. After the swap, confirm the next `Dependabot Updates` run for the `nuget` ecosystem succeeds and record its run id in Results.
 
 ## Session
 
