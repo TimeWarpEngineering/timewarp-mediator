@@ -11,7 +11,7 @@
 // shared check-version/release commands), so there is nothing to drift. Handlers are invoked directly so CI does not need a
 // pre-installed ./bin/dev. CI passes the OIDC key via NUGET_API_KEY env (never
 // argv). Push is skipped when no API key is supplied (local pack-only).
-// Handler is internal: TimeWarp.Nuru.DevCli 4.0.0-beta.10 ships NuGetVersionService,
+// Handler is internal: TimeWarp.Nuru.DevCli 4.0.0-beta.11 ships NuGetVersionService,
 // IRepoConfigService, and IPackableProjectService as internal, and a public
 // constructor cannot take them.
 #endregion

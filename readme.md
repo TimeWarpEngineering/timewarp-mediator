@@ -30,8 +30,8 @@ inside the compiler. The packages need a .NET SDK whose compiler is at least the
 Keep both packages on the same version. Generators does not bring `TimeWarp.Mediator` with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.3
-dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.3
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.4
+dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.4
 ```
 
 Without `--version`, `dotnet add package TimeWarp.Mediator` resolves 14.0.0, the reflection
@@ -130,7 +130,7 @@ Package ids, `ValueTask` signatures, `Unit.ValueTask`, and the three consumer se
 - [benchmarks/comparison-baseline.md](documentation/benchmarks/comparison-baseline.md): net10.0 gate (`./bin/dev benchmark --gate`). [comparison-baseline-net11.md](documentation/benchmarks/comparison-baseline-net11.md) and [comparison-baseline-aot.md](documentation/benchmarks/comparison-baseline-aot.md) are records, not gates.
 - [overview.md](documentation/overview.md): versioning, CI and releasing
 - Release notes: [15.0.0](documentation/release-notes/15.0.0.md),
-  [15.0.0-beta.3](documentation/release-notes/15.0.0-beta.3.md),
+  [15.0.0-beta.4](documentation/release-notes/15.0.0-beta.4.md),
   [14.0.0](documentation/release-notes/release-notes-v14.0.0.md),
   [13.0.0](documentation/release-notes/release-notes-v13.0.0.md)
 

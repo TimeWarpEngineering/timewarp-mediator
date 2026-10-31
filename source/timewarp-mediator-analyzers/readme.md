@@ -16,7 +16,7 @@ A project that references `TimeWarp.Mediator.Generators` already runs the genera
 Reference the contracts package. The analyzer comes with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.3
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.4
 ```
 
 Without `--version`, that command resolves 14.0.0, the reflection runtime. Drop the flag when 15.0 is the stable package.
