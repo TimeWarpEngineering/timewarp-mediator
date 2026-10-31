@@ -71,8 +71,12 @@ them. For this repo that compiler is the SDK in `global.json`. Measured on 2026-
 - [x] Every floor mention replaced (agent.md, readmes, architecture, migration, SKILL.md)
 - [x] Release-notes entry for the next version written
 ### Review
-- [ ] Code Review
+- [x] Code Review
 - [ ] PR with merge commit
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -107,8 +111,16 @@ Acceptance: pins and comment updated, overrides and the Dependabot ignore gone, 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-31)
 - Implementation: task-work implementer (2026-10-31)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a190db-8bac-7613-b7ce-f968878c5da6, max-turns 500, Done — 2026-10-31T07:41:12Z
+- Review oracle: claude (model claude-opus-5-5), body tw-implementation-review, effort 2, roster general, turn cap 120, 1 round, disposition clean — 2026-10-31
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-31T07:43:38Z
 
 ## Results
+
+### Review disposition
+
+Disposition is **clean**. There was 1 round at effort 2, with one general reviewer. The final counts are 0 open, 0 fixed, and 0 wontfix for bug, suggestion, and nit, because round 1 raised nothing. The reviewer re-ran `RoslynCompilerTests` on SDK 11.0.100-rc.3, and it passed on net10.0 and net11.0. The goal restatement matches the task, so no misread is recorded.
+
+The artifacts are `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, and `review/disposition.md`.
 
 `Microsoft.CodeAnalysis.CSharp` and `Microsoft.CodeAnalysis.CSharp.Workspaces` are pinned at 5.9.0. The analyzer and generator projects take that central pin. Dependabot no longer ignores `Microsoft.CodeAnalysis.CSharp*`. `RoslynCompilerTests.ReferencedCompiler_IsNotNewerThanTheSdkCompiler` replaces `Compiler_IsTheDeclaredFloor`. Living docs and `documentation/release-notes/15.0.0-beta.3.md` state the SDK-compiler rule. `<Version>` stays `15.0.0-beta.2`.
 
