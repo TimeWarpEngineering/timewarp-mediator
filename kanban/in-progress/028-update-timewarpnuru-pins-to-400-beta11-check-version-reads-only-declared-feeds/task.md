@@ -37,12 +37,12 @@ beta.3-vs-beta.4 decision and the release are a follow-up.
 
 ## Checklist
 
-- [ ] Both Nuru pins at 4.0.0-beta.11
-- [ ] `self-install` succeeds; dev CLI call sites compile against DevCli beta.11
-- [ ] `check-version` with no GitHub credential reads nuget.org only (output in Results)
-- [ ] agent.md and workflow-command.cs comment name beta.11
-- [ ] No GH_TOKEN added to the release step
-- [ ] audit --fix committed; `./bin/dev workflow` green; `ganda nuget outdated` clean
+- [x] Both Nuru pins at 4.0.0-beta.11
+- [x] `self-install` succeeds; dev CLI call sites compile against DevCli beta.11
+- [x] `check-version` with no GitHub credential reads nuget.org only (output in Results)
+- [x] agent.md and workflow-command.cs comment name beta.11
+- [x] No GH_TOKEN added to the release step
+- [x] audit --fix committed; `./bin/dev workflow` green; `ganda nuget outdated` clean
 
 ## Notes
 
@@ -53,9 +53,59 @@ beta.3-vs-beta.4 decision and the release are a follow-up.
 - DevCli beta.11 `package-feed-lookup.cs` header: "only the declared feeds are read"; feeds with
   nuget.org default come from `checkVersionConfig.feeds` (`check-version-config.cs`).
 
+## Goal (implementer restatement)
+
+Move the dev CLI onto TimeWarp.Nuru and TimeWarp.Nuru.DevCli 4.0.0-beta.11 so `check-version` reads only the feeds this repo declares. Mediator publishes to nuget.org, the default when `checkVersionConfig.feeds` is absent, so a release no longer needs a GitHub Packages token. Also advance the packed version from the unpublished `15.0.0-beta.3` tag to `15.0.0-beta.4`. This walk does not tag and does not create a GitHub Release.
+
+Acceptance:
+
+- `Directory.Packages.props` pins both Nuru packages at `4.0.0-beta.11`. `dotnet run --file tools/dev-cli/dev.cs -- self-install` succeeds, and dev CLI call sites compile against that pin. The dev CLI stays `net10.0`. `NuGetVersionService`, `IRepoConfigService`, and `IPackableProjectService` stay internal in beta.11, so `WorkflowCommand.Handler` stays internal and the comment names beta.11. `agent.md` names beta.11.
+- `.timewarp/dev.jsonc` keeps `checkVersionConfig` without a `feeds` key.
+- With `GITHUB_TOKEN` and `GH_TOKEN` unset and no `gh` login, `./bin/dev check-version` prints `Version in source: 15.0.0-beta.4`, `Latest NuGet version: 15.0.0-beta.2`, and `safe to release`. The output does not mention GitHub Packages, a token, or `Unknown`.
+- `<Version>` is `15.0.0-beta.4`. The root readme, the three package readmes, and `skills/tw-mediator/SKILL.md` pin that version. `git grep '15\.0\.0-beta\.3' -- ':!kanban'` hits only historical text under `documentation/release-notes/`.
+- `documentation/release-notes/15.0.0-beta.4.md` comes from `git mv` of the beta.3 note, is retitled, and explains why beta.3 was tagged and never published. The root readme and the F14 row in `15.0.0.md` link to the beta.4 note.
+- The release step in `.github/workflows/workflow.yml` does not gain `GH_TOKEN`.
+- `ganda repo audit --fix` is committed. `./bin/dev workflow` is green, packs both `15.0.0-beta.4` nupkgs, and the smoke prints `package-pong` on both frameworks. `ganda nuget outdated` has no outdated rows.
+
 ## Results
 
-(implementer fills in)
+`Directory.Packages.props` pins `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` at `4.0.0-beta.11`. `source/Directory.Build.props` is `<Version>15.0.0-beta.4</Version>`. Install lines in the root readme, the three package readmes, and `skills/tw-mediator/SKILL.md` match. `.timewarp/dev.jsonc` still has no `feeds` key. The release step in `.github/workflows/workflow.yml` was not given `GH_TOKEN` (the existing `GH_TOKEN` on the release-guards step is unchanged; it calls `gh api` for the green-CI guard).
+
+`TimeWarp.Nuru` 4.0.0-beta.11 contains `lib/net10.0` only. The dev CLI stays `#:property TargetFramework=net10.0`. In DevCli 4.0.0-beta.11, `NuGetVersionService`, `IRepoConfigService`, and `IPackableProjectService` are still `internal`, so `WorkflowCommand.Handler` stays internal. The comment at the top of `tools/dev-cli/endpoints/workflow-command.cs` and the Target Frameworks bullet in `agent.md` name beta.11. `dotnet run --file tools/dev-cli/dev.cs -- self-install` succeeded with no call-site changes.
+
+`documentation/release-notes/15.0.0-beta.4.md` is the `git mv` of the beta.3 note, retitled, with the unpublished-beta.3 paragraph at the top. `readme.md` and the F14 row in `documentation/release-notes/15.0.0.md` link to it. `git grep '15\.0\.0-beta\.3' -- ':!kanban'` hits only that historical paragraph.
+
+`env -u GITHUB_TOKEN -u GH_TOKEN GH_CONFIG_DIR=/nonexistent ./bin/dev check-version` exited 0:
+
+```
+Using configured package override; delete checkVersionConfig.packages to derive the set from IsPackable.
+Version in source: 15.0.0-beta.4
+Latest NuGet version: 15.0.0-beta.2
+Source is 2 prerelease increments ahead of v15.0.0-beta.2
+1 version(s) were bumped but never released — was a release step skipped?
+Packages checked: TimeWarp.Mediator, TimeWarp.Mediator.Generators
+
+✓ Version in source is new — safe to release.
+```
+
+The skipped-increment line is beta.3, which was tagged and never published. The output does not mention GitHub Packages, a token, or `Unknown`.
+
+`./bin/dev workflow` (mode Pr) exited 0. Build: 0 warnings, 0 errors. Tests passed on net10.0 and net11.0: generators 61, analyzers 42, compilation 69, failed 0. Samples verified, including NativeAOT publish of the AOT sample on both frameworks. Pack wrote `TimeWarp.Mediator.15.0.0-beta.4.nupkg` and `TimeWarp.Mediator.Generators.15.0.0-beta.4.nupkg`. Smoke printed `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator` on net10.0 and on net11.0. The log ends with `Pipeline SUCCEEDED`.
+
+`ganda nuget outdated` printed `All packages are up to date!` (both Nuru pins `up to date, nuget.org`). `ganda repo audit --fix` changed nothing. The audit exited 0 (`Repository passes`) with one advisory warning: `kanban-landed` says claim 021 has no usable worktree. That claim is not this task, and `--fix` did not land a kitchen for it.
+
+This walk does not tag or create a GitHub Release. The cut is `./bin/dev release` from master after merge.
+
+### How to validate
+
+Smoke: `env -u GITHUB_TOKEN -u GH_TOKEN GH_CONFIG_DIR=/nonexistent ./bin/dev check-version` and `./bin/dev workflow`.
+
+Expect: check-version prints `Version in source: 15.0.0-beta.4`, `Latest NuGet version: 15.0.0-beta.2`, and `safe to release`, and does not mention GitHub Packages, a token, or `Unknown`. Workflow prints `0 Warning(s)`, tests 61 + 42 + 69 passed on net10.0 and net11.0, `Samples verified successfully!`, both `15.0.0-beta.4` nupkgs, `package-pong` on both frameworks, and `Pipeline SUCCEEDED`.
+
+## Session
+
+- Implementation: implementer-grok (2026-10-31). Pinned Nuru 4.0.0-beta.11, set `<Version>` to 15.0.0-beta.4, and recorded the unpublished beta.3 in the release note.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a191dd-ea04-7630-8508-2ef54750d554, max-turns 500, Done — 2026-10-31T12:19:00Z
 
 ## Addendum: also bump to 15.0.0-beta.4 (Steven, 2026-10-31)
 
@@ -89,6 +139,6 @@ by this section. Tag `v15.0.0-beta.3` and its GitHub Release still stay untouche
 
 Extra checklist items:
 
-- [ ] `<Version>` is `15.0.0-beta.4`; readmes and SKILL.md pin it; no stray `beta.3` pins outside release notes
-- [ ] `15.0.0-beta.4.md` exists via `git mv`, explains the unpublished beta.3, and both links point at it
-- [ ] `check-version` says `15.0.0-beta.4` is safe to release
+- [x] `<Version>` is `15.0.0-beta.4`; readmes and SKILL.md pin it; no stray `beta.3` pins outside release notes
+- [x] `15.0.0-beta.4.md` exists via `git mv`, explains the unpublished beta.3, and both links point at it
+- [x] `check-version` says `15.0.0-beta.4` is safe to release
