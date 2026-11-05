@@ -39,15 +39,15 @@ internal static partial class CandidateExtractor
         location = LocationInfo.From(attribute.ApplicationSyntaxReference.GetSyntax().GetLocation());
       }
 
-      if (!HandlerTypeNameReader.TryRead(attribute, compilation, out string relative, out string failureDetail))
+      if (!HandlerTypeNameReader.TryRead(attribute, out string relative, out HandlerNameFailure failure))
       {
-        broken.Add(new DeclaredHandlerFailure(failureDetail, location));
+        broken.Add(new DeclaredHandlerFailure(failure.Problem, failure.Detail, location));
         continue;
       }
 
       if (!HandlerTypeNameReader.TryResolve(type, relative, out string metadataName, out string displayName))
       {
-        broken.Add(new DeclaredHandlerFailure(HandlerTypeNameReader.NotATypeName(relative), location));
+        broken.Add(new DeclaredHandlerFailure(DeclaredHandlerNameProblem.NotATypeName, relative, location));
         continue;
       }
 

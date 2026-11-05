@@ -87,8 +87,9 @@ public sealed class GeneratedHandlerAnalyzerTests
             public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
         }
 
-        public sealed class Side
+        public sealed class Side : IRequestHandler<Ping, int>
         {
+            public ValueTask<int> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult(2);
         }
         """;
 
@@ -120,6 +121,55 @@ public sealed class GeneratedHandlerAnalyzerTests
     Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
     diagnostic.Id.ShouldBe("TWM012");
     diagnostic.GetMessage().ShouldContain("not a constant string");
+  }
+
+  [Fact]
+  public async Task DeclaredType_ThatIsNotAHandler_IsTwm012()
+  {
+    const string source = """
+        using TimeWarp.Mediator;
+
+        public sealed class ReducerAttribute : GeneratedHandlerAttribute
+        {
+            public override string HandlerTypeName => "Side";
+        }
+
+        [Reducer]
+        public sealed class Ping : IRequest<int> { }
+
+        public sealed class Side
+        {
+        }
+        """;
+
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(source, isHost: true);
+    Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWM012");
+    diagnostic.GetMessage().ShouldBe("Request 'Ping' names 'Side', which is not an IRequestHandler<Ping, int>");
+  }
+
+  [Fact]
+  public async Task NotATypeName_IsTwm012_WithoutTheMissingTypeSentence()
+  {
+    const string source = """
+        using TimeWarp.Mediator;
+
+        [assembly: MediatorAssembly]
+
+        public sealed class WeirdAttribute : GeneratedHandlerAttribute
+        {
+            public override string HandlerTypeName => "Not A Type";
+        }
+
+        [Weird]
+        public sealed class Ping : IRequest<int> { }
+        """;
+
+    ImmutableArray<Diagnostic> diagnostics = await AnalyzerTestHelper.GetDiagnosticsAsync(source);
+    Diagnostic diagnostic = diagnostics.ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWM012");
+    diagnostic.GetMessage().ShouldContain("not a type name");
+    diagnostic.GetMessage().ShouldNotContain("does not exist after generation");
   }
 
   private const string LibrarySource = """

@@ -149,8 +149,11 @@ internal static partial class CandidateGraph
         requests[fact.Type.Key] = fact.Type;
         foreach (DeclaredHandlerFailure failure in fact.DeclaredHandlerFailures)
         {
+          DiagnosticDescriptor descriptor = failure.Problem == DeclaredHandlerNameProblem.NotATypeName
+              ? DiagnosticDescriptors.DeclaredHandlerNotATypeName
+              : DiagnosticDescriptors.DeclaredHandlerNameUnreadable;
           diagnostics.Add(Info(
-              DiagnosticDescriptors.DeclaredHandlerDoesNotExist,
+              descriptor,
               failure.Location,
               fact.Type.ErrorDisplay,
               failure.Detail));

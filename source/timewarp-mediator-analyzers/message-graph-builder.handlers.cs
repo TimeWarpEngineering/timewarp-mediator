@@ -15,6 +15,8 @@ public static partial class MessageGraphBuilder
       INamedTypeSymbol type,
       INamedTypeSymbol? request0,
       INamedTypeSymbol? request1,
+      INamedTypeSymbol? requestHandler1,
+      INamedTypeSymbol? requestHandler2,
       INamedTypeSymbol? unitType,
       INamedTypeSymbol? generatedHandlerAttribute,
       Membership membership,
@@ -51,11 +53,16 @@ public static partial class MessageGraphBuilder
       Location location = GetAttributeLocation(compilation, attribute);
       declaredCovered.Add(type);
       requests.Add(type);
-      if (!HandlerTypeNameReader.TryRead(attribute, compilation, out string relative, out string failureDetail))
+      if (!HandlerTypeNameReader.TryRead(attribute, out string relative, out HandlerNameFailure failure))
       {
         if (reportUnreadable)
         {
-          declaredDiagnostics.Add(DeclaredHandlerDiagnostic(location, type, failureDetail));
+          declaredDiagnostics.Add(
+              DeclaredHandlerDiagnostic(
+                  DiagnosticDescriptors.DeclaredHandlerNameUnreadable,
+                  location,
+                  type,
+                  failure.Detail));
         }
 
         continue;
@@ -65,7 +72,12 @@ public static partial class MessageGraphBuilder
       {
         if (reportUnreadable)
         {
-          declaredDiagnostics.Add(DeclaredHandlerDiagnostic(location, type, HandlerTypeNameReader.NotATypeName(relative)));
+          declaredDiagnostics.Add(
+              DeclaredHandlerDiagnostic(
+                  DiagnosticDescriptors.DeclaredHandlerNotATypeName,
+                  location,
+                  type,
+                  relative));
         }
 
         continue;
@@ -81,6 +93,24 @@ public static partial class MessageGraphBuilder
           declaredDiagnostics.Add(DeclaredHandlerDiagnostic(location, type, displayName));
         }
 
+        continue;
+      }
+
+      if (!HandlerTypeNameReader.IsRequestHandler(
+              handler,
+              type,
+              requestHandler1,
+              requestHandler2,
+              request1,
+              out string expectedInterface))
+      {
+        declaredDiagnostics.Add(
+            DeclaredHandlerDiagnostic(
+                DiagnosticDescriptors.DeclaredHandlerNotAHandler,
+                location,
+                type,
+                displayName,
+                expectedInterface));
         continue;
       }
 
@@ -212,6 +242,18 @@ public static partial class MessageGraphBuilder
         location,
         request.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
         detail);
+  }
+
+  private static Diagnostic DeclaredHandlerDiagnostic(
+      DiagnosticDescriptor descriptor,
+      Location location,
+      INamedTypeSymbol request,
+      params object[] messageArgs)
+  {
+    object[] args = new object[messageArgs.Length + 1];
+    args[0] = request.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+    messageArgs.CopyTo(args, 1);
+    return Diagnostic.Create(descriptor, location, args);
   }
 
   private static void ReportScopeMismatch(

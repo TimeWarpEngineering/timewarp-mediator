@@ -215,7 +215,7 @@ Ids and ownership: [diagnostics.md](diagnostics.md).
 | TWM008 | generator | `TimeWarp.Mediator` or `Microsoft.Extensions.DependencyInjection.Abstractions` is missing. Nothing is generated |
 | TWM010 | generator | `[MediatorBehavior]` type is not a pipeline behavior |
 | TWM011 | generator | Behavior matches no request in its pipeline |
-| TWM012 | analyzer in a host when the named type is missing; generator when the name is not a constant; analyzer in a library for that unreadable name | `GeneratedHandlerAttribute` does not name a handler that exists after generation |
+| TWM012 | analyzer in a host when the named type is missing or is not an `IRequestHandler`; generator when the name is not a constant or not a type name; analyzer in a library for that unreadable name | `GeneratedHandlerAttribute` does not name a handler that exists after generation |
 
 TWM005 and TWM006 described the removed Aot and Link profiles. TWM009 described stream,
 processor, and exception-handler kinds. Those three ids are retired.

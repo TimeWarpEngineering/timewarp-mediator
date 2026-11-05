@@ -25,7 +25,7 @@ reaches many handlers, sequentially. The dispatcher is source-generated. A host 
 | Registration | `services.AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()` from the generated namespace. The dispatcher is transient |
 | Handler discovery | compile time, member assemblies only |
 | Missing / duplicate handler | build error (TWM001 / TWM002) |
-| Handler emitted by another generator | `[GeneratedHandler]` on the request; `HandlerTypeName` is relative to the containing type. A bad or missing name is TWM012 |
+| Handler emitted by another generator | A `GeneratedHandlerAttribute`-derived attribute on the request. `HandlerTypeName` is relative to the containing type. An attribute in another assembly passes it as a constructor parameter named `handlerTypeName` (a default value is enough). A bad or missing name is TWM012 |
 | Behaviors | `[assembly: MediatorBehavior(typeof(B<,>))]`, always woven. The host supplies `IServiceProvider` |
 | Named pipelines (`ISender<TScope>`) | yes |
 | Streams, pre/post processors, exception handlers | removed with the reflection runtime |
@@ -202,7 +202,7 @@ Full text:
 | TWM008 | `TimeWarp.Mediator` or MS.DI Abstractions is missing. Nothing is generated | Reference `TimeWarp.Mediator` and `Microsoft.Extensions.DependencyInjection.Abstractions` |
 | TWM010 (warning) | `[MediatorBehavior]` type is not an `IPipelineBehavior<,>` | Fix the type or remove the attribute |
 | TWM011 (warning) | Behavior constraints match no request in its pipeline | Fix the constraints or `Scope`, or remove it |
-| TWM012 | `GeneratedHandlerAttribute` names a handler that is not a constant, or that still does not exist after generation | Make `HandlerTypeName` a constant type name relative to the request's containing type, and emit that handler |
+| TWM012 | `GeneratedHandlerAttribute` names a handler that is not a constant, is not a type name, is not an `IRequestHandler` for that request, or still does not exist after generation | In another assembly, add a constructor parameter named `handlerTypeName`. Otherwise make the name a constant type name relative to the request's containing type, and emit that handler |
 
 In a generator host the generator reports TWM001–TWM003 and an unreadable TWM012. The analyzer
 reports TWM004 there, TWM012 when the named handler is missing, and TWM001–TWM004 in a library.

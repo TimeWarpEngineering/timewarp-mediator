@@ -2,7 +2,17 @@
 
 ## Goal (implementer restatement)
 
-Ship an additive public abstract `GeneratedHandlerAttribute` whose `HandlerTypeName` is a constant string relative to the request's containing type (or its namespace when the request is top-level). The host candidate extractor accepts that attribute, and any attribute derived from it, as a new fact on the request type. `MessageGraph` and the emission graph carry the fact, and the existing dispatcher emits a call to the declared handler type name even when another generator emits the handler. When the name is unreadable, or when it still does not exist after every generator has run, report TWM012 on the attribute application so the failure is not only a bare CS0246 inside `Mediator.g.cs`. Requests without the attribute keep today's path, including the unrelated-edit incrementality cache. Bump both packages to 15.0.0-beta.5, ship the analyzer row, and write the release note so TimeWarp.State can pin this version. Do not add a runtime handler table, and do not fold Mediator's emitters into another generator.
+A request written in source can name the handler another generator emits. The public contract is an abstract `GeneratedHandlerAttribute`. The handler name is a constant string relative to the request's containing type, or to the request's namespace when the request is top-level. The extractor records that fact, the dispatcher emits that type name, and TWM012 is reported on the attribute when the name cannot be read or the handler is still absent after generation. Requests without the attribute stay on the previous path, including the unrelated-edit cache. Both packages stay at 15.0.0-beta.5. There is no runtime handler table.
+
+Round-1 review is part of the same acceptance bar:
+
+- An attribute declared in another assembly is read from a constructor parameter named `handlerTypeName`. A default value counts. A metadata-only library image is the test, because a ProjectReference hands the compiler a reference assembly whose getter body is not the constant. The IL and private-reflection reader goes away. TWM012 tells the user to add that parameter.
+- The same constructor read ignores every other string parameter. The dead named-argument branch goes away.
+- A handler emitted from `RegisterSourceOutput` (invisible to this generator), nested as `CounterState.Handler`, dispatches and returns the send result. The post-initialization test is named as the visible dedupe case.
+- A declared name that resolves to a type which does not implement the request's `IRequestHandler` is TWM012, with that interface in the message.
+- In a generator host the full message graph is built at compilation end only when some type carries a `GeneratedHandlerAttribute`-derived attribute.
+- Unreadable and not-a-type-name TWM012 each use their own message format under the same id.
+- The skill and `agent.md` say a derived attribute, and they name `GeneratedHandlerAttribute` and TWM012.
 
 ## Description
 
@@ -34,12 +44,16 @@ all generator output compiles together.
 - [x] Attribute and fact kind
 - [x] Dispatch emitter and TWM diagnostic with tests
 - [x] Incrementality test; build 0/0; version bump
+- [x] Round-1 findings M1–M7 on this branch
 
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-06, from the timewarp-architecture cockpit)
 - Implementation: 01a1ace5-a6e2-77c1-adcf-7d30cf063e6c (2026-11-06)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1ace5-a6e2-77c1-adcf-7d30cf063e6c, max-turns 500, Done — 2026-11-05T19:03:46Z
+- Review oracle round 1: general reviewer (Claude Opus 5.5, claude-opus-5-5), effort 3, turn cap 200. 2026-11-06. Outcome: 7 open (2 bug, 3 suggestion, 2 nit); fix pass requested
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 10a53bba-de66-4161-9376-a4bf0a764511, max-turns 200, artifacts general.md, merged.md — 2026-11-05T19:09:08Z
+- Fix pass (implement-fix-2): session 01a1ad1d-6c44-7ce0-b4ab-64246cf7c12d (2026-11-06). Implemented M1–M7. Did not run a review.
 
 ## Results
 
@@ -53,13 +67,37 @@ Both packages are `15.0.0-beta.5`. TWM012 is in `AnalyzerReleases.Shipped.md` un
 
 `./bin/dev workflow` (mode Pr), after the partial-class split, exited 0. Build: 0 warnings, 0 errors. Tests passed on net10.0 and net11.0: generators 61, analyzers 48, compilation 76, failed 0. Samples verified, including NativeAOT publish of the AOT sample on both frameworks. Pack wrote `TimeWarp.Mediator.15.0.0-beta.5.nupkg` and `TimeWarp.Mediator.Generators.15.0.0-beta.5.nupkg`. Smoke printed `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator` on net10.0 and on net11.0. The log ends with `Pipeline SUCCEEDED`.
 
-`ganda repo audit --fix` added `bin/dev`, `bin/dev.dbg`, and `bin/dev.exe` to `.gitignore`. The four files over the 500-line cap (`message-graph-builder.cs`, `candidate-extractor.cs`, `candidate-graph.cs`, `mediator-emitter.cs`) are partials split by responsibility. The audit then exited 0 (`Repository passes`) with one advisory warning: `kanban-landed` says claim 021 has no usable worktree. That claim is not this task, and `--fix` did not land a kitchen for it.
+`ganda repo audit --fix` added `bin/dev`, `bin/dev.dbg`, and `bin/dev.exe` to `.gitignore`. The four files over the 500-line cap (`message-graph-builder.cs`, `candidate-extractor.cs`, `candidate-graph.cs`, `mediator-emitter.cs`) are partials split by responsibility. The audit then exited 0 (`Repository passes`) with one advisory warning: `kanban-landed` says claim 021 has no usable worktree. That claim is not this task, and `--fix` did not land a kitchen for it. This fix pass ran `ganda repo audit` and `ganda repo audit --fix` again: exit 0, the same advisory, 35 passed, and `--fix` landed 0 kitchens.
+
+Round 1 left seven findings. This pass implements them. The cross-assembly contract is a constructor parameter named `handlerTypeName` (a default counts). The getter-IL and private-reflection reader is gone. An unrelated string parameter is ignored. A name that is not a constant string, a name that is not a type name, and a type that is not the request's `IRequestHandler` each keep id TWM012 and use their own message. A generator host builds the compilation-end message graph only when some member-assembly type carries a `GeneratedHandlerAttribute`-derived attribute. The skill and `agent.md` name that attribute and TWM012. Version stays `15.0.0-beta.5`. This walk does not tag or publish.
 
 ### How to validate
 
-Smoke: `./bin/dev workflow` and `dotnet test tests/timewarp-mediator-generators-compilation-tests/timewarp-mediator-generators-compilation-tests.csproj -f net10.0 --filter "FullyQualifiedName~GeneratedHandler|FullyQualifiedName~DeclaredHandler|FullyQualifiedName~AddingGeneratedHandler"`.
+Smoke: Release `net10.0` of the three suites that cover the attribute.
 
-Expect: workflow prints `0 Warning(s)`, tests 61 + 48 + 76 passed on net10.0 and net11.0, `Samples verified successfully!`, both `15.0.0-beta.5` nupkgs, `package-pong` on both frameworks, and `Pipeline SUCCEEDED`. The filtered run passes the cross-generator Send (`pong`), the metadata getter read, the nested `global::App.CounterState.Handler` binding, TWM012 plus CS0234 for `App.MissingHandler`, the unreadable-name TWM012, and both incrementality cases (unrelated edit stays cached; adding the attribute modifies the model).
+```bash
+dotnet test tests/timewarp-mediator-analyzers-tests/timewarp-mediator-analyzers-tests.csproj -c Release -f net10.0
+dotnet test tests/timewarp-mediator-generators-compilation-tests/timewarp-mediator-generators-compilation-tests.csproj -c Release -f net10.0
+dotnet test tests/timewarp-mediator-generators-tests/timewarp-mediator-generators-tests.csproj -c Release -f net10.0
+```
+
+Expect: analyzers 50 passed, compilation 80 passed, generators 61 passed, failed 0. That includes a metadata-only library whose `handlerTypeName` default dispatches `Send` to `pong` and emits `global::App.PingHandler`; a metadata-only getter-only attribute is TWM012 containing `not a constant string` and `handlerTypeName`; `RegisterSourceOutput` nested `CounterState.Handler` returns `pong`; an unrelated constructor string still uses the getter; a resolved type that is not `IRequestHandler<App.Ping, string>` is TWM012 naming that interface. This pass did not re-run `./bin/dev workflow` or `net11.0`.
+
+### Review
+
+Round 1 ran with one general reviewer at effort 3. The fix pass implemented all seven findings. Disposition belongs to review round 2.
+
+| Severity | Open | Fixed | Won't fix |
+|---|---|---|---|
+| bug | 0 | 2 | 0 |
+| suggestion | 0 | 3 | 0 |
+| nit | 0 | 2 | 0 |
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. `review/disposition.md` does not exist yet.
+
+## Review
+
+- Round 1 findings M1–M7 are implemented on this branch. Round 2 is the host review node.
 
 ## Notes
 

@@ -6,7 +6,8 @@
 // A TypeFact is one discoverable declaration: the handler and notification matches it declares,
 // whether it is a concrete request, the scope ResolveScope would return, and any
 // GeneratedHandlerAttribute facts. DeclaredHandlers name a handler this compilation may not
-// contain yet. DeclaredHandlerFailures are names that are not constant type names. Both are
+// contain yet. DeclaredHandlerFailures are names that are not constant type names, each tagged
+// with the TWM012 case. Both are
 // empty when the request has no such attribute, so an unrelated edit stays equal.
 // HandlerMatch.MessageScope is that same ResolveScope for the message, so a notification or a
 // non-member request still carries a scope when the message itself has no fact.
@@ -32,6 +33,7 @@ internal sealed record DeclaredHandlerFact(
     bool IsVoid) : IEquatable<DeclaredHandlerFact>;
 
 internal sealed record DeclaredHandlerFailure(
+    DeclaredHandlerNameProblem Problem,
     string Detail,
     LocationInfo? Location) : IEquatable<DeclaredHandlerFailure>;
 

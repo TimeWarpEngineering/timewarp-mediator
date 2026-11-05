@@ -24,7 +24,7 @@ that 15.0 no longer ships. Those three ids are retired.
 | [TWM008](#twm008) | Error | generator | Generated mediator dependencies are not referenced |
 | [TWM010](#twm010) | Warning | generator | Registered behavior is not a pipeline behavior |
 | [TWM011](#twm011) | Warning | generator | Registered behavior applies to no request |
-| [TWM012](#twm012) | Error | analyzer (missing type, host); generator (unreadable name); analyzer (unreadable name, library) | Declared handler does not exist |
+| [TWM012](#twm012) | Error | analyzer (missing type or not an `IRequestHandler`, host); generator (unreadable name or not a type name); analyzer (unreadable name, library) | Declared handler does not exist |
 
 ## TWM001
 
@@ -96,11 +96,23 @@ derived attribute) whose `HandlerTypeName` names the handler another generator e
 is relative to the request's containing type, or to its namespace when the request is top-level.
 `Handler` on a request nested in `CounterState` names `CounterState.Handler`.
 
-The name has to be a constant string: a constructor argument (including a default parameter) or
-a getter that returns a string literal. Anything else is TWM012 on the attribute, reported by
-the generator in a host and by the analyzer in a library. The message names the attribute
-property and says it is not a constant string. A relative name that is not a type name says so
-in the same way.
+The name has to be a constant string. In the compilation that declares the attribute, a getter
+that returns a string literal is enough. An attribute declared in another assembly is read from
+a constructor parameter named `handlerTypeName`. A default value is enough:
+
+```csharp
+public sealed class ReducerAttribute(string handlerTypeName = "Handler") : GeneratedHandlerAttribute
+{
+  public override string HandlerTypeName => handlerTypeName;
+}
+```
+
+A ProjectReference hands the compiler a reference assembly. That image does not keep the getter
+body, so a getter-only attribute is not a constant. Any other string constructor parameter is
+ignored. That failure is TWM012 on the attribute, reported by the generator in a host and by the
+analyzer in a library. The message says the name is not a constant string and names
+`handlerTypeName`. A relative name that is not a type name uses the same id and says it is not
+a type name relative to the request's containing type.
 
 When the name is a constant and the type still does not exist after every generator has run,
 the analyzer reports TWM012 on the attribute in a host. A library does not: the host is where
@@ -108,5 +120,6 @@ the other generator emits the handler, and reporting it in the library would be 
 positive. The generated mediator still names the handler, so a missing type is also `CS0234`
 when that parent namespace exists, or `CS0246` when it does not, inside `Mediator.g.cs`.
 TWM012 is the diagnostic on the request. Requests without the attribute
-are unchanged. A declared name that is the same type as the request's `IRequestHandler` is one
-handler. A different type is TWM002.
+are unchanged. A declared name that exists and does not implement the request's
+`IRequestHandler` is TWM012. The message names that interface. A declared name that is the same
+type as the request's `IRequestHandler` is one handler. A different handler type is TWM002.

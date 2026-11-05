@@ -1,15 +1,17 @@
 #region Purpose
 // A request in source names a handler another generator emits, and a missing name is TWM012.
+// Post-initialization output is visible to this generator, so that test covers dedupe.
+// RegisterSourceOutput is not visible, so that test covers the declared-name path.
 #endregion
 
 #region Design
-// The mediator generator cannot see another generator's execute output. A post-initialization
+// The mediator generator cannot see another generator's RegisterSourceOutput. A post-initialization
 // source is visible, and a real IRequestHandler of the same type must stay one handler.
-// The final compilation contains both, so Send runs. The metadata test puts the derived
-// attribute in a referenced image whose getter is a constant and whose constructor takes no
-// string, so the name has to come from the method body. A source handler of the same name
-// would bind through IRequestHandler and hide a failed read. A missing name under an existing
-// namespace is CS0234 in Mediator.g.cs; TWM012 is the diagnostic on the attribute.
+// The final compilation contains both, so Send runs. The metadata-only test is the reference
+// assembly a ProjectReference passes to csc. The name comes from a constructor parameter named
+// handlerTypeName, including its default. A getter-only image is TWM012. A source handler of the
+// same name would bind through IRequestHandler and hide a failed read. A missing name under an
+// existing namespace is CS0234 in Mediator.g.cs; TWM012 is the diagnostic on the attribute.
 #endregion
 
 namespace TimeWarp.Mediator.Generators.Compilation.Tests;
@@ -17,7 +19,7 @@ namespace TimeWarp.Mediator.Generators.Compilation.Tests;
 public sealed class GeneratedHandlerTests
 {
   [Fact]
-  public async Task DeclaredHandler_FromAnotherGenerator_IsDispatched()
+  public async Task DeclaredHandler_FromPostInitializationOutput_DedupesTheVisibleHandler()
   {
     const string handler = """
         using System.Threading;
@@ -47,20 +49,73 @@ public sealed class GeneratedHandlerTests
   }
 
   [Fact]
-  public async Task DeclaredHandler_ReadFromReferencedAttributeBody_IsDispatched()
+  public async Task DeclaredHandler_FromMetadataOnlyConstructorArgument_IsDispatched()
   {
-    byte[] library = HostCompiler.CompileLibraryImage("StateLib", AttributeLibrary);
+    byte[] referenceImage = HostCompiler.CompileLibraryImage("StateLib", AttributeLibrary, metadataOnly: true);
+    byte[] runtimeImage = HostCompiler.CompileLibraryImage("StateLib", AttributeLibrary);
     HostCompilation host = HostCompiler.Compile(
         "DeclaredMetadata",
         MetadataHost,
         new EmittedHandler(MetadataHandler),
-        MetadataReference.CreateFromImage(library));
+        MetadataReference.CreateFromImage(referenceImage));
 
     Problems(host).ShouldBeEmpty();
     MediatorSource(host).ShouldContain("global::App.PingHandler");
-    Assembly assembly = Load(host, library);
+    Assembly assembly = Load(host, runtimeImage);
     string result = await Send(assembly, "App.Ping");
     result.ShouldBe("pong");
+  }
+
+  [Fact]
+  public void DeclaredHandler_FromMetadataOnlyGetter_IsTwm012()
+  {
+    byte[] library = HostCompiler.CompileLibraryImage("StateLib", GetterOnlyLibrary, metadataOnly: true);
+    HostCompilation host = HostCompiler.Compile(
+        "GetterOnlyMetadata",
+        MetadataHost,
+        MetadataReference.CreateFromImage(library));
+
+    Diagnostic twm012 = host.Diagnostics.Where(diagnostic => diagnostic.Id == "TWM012").ShouldHaveSingleItem();
+    twm012.GetMessage().ShouldContain("not a constant string");
+    twm012.GetMessage().ShouldContain("handlerTypeName");
+    MediatorSource(host).ShouldNotContain("PingHandler");
+  }
+
+  [Fact]
+  public async Task DeclaredHandler_FromRegisterSourceOutput_IsDispatched()
+  {
+    HostCompilation host = HostCompiler.Compile(
+        "InvisibleHandler",
+        NestedSourceHost,
+        new SourceOutputHandler(NestedHandler));
+
+    Problems(host).ShouldBeEmpty();
+    MediatorSource(host).ShouldContain("global::App.CounterState.Handler");
+    Assembly assembly = Load(host);
+    string result = await Send(assembly, "App.CounterState+Increment");
+    result.ShouldBe("pong");
+  }
+
+  [Fact]
+  public async Task DeclaredHandler_UnrelatedConstructorString_UsesTheGetter()
+  {
+    HostCompilation host = HostCompiler.Compile("UnrelatedArgument", UnrelatedArgumentHost);
+
+    Problems(host).ShouldBeEmpty();
+    MediatorSource(host).ShouldContain("global::App.PingHandler");
+    Assembly assembly = Load(host);
+    string result = await Send(assembly, "App.Ping");
+    result.ShouldBe("pong");
+  }
+
+  [Fact]
+  public void DeclaredHandler_ThatIsNotARequestHandler_IsTwm012()
+  {
+    HostCompilation host = HostCompiler.Compile("NotAHandler", NotAHandlerHost);
+
+    Diagnostic twm012 = host.Diagnostics.Where(diagnostic => diagnostic.Id == "TWM012").ShouldHaveSingleItem();
+    twm012.GetMessage().ShouldBe(
+        "Request 'App.Ping' names 'App.Side', which is not an IRequestHandler<App.Ping, string>");
   }
 
   [Fact]
@@ -97,6 +152,7 @@ public sealed class GeneratedHandlerTests
 
     Diagnostic twm012 = host.Diagnostics.Where(diagnostic => diagnostic.Id == "TWM012").ShouldHaveSingleItem();
     twm012.GetMessage().ShouldContain("not a constant string");
+    twm012.GetMessage().ShouldContain("handlerTypeName");
     twm012.Location.SourceTree!.GetText().ToString(twm012.Location.SourceSpan).ShouldBe("Weird");
     host.Diagnostics.ShouldNotContain(diagnostic => diagnostic.Id == "TWM001" || diagnostic.Id == "CS0246");
   }
@@ -182,6 +238,24 @@ public sealed class GeneratedHandlerTests
     }
   }
 
+  private sealed class SourceOutputHandler : IIncrementalGenerator
+  {
+    private readonly string Source;
+
+    public SourceOutputHandler(string source)
+    {
+      Source = source;
+    }
+
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+      string source = Source;
+      context.RegisterSourceOutput(
+          context.CompilationProvider,
+          (production, _) => production.AddSource("EmittedHandler.g.cs", source));
+    }
+  }
+
   private const string SyntaxHost = """
       using TimeWarp.Mediator;
 
@@ -198,6 +272,18 @@ public sealed class GeneratedHandlerTests
       """;
 
   private const string AttributeLibrary = """
+      using TimeWarp.Mediator;
+
+      namespace State
+      {
+          public sealed class ReducerAttribute(string handlerTypeName = "PingHandler") : GeneratedHandlerAttribute
+          {
+              public override string HandlerTypeName => handlerTypeName;
+          }
+      }
+      """;
+
+  private const string GetterOnlyLibrary = """
       using TimeWarp.Mediator;
 
       namespace State
@@ -231,6 +317,88 @@ public sealed class GeneratedHandlerTests
           {
               public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) =>
                   ValueTask.FromResult("pong");
+          }
+      }
+      """;
+
+  private const string NestedSourceHost = """
+      using TimeWarp.Mediator;
+
+      namespace App
+      {
+          public sealed class ReducerAttribute : GeneratedHandlerAttribute
+          {
+              public override string HandlerTypeName => "Handler";
+          }
+
+          public sealed partial class CounterState
+          {
+              [Reducer]
+              public sealed class Increment : IRequest<string> { }
+          }
+      }
+      """;
+
+  private const string NestedHandler = """
+      using System.Threading;
+      using System.Threading.Tasks;
+      using TimeWarp.Mediator;
+
+      namespace App
+      {
+          public sealed partial class CounterState
+          {
+              public sealed class Handler : IRequestHandler<Increment, string>
+              {
+                  public ValueTask<string> Handle(Increment request, CancellationToken cancellationToken) =>
+                      ValueTask.FromResult("pong");
+              }
+          }
+      }
+      """;
+
+  private const string UnrelatedArgumentHost = """
+      using System.Threading;
+      using System.Threading.Tasks;
+      using TimeWarp.Mediator;
+
+      namespace App
+      {
+          public sealed class ReducerAttribute : GeneratedHandlerAttribute
+          {
+              public ReducerAttribute(string description)
+              {
+              }
+
+              public override string HandlerTypeName => "PingHandler";
+          }
+
+          [Reducer("increments the counter")]
+          public sealed class Ping : IRequest<string> { }
+
+          public sealed class PingHandler : IRequestHandler<Ping, string>
+          {
+              public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) =>
+                  ValueTask.FromResult("pong");
+          }
+      }
+      """;
+
+  private const string NotAHandlerHost = """
+      using TimeWarp.Mediator;
+
+      namespace App
+      {
+          public sealed class ReducerAttribute : GeneratedHandlerAttribute
+          {
+              public override string HandlerTypeName => "Side";
+          }
+
+          [Reducer]
+          public sealed class Ping : IRequest<string> { }
+
+          public sealed class Side
+          {
           }
       }
       """;

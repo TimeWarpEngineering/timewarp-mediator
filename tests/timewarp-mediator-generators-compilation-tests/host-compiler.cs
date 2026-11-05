@@ -151,7 +151,8 @@ internal static class HostCompiler
   }
 
   // The emitted image, for runtime tests that load the library beside the host.
-  internal static byte[] CompileLibraryImage(string assemblyName, string source)
+  // metadataOnly matches the reference assembly a ProjectReference hands to csc.
+  internal static byte[] CompileLibraryImage(string assemblyName, string source, bool metadataOnly = false)
   {
     CSharpCompilation compilation = CSharpCompilation.Create(
         assemblyName,
@@ -159,7 +160,9 @@ internal static class HostCompiler
         references: GetBaseReferences(),
         options: CompilationOptions);
     using MemoryStream stream = new();
-    EmitResult result = compilation.Emit(stream);
+    EmitResult result = compilation.Emit(
+        stream,
+        options: metadataOnly ? new EmitOptions(metadataOnly: true) : null);
     result.Success.ShouldBeTrue(string.Join(Environment.NewLine, result.Diagnostics));
     return stream.ToArray();
   }

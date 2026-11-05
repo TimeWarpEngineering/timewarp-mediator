@@ -42,9 +42,9 @@ dotnet test tests/timewarp-mediator-generators-tests/timewarp-mediator-generator
 
 | Project | Package | Target | Contents |
 |---|---|---|---|
-| `timewarp-mediator` | `TimeWarp.Mediator` | `net10.0;net11.0` | `IRequest`, `ICommand`, `IQuery`, `IAction`, `IIdempotentCommand`, `INotification`, `IRequestHandler` / `INotificationHandler`, `ActionHandler<T>`, `IPipelineBehavior` / `MessageHandlerDelegate`, `ISender` / `IPublisher` / `IMediator` (and the `<TScope>` forms), `MediatorAssembly`, `MediatorScope`, `MediatorBehavior`, `GeneratedMediatorAttribute`, `NoHandlerException`, `Unit`. Packs the TWM001–TWM004 analyzer |
-| `timewarp-mediator-generators` | `TimeWarp.Mediator.Generators` | `netstandard2.0` | Source generator: compile-time message graph, `internal sealed Mediator`, named pipelines, `MediatorManifest` version 2, `AddGeneratedMediator()`. Reports TWM007, TWM008, TWM010, TWM011, and TWM001–TWM003 in a host |
-| `timewarp-mediator-analyzers` | none (asset of `TimeWarp.Mediator`) | `netstandard2.0` | TWM001–TWM004. Not a NuGet package |
+| `timewarp-mediator` | `TimeWarp.Mediator` | `net10.0;net11.0` | `IRequest`, `ICommand`, `IQuery`, `IAction`, `IIdempotentCommand`, `INotification`, `IRequestHandler` / `INotificationHandler`, `ActionHandler<T>`, `IPipelineBehavior` / `MessageHandlerDelegate`, `ISender` / `IPublisher` / `IMediator` (and the `<TScope>` forms), `MediatorAssembly`, `MediatorScope`, `MediatorBehavior`, `GeneratedMediatorAttribute`, `GeneratedHandlerAttribute`, `NoHandlerException`, `Unit`. Packs the TWM001–TWM004 and TWM012 analyzer |
+| `timewarp-mediator-generators` | `TimeWarp.Mediator.Generators` | `netstandard2.0` | Source generator: compile-time message graph, `internal sealed Mediator`, named pipelines, `MediatorManifest` version 2, `AddGeneratedMediator()`. Reports TWM007, TWM008, TWM010, TWM011, TWM001–TWM003 in a host, and TWM012 when a declared handler name is not a constant or not a type name |
+| `timewarp-mediator-analyzers` | none (asset of `TimeWarp.Mediator`) | `netstandard2.0` | TWM001–TWM004 and TWM012. Not a NuGet package |
 
 ### Dispatcher
 

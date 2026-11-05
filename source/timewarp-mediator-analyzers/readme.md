@@ -10,7 +10,7 @@ Roslyn analyzers for TimeWarp Mediator libraries that declare requests and handl
 | TWM004 | Request is not a member of this sender pipeline |
 | TWM012 | Declared generated handler does not exist |
 
-A project that references `TimeWarp.Mediator.Generators` already runs the generator, which reports TWM001–TWM003 in that host. The analyzer still reports TWM004 there, and it reports TWM001–TWM004 in a library. TWM012 is reported here after every generator has run, including in a generator host, when the named handler is missing. A library reports TWM012 only when the handler name is not a constant.
+A project that references `TimeWarp.Mediator.Generators` already runs the generator, which reports TWM001–TWM003 in that host. The analyzer still reports TWM004 there, and it reports TWM001–TWM004 in a library. TWM012 is reported here after every generator has run, including in a generator host, when the named handler is missing or is not an `IRequestHandler` for that request. A generator host builds that graph only when a type carries a `GeneratedHandlerAttribute`-derived attribute. A library reports TWM012 when the handler name is not a constant or not a type name.
 
 ## Install
 

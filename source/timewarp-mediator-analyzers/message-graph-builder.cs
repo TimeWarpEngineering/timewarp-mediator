@@ -27,7 +27,9 @@
 // Diagnostic locations are limited to this compilation's syntax trees: analyzers and generators
 // may not report into another project's source.
 // GeneratedHandlerAttribute on a concrete request names a handler. A symbol that exists is bound
-// like any other handler. A missing name is TWM012 in a host and still suppresses TWM001, because
+// like any other handler when it implements that request's IRequestHandler. A type that exists and
+// does not implement the interface is TWM012. A missing name is TWM012 in a host and still suppresses
+// TWM001, because
 // another generator may have been going to emit it and, in a library, the host is where it appears.
 // An unreadable name is TWM012 from this walk only when the caller asks: the generator reports
 // that case itself, and reporting it here too would double it.
@@ -45,6 +47,35 @@ public static partial class MessageGraphBuilder
   private const string Request0 = "TimeWarp.Mediator.IRequest";
   private const string Notification0 = "TimeWarp.Mediator.INotification";
   private const string UnitTypeName = "TimeWarp.Mediator.Unit";
+
+  internal static bool HasGeneratedHandlerAttribute(
+      Compilation compilation,
+      Membership membership,
+      CancellationToken cancellationToken)
+  {
+    INamedTypeSymbol? attribute = compilation.GetTypeByMetadataName(HandlerTypeNameReader.MetadataName);
+    if (attribute is null)
+    {
+      return false;
+    }
+
+    foreach (IAssemblySymbol assembly in membership.MemberAssemblies)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      foreach (INamedTypeSymbol type in Membership.EnumerateTypes(assembly.GlobalNamespace))
+      {
+        foreach (AttributeData data in type.GetAttributes())
+        {
+          if (HandlerTypeNameReader.IsGeneratedHandler(data.AttributeClass, attribute))
+          {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
 
   public static MessageGraph Build(
       Compilation compilation,
@@ -95,6 +126,8 @@ public static partial class MessageGraphBuilder
             type,
             request0,
             request1,
+            requestHandler1,
+            requestHandler2,
             unitType,
             generatedHandlerAttribute,
             membership,
