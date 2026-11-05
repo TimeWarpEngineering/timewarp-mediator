@@ -13,7 +13,7 @@ The bump itself was not needed: task 029 already set `<Version>` to 15.0.0-beta.
 - [x] PR #123 (task 029) merged to master, CI green
 - [x] `./bin/dev release --dry-run` guards all pass
 - [x] `./bin/dev release` tagged v15.0.0-beta.5 at 19e4071 and created the GitHub Release
-- [ ] `release:published` workflow run pushes both packages to nuget.org
+- [x] `release:published` run 42097280764 pushed both packages to nuget.org
 
 ## Session
 
