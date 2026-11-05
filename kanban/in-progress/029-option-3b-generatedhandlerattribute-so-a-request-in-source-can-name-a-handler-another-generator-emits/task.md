@@ -54,6 +54,7 @@ all generator output compiles together.
 - Review oracle round 1: general reviewer (Claude Opus 5.5, claude-opus-5-5), effort 3, turn cap 200. 2026-11-06. Outcome: 7 open (2 bug, 3 suggestion, 2 nit); fix pass requested
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 10a53bba-de66-4161-9376-a4bf0a764511, max-turns 200, artifacts general.md, merged.md — 2026-11-05T19:09:08Z
 - Fix pass (implement-fix-2): session 01a1ad1d-6c44-7ce0-b4ab-64246cf7c12d (2026-11-06). Implemented M1–M7. Did not run a review.
+- Review oracle round 2: general reviewer (Claude Opus 5.5, claude-opus-5-5), effort 3, turn cap 200. 2026-11-06. Scope `b0c49a7..ae64cbd`. Outcome: M1–M7 fixed, 0 new findings, disposition clean
 
 ## Results
 
@@ -85,7 +86,9 @@ Expect: analyzers 50 passed, compilation 80 passed, generators 61 passed, failed
 
 ### Review
 
-Round 1 ran with one general reviewer at effort 3. The fix pass implemented all seven findings. Disposition belongs to review round 2.
+Two rounds ran, each with one general reviewer (Claude Opus 5.5) at effort 3. Round 1 raised seven findings, and the fix pass `ae64cbd` implemented all of them. Round 2 reviewed the delta `b0c49a7..ae64cbd`, confirmed M1–M7 fixed, and raised no new findings. **Disposition: clean.** There are no wontfix items and no escalations.
+
+Round 2 ran the compilation (80), analyzer (50), and generator (61) suites in Release on net10.0 and on net11.0, with 0 failed. It also ran a generator-host probe that covered three shapes. A void `IAction` with an invisible `ActionHandler<T>` handler gave no diagnostics. A not-a-handler type gave TWM012 plus CS1061 in `Mediator.g.cs`. A host with no attribute skipped the graph build. Two optional doc observations are noted in `review/round-2/general.md`: the csproj `<Description>` TWM012 cases, and the CS1061 note. Neither is a finding.
 
 | Severity | Open | Fixed | Won't fix |
 |---|---|---|---|
@@ -93,12 +96,13 @@ Round 1 ran with one general reviewer at effort 3. The fix pass implemented all 
 | suggestion | 0 | 3 | 0 |
 | nit | 0 | 2 | 0 |
 
-Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. `review/disposition.md` does not exist yet.
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md` (final counts), `review/disposition.md`.
 
 ## Review
 
-- Round 1 findings M1–M7 are implemented on this branch. Round 2 is the host review node.
-
+- Round 1 findings M1–M7 are implemented on this branch.
+- Round 2 (2026-11-06): all seven verified fixed, 0 new findings. Disposition clean (`review/disposition.md`).
+- Round 2: Done
 ## Notes
 
 Steve 2026-11-06: all of 0, 1, 2, 3b, 4, 5 on State; 3b is the Mediator decision as much as a
