@@ -7,7 +7,7 @@
     <RootNamespace>TimeWarp.Mediator.Generators</RootNamespace>
     <AssemblyName>TimeWarp.Mediator.Generators</AssemblyName>
     <PackageId>TimeWarp.Mediator.Generators</PackageId>
-    <Description>Source generator for TimeWarp.Mediator: builds the message graph at compile time and emits a sealed, reflection-free, AOT-friendly IMediator plus per-scope ISender&lt;TScope&gt;/IPublisher&lt;TScope&gt; named pipelines and AddGeneratedMediator() registration. Reports TWM007, TWM008, TWM010, and TWM011. TWM001–TWM004 ship in the TimeWarp.Mediator package.</Description>
+    <Description>Source generator for TimeWarp.Mediator: builds the message graph at compile time and emits a sealed, reflection-free, AOT-friendly IMediator plus per-scope ISender&lt;TScope&gt;/IPublisher&lt;TScope&gt; named pipelines and AddGeneratedMediator() registration. Reports TWM007, TWM008, TWM010, and TWM011, and TWM012 when a GeneratedHandlerAttribute name is not a constant. TWM001–TWM004 and the missing-handler half of TWM012 ship in the TimeWarp.Mediator package.</Description>
     <PackageTags>$(PackageTags);source-generator;aot</PackageTags>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
@@ -35,6 +35,9 @@
     <Compile Include="..\timewarp-mediator-analyzers\membership-options.cs" Link="shared\membership-options.cs" />
     <Compile Include="..\timewarp-mediator-analyzers\message-graph.cs" Link="shared\message-graph.cs" />
     <Compile Include="..\timewarp-mediator-analyzers\message-graph-builder.cs" Link="shared\message-graph-builder.cs" />
+    <Compile Include="..\timewarp-mediator-analyzers\message-graph-builder.handlers.cs" Link="shared\message-graph-builder.handlers.cs" />
+    <Compile Include="..\timewarp-mediator-analyzers\message-graph-builder.constraints.cs" Link="shared\message-graph-builder.constraints.cs" />
+    <Compile Include="..\timewarp-mediator-analyzers\handler-type-name.cs" Link="shared\handler-type-name.cs" />
     <AdditionalFiles Include="..\timewarp-mediator-analyzers\AnalyzerReleases.Shipped.md" />
     <AdditionalFiles Include="..\timewarp-mediator-analyzers\AnalyzerReleases.Unshipped.md" />
   </ItemGroup>

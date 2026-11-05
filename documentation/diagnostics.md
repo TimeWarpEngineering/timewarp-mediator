@@ -1,11 +1,13 @@
 # TimeWarp.Mediator diagnostics
 
-`TimeWarp.Mediator` ships the analyzer (TWM001–TWM004) as an analyzer asset. A library that
-references that package and does not run the generator gets those four. `TimeWarp.Mediator.Generators`
-reports TWM007, TWM008, TWM010, and TWM011, and in a generator host it also reports TWM001–TWM003.
-The analyzer skips TWM001–TWM003 when `TimeWarpMediatorGenerator=true`, so each is reported once.
-TWM004 stays with the analyzer in both hosts and libraries. Each descriptor's help link points to
-its section here.
+`TimeWarp.Mediator` ships the analyzer (TWM001–TWM004 and TWM012) as an analyzer asset. A library that
+references that package and does not run the generator gets TWM001–TWM004, and TWM012 when a
+`GeneratedHandlerAttribute` name is not a constant. `TimeWarp.Mediator.Generators`
+reports TWM007, TWM008, TWM010, and TWM011, and in a generator host it also reports TWM001–TWM003
+and an unreadable TWM012. The analyzer skips TWM001–TWM003 when `TimeWarpMediatorGenerator=true`,
+so each is reported once. It still reports TWM012 there when the named handler does not exist
+after every generator has run. TWM004 stays with the analyzer in both hosts and libraries.
+Each descriptor's help link points to its section here.
 
 There is one emission. The host supplies `IServiceProvider`, and registered pipeline behaviors are
 woven. TWM005 (behavior not woven) and TWM006 (handler not constructible with `new()`) described
@@ -22,6 +24,7 @@ that 15.0 no longer ships. Those three ids are retired.
 | [TWM008](#twm008) | Error | generator | Generated mediator dependencies are not referenced |
 | [TWM010](#twm010) | Warning | generator | Registered behavior is not a pipeline behavior |
 | [TWM011](#twm011) | Warning | generator | Registered behavior applies to no request |
+| [TWM012](#twm012) | Error | analyzer (missing type, host); generator (unreadable name); analyzer (unreadable name, library) | Declared handler does not exist |
 
 ## TWM001
 
@@ -85,3 +88,25 @@ from every pipeline.
 **Registered behavior applies to no request.** The behavior is valid, but no request in its
 pipeline (the `Scope` named argument, or the unscoped default) satisfies its generic
 constraints, so it never runs. Fix the constraints or the `Scope`, or remove the registration.
+
+## TWM012
+
+**Declared handler does not exist.** A request carries a `GeneratedHandlerAttribute` (or a
+derived attribute) whose `HandlerTypeName` names the handler another generator emits. The name
+is relative to the request's containing type, or to its namespace when the request is top-level.
+`Handler` on a request nested in `CounterState` names `CounterState.Handler`.
+
+The name has to be a constant string: a constructor argument (including a default parameter) or
+a getter that returns a string literal. Anything else is TWM012 on the attribute, reported by
+the generator in a host and by the analyzer in a library. The message names the attribute
+property and says it is not a constant string. A relative name that is not a type name says so
+in the same way.
+
+When the name is a constant and the type still does not exist after every generator has run,
+the analyzer reports TWM012 on the attribute in a host. A library does not: the host is where
+the other generator emits the handler, and reporting it in the library would be a false
+positive. The generated mediator still names the handler, so a missing type is also `CS0234`
+when that parent namespace exists, or `CS0246` when it does not, inside `Mediator.g.cs`.
+TWM012 is the diagnostic on the request. Requests without the attribute
+are unchanged. A declared name that is the same type as the request's `IRequestHandler` is one
+handler. A different type is TWM002.

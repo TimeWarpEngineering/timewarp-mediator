@@ -1,6 +1,6 @@
 ---
 name: tw-mediator
-description: Add and use TimeWarp.Mediator 15.0 - in-process request/response and notifications for .NET with one source-generated dispatcher. Use when adding TimeWarp.Mediator to a project, writing requests, handlers, notifications or pipeline behaviors, calling AddGeneratedMediator, setting up named pipelines (ISender<TScope>), reading MediatorManifest, or fixing TWM001-TWM004, TWM007, TWM008, TWM010, and TWM011.
+description: Add and use TimeWarp.Mediator 15.0 - in-process request/response and notifications for .NET with one source-generated dispatcher. Use when adding TimeWarp.Mediator to a project, writing requests, handlers, notifications or pipeline behaviors, calling AddGeneratedMediator, setting up named pipelines (ISender<TScope>), reading MediatorManifest, naming a handler another generator emits, or fixing TWM001-TWM004, TWM007, TWM008, TWM010, TWM011, and TWM012.
 ---
 
 # TimeWarp.Mediator
@@ -9,7 +9,7 @@ In-process messaging for .NET. `ISender.Send` reaches one handler. `IPublisher.P
 reaches many handlers, sequentially. The dispatcher is source-generated. A host calls
 `AddGeneratedMediator()`. Handlers and behaviors return `ValueTask`.
 
-**Packages:** `TimeWarp.Mediator` (contracts and TWM001–TWM004) and `TimeWarp.Mediator.Generators`.
+**Packages:** `TimeWarp.Mediator` (contracts, `GeneratedHandlerAttribute`, and TWM001–TWM004 plus TWM012) and `TimeWarp.Mediator.Generators`.
 **Repository:** https://github.com/TimeWarpEngineering/timewarp-mediator
 **Docs this skill links instead of repeating:**
 [architecture.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/architecture.md),
@@ -25,6 +25,7 @@ reaches many handlers, sequentially. The dispatcher is source-generated. A host 
 | Registration | `services.AddGeneratedMediator()` / `AddGeneratedMediator<TScope>()` from the generated namespace. The dispatcher is transient |
 | Handler discovery | compile time, member assemblies only |
 | Missing / duplicate handler | build error (TWM001 / TWM002) |
+| Handler emitted by another generator | `[GeneratedHandler]` on the request; `HandlerTypeName` is relative to the containing type. A bad or missing name is TWM012 |
 | Behaviors | `[assembly: MediatorBehavior(typeof(B<,>))]`, always woven. The host supplies `IServiceProvider` |
 | Named pipelines (`ISender<TScope>`) | yes |
 | Streams, pre/post processors, exception handlers | removed with the reflection runtime |
@@ -39,8 +40,8 @@ Keep both packages on the same version. Generators does not bring `TimeWarp.Medi
 ```xml
 <!-- Directory.Packages.props -->
 <ItemGroup>
-  <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />
-  <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.4" />
+  <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.5" />
+  <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.5" />
   <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
 </ItemGroup>
 ```
@@ -54,7 +55,7 @@ Keep both packages on the same version. Generators does not bring `TimeWarp.Medi
 </ItemGroup>
 ```
 
-Use the version this repo is packing, currently `15.0.0-beta.4`. 14.0.0 on nuget.org
+Use the version this repo is packing, currently `15.0.0-beta.5`. 14.0.0 on nuget.org
 is the previous surface: the id `TimeWarp.Mediator` was the reflection runtime (`AddMediator`),
 contracts were `TimeWarp.Mediator.Contracts`, analyzers were a separate package, and handlers
 returned `Task`.
@@ -201,9 +202,11 @@ Full text:
 | TWM008 | `TimeWarp.Mediator` or MS.DI Abstractions is missing. Nothing is generated | Reference `TimeWarp.Mediator` and `Microsoft.Extensions.DependencyInjection.Abstractions` |
 | TWM010 (warning) | `[MediatorBehavior]` type is not an `IPipelineBehavior<,>` | Fix the type or remove the attribute |
 | TWM011 (warning) | Behavior constraints match no request in its pipeline | Fix the constraints or `Scope`, or remove it |
+| TWM012 | `GeneratedHandlerAttribute` names a handler that is not a constant, or that still does not exist after generation | Make `HandlerTypeName` a constant type name relative to the request's containing type, and emit that handler |
 
-In a generator host the generator reports TWM001–TWM003. The analyzer reports TWM004 there,
-and TWM001–TWM004 in a library. TWM005, TWM006, and TWM009 are retired.
+In a generator host the generator reports TWM001–TWM003 and an unreadable TWM012. The analyzer
+reports TWM004 there, TWM012 when the named handler is missing, and TWM001–TWM004 in a library.
+A library reports TWM012 only for an unreadable name. TWM005, TWM006, and TWM009 are retired.
 
 ## 4. Gotchas
 

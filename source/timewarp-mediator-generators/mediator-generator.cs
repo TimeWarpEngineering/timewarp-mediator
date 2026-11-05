@@ -14,7 +14,9 @@
 // predicate are the host candidate source. The diagnostics output re-joins the Compilation only to
 // put each span back on its syntax tree.
 // This generator is the only reporter of TWM001-TWM003 in its host: the analyzer sees
-// TimeWarpMediatorGenerator=true and skips them, so each is reported once.
+// TimeWarpMediatorGenerator=true and skips them, so each is reported once. It also reports
+// TWM012 when a GeneratedHandlerAttribute name is not a constant. It does not report a missing
+// declared handler: another generator may emit that type, and the analyzer checks after they all run.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;

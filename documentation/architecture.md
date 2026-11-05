@@ -8,13 +8,13 @@ Host, Aot, or Link profile.
 
 | Package | Project | Target | What a reference does |
 |---|---|---|---|
-| `TimeWarp.Mediator` | `source/timewarp-mediator` | `net10.0;net11.0` | Contracts, `Unit`, membership attributes, `GeneratedMediatorAttribute`, and the TWM001–TWM004 analyzer DLL at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` |
-| `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `netstandard2.0` | Source generator. Emits the dispatcher, `MediatorManifest`, and `AddGeneratedMediator`. Reports TWM007, TWM008, TWM010, and TWM011, and TWM001–TWM003 in a generator host |
+| `TimeWarp.Mediator` | `source/timewarp-mediator` | `net10.0;net11.0` | Contracts, `Unit`, membership attributes, `GeneratedMediatorAttribute`, `GeneratedHandlerAttribute`, and the TWM001–TWM004 and TWM012 analyzer DLL at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` |
+| `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `netstandard2.0` | Source generator. Emits the dispatcher, `MediatorManifest`, and `AddGeneratedMediator`. Reports TWM007, TWM008, TWM010, and TWM011, TWM001–TWM003 in a generator host, and TWM012 when a declared handler name is not a constant |
 
 The analyzer project `source/timewarp-mediator-analyzers` stays in the tree because the analyzer
 is `netstandard2.0` and the contracts library is `net10.0` and `net11.0`. It is not a NuGet package.
 `TimeWarp.Mediator.Generators` does not bundle that analyzer DLL. A library that only declares
-messages references `TimeWarp.Mediator` and gets TWM001–TWM004. A host references both packages
+messages references `TimeWarp.Mediator` and gets TWM001–TWM004 and TWM012. A host references both packages
 at the same version.
 
 Generators and the analyzer load inside Roslyn. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
@@ -196,7 +196,7 @@ Build properties:
 |---|---|---|
 | `TimeWarpMediatorNamespace` | generator | Generated namespace. Default `TimeWarp.Mediator.Generated`. Set a distinct value on each host that shares a compilation |
 | `TimeWarpMediatorAssembly` | analyzer | Analyzer membership. Default `true` on a generator reference. Does not control emission |
-| `TimeWarpMediatorGenerator` | analyzer | `true` on a generator reference. The analyzer then skips TWM001–TWM003 so the generator reports them once. TWM004 stays with the analyzer |
+| `TimeWarpMediatorGenerator` | analyzer | `true` on a generator reference. The analyzer then skips TWM001–TWM003 so the generator reports them once. TWM004 stays with the analyzer. TWM012 for a missing declared handler stays with the analyzer, because only that compilation sees every generator |
 
 `TimeWarpMediatorProfile` is removed. The host assembly name and public key come from the
 compilation, so a strong-named `InternalsVisibleTo` grant still matches the host.
@@ -215,6 +215,7 @@ Ids and ownership: [diagnostics.md](diagnostics.md).
 | TWM008 | generator | `TimeWarp.Mediator` or `Microsoft.Extensions.DependencyInjection.Abstractions` is missing. Nothing is generated |
 | TWM010 | generator | `[MediatorBehavior]` type is not a pipeline behavior |
 | TWM011 | generator | Behavior matches no request in its pipeline |
+| TWM012 | analyzer in a host when the named type is missing; generator when the name is not a constant; analyzer in a library for that unreadable name | `GeneratedHandlerAttribute` does not name a handler that exists after generation |
 
 TWM005 and TWM006 described the removed Aot and Link profiles. TWM009 described stream,
 processor, and exception-handler kinds. Those three ids are retired.

@@ -4,7 +4,10 @@
 
 #region Design
 // A TypeFact is one discoverable declaration: the handler and notification matches it declares,
-// whether it is a concrete request, and the scope ResolveScope would return.
+// whether it is a concrete request, the scope ResolveScope would return, and any
+// GeneratedHandlerAttribute facts. DeclaredHandlers name a handler this compilation may not
+// contain yet. DeclaredHandlerFailures are names that are not constant type names. Both are
+// empty when the request has no such attribute, so an unrelated edit stays equal.
 // HandlerMatch.MessageScope is that same ResolveScope for the message, so a notification or a
 // non-member request still carries a scope when the message itself has no fact.
 // A BehaviorFact is one [assembly: MediatorBehavior]. A pipeline slot is a type parameter, a
@@ -23,11 +26,22 @@ internal sealed record HandlerMatch(
     bool IsNotification,
     TypeModel? MessageScope) : IEquatable<HandlerMatch>;
 
+internal sealed record DeclaredHandlerFact(
+    TypeModel Handler,
+    TypeModel Response,
+    bool IsVoid) : IEquatable<DeclaredHandlerFact>;
+
+internal sealed record DeclaredHandlerFailure(
+    string Detail,
+    LocationInfo? Location) : IEquatable<DeclaredHandlerFailure>;
+
 internal sealed record TypeFact(
     TypeModel Type,
     EquatableArray<HandlerMatch> Matches,
     bool IsConcreteRequest,
-    TypeModel? Scope) : IEquatable<TypeFact>;
+    TypeModel? Scope,
+    EquatableArray<DeclaredHandlerFact> DeclaredHandlers,
+    EquatableArray<DeclaredHandlerFailure> DeclaredHandlerFailures) : IEquatable<TypeFact>;
 
 // ParameterIndex >= 0 is a type parameter of the behavior. Otherwise the slot is a concrete key,
 // a generic pattern (GenericDefinitionKey plus Arguments), or an array (ArrayRank plus one argument).

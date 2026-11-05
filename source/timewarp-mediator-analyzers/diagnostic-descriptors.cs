@@ -1,5 +1,5 @@
 #region Purpose
-// TWM001–TWM004, TWM007, TWM008, TWM010, and TWM011 descriptors shared by the analyzer and the generator.
+// TWM001–TWM004, TWM007, TWM008, TWM010, TWM011, and TWM012 descriptors shared by the analyzer and the generator.
 // TWM007, TWM008, TWM010, and TWM011 are generator-only: they describe what the host's generated mediator emits.
 #endregion
 
@@ -90,6 +90,17 @@ internal static class DiagnosticDescriptors
       isEnabledByDefault: true,
       description: "[assembly: MediatorBehavior(typeof(T))] must name a type that implements IPipelineBehavior<TRequest, TResponse> (open generic or closed). Other types are dropped from every pipeline.",
       helpLinkUri: HelpLink("TWM010"));
+
+  internal static readonly DiagnosticDescriptor DeclaredHandlerDoesNotExist = new(
+      id: "TWM012",
+      title: "Declared handler does not exist",
+      messageFormat: "Request '{0}' names generated handler '{1}', which does not exist after generation",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "A GeneratedHandlerAttribute names a handler relative to the request. The name must be a constant type name, and in a host that type must exist after every generator has run.",
+      helpLinkUri: HelpLink("TWM012"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
 
   internal static readonly DiagnosticDescriptor BehaviorAppliesToNoRequest = new(
       id: "TWM011",

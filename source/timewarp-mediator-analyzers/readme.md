@@ -8,15 +8,16 @@ Roslyn analyzers for TimeWarp Mediator libraries that declare requests and handl
 | TWM002 | Duplicate handler for request |
 | TWM003 | Handler and message belong to different pipelines |
 | TWM004 | Request is not a member of this sender pipeline |
+| TWM012 | Declared generated handler does not exist |
 
-A project that references `TimeWarp.Mediator.Generators` already runs the generator, which reports TWM001–TWM003 in that host. The analyzer still reports TWM004 there, and it reports TWM001–TWM004 in a library.
+A project that references `TimeWarp.Mediator.Generators` already runs the generator, which reports TWM001–TWM003 in that host. The analyzer still reports TWM004 there, and it reports TWM001–TWM004 in a library. TWM012 is reported here after every generator has run, including in a generator host, when the named handler is missing. A library reports TWM012 only when the handler name is not a constant.
 
 ## Install
 
 Reference the contracts package. The analyzer comes with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.4
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.5
 ```
 
 Without `--version`, that command resolves 14.0.0, the reflection runtime. Drop the flag when 15.0 is the stable package.

@@ -2,6 +2,11 @@
 // Symbol-free message graph the emitters render. Same shape as the analyzer's MessageGraph.
 #endregion
 
+#region Design
+// A declared handler is a TypeModel whose FullyQualified name the emitter prints, including when
+// that type is not a symbol in this compilation. The call is the same .Handle the real handlers use.
+#endregion
+
 namespace TimeWarp.Mediator.Generators;
 
 internal sealed class EmissionGraph

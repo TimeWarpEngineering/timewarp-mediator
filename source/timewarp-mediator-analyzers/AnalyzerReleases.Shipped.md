@@ -20,3 +20,11 @@ TWM008  | TimeWarp.Mediator | Error | MediatorRuntimeMissing, shipped in 14.0.0-
 TWM009  | TimeWarp.Mediator | Warning | UnsupportedHandlerKind, shipped in 14.0.0-beta.5
 TWM010  | TimeWarp.Mediator | Warning | InvalidBehaviorRegistration, shipped in 14.0.0-beta.5
 TWM011  | TimeWarp.Mediator | Warning | BehaviorAppliesToNoRequest, shipped in 14.0.0-beta.5
+
+## Release 15.0.0
+
+### New Rules
+
+Rule ID | Category | Severity | Notes
+--------|----------|----------|-------
+TWM012  | TimeWarp.Mediator | Error | DeclaredHandlerDoesNotExist, shipped in 15.0.0-beta.5

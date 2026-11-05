@@ -1,14 +1,14 @@
 # TimeWarp.Mediator
 
-Message contracts and the TWM001–TWM004 analyzer for TimeWarp Mediator 15.0: requests, commands, queries, notifications, and pipeline types.
+Message contracts and the TWM001–TWM004 and TWM012 analyzer for TimeWarp Mediator 15.0: requests, commands, queries, notifications, and pipeline types.
 
 ## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.4
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.5
 ```
 
-Without `--version`, that command resolves 14.0.0. Through 14.0.0 this package id was the reflection runtime (`AddMediator`). The 14.0.0 contracts were `TimeWarp.Mediator.Contracts`, and the analyzers were `TimeWarp.Mediator.Analyzers`. 15.0 reuses this id for the contracts and the analyzer. A host also references `TimeWarp.Mediator.Generators` at the same version. This package ships the TWM001–TWM004 analyzer. There is no separate analyzers package.
+Without `--version`, that command resolves 14.0.0. Through 14.0.0 this package id was the reflection runtime (`AddMediator`). The 14.0.0 contracts were `TimeWarp.Mediator.Contracts`, and the analyzers were `TimeWarp.Mediator.Analyzers`. 15.0 reuses this id for the contracts and the analyzer. A host also references `TimeWarp.Mediator.Generators` at the same version. This package ships the TWM001–TWM004 and TWM012 analyzer, and `GeneratedHandlerAttribute` so a request can name a handler another generator emits. There is no separate analyzers package.
 
 ## Example
 

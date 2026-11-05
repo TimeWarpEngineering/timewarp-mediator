@@ -39,6 +39,19 @@ internal static class HostCompiler
   internal static HostCompilation Compile(
       string assemblyName,
       string source,
+      IIncrementalGenerator additionalGenerator,
+      params MetadataReference[] hostReferences)
+  {
+    return CompileWithReferences(
+        assemblyName,
+        source,
+        GetBaseReferences().Concat(hostReferences),
+        additionalGenerator: additionalGenerator);
+  }
+
+  internal static HostCompilation Compile(
+      string assemblyName,
+      string source,
       string hostAssemblyNameProperty,
       params MetadataReference[] hostReferences)
   {
@@ -70,7 +83,8 @@ internal static class HostCompiler
       IEnumerable<MetadataReference> references,
       string generatedNamespace = DefaultNamespace,
       string? hostAssemblyNameProperty = null,
-      CSharpCompilationOptions? compilationOptions = null)
+      CSharpCompilationOptions? compilationOptions = null,
+      IIncrementalGenerator? additionalGenerator = null)
   {
     CSharpCompilation compilation = CSharpCompilation.Create(
         assemblyName,
@@ -79,7 +93,10 @@ internal static class HostCompiler
         options: compilationOptions ?? CompilationOptions);
     string propertyName = hostAssemblyNameProperty ?? assemblyName;
 
-    GeneratorDriver driver = CreateDriver(generatedNamespace: generatedNamespace, assemblyName: propertyName);
+    GeneratorDriver driver = CreateDriver(
+        generatedNamespace: generatedNamespace,
+        assemblyName: propertyName,
+        additionalGenerator: additionalGenerator);
 
     driver.RunGeneratorsAndUpdateCompilation(
         compilation,
@@ -102,10 +119,14 @@ internal static class HostCompiler
   internal static GeneratorDriver CreateDriver(
       bool trackSteps = false,
       string generatedNamespace = DefaultNamespace,
-      string assemblyName = "IncrementalHost")
+      string assemblyName = "IncrementalHost",
+      IIncrementalGenerator? additionalGenerator = null)
   {
+    ISourceGenerator[] generators = additionalGenerator is null
+        ? new ISourceGenerator[] { new MediatorGenerator().AsSourceGenerator() }
+        : new ISourceGenerator[] { new MediatorGenerator().AsSourceGenerator(), additionalGenerator.AsSourceGenerator() };
     return CSharpGeneratorDriver.Create(
-        generators: new[] { new MediatorGenerator().AsSourceGenerator() },
+        generators: generators,
         additionalTexts: null,
         parseOptions: ParseOptions,
         optionsProvider: CreateOptionsProvider(generatedNamespace, assemblyName),
