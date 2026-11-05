@@ -11,11 +11,17 @@
 // The analyzer keeps the symbol walk. This path exists so the generator model step does not take
 // a Compilation. Display strings were copied from symbols at the syntax and metadata boundary,
 // so the emitters still print the same text.
+// A declared handler is added beside any real match. The same type (key or fully qualified name)
+// is one handler. AddHandler does that dedupe: the request fact can be visited before the handler
+// fact, and the match path would otherwise add the same type again. A different type is a second
+// handler and TWM002. An unreadable name is TWM012 here and suppresses TWM001. A readable name
+// that no symbol has yet is still emitted; the analyzer reports TWM012 after every generator has
+// run, so this step does not.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
 
-internal static class CandidateGraph
+internal static partial class CandidateGraph
 {
   internal static MediatorModel Create(HostInput host, ReferencedInput referenced, MembershipOptions options, CancellationToken cancellationToken)
   {
@@ -70,6 +76,7 @@ internal static class CandidateGraph
     HashSet<string> voidRequests = new(StringComparer.Ordinal);
     Dictionary<string, List<TypeModel>> handlersByNotification = new(StringComparer.Ordinal);
     Dictionary<string, TypeModel> requests = new(StringComparer.Ordinal);
+    HashSet<string> declarationCovers = new(StringComparer.Ordinal);
 
     foreach (TypeFact fact in unique)
     {
@@ -131,6 +138,50 @@ internal static class CandidateGraph
           }
 
           requests[message.Key] = message;
+        }
+      }
+
+      if (fact.IsConcreteRequest
+          && members.Contains(fact.Type.AssemblyName)
+          && (fact.DeclaredHandlers.Length > 0 || fact.DeclaredHandlerFailures.Length > 0))
+      {
+        declarationCovers.Add(fact.Type.Key);
+        requests[fact.Type.Key] = fact.Type;
+        foreach (DeclaredHandlerFailure failure in fact.DeclaredHandlerFailures)
+        {
+          DiagnosticDescriptor descriptor = failure.Problem == DeclaredHandlerNameProblem.NotATypeName
+              ? DiagnosticDescriptors.DeclaredHandlerNotATypeName
+              : DiagnosticDescriptors.DeclaredHandlerNameUnreadable;
+          diagnostics.Add(Info(
+              descriptor,
+              failure.Location,
+              fact.Type.ErrorDisplay,
+              failure.Detail));
+        }
+
+        foreach (DeclaredHandlerFact declared in fact.DeclaredHandlers)
+        {
+          if (!Allows(declared.Handler, reported, generatorDiagnostics, referenced.HostAssemblyName)
+              || !Allows(declared.Response, reported, generatorDiagnostics, referenced.HostAssemblyName))
+          {
+            dropped.Add(fact.Type.Key);
+            continue;
+          }
+
+          if (AlreadyListed(handlersByRequest, fact.Type.Key, declared.Handler))
+          {
+            continue;
+          }
+
+          AddHandler(handlersByRequest, fact.Type, declared.Handler);
+          if (!responseByRequest.ContainsKey(fact.Type.Key))
+          {
+            responseByRequest[fact.Type.Key] = declared.Response;
+            if (declared.IsVoid)
+            {
+              voidRequests.Add(fact.Type.Key);
+            }
+          }
         }
       }
     }
@@ -198,6 +249,11 @@ internal static class CandidateGraph
       int handlerCount = handlerList?.Count ?? 0;
       if (handlerCount == 0)
       {
+        if (declarationCovers.Contains(requestType.Key))
+        {
+          continue;
+        }
+
         diagnostics.Add(Info(
             DiagnosticDescriptors.RequestHasNoHandler,
             requestType.Location,
@@ -337,571 +393,4 @@ internal static class CandidateGraph
         new EquatableArray<DiagnosticInfo>(diagnostics.ToImmutableArray()));
   }
 
-  private static TypeModel RequestModel(
-      string key,
-      Dictionary<string, TypeModel> requests,
-      Dictionary<string, TypeModel> responseByRequest)
-  {
-    if (requests.TryGetValue(key, out TypeModel? request))
-    {
-      return request;
-    }
-
-    throw new InvalidOperationException("Request '" + key + "' has a handler and no request model.");
-  }
-
-  private static string RequestDisplay(string key, Dictionary<string, TypeModel> requests)
-  {
-    return requests.TryGetValue(key, out TypeModel? request) ? request.Display : key;
-  }
-
-  private static TypeModel NotificationModel(string key, Dictionary<string, TypeFact> facts, List<TypeModel> handlers)
-  {
-    if (facts.TryGetValue(key, out TypeFact? fact))
-    {
-      return fact.Type;
-    }
-
-    foreach (TypeFact candidate in facts.Values)
-    {
-      foreach (HandlerMatch match in candidate.Matches)
-      {
-        if (match.IsNotification && match.Message.Key == key)
-        {
-          return match.Message;
-        }
-      }
-    }
-
-    return handlers[0];
-  }
-
-  private static TypeModel Prefer(TypeModel model, Dictionary<string, TypeFact> facts)
-  {
-    return facts.TryGetValue(model.Key, out TypeFact? fact) ? fact.Type : model;
-  }
-
-  private static void AddHandler(Dictionary<string, List<TypeModel>> handlers, TypeModel message, TypeModel handler)
-  {
-    if (!handlers.TryGetValue(message.Key, out List<TypeModel>? list))
-    {
-      list = new List<TypeModel>();
-      handlers.Add(message.Key, list);
-    }
-
-    list.Add(handler);
-  }
-
-  private static bool BoundByBase(
-      TypeModel handler,
-      HandlerMatch match,
-      Dictionary<string, TypeFact> facts,
-      HashSet<string> members)
-  {
-    foreach (string baseKey in handler.BaseKeys)
-    {
-      if (!facts.TryGetValue(baseKey, out TypeFact? baseFact))
-      {
-        continue;
-      }
-
-      TypeModel baseType = baseFact.Type;
-      if (!baseType.IsClassOrStruct
-          || baseType.IsAbstract
-          || baseType.Arity != 0
-          || !baseType.IsDiscoverable
-          || !members.Contains(baseType.AssemblyName))
-      {
-        continue;
-      }
-
-      foreach (HandlerMatch baseMatch in baseFact.Matches)
-      {
-        string baseResponse = baseMatch.Response is null ? string.Empty : baseMatch.Response.Key;
-        string matchResponse = match.Response is null ? string.Empty : match.Response.Key;
-        if (baseMatch.IsNotification == match.IsNotification
-            && baseMatch.IsVoid == match.IsVoid
-            && baseMatch.Message.Key == match.Message.Key
-            && baseResponse == matchResponse)
-        {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private static TypeModel? ScopeOf(
-      TypeModel type,
-      Dictionary<string, TypeFact> facts,
-      Dictionary<string, TypeModel> scopeByMessage)
-  {
-    if (facts.TryGetValue(type.Key, out TypeFact? fact) && fact.Scope is not null)
-    {
-      return fact.Scope;
-    }
-
-    if (scopeByMessage.TryGetValue(type.Key, out TypeModel? scope))
-    {
-      return scope;
-    }
-
-    return null;
-  }
-
-  private static void ReportScopeMismatch(
-      TypeModel handlerType,
-      TypeModel? handlerScope,
-      TypeModel messageType,
-      TypeModel? messageScope,
-      List<DiagnosticInfo> diagnostics)
-  {
-    if (handlerScope is null || messageScope is null || handlerScope.Key == messageScope.Key)
-    {
-      return;
-    }
-
-    diagnostics.Add(Info(
-        DiagnosticDescriptors.ScopeMismatch,
-        handlerType.Location,
-        handlerType.ErrorDisplay,
-        handlerScope.ErrorDisplay,
-        messageType.ErrorDisplay,
-        messageScope.ErrorDisplay));
-  }
-
-  private static bool PipelineScopeAllowed(
-      TypeModel? scopeType,
-      HashSet<string> reported,
-      List<DiagnosticInfo> generatorDiagnostics,
-      string hostAssemblyName)
-  {
-    return scopeType is null || Allows(scopeType, reported, generatorDiagnostics, hostAssemblyName);
-  }
-
-  private static bool Allows(
-      TypeModel type,
-      HashSet<string> reported,
-      List<DiagnosticInfo> generatorDiagnostics,
-      string hostAssemblyName)
-  {
-    TypeModel? inaccessible = type.InaccessiblePart ?? (type.Accessible ? null : type);
-    if (inaccessible is null)
-    {
-      return true;
-    }
-
-    if (reported.Add(inaccessible.Key))
-    {
-      generatorDiagnostics.Add(Info(
-          DiagnosticDescriptors.InaccessibleMemberType,
-          inaccessible.Location,
-          inaccessible.ErrorDisplay,
-          inaccessible.AssemblyName,
-          hostAssemblyName));
-    }
-
-    return false;
-  }
-
-  private static ImmutableArray<TypeModel> CloseBehaviors(
-      List<OrderedBehavior> behaviors,
-      TypeModel requestType,
-      TypeModel responseType,
-      TypeModel? requestScope,
-      HashSet<int> woven)
-  {
-    List<TypeModel> closed = new();
-    foreach (OrderedBehavior behavior in behaviors)
-    {
-      if (!TypeModels.Same(behavior.Behavior.Scope, requestScope))
-      {
-        continue;
-      }
-
-      TypeModel? constructed = TryClose(behavior.Behavior, requestType, responseType);
-      if (constructed is null)
-      {
-        continue;
-      }
-
-      closed.Add(constructed);
-      woven.Add(behavior.SourceIndex);
-    }
-
-    return closed.ToImmutableArray();
-  }
-
-  private static TypeModel? TryClose(BehaviorFact behavior, TypeModel requestType, TypeModel responseType)
-  {
-    if (behavior.Parameters.Length == 0)
-    {
-      return ImplementsPipeline(behavior, Array.Empty<TypeModel>(), requestType, responseType) ? behavior.Definition : null;
-    }
-
-    TypeModel[] arguments;
-    if (behavior.Parameters.Length == 2)
-    {
-      arguments = new[] { requestType, responseType };
-    }
-    else if (behavior.Parameters.Length == 1)
-    {
-      arguments = new[] { requestType };
-    }
-    else
-    {
-      return null;
-    }
-
-    if (!CanConstruct(behavior.Parameters, arguments))
-    {
-      return null;
-    }
-
-    return ImplementsPipeline(behavior, arguments, requestType, responseType)
-        ? CloseGeneric(behavior, arguments)
-        : null;
-  }
-
-  private static bool ImplementsPipeline(
-      BehaviorFact behavior,
-      TypeModel[] arguments,
-      TypeModel requestType,
-      TypeModel responseType)
-  {
-    foreach (PipelineSlot pipeline in behavior.Pipelines)
-    {
-      if (SlotMatches(pipeline.Request, requestType, arguments)
-          && SlotMatches(pipeline.Response, responseType, arguments))
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static bool SlotMatches(TypeArgSlot slot, TypeModel type, TypeModel[] arguments)
-  {
-    if (slot.ParameterIndex >= 0)
-    {
-      return slot.ParameterIndex < arguments.Length && arguments[slot.ParameterIndex].Key == type.Key;
-    }
-
-    if (slot.ArrayRank > 0)
-    {
-      if (type.ArrayRank != slot.ArrayRank || !TryArgument(slot.Arguments, 0, out TypeArgSlot element))
-      {
-        return false;
-      }
-
-      return TryTypeArgument(type.TypeArguments, 0, out TypeModel elementType)
-          && SlotMatches(element, elementType, arguments);
-    }
-
-    if (slot.GenericDefinitionKey is not null)
-    {
-      if (type.DefinitionKey != slot.GenericDefinitionKey || type.TypeArguments.Length != slot.Arguments.Length)
-      {
-        return false;
-      }
-
-      int index = 0;
-      foreach (TypeArgSlot child in slot.Arguments)
-      {
-        if (!TryTypeArgument(type.TypeArguments, index, out TypeModel childType) || !SlotMatches(child, childType, arguments))
-        {
-          return false;
-        }
-
-        index++;
-      }
-
-      return true;
-    }
-
-    return slot.ConcreteKey == type.Key;
-  }
-
-  private static bool TryArgument(EquatableArray<TypeArgSlot> slots, int index, out TypeArgSlot slot)
-  {
-    int current = 0;
-    foreach (TypeArgSlot candidate in slots)
-    {
-      if (current == index)
-      {
-        slot = candidate;
-        return true;
-      }
-
-      current++;
-    }
-
-    slot = null!;
-    return false;
-  }
-
-  private static bool TryTypeArgument(EquatableArray<TypeModel> types, int index, out TypeModel type)
-  {
-    int current = 0;
-    foreach (TypeModel candidate in types)
-    {
-      if (current == index)
-      {
-        type = candidate;
-        return true;
-      }
-
-      current++;
-    }
-
-    type = null!;
-    return false;
-  }
-
-  private static bool CanConstruct(EquatableArray<ParameterSlot> parameters, TypeModel[] arguments)
-  {
-    if (parameters.Length != arguments.Length)
-    {
-      return false;
-    }
-
-    for (int i = 0; i < parameters.Length; i++)
-    {
-      ParameterSlot parameter = parameters.ElementAt(i);
-      TypeModel argument = arguments[i];
-      if (parameter.HasTypeParameterConstraint)
-      {
-        return false;
-      }
-
-      if (parameter.ReferenceType && !argument.IsReferenceType)
-      {
-        return false;
-      }
-
-      if (parameter.ValueType && !argument.IsValueType)
-      {
-        return false;
-      }
-
-      if (parameter.Unmanaged && !argument.IsUnmanagedType)
-      {
-        return false;
-      }
-
-      foreach (ConstraintSlot constraint in parameter.Constraints)
-      {
-        if (!ImplementsOrInherits(argument, constraint))
-        {
-          return false;
-        }
-      }
-
-      if (parameter.Constructor)
-      {
-        if (!argument.IsNamedType || argument.IsAbstract || !argument.HasPublicParameterlessConstructor)
-        {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  private static bool ImplementsOrInherits(TypeModel type, ConstraintSlot constraint)
-  {
-    if (type.Key == constraint.ConcreteKey || type.DefinitionKey == constraint.DefinitionKey)
-    {
-      return true;
-    }
-
-    for (int i = 0; i < type.BaseKeys.Length; i++)
-    {
-      if (KeyAt(type.BaseKeys, i) == constraint.ConcreteKey || KeyAt(type.BaseDefinitionKeys, i) == constraint.DefinitionKey)
-      {
-        return true;
-      }
-    }
-
-    for (int i = 0; i < type.InterfaceKeys.Length; i++)
-    {
-      if (KeyAt(type.InterfaceKeys, i) == constraint.ConcreteKey
-          || KeyAt(type.InterfaceDefinitionKeys, i) == constraint.DefinitionKey)
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static string KeyAt(EquatableArray<string> keys, int index)
-  {
-    int current = 0;
-    foreach (string key in keys)
-    {
-      if (current == index)
-      {
-        return key;
-      }
-
-      current++;
-    }
-
-    return string.Empty;
-  }
-
-  private static TypeModel CloseGeneric(BehaviorFact behavior, TypeModel[] arguments)
-  {
-    string argumentsFullyQualified = string.Join(", ", arguments.Select(argument => argument.FullyQualified));
-    string argumentsDisplay = string.Join(", ", arguments.Select(argument => argument.Display));
-    string argumentsError = string.Join(", ", arguments.Select(argument => argument.ErrorDisplay));
-    string key = behavior.Definition.AssemblyName + "|closed:" + behavior.Definition.Key + "<" + string.Join(",", arguments.Select(argument => argument.Key)) + ">";
-    return behavior.Definition with
-    {
-      Key = key,
-      FullyQualified = behavior.FullyQualifiedPrefix + "<" + argumentsFullyQualified + ">",
-      Display = behavior.DisplayPrefix + "<" + argumentsDisplay + ">",
-      ErrorDisplay = behavior.ErrorDisplayPrefix + "<" + argumentsError + ">",
-      Arity = arguments.Length,
-      ArrayRank = 0,
-      TypeArguments = new EquatableArray<TypeModel>(arguments.ToImmutableArray()),
-      Location = null,
-      InaccessiblePart = null,
-      Accessible = true,
-    };
-  }
-
-  private static List<TypeFact> OrderFacts(HostInput host, ReferencedInput referenced)
-  {
-    List<(string AssemblyName, int Index, TypeFact Fact)> ordered = new();
-    int index = 0;
-    foreach (TypeFact fact in host.Types)
-    {
-      ordered.Add((fact.Type.AssemblyName, index, fact));
-      index++;
-    }
-
-    foreach (TypeFact fact in referenced.Types)
-    {
-      ordered.Add((fact.Type.AssemblyName, index, fact));
-      index++;
-    }
-
-    ordered.Sort(static (left, right) =>
-    {
-      int name = string.CompareOrdinal(left.AssemblyName, right.AssemblyName);
-      if (name != 0)
-      {
-        return name;
-      }
-
-      return left.Index.CompareTo(right.Index);
-    });
-
-    List<TypeFact> facts = new();
-    foreach ((string _, int _, TypeFact fact) in ordered)
-    {
-      facts.Add(fact);
-    }
-
-    return facts;
-  }
-
-  private static string? FirstMissingRuntime(EquatableArray<string> missing, EquatableArray<string> declared)
-  {
-    foreach (string name in missing)
-    {
-      if (!Contains(declared, name))
-      {
-        return name;
-      }
-    }
-
-    return null;
-  }
-
-  private static bool Contains(EquatableArray<string> values, string candidate)
-  {
-    foreach (string value in values)
-    {
-      if (value == candidate)
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static int CompareBehaviors(BehaviorFact left, BehaviorFact right)
-  {
-    int assembly = string.CompareOrdinal(left.AssemblyName, right.AssemblyName);
-    if (assembly != 0)
-    {
-      return assembly;
-    }
-
-    int path = string.CompareOrdinal(left.Path, right.Path);
-    if (path != 0)
-    {
-      return path;
-    }
-
-    return left.SpanStart.CompareTo(right.SpanStart);
-  }
-
-  private static int CompareOrdered(OrderedBehavior left, OrderedBehavior right)
-  {
-    int order = left.Behavior.Order.CompareTo(right.Behavior.Order);
-    if (order != 0)
-    {
-      return order;
-    }
-
-    return left.SourceIndex.CompareTo(right.SourceIndex);
-  }
-
-  private static void SortByDisplay(List<TypeModel> types)
-  {
-    types.Sort((left, right) => string.CompareOrdinal(left.Display, right.Display));
-  }
-
-  private static DiagnosticInfo Info(DiagnosticDescriptor descriptor, LocationInfo? location, params object[] args)
-  {
-    Diagnostic diagnostic = Diagnostic.Create(descriptor, Location.None, args);
-    return DiagnosticInfo.From(diagnostic) with { Location = location };
-  }
-
-  private readonly struct OrderedBehavior
-  {
-    public OrderedBehavior(BehaviorFact behavior, int sourceIndex)
-    {
-      Behavior = behavior;
-      SourceIndex = sourceIndex;
-    }
-
-    public BehaviorFact Behavior { get; }
-
-    public int SourceIndex { get; }
-  }
-
-  private sealed class NotificationGroup
-  {
-    public NotificationGroup(TypeModel notification, TypeModel? scope)
-    {
-      Notification = notification;
-      Scope = scope;
-      Handlers = new List<TypeModel>();
-    }
-
-    public TypeModel Notification { get; }
-
-    public TypeModel? Scope { get; }
-
-    public List<TypeModel> Handlers { get; }
-  }
 }

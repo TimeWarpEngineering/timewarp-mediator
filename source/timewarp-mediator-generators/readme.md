@@ -5,13 +5,13 @@ Source generator for TimeWarp Mediator 15.0. It emits one internal mediator. `Se
 ## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.4
-dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.4
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.5
+dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.5
 ```
 
 Without `--version`, `dotnet add package TimeWarp.Mediator` resolves 14.0.0, the reflection runtime. Drop the flag when 15.0 is the stable package.
 
-Generators does not bring `TimeWarp.Mediator` with it. Keep both on the same version. TWM001–TWM004 ship inside `TimeWarp.Mediator`. This package reports TWM007, TWM008, TWM010, and TWM011, and in a generator host it also reports TWM001–TWM003.
+Generators does not bring `TimeWarp.Mediator` with it. Keep both on the same version. TWM001–TWM004 and TWM012 ship inside `TimeWarp.Mediator`. This package reports TWM007, TWM008, TWM010, and TWM011, and in a generator host it also reports TWM001–TWM003. A `GeneratedHandlerAttribute` whose handler name is not a constant, or is not a type name, is TWM012 from this package. An attribute in another assembly is read from a constructor parameter named `handlerTypeName`. The missing-type half of TWM012, and a named type that is not an `IRequestHandler`, are reported by the analyzer after every generator has run.
 
 ## Example
 

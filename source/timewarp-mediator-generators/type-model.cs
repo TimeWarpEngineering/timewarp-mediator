@@ -11,6 +11,8 @@
 // shape a pipeline slot compares, such as Result<TRequest>.
 // Display is parameterless ToDisplayString; ErrorDisplay is CSharpErrorMessageFormat; FullyQualified
 // is FullyQualifiedFormat. Closed behaviors reuse those prefixes with the request and response substituted.
+// Declare builds the same shape for a handler named by GeneratedHandlerAttribute when that type is
+// not in this compilation yet. Its FullyQualified string is what the emitter prints.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -62,6 +64,49 @@ internal static class TypeModels
         ? null
         : CreateCore(inaccessible, accessCompilation, accessible: false, inaccessiblePart: null);
     return CreateCore(type, accessCompilation, part is null, part);
+  }
+
+  internal static TypeModel Declare(string displayName, string assemblyName, LocationInfo? location)
+  {
+    string fullyQualified = displayName.StartsWith("global::", StringComparison.Ordinal)
+        ? displayName
+        : "global::" + displayName;
+    string name = displayName;
+    int lastDot = displayName.LastIndexOf('.');
+    if (lastDot >= 0 && lastDot < displayName.Length - 1)
+    {
+      name = displayName.Substring(lastDot + 1);
+    }
+
+    string key = assemblyName + "|T:" + displayName;
+    EquatableArray<string> noStrings = EquatableArray<string>.Empty;
+    return new TypeModel(
+        key,
+        key,
+        fullyQualified,
+        displayName,
+        displayName,
+        name,
+        assemblyName,
+        false,
+        true,
+        false,
+        false,
+        true,
+        true,
+        0,
+        true,
+        false,
+        true,
+        null,
+        noStrings,
+        noStrings,
+        noStrings,
+        noStrings,
+        noStrings,
+        0,
+        EquatableArray<TypeModel>.Empty,
+        location);
   }
 
   internal static string KeyOf(ITypeSymbol type)

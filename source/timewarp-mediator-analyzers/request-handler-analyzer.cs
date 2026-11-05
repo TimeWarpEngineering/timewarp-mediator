@@ -14,9 +14,13 @@
 // could be belongs to another pipeline. A library sees only part of the graph, so it skips both.
 // Membership and the graph are built lazily, on the first ISender.Send call or at compilation end,
 // never in CompilationStart: a compilation with no sends and no end analysis (IDE without full
-// solution analysis) never pays for them. Both honor the analysis cancellation token.
+// solution analysis) never pays for them. A generator host builds the graph at compilation end only
+// when some type carries a GeneratedHandlerAttribute-derived attribute. Both honor the analysis
+// cancellation token.
 // In a generator host (TimeWarpMediatorGenerator=true) the generator reports TWM001–TWM003, so
-// this analyzer keeps only TWM004 there.
+// this analyzer keeps only TWM004 there. TWM012 is the exception: a missing declared handler is
+// visible only after every generator has run, so this analyzer reports it in a generator host too.
+// An unreadable HandlerTypeName is left to the generator in that host.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
@@ -29,7 +33,11 @@ public sealed class RequestHandlerAnalyzer : DiagnosticAnalyzer
           DiagnosticDescriptors.RequestHasNoHandler,
           DiagnosticDescriptors.DuplicateHandler,
           DiagnosticDescriptors.ScopeMismatch,
-          DiagnosticDescriptors.WrongScopeSend);
+          DiagnosticDescriptors.WrongScopeSend,
+          DiagnosticDescriptors.DeclaredHandlerDoesNotExist,
+          DiagnosticDescriptors.DeclaredHandlerNameUnreadable,
+          DiagnosticDescriptors.DeclaredHandlerNotATypeName,
+          DiagnosticDescriptors.DeclaredHandlerNotAHandler);
 
   public override void Initialize(AnalysisContext context)
   {
@@ -42,21 +50,43 @@ public sealed class RequestHandlerAnalyzer : DiagnosticAnalyzer
       CancellationToken cancellationToken = startContext.CancellationToken;
       Lazy<MessageGraph?> graph = new(
               () => Membership.TryCreate(compilation, options, options.IsGeneratorHost, cancellationToken, out Membership membership)
-                  ? MessageGraphBuilder.Build(compilation, membership, cancellationToken)
+                  ? MessageGraphBuilder.Build(
+                      compilation,
+                      membership,
+                      cancellationToken,
+                      reportUnreadableDeclaredHandler: !options.IsGeneratorHost)
                   : null,
               LazyThreadSafetyMode.ExecutionAndPublication);
 
       // The generator reports TWM001–TWM003 in its own host; reporting them here too doubles them.
-      if (!options.IsGeneratorHost)
-      {
-        startContext.RegisterCompilationEndAction(endContext =>
+      // TWM012 still belongs to this analyzer there, because only this compilation sees every generator.
+      startContext.RegisterCompilationEndAction(endContext =>
+          {
+            if (options.IsGeneratorHost
+                && !HostDeclaresGeneratedHandler(compilation, options, endContext.CancellationToken))
             {
-              foreach (Diagnostic diagnostic in graph.Value?.Diagnostics ?? ImmutableArray<Diagnostic>.Empty)
+              return;
+            }
+
+            MessageGraph? built = graph.Value;
+            if (built is null)
+            {
+              return;
+            }
+
+            if (!options.IsGeneratorHost)
+            {
+              foreach (Diagnostic diagnostic in built.Diagnostics)
               {
                 endContext.ReportDiagnostic(diagnostic);
               }
-            });
-      }
+            }
+
+            foreach (Diagnostic diagnostic in built.DeclaredHandlerDiagnostics)
+            {
+              endContext.ReportDiagnostic(diagnostic);
+            }
+          });
 
       INamedTypeSymbol? sender0 = compilation.GetTypeByMetadataName("TimeWarp.Mediator.ISender");
       INamedTypeSymbol? sender1 = compilation.GetTypeByMetadataName("TimeWarp.Mediator.ISender`1");
@@ -197,6 +227,20 @@ public sealed class RequestHandlerAnalyzer : DiagnosticAnalyzer
     }
 
     return null;
+  }
+
+  private static bool HostDeclaresGeneratedHandler(
+      Compilation compilation,
+      MembershipOptions options,
+      CancellationToken cancellationToken)
+  {
+    return Membership.TryCreate(
+            compilation,
+            options,
+            currentCompilationIsHost: true,
+            cancellationToken,
+            out Membership membership)
+        && MessageGraphBuilder.HasGeneratedHandlerAttribute(compilation, membership, cancellationToken);
   }
 
   // True when the call binds to ISender.Send, either on the interface or as the receiver's implementation of it.

@@ -26,11 +26,18 @@
 // stays TWM001–TWM004.
 // Diagnostic locations are limited to this compilation's syntax trees: analyzers and generators
 // may not report into another project's source.
+// GeneratedHandlerAttribute on a concrete request names a handler. A symbol that exists is bound
+// like any other handler when it implements that request's IRequestHandler. A type that exists and
+// does not implement the interface is TWM012. A missing name is TWM012 in a host and still suppresses
+// TWM001, because
+// another generator may have been going to emit it and, in a library, the host is where it appears.
+// An unreadable name is TWM012 from this walk only when the caller asks: the generator reports
+// that case itself, and reporting it here too would double it.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
 
-public static class MessageGraphBuilder
+public static partial class MessageGraphBuilder
 {
   private const string RequestHandler1 = "TimeWarp.Mediator.IRequestHandler`1";
   private const string RequestHandler2 = "TimeWarp.Mediator.IRequestHandler`2";
@@ -41,7 +48,40 @@ public static class MessageGraphBuilder
   private const string Notification0 = "TimeWarp.Mediator.INotification";
   private const string UnitTypeName = "TimeWarp.Mediator.Unit";
 
-  public static MessageGraph Build(Compilation compilation, Membership membership, CancellationToken cancellationToken)
+  internal static bool HasGeneratedHandlerAttribute(
+      Compilation compilation,
+      Membership membership,
+      CancellationToken cancellationToken)
+  {
+    INamedTypeSymbol? attribute = compilation.GetTypeByMetadataName(HandlerTypeNameReader.MetadataName);
+    if (attribute is null)
+    {
+      return false;
+    }
+
+    foreach (IAssemblySymbol assembly in membership.MemberAssemblies)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      foreach (INamedTypeSymbol type in Membership.EnumerateTypes(assembly.GlobalNamespace))
+      {
+        foreach (AttributeData data in type.GetAttributes())
+        {
+          if (HandlerTypeNameReader.IsGeneratedHandler(data.AttributeClass, attribute))
+          {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  public static MessageGraph Build(
+      Compilation compilation,
+      Membership membership,
+      CancellationToken cancellationToken,
+      bool reportUnreadableDeclaredHandler = true)
   {
     INamedTypeSymbol? requestHandler1 = compilation.GetTypeByMetadataName(RequestHandler1);
     INamedTypeSymbol? requestHandler2 = compilation.GetTypeByMetadataName(RequestHandler2);
@@ -51,8 +91,13 @@ public static class MessageGraphBuilder
     INamedTypeSymbol? request1 = compilation.GetTypeByMetadataName(Request1);
     INamedTypeSymbol? notification0 = compilation.GetTypeByMetadataName(Notification0);
     INamedTypeSymbol? unitType = compilation.GetTypeByMetadataName(UnitTypeName);
+    INamedTypeSymbol? generatedHandlerAttribute = compilation.GetTypeByMetadataName(HandlerTypeNameReader.MetadataName);
 
     List<Diagnostic> diagnostics = new();
+    List<DeclaredHandler> declaredHandlers = new();
+    List<Diagnostic> declaredDiagnostics = new();
+    HashSet<INamedTypeSymbol> declaredCovered = new(SymbolEqualityComparer.Default);
+    Dictionary<INamedTypeSymbol, List<string>> declaredNames = new(SymbolEqualityComparer.Default);
     List<Diagnostic> generatorDiagnostics = new();
     AccessGuard access = new(compilation, generatorDiagnostics);
     HashSet<INamedTypeSymbol> droppedMessages = new(SymbolEqualityComparer.Default);
@@ -76,6 +121,27 @@ public static class MessageGraphBuilder
         }
 
         CollectRequest(compilation, type, request0, request1, requests);
+        CollectDeclaredHandlers(
+            compilation,
+            type,
+            request0,
+            request1,
+            requestHandler1,
+            requestHandler2,
+            unitType,
+            generatedHandlerAttribute,
+            membership,
+            access,
+            reportUnreadableDeclaredHandler,
+            handlersByRequest,
+            responseByRequest,
+            voidRequests,
+            requests,
+            droppedMessages,
+            declaredHandlers,
+            declaredDiagnostics,
+            declaredCovered,
+            declaredNames);
 
         foreach (RequestHandlerMatch match in GetRequestHandlers(type, requestHandler1, requestHandler2, unitType, membership))
         {
@@ -91,7 +157,11 @@ public static class MessageGraphBuilder
             handlersByRequest[match.RequestType] = list;
           }
 
-          list.Add(type);
+          // A GeneratedHandlerAttribute may already have named this class.
+          if (!ContainsSymbol(list, type))
+          {
+            list.Add(type);
+          }
           responseByRequest[match.RequestType] = match.ResponseType;
           if (match.IsVoid)
           {
@@ -154,11 +224,27 @@ public static class MessageGraphBuilder
 
       if (handlerCount == 0)
       {
+        if (declaredCovered.Contains(requestType))
+        {
+          if (declaredNames.TryGetValue(requestType, out List<string>? names) && DistinctCount(names) > 1)
+          {
+            diagnostics.Add(DuplicateDeclared(compilation, requestType, names));
+          }
+
+          continue;
+        }
+
         diagnostics.Add(
             Diagnostic.Create(
                 DiagnosticDescriptors.RequestHasNoHandler,
                 GetSourceLocation(compilation, requestType),
                 requestType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+      }
+      else if (handlerCount == 1
+          && declaredNames.TryGetValue(requestType, out List<string>? declaredNameList)
+          && DistinctCount(declaredNameList) > 1)
+      {
+        diagnostics.Add(DuplicateDeclared(compilation, requestType, declaredNameList));
       }
       else if (handlerCount > 1 && handlerList is not null)
       {
@@ -282,642 +368,9 @@ public static class MessageGraphBuilder
         notificationBindings.ToImmutable(),
         diagnostics.ToImmutableArray(),
         generatorDiagnostics.ToImmutableArray(),
-        membership);
+        membership,
+        declaredHandlers.ToImmutableArray(),
+        declaredDiagnostics.ToImmutableArray());
   }
 
-  private static void ReportScopeMismatch(
-      Compilation compilation,
-      INamedTypeSymbol handlerType,
-      INamedTypeSymbol? handlerScope,
-      INamedTypeSymbol messageType,
-      INamedTypeSymbol? messageScope,
-      List<Diagnostic> diagnostics)
-  {
-    if (handlerScope is null
-        || messageScope is null
-        || SymbolEqualityComparer.Default.Equals(handlerScope, messageScope))
-    {
-      return;
-    }
-
-    diagnostics.Add(
-        Diagnostic.Create(
-            DiagnosticDescriptors.ScopeMismatch,
-            GetSourceLocation(compilation, handlerType),
-            handlerType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-            handlerScope.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-            messageType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-            messageScope.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
-  }
-
-  // The emitted pipeline names this marker. An inaccessible marker is TWM007 and is left unbound.
-  private static bool PipelineScopeAllowed(AccessGuard access, INamedTypeSymbol? scopeType)
-  {
-    return scopeType is null || access.Allows(scopeType);
-  }
-
-  private static void CollectRequest(
-      Compilation compilation,
-      INamedTypeSymbol type,
-      INamedTypeSymbol? request0,
-      INamedTypeSymbol? request1,
-      HashSet<INamedTypeSymbol> requests)
-  {
-    if (type.TypeKind is not (TypeKind.Class or TypeKind.Struct) || type.IsAbstract || type.Arity > 0)
-    {
-      return;
-    }
-
-    // An inaccessible request cannot appear in generated code; its handler reports TWM007.
-    if (!compilation.IsSymbolAccessibleWithin(type, compilation.Assembly))
-    {
-      return;
-    }
-
-    if (Implements(type, request0) || ImplementsGeneric(type, request1))
-    {
-      requests.Add(type);
-    }
-  }
-
-  private static List<RequestHandlerMatch> GetRequestHandlers(
-      INamedTypeSymbol type,
-      INamedTypeSymbol? handler1,
-      INamedTypeSymbol? handler2,
-      INamedTypeSymbol? unitType,
-      Membership membership)
-  {
-    List<RequestHandlerMatch> matches = new();
-    if (type.TypeKind != TypeKind.Class || type.IsAbstract || type.Arity > 0)
-    {
-      return matches;
-    }
-
-    HashSet<INamedTypeSymbol> bound = new(SymbolEqualityComparer.Default);
-    foreach (INamedTypeSymbol iface in type.AllInterfaces)
-    {
-      if (handler2 is not null
-          && SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, handler2)
-          && iface.TypeArguments.Length == 2
-          && iface.TypeArguments[0] is INamedTypeSymbol request2
-          && iface.TypeArguments[1] is ITypeSymbol response2
-          && !IsBoundByBaseHandler(type, iface, membership)
-          && bound.Add(request2))
-      {
-        matches.Add(new RequestHandlerMatch(request2, response2, false));
-      }
-    }
-
-    // A two-arity binding wins over IRequestHandler<T> for the same request on one class.
-    foreach (INamedTypeSymbol iface in type.AllInterfaces)
-    {
-      if (handler1 is not null
-          && SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, handler1)
-          && iface.TypeArguments.Length == 1
-          && iface.TypeArguments[0] is INamedTypeSymbol request1
-          && !IsBoundByBaseHandler(type, iface, membership)
-          && bound.Add(request1))
-      {
-        matches.Add(new RequestHandlerMatch(request1, unitType ?? request1, true));
-      }
-    }
-
-    return matches;
-  }
-
-  private static List<INamedTypeSymbol> GetNotificationHandlers(
-      INamedTypeSymbol type,
-      INamedTypeSymbol? handler1,
-      Membership membership)
-  {
-    List<INamedTypeSymbol> notifications = new();
-    if (handler1 is null || type.TypeKind != TypeKind.Class || type.IsAbstract || type.Arity > 0)
-    {
-      return notifications;
-    }
-
-    foreach (INamedTypeSymbol iface in type.AllInterfaces)
-    {
-      if (SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, handler1)
-          && iface.TypeArguments.Length == 1
-          && iface.TypeArguments[0] is INamedTypeSymbol notification
-          && !IsBoundByBaseHandler(type, iface, membership))
-      {
-        notifications.Add(notification);
-      }
-    }
-
-    return notifications;
-  }
-
-  // True when a concrete base class that discovery already binds implements the same closed
-  // interface: the derived class inherits that binding instead of introducing a second one.
-  private static bool IsBoundByBaseHandler(INamedTypeSymbol type, INamedTypeSymbol iface, Membership membership)
-  {
-    for (INamedTypeSymbol? current = type.BaseType; current is not null; current = current.BaseType)
-    {
-      if (current.TypeKind == TypeKind.Class
-          && !current.IsAbstract
-          && current.Arity == 0
-          && IsDiscoverableType(current)
-          && membership.Includes(current)
-          && current.AllInterfaces.Contains(iface, SymbolEqualityComparer.Default))
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static void SortByDisplayName(List<INamedTypeSymbol> handlers)
-  {
-    handlers.Sort((left, right) => System.StringComparer.Ordinal.Compare(left.ToDisplayString(), right.ToDisplayString()));
-  }
-
-  private static ImmutableArray<BehaviorRegistration> DiscoverBehaviors(
-      Compilation compilation,
-      Membership membership,
-      INamedTypeSymbol? pipelineBehavior2,
-      AccessGuard access,
-      List<Diagnostic> generatorDiagnostics)
-  {
-    List<BehaviorRegistration> list = new();
-    int sourceIndex = 0;
-
-    IEnumerable<IAssemblySymbol> assemblies = membership.MemberAssemblies
-        .OrderBy(a => a.Name, System.StringComparer.Ordinal);
-    foreach (IAssemblySymbol assembly in assemblies)
-    {
-      foreach (AttributeData attribute in assembly.GetAttributes())
-      {
-        if (attribute.AttributeClass?.ToDisplayString() != Membership.BehaviorAttributeMetadataName)
-        {
-          continue;
-        }
-
-        if (attribute.ConstructorArguments.Length == 0
-            || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol behaviorType)
-        {
-          continue;
-        }
-
-        int order = 0;
-        if (attribute.ConstructorArguments.Length > 1
-            && attribute.ConstructorArguments[1].Value is int orderValue)
-        {
-          order = orderValue;
-        }
-
-        INamedTypeSymbol? scopeType = null;
-        foreach (KeyValuePair<string, TypedConstant> named in attribute.NamedArguments)
-        {
-          if (named.Key == "Scope" && named.Value.Value is INamedTypeSymbol namedScope)
-          {
-            scopeType = namedScope;
-          }
-        }
-
-        Location location = GetAttributeLocation(compilation, attribute);
-        INamedTypeSymbol definition = behaviorType.OriginalDefinition;
-        if (pipelineBehavior2 is not null && !ImplementsGeneric(behaviorType, pipelineBehavior2)
-            && !ImplementsGeneric(definition, pipelineBehavior2))
-        {
-          generatorDiagnostics.Add(
-              Diagnostic.Create(
-                  DiagnosticDescriptors.InvalidBehaviorRegistration,
-                  location,
-                  definition.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
-          continue;
-        }
-
-        if (!access.Allows(definition))
-        {
-          continue;
-        }
-
-        list.Add(new BehaviorRegistration(behaviorType, order, sourceIndex, scopeType, location));
-        sourceIndex++;
-      }
-    }
-
-    return list
-        .OrderBy(b => b.Order)
-        .ThenBy(b => b.SourceIndex)
-        .ToImmutableArray();
-  }
-
-  private static ImmutableArray<INamedTypeSymbol> CloseBehaviors(
-      ImmutableArray<BehaviorRegistration> behaviors,
-      INamedTypeSymbol requestType,
-      ITypeSymbol responseType,
-      INamedTypeSymbol? pipelineBehavior2,
-      INamedTypeSymbol? requestScope,
-      HashSet<BehaviorRegistration> wovenBehaviors)
-  {
-    ImmutableArray<INamedTypeSymbol>.Builder builder = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
-    foreach (BehaviorRegistration registration in behaviors)
-    {
-      if (!SymbolEqualityComparer.Default.Equals(registration.ScopeType, requestScope))
-      {
-        continue;
-      }
-
-      INamedTypeSymbol? closed = TryCloseBehavior(registration.BehaviorType, requestType, responseType, pipelineBehavior2);
-      if (closed is not null)
-      {
-        builder.Add(closed);
-        wovenBehaviors.Add(registration);
-      }
-    }
-
-    return builder.ToImmutable();
-  }
-
-  internal static INamedTypeSymbol? ResolveScope(INamedTypeSymbol type)
-  {
-    for (INamedTypeSymbol? current = type; current is not null; current = current.ContainingType)
-    {
-      INamedTypeSymbol? typeScope = GetScopeFromAttributes(current.GetAttributes());
-      if (typeScope is not null)
-      {
-        return typeScope;
-      }
-    }
-
-    return type.ContainingAssembly is null
-        ? null
-        : GetScopeFromAttributes(type.ContainingAssembly.GetAttributes());
-  }
-
-  private static INamedTypeSymbol? GetScopeFromAttributes(System.Collections.Immutable.ImmutableArray<AttributeData> attributes)
-  {
-    foreach (AttributeData attribute in attributes)
-    {
-      if (attribute.AttributeClass?.ToDisplayString() != Membership.ScopeAttributeMetadataName)
-      {
-        continue;
-      }
-
-      if (attribute.ConstructorArguments.Length > 0
-          && attribute.ConstructorArguments[0].Value is INamedTypeSymbol scopeType)
-      {
-        return scopeType;
-      }
-    }
-
-    return null;
-  }
-
-  private static INamedTypeSymbol? TryCloseBehavior(
-      INamedTypeSymbol behaviorType,
-      INamedTypeSymbol requestType,
-      ITypeSymbol responseType,
-      INamedTypeSymbol? pipelineBehavior2)
-  {
-    if (behaviorType.IsUnboundGenericType)
-    {
-      behaviorType = behaviorType.OriginalDefinition;
-    }
-
-    if (behaviorType.Arity == 0)
-    {
-      return ImplementsPipeline(behaviorType, requestType, responseType, pipelineBehavior2) ? behaviorType : null;
-    }
-
-    INamedTypeSymbol definition = behaviorType.OriginalDefinition;
-    ITypeSymbol[] arguments;
-    if (definition.Arity == 2)
-    {
-      arguments = new ITypeSymbol[] { requestType, responseType };
-    }
-    else if (definition.Arity == 1)
-    {
-      arguments = new ITypeSymbol[] { requestType };
-    }
-    else
-    {
-      return null;
-    }
-
-    if (!CanConstruct(definition, arguments))
-    {
-      return null;
-    }
-
-    INamedTypeSymbol constructed = definition.Construct(arguments);
-    return ImplementsPipeline(constructed, requestType, responseType, pipelineBehavior2) ? constructed : null;
-  }
-
-  private static bool ImplementsPipeline(
-      INamedTypeSymbol behaviorType,
-      INamedTypeSymbol requestType,
-      ITypeSymbol responseType,
-      INamedTypeSymbol? pipelineBehavior2)
-  {
-    if (pipelineBehavior2 is null)
-    {
-      return true;
-    }
-
-    foreach (INamedTypeSymbol iface in behaviorType.AllInterfaces)
-    {
-      if (SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, pipelineBehavior2)
-          && iface.TypeArguments.Length == 2
-          && SymbolEqualityComparer.Default.Equals(iface.TypeArguments[0], requestType)
-          && SymbolEqualityComparer.Default.Equals(iface.TypeArguments[1], responseType))
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static bool CanConstruct(INamedTypeSymbol openGeneric, ITypeSymbol[] typeArguments)
-  {
-    if (openGeneric.Arity != typeArguments.Length)
-    {
-      return false;
-    }
-
-    for (int i = 0; i < openGeneric.TypeParameters.Length; i++)
-    {
-      ITypeParameterSymbol parameter = openGeneric.TypeParameters[i];
-      ITypeSymbol argument = typeArguments[i];
-
-      if (parameter.HasReferenceTypeConstraint && !argument.IsReferenceType)
-      {
-        return false;
-      }
-
-      if (parameter.HasValueTypeConstraint && !argument.IsValueType)
-      {
-        return false;
-      }
-
-      if (parameter.HasUnmanagedTypeConstraint && argument is not { IsUnmanagedType: true })
-      {
-        return false;
-      }
-
-      foreach (ITypeSymbol constraint in parameter.ConstraintTypes)
-      {
-        if (!ImplementsOrInherits(argument, constraint))
-        {
-          return false;
-        }
-      }
-
-      if (parameter.HasConstructorConstraint)
-      {
-        if (argument is not INamedTypeSymbol named || named.IsAbstract)
-        {
-          return false;
-        }
-
-        bool hasPublicCtor = false;
-        foreach (IMethodSymbol ctor in named.InstanceConstructors)
-        {
-          if (ctor.Parameters.Length == 0 && ctor.DeclaredAccessibility == Accessibility.Public)
-          {
-            hasPublicCtor = true;
-            break;
-          }
-        }
-
-        if (!hasPublicCtor)
-        {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  private static bool ImplementsOrInherits(ITypeSymbol type, ITypeSymbol constraint)
-  {
-    if (SymbolEqualityComparer.Default.Equals(type, constraint))
-    {
-      return true;
-    }
-
-    for (INamedTypeSymbol? current = type as INamedTypeSymbol; current is not null; current = current.BaseType)
-    {
-      if (SymbolEqualityComparer.Default.Equals(current, constraint)
-          || SymbolEqualityComparer.Default.Equals(current.OriginalDefinition, constraint.OriginalDefinition))
-      {
-        return true;
-      }
-    }
-
-    foreach (INamedTypeSymbol iface in type.AllInterfaces)
-    {
-      if (SymbolEqualityComparer.Default.Equals(iface, constraint)
-          || SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, constraint.OriginalDefinition))
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static bool Implements(INamedTypeSymbol type, INamedTypeSymbol? interfaceType)
-  {
-    if (interfaceType is null)
-    {
-      return false;
-    }
-
-    foreach (INamedTypeSymbol iface in type.AllInterfaces)
-    {
-      if (SymbolEqualityComparer.Default.Equals(iface, interfaceType))
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static bool ImplementsGeneric(INamedTypeSymbol type, INamedTypeSymbol? unboundInterface)
-  {
-    if (unboundInterface is null)
-    {
-      return false;
-    }
-
-    INamedTypeSymbol definition = unboundInterface.OriginalDefinition;
-    foreach (INamedTypeSymbol iface in type.AllInterfaces)
-    {
-      if (SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, definition))
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static bool IsDiscoverableType(INamedTypeSymbol type)
-  {
-    if (type.IsStatic || type.TypeKind is TypeKind.Interface or TypeKind.Delegate or TypeKind.Enum)
-    {
-      return false;
-    }
-
-    return !IsEffectivelyPrivate(type);
-  }
-
-  private static bool IsEffectivelyPrivate(INamedTypeSymbol type)
-  {
-    for (INamedTypeSymbol? current = type; current is not null; current = current.ContainingType)
-    {
-      if (current.DeclaredAccessibility is Accessibility.Private
-          or Accessibility.Protected
-          or Accessibility.ProtectedAndInternal)
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static Location GetSourceLocation(Compilation compilation, ISymbol symbol)
-  {
-    foreach (Location location in symbol.Locations)
-    {
-      if (location.IsInSource && compilation.ContainsSyntaxTree(location.SourceTree!))
-      {
-        return location;
-      }
-    }
-
-    return Location.None;
-  }
-
-  private static Location GetAttributeLocation(Compilation compilation, AttributeData attribute)
-  {
-    SyntaxReference? reference = attribute.ApplicationSyntaxReference;
-    return reference is not null && compilation.ContainsSyntaxTree(reference.SyntaxTree)
-        ? reference.GetSyntax().GetLocation()
-        : Location.None;
-  }
-
-  public static string Sanitize(INamedTypeSymbol type)
-  {
-    string display = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-    StringBuilder builder = new(display.Length);
-    foreach (char c in display)
-    {
-      if (char.IsLetterOrDigit(c))
-      {
-        builder.Append(c);
-      }
-      else
-      {
-        builder.Append('_');
-      }
-    }
-
-    return builder.ToString().Trim('_');
-  }
-
-  private readonly struct RequestHandlerMatch
-  {
-    public RequestHandlerMatch(INamedTypeSymbol requestType, ITypeSymbol responseType, bool isVoid)
-    {
-      RequestType = requestType;
-      ResponseType = responseType;
-      IsVoid = isVoid;
-    }
-
-    public INamedTypeSymbol RequestType { get; }
-
-    public ITypeSymbol ResponseType { get; }
-
-    public bool IsVoid { get; }
-  }
-
-  // Reports TWM007 once per inaccessible type and says whether a type may appear in generated code.
-  private sealed class AccessGuard
-  {
-    private readonly Compilation Compilation;
-    private readonly List<Diagnostic> Diagnostics;
-    private readonly HashSet<ITypeSymbol> Reported = new(SymbolEqualityComparer.Default);
-
-    public AccessGuard(Compilation compilation, List<Diagnostic> diagnostics)
-    {
-      Compilation = compilation;
-      Diagnostics = diagnostics;
-    }
-
-    public bool Allows(ITypeSymbol type)
-    {
-      ITypeSymbol? inaccessible = FindInaccessible(type);
-      if (inaccessible is null)
-      {
-        return true;
-      }
-
-      if (Reported.Add(inaccessible))
-      {
-        Diagnostics.Add(
-            Diagnostic.Create(
-                DiagnosticDescriptors.InaccessibleMemberType,
-                GetSourceLocation(Compilation, inaccessible),
-                inaccessible.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-                inaccessible.ContainingAssembly?.Name ?? string.Empty,
-                Compilation.AssemblyName ?? string.Empty));
-      }
-
-      return false;
-    }
-
-    private ITypeSymbol? FindInaccessible(ITypeSymbol type)
-    {
-      if (type is IArrayTypeSymbol array)
-      {
-        return FindInaccessible(array.ElementType);
-      }
-
-      if (type is INamedTypeSymbol named)
-      {
-        foreach (ITypeSymbol argument in named.TypeArguments)
-        {
-          ITypeSymbol? inner = FindInaccessible(argument);
-          if (inner is not null)
-          {
-            return inner;
-          }
-        }
-
-        INamedTypeSymbol definition = named.OriginalDefinition;
-        return Compilation.IsSymbolAccessibleWithin(definition, Compilation.Assembly) ? null : definition;
-      }
-
-      return type is ITypeParameterSymbol || Compilation.IsSymbolAccessibleWithin(type, Compilation.Assembly)
-          ? null
-          : type;
-    }
-  }
-
-  private sealed class NotificationGroup
-  {
-    public NotificationGroup(INamedTypeSymbol notification, INamedTypeSymbol? scope)
-    {
-      Notification = notification;
-      Scope = scope;
-      Handlers = new List<INamedTypeSymbol>();
-    }
-
-    public INamedTypeSymbol Notification { get; }
-
-    public INamedTypeSymbol? Scope { get; }
-
-    public List<INamedTypeSymbol> Handlers { get; }
-  }
 }

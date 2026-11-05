@@ -1,5 +1,5 @@
 #region Purpose
-// TWM001–TWM004, TWM007, TWM008, TWM010, and TWM011 descriptors shared by the analyzer and the generator.
+// TWM001–TWM004, TWM007, TWM008, TWM010, TWM011, and TWM012 descriptors shared by the analyzer and the generator.
 // TWM007, TWM008, TWM010, and TWM011 are generator-only: they describe what the host's generated mediator emits.
 #endregion
 
@@ -90,6 +90,50 @@ internal static class DiagnosticDescriptors
       isEnabledByDefault: true,
       description: "[assembly: MediatorBehavior(typeof(T))] must name a type that implements IPipelineBehavior<TRequest, TResponse> (open generic or closed). Other types are dropped from every pipeline.",
       helpLinkUri: HelpLink("TWM010"));
+
+  internal static readonly DiagnosticDescriptor DeclaredHandlerDoesNotExist = new(
+      id: "TWM012",
+      title: "Declared handler does not exist",
+      messageFormat: "Request '{0}' names generated handler '{1}', which does not exist after generation",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "A GeneratedHandlerAttribute names a handler relative to the request. The name must be a constant type name, and in a host that type must exist after every generator has run.",
+      helpLinkUri: HelpLink("TWM012"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+  internal static readonly DiagnosticDescriptor DeclaredHandlerNameUnreadable = new(
+      id: "TWM012",
+      title: "Declared handler name is not a constant",
+      messageFormat: "Request '{0}' cannot read a constant handler type name from '{1}'. The name is not a constant string. Add a constructor parameter named handlerTypeName; a default value is enough when the attribute is declared in another assembly.",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "A GeneratedHandlerAttribute declared in another assembly is read from a constructor parameter named handlerTypeName. A default value is enough. A getter body in a reference assembly is not a constant.",
+      helpLinkUri: HelpLink("TWM012"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+  internal static readonly DiagnosticDescriptor DeclaredHandlerNotATypeName = new(
+      id: "TWM012",
+      title: "Declared handler name is not a type name",
+      messageFormat: "Request '{0}' names generated handler '{1}', which is not a type name relative to the request's containing type",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "HandlerTypeName is a type name relative to the request's containing type. Dots are nested-type segments.",
+      helpLinkUri: HelpLink("TWM012"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+  internal static readonly DiagnosticDescriptor DeclaredHandlerNotAHandler = new(
+      id: "TWM012",
+      title: "Declared handler does not implement IRequestHandler",
+      messageFormat: "Request '{0}' names '{1}', which is not an {2}",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "The named type exists after generation but does not implement the request's IRequestHandler.",
+      helpLinkUri: HelpLink("TWM012"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
 
   internal static readonly DiagnosticDescriptor BehaviorAppliesToNoRequest = new(
       id: "TWM011",

@@ -57,6 +57,42 @@ public sealed class IncrementalGeneratorTests
   }
 
   [Fact]
+  public void DeclaredHandler_UnrelatedEdit_StaysCached()
+  {
+    CSharpCompilation compilation = CreateCompilation(DeclaredHost);
+    GeneratorDriver driver = HostCompiler.CreateDriver(trackSteps: true).RunGenerators(compilation);
+
+    driver = driver.RunGenerators(compilation.AddSyntaxTrees(
+        CSharpSyntaxTree.ParseText(UnrelatedSource, HostCompiler.ParseOptions, path: "Unrelated.cs")));
+
+    GeneratorRunResult result = driver.GetRunResult().Results.ShouldHaveSingleItem();
+    Reasons(result, TrackingNames.HostCandidates).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
+    Reasons(result, TrackingNames.ReferencedAssemblies).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
+    Reasons(result, TrackingNames.Model).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
+    Reasons(result, TrackingNames.Sources).ShouldAllBe(reason => reason == IncrementalStepRunReason.Cached);
+  }
+
+  [Fact]
+  public void AddingGeneratedHandlerAttribute_ModifiesModel_AndEmitsTheDeclaredName()
+  {
+    SyntaxTree original = CSharpSyntaxTree.ParseText(BareRequest, HostCompiler.ParseOptions, path: "Host.cs");
+    CSharpCompilation compilation = CSharpCompilation.Create(
+        "IncrementalHost",
+        syntaxTrees: new[] { original },
+        references: HostCompiler.GetBaseReferences(),
+        options: HostCompiler.CompilationOptions);
+    GeneratorDriver driver = HostCompiler.CreateDriver(trackSteps: true).RunGenerators(compilation);
+
+    SyntaxTree edited = CSharpSyntaxTree.ParseText(DeclaredRequestOnly, HostCompiler.ParseOptions, path: "Host.cs");
+    driver = driver.RunGenerators(compilation.ReplaceSyntaxTree(original, edited));
+
+    GeneratorRunResult result = driver.GetRunResult().Results.ShouldHaveSingleItem();
+    Reasons(result, TrackingNames.HostCandidates).ShouldAllBe(reason => reason == IncrementalStepRunReason.Modified);
+    Reasons(result, TrackingNames.Model).ShouldAllBe(reason => reason == IncrementalStepRunReason.Modified);
+    result.GeneratedSources.ShouldContain(source => source.SourceText.ToString().Contains("App.PingHandler"));
+  }
+
+  [Fact]
   public void RequestWithNoHandler_IsReportedOnce_WithGeneratorAndAnalyzer()
   {
     HostCompilation host = HostCompiler.Compile("SingleReporter", HostSource + UnhandledSource);
@@ -127,6 +163,49 @@ public sealed class IncrementalGeneratorTests
             {
                 public ValueTask<int> Handle(Pong request, CancellationToken cancellationToken) => ValueTask.FromResult(1);
             }
+        }
+        """;
+
+  private const string DeclaredHost = """
+        using System.Threading;
+        using System.Threading.Tasks;
+        using TimeWarp.Mediator;
+
+        namespace App
+        {
+            public sealed class ReducerAttribute : GeneratedHandlerAttribute
+            {
+                public override string HandlerTypeName => "PingHandler";
+            }
+
+            [Reducer]
+            public sealed class Ping : IRequest<string> { }
+
+            public sealed class PingHandler : IRequestHandler<Ping, string>
+            {
+                public ValueTask<string> Handle(Ping request, CancellationToken cancellationToken) => ValueTask.FromResult("pong");
+            }
+        }
+
+        """;
+
+  private const string BareRequest = """
+        namespace App
+        {
+            public sealed class Ping : TimeWarp.Mediator.IRequest<string> { }
+        }
+        """;
+
+  private const string DeclaredRequestOnly = """
+        namespace App
+        {
+            public sealed class ReducerAttribute : TimeWarp.Mediator.GeneratedHandlerAttribute
+            {
+                public override string HandlerTypeName => "PingHandler";
+            }
+
+            [Reducer]
+            public sealed class Ping : TimeWarp.Mediator.IRequest<string> { }
         }
         """;
 

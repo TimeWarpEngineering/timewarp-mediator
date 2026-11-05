@@ -10,13 +10,15 @@
 // when the symbol is MediatorBehavior, so a using-alias is kept.
 // Inherited handler bindings stay in the fact. CandidateGraph drops them once every member
 // assembly is visible, then dedupes one binding per request.
+// A concrete request may also carry GeneratedHandlerAttribute. That fact names a handler this
+// compilation cannot see yet. Only a constant relative type name is kept.
 // A type-parameter constraint is unsatisfiable: the symbol walk compares the concrete argument
 // to that type parameter and rejects the close.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
 
-internal static class CandidateExtractor
+internal static partial class CandidateExtractor
 {
   private const string RequestHandler1 = "T:TimeWarp.Mediator.IRequestHandler`1";
   private const string RequestHandler2 = "T:TimeWarp.Mediator.IRequestHandler`2";
@@ -192,6 +194,13 @@ internal static class CandidateExtractor
     TypeModel model = TypeModels.Create(type, accessCompilation);
     EquatableArray<HandlerMatch> matches = ReadMatches(type, accessCompilation);
     bool isConcreteRequest = IsConcreteRequest(type, model, accessCompilation);
+    EquatableArray<DeclaredHandlerFact> declaredHandlers = EquatableArray<DeclaredHandlerFact>.Empty;
+    EquatableArray<DeclaredHandlerFailure> declaredFailures = EquatableArray<DeclaredHandlerFailure>.Empty;
+    if (isConcreteRequest)
+    {
+      ReadDeclaredHandlers(type, accessCompilation, out declaredHandlers, out declaredFailures);
+    }
+
     if (matches.Length == 0 && !isConcreteRequest)
     {
       return null;
@@ -202,7 +211,9 @@ internal static class CandidateExtractor
         model,
         matches,
         isConcreteRequest,
-        scope is null ? null : TypeModels.Create(scope, accessCompilation));
+        scope is null ? null : TypeModels.Create(scope, accessCompilation),
+        declaredHandlers,
+        declaredFailures);
   }
 
   private static EquatableArray<HandlerMatch> ReadMatches(INamedTypeSymbol type, Compilation compilation)
