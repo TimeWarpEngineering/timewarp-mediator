@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 5840
+- Lines changed: 1020
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
@@ -30,3 +30,9 @@ differ only by the declared-handler additions and the `AddHandler` dedupe.
 - Do not invent issues to fill space. Zero issues is a valid outcome.
 - Review the diff and the call sites around it. Re-check falsifiable claims against the repo.
 - Prior rounds are immutable. New work goes in `round-(N+1)/`.
+
+## Round 2 scope
+
+**Date:** 2026-11-06
+**Diff scope:** the fix delta `b0c49a7..ae64cbd` (one commit, `ae64cbd`), checked against round-1 M1–M7 and the restated goal. The budget line above (1020 lines) measures this delta.
+**Reviewer roster:** general (review oracle, Claude Opus 5.5), effort 3, turn cap 200.
