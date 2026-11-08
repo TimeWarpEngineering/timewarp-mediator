@@ -44,6 +44,8 @@ means no export, so the change is safe in CI even without a collector.
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-08)
 - Implementation: 01a1bc1f-1462-7c61-aa96-e7b26e136ccf (2026-11-09)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1bc1f-1462-7c61-aa96-e7b26e136ccf, max-turns 500, Done — 2026-11-08T17:17:13Z
+- Review oracle: claude (model claude-opus-5-5), effort 2, roster general, turn cap 120, 1 round, disposition clean — 2026-11-09
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 2e9b5454-d8ff-4386-9595-15f4b2f87c60, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-08T17:19:01Z
 
 ## Results
 
@@ -60,6 +62,16 @@ means no export, so the change is safe in CI even without a collector.
 Smoke: from this worktree, run `./bin/dev --capabilities`, then `./bin/dev build --quiet`. With a collector listening, run `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:14318 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf TRACEPARENT=00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01 ./bin/dev check-version`.
 
 Expect: capabilities JSON includes `build`, `clean`, `check-version`, `release`, and `self-install`. The build ends with `Build completed successfully!`. The collector receives one `check-version` span named for service `timewarp-mediator-dev`, on trace id `4bf92f3577b34da6a3ce929d0e0e4736`, parented to span `00f067aa0ba902b7`. `check-version` exits 1 while source version `15.0.0-beta.5` is already published. Unset `OTEL_EXPORTER_OTLP_ENDPOINT` exports nothing.
+
+### Review
+
+The review ran 1 round at effort 2 with one general reviewer. It raised 0 findings. Final counts are 0 open, 0 fixed, and 0 wontfix at each severity (bug, suggestion, nit). The disposition is **clean**. `incoming-trace-context.cs` is byte-identical to the timewarp-nuru reference. `UseTelemetry` uses the literal service name. The repo has no `ActivitySource` to register. Smoke runs of `./bin/dev` with no `TRACEPARENT`, an invalid one, and a valid one all exit 0. The goal restatement matches the task, so there was no misread. One observation is for upstream and is not a finding: the `UnsafeAccessor` on `Activity._spanId` depends on a private runtime field.
+
+Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
