@@ -1,5 +1,9 @@
 # Enable dev CLI telemetry with UseTelemetry
 
+## Goal (implementer restatement)
+
+Every `dev` command should emit one OpenTelemetry command span and a duration metric so a ganda walk or a CI job can see which commands are slow. TimeWarp.Nuru only emits that code when the repo's `tools/dev-cli/dev.cs` calls `UseTelemetry` with the literal service name `timewarp-mediator-dev`. Copy `IncomingTraceContext` and restore the caller's `TRACEPARENT` around `RunAsync` so the command span nests under ganda or CI. This repo has no `ActivitySource` of its own, so none is registered. Export stays off unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set. `dev --capabilities`, `dev build`, and the AOT publish of the dev CLI must still succeed. `tools/dev-cli/telemetry.md` names the environment variables.
+
 ## Description
 
 Every `dev` command in this repo should emit OpenTelemetry spans and metrics so we can see
@@ -29,15 +33,33 @@ means no export, so the change is safe in CI even without a collector.
 
 ## Checklist
 
-- [ ] Add `UseTelemetry` call to `tools/dev-cli/dev.cs`
-- [ ] Add `IncomingTraceContext` and wrap `RunAsync`
-- [ ] Register repo-specific ActivitySources if any
-- [ ] Build dev CLI (`bin/dev build`) and run one command with `OTEL_EXPORTER_OTLP_ENDPOINT` set; confirm a span arrives
-- [ ] Add a short `tools/dev-cli/telemetry.md` naming the env vars (copy from timewarp-nuru)
+- [x] Add `UseTelemetry` call to `tools/dev-cli/dev.cs`
+- [x] Add `IncomingTraceContext` and wrap `RunAsync`
+- [x] Register repo-specific ActivitySources if any (none in this repo)
+- [x] Build dev CLI (`bin/dev build`) and run one command with `OTEL_EXPORTER_OTLP_ENDPOINT` set; confirm a span arrives
+- [x] Add a short `tools/dev-cli/telemetry.md` naming the env vars (copy from timewarp-nuru)
 
 ## Session
 
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-08)
+- Implementation: 01a1bc1f-1462-7c61-aa96-e7b26e136ccf (2026-11-09)
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1bc1f-1462-7c61-aa96-e7b26e136ccf, max-turns 500, Done — 2026-11-08T17:17:13Z
+
+## Results
+
+`tools/dev-cli/dev.cs` calls `UseTelemetry` with the literal service name `timewarp-mediator-dev`. `IncomingTraceContext.Restore()` runs before `RunAsync`. A search of `*.cs` found no `ActivitySource` in this repo, so none is registered. `tools/dev-cli/telemetry.md` names `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SERVICE_NAME`, `TRACEPARENT`, `TRACESTATE`, and `OTEL_EXPORTER_OTLP_PROTOCOL`.
+
+`dotnet run --file tools/dev-cli/dev.cs -- self-install` AOT-published `./bin/dev`. `./bin/dev --capabilities` lists `build`, `clean`, `check-version`, `release`, and `self-install` among the routes. `./bin/dev build --quiet` printed `Build completed successfully!`.
+
+`./bin/dev check-version` with `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:14318`, `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf`, and `TRACEPARENT=00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01` posted a `check-version` span to that collector. The span's service name was `timewarp-mediator-dev`, its trace id was `4bf92f3577b34da6a3ce929d0e0e4736`, and its parent span id was `00f067aa0ba902b7`. The same export happened from the runfile build before AOT publish. `check-version` exited 1 because `15.0.0-beta.5` is already on NuGet. That is the existing version gate.
+
+`ganda repo audit` exited 0. `ganda repo audit --fix` wrote the local VS Code window title (`.vscode/settings.json` stays gitignored) and left one advisory warning: `kanban-landed` says task 021 has no usable worktree. That claim is not this id.
+
+### How to validate
+
+Smoke: from this worktree, run `./bin/dev --capabilities`, then `./bin/dev build --quiet`. With a collector listening, run `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:14318 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf TRACEPARENT=00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01 ./bin/dev check-version`.
+
+Expect: capabilities JSON includes `build`, `clean`, `check-version`, `release`, and `self-install`. The build ends with `Build completed successfully!`. The collector receives one `check-version` span named for service `timewarp-mediator-dev`, on trace id `4bf92f3577b34da6a3ce929d0e0e4736`, parented to span `00f067aa0ba902b7`. `check-version` exits 1 while source version `15.0.0-beta.5` is already published. Unset `OTEL_EXPORTER_OTLP_ENDPOINT` exports nothing.
 
 ## Notes
 
