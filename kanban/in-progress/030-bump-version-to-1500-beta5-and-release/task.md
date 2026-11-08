@@ -15,6 +15,8 @@ The bump itself was not needed: task 029 already set `<Version>` to 15.0.0-beta.
 - [x] `./bin/dev release` tagged v15.0.0-beta.5 at 19e4071 and created the GitHub Release
 - [x] `release:published` run 42097280764 pushed both packages to nuget.org
 
+- 2026-11-08: audit --fix untracked .vscode/settings.json and ignored it; MediatR benchmark pin 14.2.0 → 14.3.0 (Steven, same task)
+
 ## Session
 
 - Created: 6a80da6d-bb0c-4bb4-b006-83f4e5ea795c (2026-11-05)
