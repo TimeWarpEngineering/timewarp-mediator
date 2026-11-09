@@ -80,6 +80,23 @@ M2 is fixed in `documentation/release-notes/15.0.0-beta.6.md`. The sentence name
 
 `ganda repo audit` exited 0. Passed 38, failed 0, skipped 3. It changed no tracked file.
 
+### Review (round 2) and disposition
+
+Round 2 ran at effort 1 with one general reviewer. It covered the fix delta `8944f20..8d6fdef`: the Nuru pins, `agent.md`, the release note, `tools/dev-cli/dev.cs`, and the six endpoint handlers. M1 (bug) and M2 (nit) are both `fixed`. The round raised no new findings. Final counts: bug 0 open / 1 fixed / 0 wontfix, suggestion 0 / 0 / 0, nit 0 open / 1 fixed / 0 wontfix.
+
+What the reviewer checked:
+
+- nuget.org lists `4.0.0-beta.12` as the latest `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli`.
+- `ganda nuget outdated --no-cache` printed `All packages are up to date!`.
+- `dotnet build tools/dev-cli/dev.cs` exited 0 on `net11.0`.
+- `./bin/dev check-version --strict` exited 0.
+- No `ICommandHandler` or `Task<Unit>` remains in the dev CLI.
+- CI installs `11.0.x` before it runs the CLI.
+
+The reviewer did not rerun the full `./bin/dev workflow`. That result comes from the fix pass above.
+
+**Disposition: clean** (2 rounds, 0 open, no wontfix). Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke: from this worktree, run `ganda nuget outdated --no-cache`, then `./bin/dev check-version --strict`, then `./bin/dev workflow`.
@@ -94,11 +111,12 @@ Expect: outdated prints `All packages are up to date!`, including `TimeWarp.Nuru
 - Review oracle round 1: Claude Code (claude-opus-5-5), effort 1, general reviewer, turn cap 80, Blocked (fix pass needed for M1, M2) — 2026-11-09
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 03bfb466-76aa-4326-a61c-8104cacd0c6f, max-turns 80, artifacts general.md, merged.md — 2026-11-09T09:02:18Z
 - Fix pass: implement-fix-2 by implementer-grok (grok, vendor xai, model grok-4.7), session 01a1bf8b-48ab-77d1-8b07-61397314e59f — 2026-11-09. M1 and M2 fixed. Both Nuru pins are `4.0.0-beta.12`. The dev CLI is `net11.0`.
+- Review oracle round 2: Claude Code (claude-opus-5-5), effort 1, general reviewer, turn cap 80, artifacts round-2/general.md, round-2/merged.md, disposition.md. Disposition clean, Done — 2026-11-09
 
 ## Review
 
 - Round 1: M1 and M2 fixed on this branch. The host runs review round 2.
-
+- Round 2: Done
 ## Notes
 
 - beta.5 was tagged `v15.0.0-beta.5` (task 029). beta.3 is a dead tag; do not reuse it.
