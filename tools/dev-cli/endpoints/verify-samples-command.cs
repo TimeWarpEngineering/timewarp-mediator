@@ -22,7 +22,7 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
   [Option("no-build", Description = "Run the samples without building them first")]
   public bool NoBuild { get; set; }
 
-  public sealed class Handler : ICommandHandler<VerifySamplesCommand, Unit>
+  public sealed class Handler : IRequestHandler<VerifySamplesCommand, Unit>
   {
     private static readonly TimeSpan SampleTimeout = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan AotPublishTimeout = TimeSpan.FromMinutes(10);
@@ -35,7 +35,7 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
     {
       string? repoRoot = Git.FindRoot();
       if (repoRoot is null)

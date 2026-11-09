@@ -11,7 +11,7 @@
 // shared check-version/release commands), so there is nothing to drift. Handlers are invoked directly so CI does not need a
 // pre-installed ./bin/dev. CI passes the OIDC key via NUGET_API_KEY env (never
 // argv). Push is skipped when no API key is supplied (local pack-only).
-// Handler is internal: TimeWarp.Nuru.DevCli 4.0.0-beta.11 ships NuGetVersionService,
+// Handler is internal: TimeWarp.Nuru.DevCli 4.0.0-beta.12 ships NuGetVersionService,
 // IRepoConfigService, and IPackableProjectService as internal, and a public
 // constructor cannot take them.
 #endregion
@@ -27,7 +27,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
   [Option("api-key", "k", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
   public string? ApiKey { get; set; }
 
-  internal sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
+  internal sealed class Handler : IRequestHandler<WorkflowCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly IRepoCleanService RepoCleanService;
@@ -53,7 +53,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       PackableProjectService = packableProjectService;
     }
 
-    public async Task<Unit> Handle(WorkflowCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
     {
       Ct = ct;
 
@@ -198,7 +198,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       return true;
     }
 
-    private async Task<bool> RunStepAsync(string stepName, Task<Unit> step)
+    private async Task<bool> RunStepAsync(string stepName, ValueTask<Unit> step)
     {
       await step;
 

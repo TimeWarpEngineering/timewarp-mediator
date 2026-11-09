@@ -27,7 +27,7 @@ public sealed class PackCommand : ICommand<Unit>
   [Option("no-build", Description = "Do not build before packing")]
   public bool NoBuild { get; set; }
 
-  public sealed class Handler : ICommandHandler<PackCommand, Unit>
+  public sealed class Handler : IRequestHandler<PackCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private PackCommand Command = null!;
@@ -39,7 +39,7 @@ public sealed class PackCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(PackCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(PackCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;

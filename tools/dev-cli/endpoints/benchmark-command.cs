@@ -46,7 +46,7 @@ public sealed class BenchmarkCommand : ICommand<Unit>
   [Option("aot", Description = "Publish the comparison project with PublishAot and record comparison-baseline-aot.md (not gated)")]
   public bool Aot { get; set; }
 
-  public sealed class Handler : ICommandHandler<BenchmarkCommand, Unit>
+  public sealed class Handler : IRequestHandler<BenchmarkCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -55,7 +55,7 @@ public sealed class BenchmarkCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(BenchmarkCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(BenchmarkCommand command, CancellationToken ct)
     {
       string? repoRoot = Git.FindRoot();
       if (repoRoot is null)
