@@ -18,7 +18,7 @@ public sealed class BuildCommand : ICommand<Unit>
   [Option("quiet", "q", Description = "Hide build output unless the command fails")]
   public bool Quiet { get; set; }
 
-  public sealed class Handler : ICommandHandler<BuildCommand, Unit>
+  public sealed class Handler : IRequestHandler<BuildCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private BuildCommand Command = null!;
@@ -30,7 +30,7 @@ public sealed class BuildCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(BuildCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;
