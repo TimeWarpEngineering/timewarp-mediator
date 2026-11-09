@@ -37,6 +37,8 @@ Acceptance:
 
 `git ls-files .timewarp/signals` prints nothing. The tracked `.timewarp` paths are `dev.jsonc` and `ganda.jsonc` only. `source/Directory.Build.props` `<Version>` is still `15.0.0-beta.6`. No product code changed, and this walk does not cut a release.
 
+The kitchen commit left the folderized task off origin-home, so the next `ganda repo audit` failed `kanban-landed`. `ganda kanban reconcile` landed that kitchen. The audit after the land passed 39, failed 0, including `timewarp-signals-gitignore` and `kanban-landed`.
+
 The pull request stays for the host open-pr node.
 
 ### How to validate
@@ -49,6 +51,7 @@ Expect: check-ignore names `.gitignore` and `/.timewarp/signals/`. `git ls-files
 
 - Created: 4bddab61-0b48-4f1d-8a19-57e7f9d047b3 (2026-11-09)
 - Implementation: 01a1c0f9-bf92-7aa3-b0f8-3e2aef182808 (2026-11-09)
+- Land: `ganda kanban reconcile` (2026-11-09) so `kanban-landed` matches origin-home
 
 ## Notes
 
