@@ -41,6 +41,14 @@ The kitchen commit left the folderized task off origin-home, so the next `ganda 
 
 The pull request stays for the host open-pr node.
 
+### Review disposition
+
+- Rounds: 1. Roster: `general`, effort 1.
+- Final counts: bug 0, suggestion 0, nit 0, with 0 open, 0 fixed, and 0 wontfix.
+- Disposition: `clean`, with no wontfix and no escalations.
+- The reviewer reran the smoke checks. `git check-ignore` matches `.gitignore:277:/.timewarp/signals/`. `git ls-files .timewarp/signals` is empty. `ganda repo audit` passes all checks, including `timewarp-signals-gitignore`. `<Version>` is still `15.0.0-beta.6`.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke: from this worktree, run `git check-ignore -v .timewarp/signals/example.log`, then `git ls-files .timewarp/signals`, then `ganda repo audit`.
@@ -53,6 +61,12 @@ Expect: check-ignore names `.gitignore` and `/.timewarp/signals/`. `git ls-files
 - Implementation: 01a1c0f9-bf92-7aa3-b0f8-3e2aef182808 (2026-11-09)
 - Land: `ganda kanban reconcile` (2026-11-09) so `kanban-landed` matches origin-home
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1c0f9-bf92-7aa3-b0f8-3e2aef182808, max-turns 500, Done — 2026-11-09T15:52:48Z
+- Review oracle: reviewer (claude, model claude-opus-5-5), tw-implementation-review effort 1, roster general, turn cap 80. Round 1 disposition: clean (2026-11-09)
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 54476d6f-9139-43d7-b72a-bce99fd5dc0b, max-turns 80, artifacts general.md, merged.md, disposition.md — 2026-11-09T15:54:39Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
