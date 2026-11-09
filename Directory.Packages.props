@@ -12,7 +12,7 @@
     </PackageVersion>
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.403" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
-    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.11" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.12" />
   </ItemGroup>
 
   <!-- tests/timewarp-mediator-package-smoke only: dev pack passes TimeWarpMediatorVersion (the
