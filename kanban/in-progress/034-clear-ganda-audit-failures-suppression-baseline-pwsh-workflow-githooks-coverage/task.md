@@ -65,6 +65,7 @@ Reviewer: compare the bash and pwsh release guards line by line. For each guard,
 
 - Created: 4bddab61-0b48-4f1d-8a19-57e7f9d047b3 (2026-11-11)
 - Implementation: 2026-11-11. Cleared the four named audit failures and `vscode-window-icon` (`--fix` wrote the gitignored `.vscode/settings.json`). The task branch and origin/master both moved this kitchen to in-progress from `d830944`; this commit folderizes that kitchen.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1c691-b89e-7b13-a535-e1a9ab60442b, max-turns 500, Done — 2026-11-10T18:06:28Z
 
 ## Notes
 
