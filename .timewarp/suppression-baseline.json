@@ -1,0 +1,61 @@
+{
+  "files": {
+    ".githooks/post-checkout.cs": {
+      "CA2007": 1
+    },
+    ".githooks/post-commit.cs": {
+      "CA2007": 1
+    },
+    ".githooks/post-merge.cs": {
+      "CA2007": 1
+    },
+    ".githooks/pre-commit.cs": {
+      "CA1849": 2,
+      "CA2007": 1,
+      "RS0030": 2
+    },
+    ".githooks/pre-push.cs": {
+      "CA1849": 3,
+      "CA2007": 1,
+      "RS0030": 3
+    },
+    "Directory.Build.props": {
+      "CS1591": 1,
+      "CS1701": 1,
+      "CS1702": 1
+    },
+    "samples/Directory.Build.props": {
+      "RS0030": 1
+    },
+    "source/timewarp-mediator-analyzers/timewarp-mediator-analyzers.csproj": {
+      "NU5128": 1
+    },
+    "source/timewarp-mediator-generators/timewarp-mediator-generators.csproj": {
+      "NU5128": 1
+    },
+    "source/timewarp-mediator/timewarp-mediator.csproj": {
+      "''))": 1
+    },
+    "tests/timewarp-mediator-benchmarks-comparison/timewarp-mediator-benchmarks-comparison.csproj": {
+      "RS0030": 1
+    },
+    "tools/dev-cli/Directory.Build.props": {
+      "CA1031": 1,
+      "CA1034": 1,
+      "CA1303": 1,
+      "CA1508": 1,
+      "CA1515": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "CA2007": 1,
+      "CA2016": 1,
+      "CA5399": 1,
+      "IDE0065": 1,
+      "IL2026": 1,
+      "IL2104": 1,
+      "IL3050": 1,
+      "IL3053": 1,
+      "RCS1046": 1
+    }
+  }
+}

@@ -4,6 +4,11 @@
 #region Design
 // Names timewarp-mediator.slnx explicitly (MSB1011). Maps Build.ps1's
 // `dotnet test $Solution -c Release`.
+// The suites are xunit 2.9 on VSTest. Microsoft.Testing.Platform --coverage is
+// not a runner they host, so collection is coverlet.collector via
+// --collect:"XPlat Code Coverage" into artifacts/coverage. That directory is
+// deleted first so a stale Cobertura file cannot satisfy the check. The command
+// fails when the suites pass and no coverage.cobertura.xml was written.
 #endregion
 
 namespace DevCli.Commands;
@@ -66,9 +71,20 @@ public sealed class TestCommand : ICommand<Unit>
     private async Task<bool> TestAsync()
     {
       string solutionFile = RepoLayout.SolutionPath(RepoRoot);
+      string coverageDirectory = Path.Combine(RepoRoot, "artifacts", "coverage");
+      if (Directory.Exists(coverageDirectory))
+      {
+        Directory.Delete(coverageDirectory, recursive: true);
+      }
+
+      Directory.CreateDirectory(coverageDirectory);
+
       DotNetTestBuilder testBuilder = DotNet.Test()
         .WithProject(solutionFile)
         .WithConfiguration("Release")
+        .WithWorkingDirectory(RepoRoot)
+        .WithCollect("XPlat Code Coverage")
+        .WithResultsDirectory("artifacts/coverage")
         .WithNoValidation();
 
       if (Command.NoBuild)
@@ -88,19 +104,30 @@ public sealed class TestCommand : ICommand<Unit>
           Environment.ExitCode = 1;
           return false;
         }
-
-        return true;
+      }
+      else
+      {
+        int exitCode = await command.RunAsync(Ct);
+        if (exitCode != 0)
+        {
+          Terminal.WriteErrorLine("Tests failed!".Red());
+          Environment.ExitCode = exitCode;
+          return false;
+        }
       }
 
-      int exitCode = await command.RunAsync(Ct);
-      if (exitCode != 0)
+      if (!HasCobertura(coverageDirectory))
       {
-        Terminal.WriteErrorLine("Tests failed!".Red());
-        Environment.ExitCode = exitCode;
+        Terminal.WriteErrorLine("Tests passed but artifacts/coverage has no Cobertura file.".Red());
+        Environment.ExitCode = 1;
         return false;
       }
 
       return true;
     }
+
+    private static bool HasCobertura(string coverageDirectory) =>
+      Directory.Exists(coverageDirectory)
+      && Directory.EnumerateFiles(coverageDirectory, "coverage.cobertura.xml", SearchOption.AllDirectories).Any();
   }
 }
