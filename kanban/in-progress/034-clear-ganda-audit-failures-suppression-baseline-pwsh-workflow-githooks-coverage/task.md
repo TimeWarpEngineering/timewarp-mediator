@@ -62,6 +62,7 @@ Done means:
 Reviewer: compare the bash and pwsh release guards line by line. For each guard, confirm the failure condition, exit code, and `::error::` text match. A guard that fails open, meaning it passes when it should refuse, blocks this PR.
 - Round 1: Blocked — open M1, M2
 - Fix pass: M1 and M2 implemented (`-cne`, `-cmatch`). Round 2 is the host review node.
+- Round 2: Done
 ## Session
 
 - Created: 4bddab61-0b48-4f1d-8a19-57e7f9d047b3 (2026-11-11)
@@ -70,6 +71,7 @@ Reviewer: compare the bash and pwsh release guards line by line. For each guard,
 - Review oracle round 1: Claude (claude-opus-5-5), headless `ganda task work`, effort 2, roster general, turn cap 120. 2026-11-11. One open bug, so a fix pass is needed.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session fb5d2093-8630-42b1-ba89-00f9adf857c7, max-turns 120, artifacts general.md, merged.md — 2026-11-10T18:10:29Z
 - Fix pass: implemented by implementer-grok (grok, vendor xai, model grok-4.7), session 01a1c6a7-86d2-7cd1-85a7-07e40e7382f6, 2026-11-11. M1 and M2 use case-sensitive `-cne` and `-cmatch`.
+- Review oracle round 2: Claude (claude-opus-5-5), headless `ganda task work`, effort 1, roster general, turn cap 80. 2026-11-11. 0 open, disposition clean.
 
 ## Notes
 
@@ -117,7 +119,11 @@ Round 1 (effort 2, reviewer general) found 1 open bug and 1 open suggestion. Thi
 - M1 (bug, fixed): `$releaseTag -cne $expected` and `$tagSha -cne $sha`. At detached `39f9e22`, `RELEASE_TAG=V15.0.0-BETA.6` exits 1 with `::error::Release tag 'V15.0.0-BETA.6' does not match v+Version 'v15.0.0-beta.6'.` Unset `RELEASE_TAG` and exact `v15.0.0-beta.6` still exit 0.
 - M2 (suggestion, fixed): the version read uses `-cmatch`. A props file whose only element is `<version>` exits 1 with the unreadable-version error. `<version>WRONG</version>` before `<Version>15.0.0-beta.6</Version>` reads `15.0.0-beta.6`.
 
-Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 2 (effort 1, reviewer general, fix delta `01939c1..ec6e59a`) re-checked both fixes under pwsh. Mis-cased tags refuse, the exact tag passes, and a lowercase `<version>` does not match. Round 2 found no new issues.
+
+**Disposition: clean.** 2 rounds. Final counts: bug 0 open / 1 fixed / 0 wontfix, suggestion 0 open / 1 fixed / 0 wontfix, nit 0. No wontfix, no escalations.
+
+Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Learnings
 

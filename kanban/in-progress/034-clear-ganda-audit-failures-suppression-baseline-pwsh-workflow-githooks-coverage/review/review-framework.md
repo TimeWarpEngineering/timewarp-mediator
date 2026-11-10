@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 444
-- Effort: 2
+- Lines changed: 132
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope (task 034)
 
@@ -17,6 +17,14 @@
 **Effort:** 2 (by-diff budget above)
 **Reviewer roster:** general
 **Session IDs:** review oracle (Claude, claude-opus-5-5), headless `ganda task work`, 2026-11-11
+
+## Round 2 scope
+
+**Date:** 2026-11-11
+**Diff scope:** the fix delta `01939c1..HEAD` (round-1 `base.sha` to `ec6e59a`). The only product change is `.github/workflows/workflow.yml`, release-guard step lines 159, 172, and 183.
+**Effort:** 1 (by-diff budget above, 132 lines with kitchen files)
+**Reviewer roster:** general
+**Session IDs:** review oracle round 2 (Claude, claude-opus-5-5), headless `ganda task work`, 2026-11-11
 
 ## Ground rules
 
