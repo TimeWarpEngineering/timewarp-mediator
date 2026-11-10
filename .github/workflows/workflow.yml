@@ -55,6 +55,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
   ci:
     if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'merge')
@@ -93,6 +97,16 @@ jobs:
       - name: Run CI Pipeline
         run: dotnet run --file tools/dev-cli/dev.cs -- workflow
 
+      # dev workflow writes Cobertura under artifacts/coverage. warn: a job that
+      # did not run tests must not fail the upload.
+      - name: coverage
+        if: success()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: artifacts/coverage
+          if-no-files-found: warn
+
       - name: Upload Artifacts
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -130,38 +144,62 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          set -euo pipefail
-          sha="$(git rev-parse HEAD)"
-          version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' source/Directory.Build.props | head -n 1)"
-          if [ -z "$version" ]; then
-            echo "::error::Could not read <Version> from source/Directory.Build.props."
-            exit 1
-          fi
-          expected="v$version"
-          echo "Commit: $sha  Version: $version  Expected tag: $expected"
+          # Fail fast like bash set -e. pwsh does not stop on a native non-zero exit,
+          # so every git and gh call checks $LASTEXITCODE. The tag lookup is allowed
+          # to fail: a missing tag is the guard below, not a script abort.
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
 
-          if [ -n "$RELEASE_TAG" ] && [ "$RELEASE_TAG" != "$expected" ]; then
-            echo "::error::Release tag '$RELEASE_TAG' does not match v+Version '$expected'."
-            exit 1
-          fi
+          $shaRaw = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sha = "$shaRaw".Trim()
 
-          tag_sha="$(git rev-parse -q --verify "refs/tags/$expected^{commit}" || true)"
-          if [ "$tag_sha" != "$sha" ]; then
-            echo "::error::Tag $expected must exist and point at the commit being published ($sha); found '${tag_sha:-none}'. Break-glass dispatch must run with --ref $expected."
+          $version = ''
+          foreach ($line in Get-Content -Path 'source/Directory.Build.props') {
+            if ($line -match '<Version>(.*)</Version>') {
+              $version = $Matches[1]
+              break
+            }
+          }
+          if ([string]::IsNullOrEmpty($version)) {
+            Write-Output "::error::Could not read <Version> from source/Directory.Build.props."
             exit 1
-          fi
+          }
+          $expected = "v$version"
+          Write-Output "Commit: $sha  Version: $version  Expected tag: $expected"
 
-          if ! git merge-base --is-ancestor "$sha" origin/master; then
-            echo "::error::Commit $sha is not on master."
+          $releaseTag = $env:RELEASE_TAG
+          if (-not [string]::IsNullOrEmpty($releaseTag) -and $releaseTag -ne $expected) {
+            Write-Output "::error::Release tag '$releaseTag' does not match v+Version '$expected'."
             exit 1
-          fi
+          }
 
-          green="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/workflow.yml/runs?head_sha=$sha&event=push&status=success" --jq '.total_count')"
-          if [ "$green" -lt 1 ]; then
-            echo "::error::No successful push CI run of workflow.yml for $sha. Wait for CI or re-run it, then re-run this release."
+          $tagShaRaw = git rev-parse -q --verify "refs/tags/${expected}^{commit}" 2>$null
+          $tagExit = $LASTEXITCODE
+          $tagSha = ''
+          if ($tagExit -eq 0 -and -not [string]::IsNullOrWhiteSpace("$tagShaRaw")) {
+            $tagSha = "$tagShaRaw".Trim()
+          }
+          if ($tagSha -ne $sha) {
+            $found = if ([string]::IsNullOrEmpty($tagSha)) { 'none' } else { $tagSha }
+            Write-Output "::error::Tag $expected must exist and point at the commit being published ($sha); found '$found'. Break-glass dispatch must run with --ref $expected."
             exit 1
-          fi
-          echo "Release guards passed ($green successful CI run(s) for $sha)."
+          }
+
+          git merge-base --is-ancestor $sha origin/master 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            Write-Output "::error::Commit $sha is not on master."
+            exit 1
+          }
+
+          $greenRaw = gh api "repos/$($env:GITHUB_REPOSITORY)/actions/workflows/workflow.yml/runs?head_sha=$sha&event=push&status=success" --jq '.total_count'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $green = "$greenRaw".Trim()
+          if ([int]$green -lt 1) {
+            Write-Output "::error::No successful push CI run of workflow.yml for $sha. Wait for CI or re-run it, then re-run this release."
+            exit 1
+          }
+          Write-Output "Release guards passed ($green successful CI run(s) for $sha)."
 
       - name: Setup .NET 10
         if: inputs.mode != 'probe'
