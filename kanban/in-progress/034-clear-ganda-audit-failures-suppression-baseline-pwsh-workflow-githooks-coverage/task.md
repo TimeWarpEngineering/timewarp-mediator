@@ -72,6 +72,7 @@ Reviewer: compare the bash and pwsh release guards line by line. For each guard,
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session fb5d2093-8630-42b1-ba89-00f9adf857c7, max-turns 120, artifacts general.md, merged.md — 2026-11-10T18:10:29Z
 - Fix pass: implemented by implementer-grok (grok, vendor xai, model grok-4.7), session 01a1c6a7-86d2-7cd1-85a7-07e40e7382f6, 2026-11-11. M1 and M2 use case-sensitive `-cne` and `-cmatch`.
 - Review oracle round 2: Claude (claude-opus-5-5), headless `ganda task work`, effort 1, roster general, turn cap 80. 2026-11-11. 0 open, disposition clean.
+- Installed ganda changed during this walk: was 51719784 bytes 2b68168f4096b6ead5ba35c3ac18bdcb70e3e05a0c22f189da7b7369e773a185; now 51756808 bytes a18f3dc25f245e28614a218db4f6294c4e02bfabf5529c0b4a7a94f7b048c6ec
 
 ## Notes
 
