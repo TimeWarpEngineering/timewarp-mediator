@@ -156,7 +156,7 @@ jobs:
 
           $version = ''
           foreach ($line in Get-Content -Path 'source/Directory.Build.props') {
-            if ($line -match '<Version>(.*)</Version>') {
+            if ($line -cmatch '<Version>(.*)</Version>') {
               $version = $Matches[1]
               break
             }
@@ -169,7 +169,7 @@ jobs:
           Write-Output "Commit: $sha  Version: $version  Expected tag: $expected"
 
           $releaseTag = $env:RELEASE_TAG
-          if (-not [string]::IsNullOrEmpty($releaseTag) -and $releaseTag -ne $expected) {
+          if (-not [string]::IsNullOrEmpty($releaseTag) -and $releaseTag -cne $expected) {
             Write-Output "::error::Release tag '$releaseTag' does not match v+Version '$expected'."
             exit 1
           }
@@ -180,7 +180,7 @@ jobs:
           if ($tagExit -eq 0 -and -not [string]::IsNullOrWhiteSpace("$tagShaRaw")) {
             $tagSha = "$tagShaRaw".Trim()
           }
-          if ($tagSha -ne $sha) {
+          if ($tagSha -cne $sha) {
             $found = if ([string]::IsNullOrEmpty($tagSha)) { 'none' } else { $tagSha }
             Write-Output "::error::Tag $expected must exist and point at the commit being published ($sha); found '$found'. Break-glass dispatch must run with --ref $expected."
             exit 1
