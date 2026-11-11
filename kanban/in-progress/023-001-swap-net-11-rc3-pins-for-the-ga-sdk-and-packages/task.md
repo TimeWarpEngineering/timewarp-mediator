@@ -33,13 +33,13 @@ Acceptance:
 
 ## Checklist
 
-- [ ] SDK pin is `11.0.100` and CI no longer asks for preview quality
-- [ ] net11.0 DependencyInjection pin is `11.0.0`; net10.0 pin stays on 10.0
-- [ ] net11.0 BenchmarkDotNet pin is off the preview when 0.16.0 stable exists; net10.0 stays on 0.15.8
-- [ ] `./bin/dev benchmark --gate` is green. Re-record `comparison-baseline.md` only after Steven approves the new numbers
-- [ ] `<Version>` is `15.0.0-beta.7`, release notes added, `check-version --strict` passes
-- [ ] `agent.md` names the GA pins
-- [ ] `./bin/dev workflow` green
+- [x] SDK pin is `11.0.100` and CI no longer asks for preview quality
+- [x] net11.0 DependencyInjection pin is `11.0.0`; net10.0 pin stays on 10.0
+- [x] net11.0 BenchmarkDotNet pin is off the preview when 0.16.0 stable exists; net10.0 stays on 0.15.8 (0.16.0 stable is not on NuGet as of 2026-11-11, so net11.0 stays on `0.16.0-preview.2`)
+- [x] `./bin/dev benchmark --gate` is green. Re-record `comparison-baseline.md` only after Steven approves the new numbers
+- [x] `<Version>` is `15.0.0-beta.7`, release notes added, `check-version --strict` passes
+- [x] `agent.md` names the GA pins
+- [x] `./bin/dev workflow` green
 
 ## Notes
 
@@ -52,3 +52,43 @@ Acceptance:
 - Created: 3691297 (2026-10-28)
 - Spec: task 023 implementer (2026-10-28)
 - Gate item: task 023 implement-fix-4 (2026-10-28). The net10.0 gate passed on BenchmarkDotNet 0.15.8. This task keeps that gate green when the net11.0 pin leaves the preview.
+- Implementer (2026-11-11): swapped the RC3 pins for GA and committed b8432b5.
+- Boy-scout audit fix (2026-11-11): `ganda repo audit` warned `vscode-window-icon` because `.vscode/settings.json` was missing. `ganda repo audit --fix` created it. That file is gitignored, so there is no tracked diff. The audit then passed every check.
+- Hook note (2026-11-11): `git commit` failed in the `.githooks/pre-commit` runfile with `CS2012 ... pre-commit.dll ... Access ... denied`. The write goes through the shared `VBCSCompiler` server. `UseSharedCompilation=false git commit` compiled the hook in-process, and the commit went through. The repo was not changed for this.
+
+## Results
+
+The repo now builds on the .NET 11 GA SDK and packages. No RC3 pin is left in `global.json`, `Directory.Packages.props`, the workflow, or `agent.md`/`documentation/overview.md`. The recorded benchmark files are unchanged: `comparison-baseline.md` and `comparison-baseline-net11.md` still name the RC3 SDK they were measured on, and they were not re-recorded.
+
+- `global.json`: `11.0.100`, `rollForward: latestFeature`. `allowPrerelease` is removed.
+- `Directory.Packages.props`: on `net11.0`, `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Logging` are both `11.0.0`. Logging moves with DI so the net11.0 split stays consistent. The `net10.0` pins stay at `10.0.14`. The restore of `tests/timewarp-mediator-package-smoke` resolved `Microsoft.Extensions.DependencyInjection/10.0.14` and `/11.0.0`.
+- BenchmarkDotNet: `0.15.8` on `net10.0` and `0.16.0-preview.2` on `net11.0`. NuGet flat-container on 2026-11-11 lists `0.16.0-preview.2` as the newest version, with no `0.16.0` stable.
+- `.github/workflows/workflow.yml`: `dotnet-quality: preview` is removed from all three `11.0.x` setup steps (ci, publish, benchmark). The `10.0.x` installs stay. The header comment names the GA pin.
+- `source/Directory.Build.props`: `<Version>15.0.0-beta.7</Version>`. Release notes are in `documentation/release-notes/15.0.0-beta.7.md`.
+- Gates on the local SDK `11.0.100`:
+  - `./bin/dev check-version --strict` passed: source is `15.0.0-beta.7` and NuGet has `15.0.0-beta.6`.
+  - `./bin/dev workflow` printed `Pipeline SUCCEEDED`. That covers tests, AOT samples on net10.0 and net11.0, pack, and package smoke on both frameworks.
+  - `ganda repo audit` passed all checks.
+- `./bin/dev benchmark --gate`: the first run failed while other worktrees were compiling. Load average was about 13, and the error bars were ±10–12 ns. The failing rows were `TimeWarpGeneratedInterfaceSend` at 17.1 ns and `TimeWarpGeneratedObjectSend` at 52.3 ns. A re-run at load below 2 passed. `InterfaceSend` measured 8.58 ns against the 8.48 ns baseline, `ObjectSend` 16.85 ns against 16.55 ns, and `MonomorphicSend` 4.09 ns against 5.06 ns. Allocated bytes matched the baseline on every row. That run used BenchmarkDotNet 0.15.8 on .NET 10.0.15 and SDK 11.0.100. `comparison-baseline.md` was not re-recorded.
+- Dependabot: pending. Dependabot runs on the default branch, so the first `nuget` run against `11.0.100` can only happen after merge. Record that run id here once it has run.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet --version                       # 11.0.100
+cat global.json                        # "11.0.100", latestFeature, no allowPrerelease
+rg -n "rc\.3|dotnet-quality" global.json Directory.Packages.props .github/workflows/workflow.yml agent.md documentation/overview.md
+./bin/dev check-version --strict
+./bin/dev workflow
+./bin/dev benchmark --gate             # run on a quiet host; timing gate is load-sensitive
+```
+
+Expect:
+
+- The `rg` command prints nothing.
+- `check-version --strict` reports `15.0.0-beta.7` as new against NuGet `15.0.0-beta.6`.
+- `workflow` ends with `Pipeline SUCCEEDED`, and package smoke prints `package-pong` for both net10.0 and net11.0.
+- `benchmark --gate` prints `Benchmark gate passed.`
+- On GitHub, the CI `Setup .NET 11` steps install a GA `11.0.x` without preview quality.
