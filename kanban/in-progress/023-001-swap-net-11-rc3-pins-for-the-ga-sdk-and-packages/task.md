@@ -20,6 +20,17 @@ Follow-up to 023. When .NET 11 ships (expected November 2026), replace the RC3 S
 - Update `agent.md` where it names the RC3 SDK pin, the `11.0.0-rc.3.26522.148` DependencyInjection pin, and CI preview quality.
 - `./bin/dev workflow` is green on the GA SDK after the swap.
 
+## Goal (implementer restatement)
+
+.NET 11 is GA, so the build stops depending on release-candidate bits. `global.json` pins the GA SDK `11.0.100` with `latestFeature` roll-forward and no prerelease allowance. The `net11.0` Microsoft.Extensions pins (DependencyInjection, and Logging alongside it) move to `11.0.0`. The `net10.0` pins stay on `10.0.14`. CI stops asking setup-dotnet for preview quality on `11.0.x` and keeps the `10.0.x` install. BenchmarkDotNet stays split: `0.15.8` on `net10.0`, and `0.16.0-preview.2` on `net11.0` until `0.16.0` stable reaches NuGet. It has not as of 2026-11-11. The product version becomes `15.0.0-beta.7` with release notes. `agent.md` and `documentation/overview.md` name the GA pins.
+
+Acceptance:
+- `global.json` is `11.0.100`, `rollForward: latestFeature`, no `allowPrerelease`.
+- No `dotnet-quality: preview` in `.github/workflows/workflow.yml`. All three jobs still install `10.0.x` and `11.0.x`.
+- `net11.0` DependencyInjection is `11.0.0` and `net10.0` stays `10.0.14`.
+- `./bin/dev check-version --strict`, `./bin/dev workflow`, `./bin/dev benchmark --gate`, and `ganda repo audit` pass on the GA SDK.
+- `comparison-baseline.md` is not re-recorded.
+
 ## Checklist
 
 - [ ] SDK pin is `11.0.100` and CI no longer asks for preview quality
