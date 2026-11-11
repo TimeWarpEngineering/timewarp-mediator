@@ -44,7 +44,7 @@ Acceptance:
 ## Review
 
 - Round 1: Blocked — open M1, M2
-
+- Round 2: Done
 ## Notes
 
 - Parent: 023.
@@ -63,6 +63,7 @@ Acceptance:
 - Review oracle round 1: reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), effort 1, roster general, max-turns uncapped (no --max-turns flag; bound 80), Blocked (fix pass needed for open findings M1, M2) — 2026-11-11
 - Review oracle: review by reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), session not reported, max-turns uncapped (no --max-turns flag; bound 80), artifacts general.md, merged.md — 2026-11-11T11:25:55Z
 - Implement-fix-2 (2026-11-11): fixed round 1 M1 and M2. `merged.md` marks both fixed with disposition notes. `ganda repo audit` failed only `kanban-landed`, because the kitchen in this worktree differs from origin-home until the host lands it. No product audit check failed.
+- Review oracle round 2: reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), effort 1, roster general, max-turns uncapped (no --max-turns flag; bound 80), Done (disposition clean; M1, M2 verified fixed, 0 open) — 2026-11-11
 
 ## Results
 
@@ -106,12 +107,14 @@ Expect:
 - `benchmark --gate` prints `Benchmark gate passed.`
 - On GitHub, the CI `Setup .NET 11` steps install a GA `11.0.x` without preview quality.
 
-### Review (round 1)
+### Review
 
-Round 1 ran at effort 1 with one `general` reviewer. `## Goal (implementer restatement)` matches the original task (no misread). The `.NET 11` GA SDK pin (`11.0.100`), `Directory.Packages.props` `net11.0` pins (`11.0.0`) vs `net10.0` (`10.0.14`), CI `workflow.yml` steps, BenchmarkDotNet split, untouched `comparison-baseline.md`, and `agent.md`/`documentation/overview.md` updates all check out, and `dotnet test timewarp-mediator.slnx --no-build -c Release` passed on both `net10.0` and `net11.0` (61 + 50 + 80 tests).
+Implementation review ran 2 rounds at effort 1 with one `general` reviewer. `## Goal (implementer restatement)` matches the original task (no misread).
 
-Round 1 opened 2 findings (bug: 2 open / 0 fixed / 0 wontfix; suggestion: 0; nit: 0):
-- M1 (bug): `documentation/release-notes/15.0.0-beta.7.md:7` falsely claims the shipped `net11.0` and `net10.0` package assets depend on `Microsoft.Extensions.DependencyInjection` (`11.0.0` / `10.0.14`); `TimeWarp.Mediator` has zero NuGet dependencies and those `Directory.Packages.props` pins are for this repo's test, benchmark, sample, and smoke hosts.
-- M2 (bug): `source/timewarp-mediator/readme.md:8`, `source/timewarp-mediator-generators/readme.md:8-9` (both packed into the `.nupkg` files), `source/timewarp-mediator-analyzers/readme.md:20`, `readme.md:33-34`, and `skills/tw-mediator/SKILL.md:43-44,58` still pin `15.0.0-beta.6`, and `readme.md:133` omits the link to `documentation/release-notes/15.0.0-beta.7.md`.
-
-Review disposition: M1 and M2 are fixed in the fix pass (see `merged.md` disposition notes). Round 2 is pending, and `review/disposition.md` is not yet written. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 1 verified the `.NET 11` GA SDK pin (`11.0.100`), `Directory.Packages.props` `net11.0` pins (`11.0.0`) vs `net10.0` (`10.0.14`), CI `workflow.yml` steps, BenchmarkDotNet split, untouched `comparison-baseline.md`, and `agent.md`/`documentation/overview.md` updates (`b8432b5`), and opened 2 `bug` findings:
+  - M1 (bug, fixed): `documentation/release-notes/15.0.0-beta.7.md:7` falsely claimed the shipped `net11.0` and `net10.0` package assets depended on `Microsoft.Extensions.DependencyInjection` (`11.0.0` / `10.0.14`); rewritten in `6598517` to state `TimeWarp.Mediator` has no NuGet dependencies and those `Directory.Packages.props` pins serve this repo's test, benchmark, sample, and smoke hosts.
+  - M2 (bug, fixed): `source/timewarp-mediator/readme.md:8`, `source/timewarp-mediator-generators/readme.md:8-9` (packed into the `.nupkg` files), `source/timewarp-mediator-analyzers/readme.md:20`, `readme.md:33-34,133`, and `skills/tw-mediator/SKILL.md:43-44,58` still pinned `15.0.0-beta.6` and omitted the `15.0.0-beta.7.md` link; updated in `6598517` and repacked.
+- Round 2 reviewed the delta since round 1 (`9d5ada5..6598517`), confirmed both M1 and M2 are fixed (including inside the rebuilt `.nupkg` archives), re-ran `dotnet test timewarp-mediator.slnx --no-build -c Release` on `net10.0` and `net11.0` (61 + 50 + 80 tests passing on each), and raised 0 new findings.
+- Final counts: `bug` 0 open / 2 fixed / 0 wontfix; `suggestion` 0 open / 0 fixed / 0 wontfix; `nit` 0 open / 0 fixed / 0 wontfix.
+- Disposition: `clean` (no `wontfix` exceptions or escalations).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
