@@ -82,11 +82,11 @@ The reflection runtime tests and `timewarp-mediator-generators-roslyn-floor-test
 - `TimeWarp.Mediator`: `net10.0;net11.0`
 - `TimeWarp.Mediator.Generators` and the analyzer project: `netstandard2.0` (Roslyn loads them in-process, including .NET Framework MSBuild and Visual Studio)
 - Tests, benchmarks, samples, and the package smoke consumer: `net10.0;net11.0`
-- Dev CLI (`tools/dev-cli/dev.cs`): `net11.0`, pinned with `#:property TargetFramework=net11.0`. `TimeWarp.Nuru` 4.0.0-beta.12 ships `lib/net11.0` only. `global.json` pins the SDK to `11.0.100-rc.3` (`rollForward: latestFeature`, `allowPrerelease: true`). CI installs `11.0.x` with `dotnet-quality: preview` and keeps `10.0.x` so the net10.0 runtime pack restores.
+- Dev CLI (`tools/dev-cli/dev.cs`): `net11.0`, pinned with `#:property TargetFramework=net11.0`. `TimeWarp.Nuru` 4.0.0-beta.12 ships `lib/net11.0` only. `global.json` pins the GA SDK `11.0.100` (`rollForward: latestFeature`). CI installs `11.0.x` on the GA channel and keeps `10.0.x` so the net10.0 runtime pack restores.
 
 ### Key Dependencies
 
-- `Microsoft.Extensions.DependencyInjection` for test, benchmark, sample, and smoke hosts. `Directory.Packages.props` pins `10.0.14` when `$(TargetFramework)` is `net10.0` and `11.0.0-rc.3.26522.148` when it is `net11.0`. A net10.0 host does not restore the 11 RC. A generated host needs `Microsoft.Extensions.DependencyInjection.Abstractions` (`IServiceCollection`, `IServiceProvider`). A missing reference is TWM008 and the generator emits nothing.
+- `Microsoft.Extensions.DependencyInjection` for test, benchmark, sample, and smoke hosts. `Directory.Packages.props` pins `10.0.14` when `$(TargetFramework)` is `net10.0` and `11.0.0` when it is `net11.0`. A net10.0 host does not restore an 11 package. A generated host needs `Microsoft.Extensions.DependencyInjection.Abstractions` (`IServiceCollection`, `IServiceProvider`). A missing reference is TWM008 and the generator emits nothing.
 - `Microsoft.CodeAnalysis.CSharp` for the shipped analyzer and generator, at the central pin. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 ### Build Properties

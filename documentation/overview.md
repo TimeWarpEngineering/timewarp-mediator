@@ -51,11 +51,9 @@ The workflow is a thin trigger; the pipeline itself is `dev workflow` (C#, in `t
 Every step runs `dotnet run --file tools/dev-cli/dev.cs -- …`, so CI does not need a
 pre-installed `./bin/dev`.
 
-`global.json` pins the SDK to `11.0.100-rc.3` with `rollForward: latestFeature` and
-`allowPrerelease: true`. Each job's `setup-dotnet` steps install `10.0.x` on the GA channel
-and `11.0.x` with `dotnet-quality: preview`. The `10.0.x` install stays so the `net10.0`
-targeting pack and runtime restore. `dotnet-quality: preview` is not applied to `10.0.x`.
-When .NET 11 ships, replace the RC pins with `11.0.100` / `11.0.0` and drop the preview quality.
+`global.json` pins the GA SDK `11.0.100` with `rollForward: latestFeature`. Each job's
+`setup-dotnet` steps install `10.0.x` and `11.0.x` on the GA channel. The `10.0.x` install
+stays so the `net10.0` targeting pack and runtime restore.
 
 | Trigger | Job | What runs |
 |---|---|---|

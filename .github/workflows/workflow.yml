@@ -11,8 +11,8 @@ name: CI/CD
 #
 # No path filters: every master commit gets a CI run, which the release
 # green-CI guard depends on.
-# SDK: global.json pins 11.0.100-rc.3 (latestFeature, prerelease allowed).
-# Each job installs 10.0.x on the GA channel and 11.0.x at preview quality.
+# SDK: global.json pins 11.0.100 (latestFeature).
+# Each job installs 10.0.x and 11.0.x on the GA channel.
 # 10.0.x stays so the net10.0 targeting pack and runtime restore.
 # benchmark job: weekly and workflow_dispatch mode=benchmark. Not on pull requests.
 on:
@@ -83,7 +83,6 @@ jobs:
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           dotnet-version: 11.0.x
-          dotnet-quality: preview
 
       # No packages.lock.json in this repo, so setup-dotnet's built-in cache
       # (lock-file keyed) cannot be used; key on central package versions + projects.
@@ -212,7 +211,6 @@ jobs:
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           dotnet-version: 11.0.x
-          dotnet-quality: preview
 
       - name: NuGet login (OIDC Trusted Publishing)
         id: nuget-login
@@ -254,7 +252,6 @@ jobs:
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           dotnet-version: 11.0.x
-          dotnet-quality: preview
 
       - name: Cache NuGet packages
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
