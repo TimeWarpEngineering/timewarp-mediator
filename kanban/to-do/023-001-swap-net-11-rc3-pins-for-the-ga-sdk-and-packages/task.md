@@ -15,7 +15,9 @@ Follow-up to 023. When .NET 11 ships (expected November 2026), replace the RC3 S
 - `.github/workflows/workflow.yml`: remove `dotnet-quality: preview` from the `11.0.x` setup-dotnet step. Keep the `10.0.x` install so the net10.0 targeting pack and runtime still restore.
 - BenchmarkDotNet is pinned per target framework: `0.15.8` on `net10.0` and `0.16.0-preview.2` on `net11.0`. `0.15.8` recorded `documentation/benchmarks/comparison-baseline.md`. `0.15.8` throws on a net11.0 host before it measures, so the net11.0 leg stays on the preview until `0.16.0` stable is on NuGet. Move only the `net11.0` pin off the preview. Leave the `net10.0` pin on `0.15.8`.
 - Keep `./bin/dev benchmark --gate` green. That gate is the net10.0 check against `comparison-baseline.md`. On 2026-10-28 it passed on BenchmarkDotNet `0.15.8` and .NET 10.0.14, and it had failed on `0.16.0-preview.2` for the two monomorphic rows. Do not re-record `comparison-baseline.md` as part of the stable bump. A later move of the `net10.0` pin has to re-run the gate and leave it green: stay on `0.15.8`, or re-record that file only after Steven approves the new numbers.
-- `<Version>` is unchanged by this swap. This is not a release.
+- BenchmarkDotNet `0.16.0` stable is not on NuGet as of 2026-11-11 (latest `0.16.0-preview.2`). Leave the `net11.0` pin on the preview unless stable appears before this task lands.
+- `source/Directory.Build.props`: `<Version>` becomes `15.0.0-beta.7` (Steven, 2026-11-11). Add `documentation/release-notes/15.0.0-beta.7.md` in the style of `15.0.0-beta.6.md`: .NET 11 GA SDK and packages. `./bin/dev check-version --strict` passes. The release is cut after merge with `./bin/dev release`, not in this task.
+- Update `agent.md` where it names the RC3 SDK pin, the `11.0.0-rc.3.26522.148` DependencyInjection pin, and CI preview quality.
 - `./bin/dev workflow` is green on the GA SDK after the swap.
 
 ## Checklist
@@ -24,6 +26,8 @@ Follow-up to 023. When .NET 11 ships (expected November 2026), replace the RC3 S
 - [ ] net11.0 DependencyInjection pin is `11.0.0`; net10.0 pin stays on 10.0
 - [ ] net11.0 BenchmarkDotNet pin is off the preview when 0.16.0 stable exists; net10.0 stays on 0.15.8
 - [ ] `./bin/dev benchmark --gate` is green. Re-record `comparison-baseline.md` only after Steven approves the new numbers
+- [ ] `<Version>` is `15.0.0-beta.7`, release notes added, `check-version --strict` passes
+- [ ] `agent.md` names the GA pins
 - [ ] `./bin/dev workflow` green
 
 ## Notes
