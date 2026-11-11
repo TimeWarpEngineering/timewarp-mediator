@@ -5,8 +5,8 @@ Source generator for TimeWarp Mediator 15.0. It emits one internal mediator. `Se
 ## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.6
-dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.6
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.7
+dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.7
 ```
 
 Without `--version`, `dotnet add package TimeWarp.Mediator` resolves 14.0.0, the reflection runtime. Drop the flag when 15.0 is the stable package.
