@@ -55,6 +55,7 @@ Acceptance:
 - Implementer (2026-11-11): swapped the RC3 pins for GA and committed b8432b5.
 - Boy-scout audit fix (2026-11-11): `ganda repo audit` warned `vscode-window-icon` because `.vscode/settings.json` was missing. `ganda repo audit --fix` created it. That file is gitignored, so there is no tracked diff. The audit then passed every check.
 - Hook note (2026-11-11): `git commit` failed in the `.githooks/pre-commit` runfile with `CS2012 ... pre-commit.dll ... Access ... denied`. The write goes through the shared `VBCSCompiler` server. `UseSharedCompilation=false git commit` compiled the hook in-process, and the commit went through. The repo was not changed for this.
+- Implement oracle: implemented by implementer-cursor (cursor, vendor anthropic, model claude-opus-5-5-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-11T11:15:13Z
 
 ## Results
 
