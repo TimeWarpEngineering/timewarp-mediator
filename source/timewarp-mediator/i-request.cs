@@ -1,4 +1,9 @@
 // Modified by Steven T. Cramer
+
+#region Purpose
+// Marker interfaces for void and response-returning requests.
+#endregion
+
 namespace TimeWarp.Mediator;
 
 /// <summary>

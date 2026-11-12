@@ -1,5 +1,9 @@
 // Modified by Steven T. Cramer
 
+#region Purpose
+// Pipeline behavior contract and the continuation delegate it calls.
+#endregion
+
 namespace TimeWarp.Mediator;
 
 /// <summary>

@@ -1,4 +1,9 @@
 // Modified by Steven T. Cramer
+
+#region Purpose
+// Mediator contract: sending requests and publishing notifications.
+#endregion
+
 namespace TimeWarp.Mediator;
 
 /// <summary>

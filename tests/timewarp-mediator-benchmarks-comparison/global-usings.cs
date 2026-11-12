@@ -1,5 +1,7 @@
+#region Purpose
 // Project-wide usings. File-level usings stay only for aliases, static imports,
 // and the colliding Mediator vs TimeWarp.Mediator package names.
+#endregion
 
 global using System;
 global using System.Threading;

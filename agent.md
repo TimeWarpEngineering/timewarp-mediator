@@ -86,7 +86,7 @@ The reflection runtime tests and `timewarp-mediator-generators-roslyn-floor-test
 
 ### Key Dependencies
 
-- `Microsoft.Extensions.DependencyInjection` for test, benchmark, sample, and smoke hosts. `Directory.Packages.props` pins `10.0.14` when `$(TargetFramework)` is `net10.0` and `11.0.0` when it is `net11.0`. A net10.0 host does not restore an 11 package. A generated host needs `Microsoft.Extensions.DependencyInjection.Abstractions` (`IServiceCollection`, `IServiceProvider`). A missing reference is TWM008 and the generator emits nothing.
+- `Microsoft.Extensions.DependencyInjection` for test, benchmark, sample, and smoke hosts. `Directory.Packages.props` pins `10.0.15` when `$(TargetFramework)` is `net10.0` and `11.0.0` when it is `net11.0`. A net10.0 host does not restore an 11 package. A generated host needs `Microsoft.Extensions.DependencyInjection.Abstractions` (`IServiceCollection`, `IServiceProvider`). A missing reference is TWM008 and the generator emits nothing.
 - `Microsoft.CodeAnalysis.CSharp` for the shipped analyzer and generator, at the central pin. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 ### Build Properties

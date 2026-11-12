@@ -1,4 +1,9 @@
 // Modified by Steven T. Cramer
+
+#region Purpose
+// Marker interface for notifications.
+#endregion
+
 namespace TimeWarp.Mediator;
 
 /// <summary>

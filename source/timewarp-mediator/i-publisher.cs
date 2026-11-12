@@ -1,5 +1,9 @@
 // Modified by Steven T. Cramer
 
+#region Purpose
+// Publishes a notification to every handler for its type.
+#endregion
+
 namespace TimeWarp.Mediator;
 
 /// <summary>
