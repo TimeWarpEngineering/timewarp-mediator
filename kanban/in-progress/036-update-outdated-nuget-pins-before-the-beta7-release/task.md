@@ -67,6 +67,7 @@ Acceptance criteria:
 
 - Created: 4bddab61-0b48-4f1d-8a19-57e7f9d047b3 (2026-11-12)
 - Implement (2026-11-12): pins bumped, Build.Tasks 2.0.0 adapted, TWA0004 Purpose regions added. Boy-scout: `ganda repo audit --fix` cleared `vscode-window-icon` (wrote the gitignored `.vscode/settings.json`; nothing committed). Parked on the SourceGenerators beta.14 dev CLI break below.
+- Implement oracle: implemented by implementer-cursor (cursor, vendor anthropic, model claude-opus-5-5-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Blocked — 2026-11-12T06:25:21Z
 
 ## Notes
 
@@ -117,3 +118,9 @@ Expect:
 - `check-version --strict` prints `Version in source is new`.
 - `nuget outdated` lists only `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Logging` 10.0.15 (net10.0) with an 11.0.0 suggestion.
 - `repo audit` prints `Repository passes all audit checks.`
+
+## Blocked
+
+2026-11-12: TimeWarp.Nuru.DevCli must ship a release with content/any/endpoints/release-command.cs and content/any/services/nuget-version-service.cs under 500 lines (or TimeWarp.SourceGenerators must stop reporting TWA0038 on package-injected sources); then pin it, run `dotnet run --file tools/dev-cli/dev.cs -- self-install`, and rerun the gates https://github.com/TimeWarpEngineering/timewarp-nuru
+
+- https://github.com/TimeWarpEngineering/timewarp-nuru
