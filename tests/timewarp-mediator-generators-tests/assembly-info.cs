@@ -1,3 +1,7 @@
+#region Purpose
+// Marks the test assembly as a mediator host and weaves the ordered and scoped test behaviors.
+#endregion
+
 [assembly: MediatorAssembly]
 [assembly: MediatorBehavior(typeof(OuterTrackingBehavior<,>), 0)]
 [assembly: MediatorBehavior(typeof(InnerTrackingBehavior<,>), 1)]

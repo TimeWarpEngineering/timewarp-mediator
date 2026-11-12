@@ -1,5 +1,9 @@
 // Modified by Steven T. Cramer
 
+#region Purpose
+// Sends a request to its single handler.
+#endregion
+
 namespace TimeWarp.Mediator;
 
 /// <summary>

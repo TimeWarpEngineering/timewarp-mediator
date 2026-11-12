@@ -1,4 +1,6 @@
+#region Purpose
 // Project-wide usings. File-level usings stay only for aliases and static imports.
+#endregion
 
 global using System;
 global using System.Collections.Generic;

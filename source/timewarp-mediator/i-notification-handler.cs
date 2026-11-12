@@ -1,5 +1,9 @@
 // Modified by Steven T. Cramer
 
+#region Purpose
+// Handler contract for a notification type.
+#endregion
+
 namespace TimeWarp.Mediator;
 
 /// <summary>

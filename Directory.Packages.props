@@ -10,9 +10,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.403" />
-    <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
-    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.12" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="11.0.100" />
+    <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.0" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.14" />
   </ItemGroup>
 
   <!-- tests/timewarp-mediator-package-smoke only: dev pack passes TimeWarpMediatorVersion (the
@@ -37,15 +37,15 @@
          compiler is newer than that SDK. -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
     <!-- Conditioned on $(TargetFramework) so a net10.0 host never restores an 11 package. -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.15" Condition="'$(TargetFramework)' == 'net10.0'" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.9.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
   </ItemGroup>
@@ -62,7 +62,7 @@
     <!-- Latest stable. net10.0 asset; net11.0 restores it by framework roll-forward. Test-only.
          MediatR 14 resolves ILoggerFactory when the mediator is constructed. -->
     <PackageVersion Include="MediatR" Version="14.3.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.14" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.15" Condition="'$(TargetFramework)' == 'net10.0'" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
   </ItemGroup>
 </Project>

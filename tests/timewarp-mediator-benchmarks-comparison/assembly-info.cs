@@ -1,3 +1,7 @@
+#region Purpose
+// Marks the benchmark host and weaves the behaviors the pipeline benchmarks measure.
+#endregion
+
 using TimeWarp.Mediator;
 
 [assembly: MediatorAssembly]

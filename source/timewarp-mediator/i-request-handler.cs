@@ -1,5 +1,9 @@
 // Modified by Steven T. Cramer
 
+#region Purpose
+// Handler contracts for void and response-returning requests.
+#endregion
+
 namespace TimeWarp.Mediator;
 
 /// <summary>
