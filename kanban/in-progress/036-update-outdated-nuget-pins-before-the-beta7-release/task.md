@@ -53,14 +53,14 @@ Acceptance criteria:
 
 ## Checklist
 
-- [ ] SourceLink 11.0.100, Build.Tasks 2.0.0, SourceGenerators beta.14, Test.Sdk 18.12.0 (pins set; beta.14 blocks the dev CLI compile, see Notes)
+- [x] SourceLink 11.0.100, Build.Tasks 2.0.0, SourceGenerators beta.14, Test.Sdk 18.12.0
 - [x] coverlet bumped or removed
 - [x] net10.0 DependencyInjection and Logging on latest 10.0.x
 - [x] Build.Tasks 2.0.0 breaking changes handled and recorded
 - [x] .NET 11 targeting confirmed, net10.0 kept
 - [x] beta.7 release notes updated
 - [x] `ganda repo audit` clean
-- [ ] `./bin/dev workflow` green (green with the installed `bin/dev`; `dotnet run --file tools/dev-cli/dev.cs` does not compile on beta.14)
+- [x] `./bin/dev workflow` green (dev CLI rebuilt from the runfile with TWA0038 off for the dev CLI only)
 - [ ] PR opened
 
 ## Session
@@ -68,6 +68,7 @@ Acceptance criteria:
 - Created: 4bddab61-0b48-4f1d-8a19-57e7f9d047b3 (2026-11-12)
 - Implement (2026-11-12): pins bumped, Build.Tasks 2.0.0 adapted, TWA0004 Purpose regions added. Boy-scout: `ganda repo audit --fix` cleared `vscode-window-icon` (wrote the gitignored `.vscode/settings.json`; nothing committed). Parked on the SourceGenerators beta.14 dev CLI break below.
 - Implement oracle: implemented by implementer-cursor (cursor, vendor anthropic, model claude-opus-5-5-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Blocked — 2026-11-12T06:25:21Z
+- Implement resume (2026-11-12): applied Steven's option 1. `tools/dev-cli/dev.cs` sets `#:property NoWarn=$(NoWarn);TWA0038`. `ganda repo audit --fix` never raises the suppression baseline, so `.timewarp/suppression-baseline.json` gets a hand-added `tools/dev-cli/dev.cs: TWA0038: 1` entry (ganda 580's path for a deliberate raise). Self-install and all gates pass.
 
 ## Notes
 
@@ -90,6 +91,7 @@ Acceptance criteria:
 - The dev CLI runfile (`dotnet run --file tools/dev-cli/dev.cs`, which is also how CI runs `workflow`) fails TWA0038 on two files that `TimeWarp.Nuru.DevCli` 4.0.0-beta.12 compiles in as package content: `content/any/endpoints/release-command.cs` (609 lines) and `content/any/services/nuget-version-service.cs` (704 lines). This repo cannot edit them. 4.0.0-beta.12 is the latest Nuru.DevCli, and timewarp-nuru master still has both files at 609 and 704 lines.
 - Not done: lowering TWA0038 or marking NuGet sources `generated_code` (timewarp-state's `external-sources.globalconfig` pattern), removing TimeWarp.SourceGenerators from the dev CLI, or holding beta.12 (timewarp-jaribu holds beta.11 for this reason). Each is a suppression or skips the required pin.
 - Unblock: TimeWarp.Nuru.DevCli ships a release with both content files under 500 lines (or TimeWarp.SourceGenerators stops reporting TWA0038 on package-injected sources). Then pin that Nuru.DevCli (and Nuru, same release train), run `dotnet run --file tools/dev-cli/dev.cs -- self-install`, and rerun the gates.
+- Resolved (Steven, option 1): TWA0038 is off for the dev CLI runfile only, via `#:property NoWarn=$(NoWarn);TWA0038` in `tools/dev-cli/dev.cs`. That property applies only to the runfile's virtual project. Products, tests, and samples still enforce TWA0038, and no repo-owned `.cs` file is over 500 lines (largest: `message-graph-builder.handlers.cs`, 480). The `analyzer-suppressions` baseline has one hand-added entry, `tools/dev-cli/dev.cs` TWA0038 = 1, because `--fix` only lowers it. timewarp-nuru 576 splits the two files, and timewarp-mediator 037 removes the line and the baseline entry after the next Nuru.DevCli release.
 
 ## Results
 
@@ -97,7 +99,7 @@ Pins in `Directory.Packages.props`: SourceLink 11.0.100, Build.Tasks 2.0.0, Sour
 
 .NET 11 targeting: 9 projects are `net10.0;net11.0` (`timewarp-mediator`, 3 test suites, package smoke, 2 benchmark projects, 2 samples), the generator and analyzer are `netstandard2.0`, the dev CLI is `net11.0`, and `global.json` is `11.0.100`. `dev pack` verified `lib/net10.0` and `lib/net11.0`.
 
-Gates on this branch: `./bin/dev workflow` (installed binary) green: 61, 50, and 80 tests on each TFM, samples including NativeAOT, pack, and smoke `package-pong` on net10.0 and net11.0. `./bin/dev check-version --strict` passes for 15.0.0-beta.7. `ganda repo audit` passes all checks. `ganda nuget outdated` lists only the two `net10.0` pins (10.0.15 to 11.0.0, ignored by design). Open: `dotnet run --file tools/dev-cli/dev.cs` fails TWA0038 on Nuru.DevCli content (see Notes).
+Gates on this branch: `./bin/dev workflow` (installed binary) green: 61, 50, and 80 tests on each TFM, samples including NativeAOT, pack, and smoke `package-pong` on net10.0 and net11.0. `./bin/dev check-version --strict` passes for 15.0.0-beta.7. `ganda repo audit` passes all checks. `ganda nuget outdated` lists only the two `net10.0` pins (10.0.15 to 11.0.0, ignored by design). `dotnet run --file tools/dev-cli/dev.cs -- self-install` compiles and installs again with TWA0038 off for the dev CLI only (see Notes), and the runfile `check-version --strict` passes. Rerun after that change: `./bin/dev workflow` ends `Pipeline SUCCEEDED`, and `ganda repo audit` reports 43 passed and 0 failed.
 
 ### How to validate
 
@@ -113,11 +115,11 @@ ganda repo audit
 
 Expect:
 
-- `self-install` compiles the dev CLI with no TWA0038 error (today it fails on `release-command.cs` and `nuget-version-service.cs` from TimeWarp.Nuru.DevCli until upstream ships the split).
+- `self-install` prints `Successfully installed dev CLI`, with no TWA0038 error from the Nuru.DevCli `release-command.cs` and `nuget-version-service.cs` content.
 - `workflow` ends `Pipeline SUCCEEDED`, with smoke printing `package-pong` on net10.0 and net11.0, and `artifacts/coverage` holding `coverage.cobertura.xml`.
 - `check-version --strict` prints `Version in source is new`.
 - `nuget outdated` lists only `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Logging` 10.0.15 (net10.0) with an 11.0.0 suggestion.
-- `repo audit` prints `Repository passes all audit checks.`
+- `repo audit` prints `Repository passes all audit checks.`, and `analyzer-suppressions` reports none above the baseline.
 
 ## Blocked
 

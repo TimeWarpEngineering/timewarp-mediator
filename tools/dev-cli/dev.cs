@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:property TargetFramework=net11.0
+// TWA0038 (500-line cap) fires on TimeWarp.Nuru.DevCli package content this repo
+// cannot edit: content/any/endpoints/release-command.cs and
+// content/any/services/nuget-version-service.cs. timewarp-nuru task 576 splits
+// them; timewarp-mediator task 037 removes this line after that release.
+#:property NoWarn=$(NoWarn);TWA0038
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEV CLI - timewarp-mediator DEVELOPMENT TOOL
 // ═══════════════════════════════════════════════════════════════════════════════
