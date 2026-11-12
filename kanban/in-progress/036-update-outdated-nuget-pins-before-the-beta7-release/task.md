@@ -70,6 +70,12 @@ Acceptance criteria:
 - Implement oracle: implemented by implementer-cursor (cursor, vendor anthropic, model claude-opus-5-5-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Blocked — 2026-11-12T06:25:21Z
 - Implement resume (2026-11-12): applied Steven's option 1. `tools/dev-cli/dev.cs` sets `#:property NoWarn=$(NoWarn);TWA0038`. `ganda repo audit --fix` never raises the suppression baseline, so `.timewarp/suppression-baseline.json` gets a hand-added `tools/dev-cli/dev.cs: TWA0038: 1` entry (ganda 580's path for a deliberate raise). Self-install and all gates pass.
 - Implement oracle: implemented by implementer-cursor (cursor, vendor anthropic, model claude-opus-5-5-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-12T06:40:26Z
+- Review oracle round 1: reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), effort 2, roster general. 2026-11-12. 0 open, disposition clean.
+- Review oracle: review by reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-12T06:54:06Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -121,6 +127,14 @@ Expect:
 - `check-version --strict` prints `Version in source is new`.
 - `nuget outdated` lists only `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Logging` 10.0.15 (net10.0) with an 11.0.0 suggestion.
 - `repo audit` prints `Repository passes all audit checks.`, and `analyzer-suppressions` reports none above the baseline.
+
+### Review disposition
+
+- Rounds: 1. Roster: `general`, effort 2.
+- Final counts: bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix).
+- Disposition: `clean`, with no wontfix and no review-loop escalations (Steven's pre-review `d21cf9e` Option 1 decision resolved the `TimeWarp.Nuru.DevCli` `TWA0038` runfile blocker, tracked by `timewarp-nuru` 576 and `timewarp-mediator` 037).
+- Verification: `dotnet list timewarp-mediator.slnx package --no-restore` confirmed all 7 updated pins and per-TFM splits (`10.0.15` vs `11.0.0`, `BenchmarkDotNet` `0.15.8` vs `0.16.0-preview.2`); `dotnet build -c Release --no-restore --no-incremental` succeeded with 0 warnings and 0 errors; `./bin/dev test --no-build --quiet` passed 61, 50, and 80 tests on `net10.0` and `net11.0` and wrote 6 `coverage.cobertura.xml` files via `coverlet.collector` `10.1.0`; `./bin/dev verify-samples --no-build` verified both samples including NativeAOT on `net10.0` and `net11.0`; packed `15.0.0-beta.7` nupkgs ship exact `lib/net10.0` and `lib/net11.0` folders with zero NuGet dependencies and `CommitHash`/`CommitDate` metadata; all 43 offline `ganda repo audit` checks pass.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Blocked
 
