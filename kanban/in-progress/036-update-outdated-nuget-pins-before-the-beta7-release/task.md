@@ -124,3 +124,13 @@ Expect:
 2026-11-12: TimeWarp.Nuru.DevCli must ship a release with content/any/endpoints/release-command.cs and content/any/services/nuget-version-service.cs under 500 lines (or TimeWarp.SourceGenerators must stop reporting TWA0038 on package-injected sources); then pin it, run `dotnet run --file tools/dev-cli/dev.cs -- self-install`, and rerun the gates https://github.com/TimeWarpEngineering/timewarp-nuru
 
 - https://github.com/TimeWarpEngineering/timewarp-nuru
+
+### Resolution (Steven, 2026-11-12)
+
+Option 1: turn off TWA0038 for the dev CLI build only, and keep SourceGenerators on beta.14.
+
+- In `tools/dev-cli/dev.cs`, add `#:property NoWarn=$(NoWarn);TWA0038` (or the equivalent that the runfile honors), with a comment naming the two Nuru.DevCli content files, timewarp-nuru task 576, and timewarp-mediator task 037.
+- The suppression must not reach products, tests, or samples. TWA0038 stays active there, so check that no repo-owned file is over 500 lines.
+- If the suppression trips `analyzer-suppressions` in `ganda repo audit`, run `ganda repo audit --fix` to update the baseline and commit it.
+- Then run `dotnet run --file tools/dev-cli/dev.cs -- self-install` and the gates in Requirements.
+- Follow-ups: timewarp-nuru 576 splits the files; timewarp-mediator 037 removes this suppression after the next Nuru.DevCli release.
