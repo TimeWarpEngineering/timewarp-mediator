@@ -69,6 +69,7 @@ Acceptance criteria:
 - Implement (2026-11-12): pins bumped, Build.Tasks 2.0.0 adapted, TWA0004 Purpose regions added. Boy-scout: `ganda repo audit --fix` cleared `vscode-window-icon` (wrote the gitignored `.vscode/settings.json`; nothing committed). Parked on the SourceGenerators beta.14 dev CLI break below.
 - Implement oracle: implemented by implementer-cursor (cursor, vendor anthropic, model claude-opus-5-5-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Blocked — 2026-11-12T06:25:21Z
 - Implement resume (2026-11-12): applied Steven's option 1. `tools/dev-cli/dev.cs` sets `#:property NoWarn=$(NoWarn);TWA0038`. `ganda repo audit --fix` never raises the suppression baseline, so `.timewarp/suppression-baseline.json` gets a hand-added `tools/dev-cli/dev.cs: TWA0038: 1` entry (ganda 580's path for a deliberate raise). Self-install and all gates pass.
+- Implement oracle: implemented by implementer-cursor (cursor, vendor anthropic, model claude-opus-5-5-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-12T06:40:26Z
 
 ## Notes
 
