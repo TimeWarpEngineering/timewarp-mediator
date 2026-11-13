@@ -18,6 +18,8 @@ Acceptance:
 - `agent.md`, both package readmes, `documentation/`, the beta.7 release notes (Breaking entry), and the 15.0.0 break list say net11.0 only; net10.0 consumers stay on 15.0.0-beta.6 or earlier.
 - `rg net10` outside kanban and history files finds nothing; `./bin/dev build`, `./bin/dev test`, `./bin/dev check-version --strict`, and `ganda repo audit` pass.
 
+Fix pass for review round 1 (M1–M3): the non-Core MSBuild workaround in `Directory.Build.props` goes away, and the beta.7 notes stop saying Visual Studio or `MSBuild.exe` builds compile. Then the comparison baseline and the AOT baseline are re-recorded on a clean tree so both headers carry a clean commit and `TimeWarpCallSiteInliningPrototype` shows its steady-state mean. `--gate` must pass against the new file. `documentation/architecture.md` `## Benchmarks` and `## Results` then quote those numbers.
+
 ## Requirements
 
 ### Target frameworks
@@ -85,6 +87,8 @@ Acceptance:
 - Boy-scout fix: `ganda repo audit` `package-pin-currency` failed on the existing branch. The dev-only pins were behind nuget.org. `TimeWarp.SourceGenerators` moved 1.0.0-beta.14 → 1.0.0-beta.15, `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` 2.0.0 → 3.0.0-beta.2, and `TimeWarp.Terminal` 1.0.2 → 2.0.0-beta.1. The solution and the dev CLI (`self-install`) both build on those pins. They are listed in the beta.7 pin table.
 - Boy-scout fix: the `.githooks/*.cs` scaffolds were refreshed by `ganda repo audit --fix` (memsearch-scaffold advisory). The VS Code window-icon config was also generated; `.vscode/settings.json` is gitignored.
 - Implement oracle: implemented by implementer-cursor (cursor, vendor anthropic, model claude-opus-5-5-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-13T17:29:44Z
+- Review oracle round 1: reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), effort 2, roster general, max-turns uncapped (no --max-turns flag; bound 120), Blocked (fix pass needed for open findings M1, M2, M3) — 2026-11-14
+- Review oracle: review by reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md — 2026-11-13T17:47:41Z
 
 ## Results
 
@@ -155,6 +159,21 @@ Expect:
 - `dev pack` prints `Package layout verified` for both nupkgs, then `Package smoke (net11.0)...` and `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`.
 - Every `.csproj` under source, tests, and samples has `<TargetFramework>net11.0</TargetFramework>`. None has `TargetFrameworks` or `netstandard2.0`.
 - `dev benchmark --gate` ends with `Benchmark gate passed.` and writes to `artifacts/benchmarks/comparison/net11.0`.
+
+### Review (round 1)
+
+Round 1 ran at effort 2 with one `general` reviewer. `## Goal (implementer restatement)` matches the original task and Steven's 2026-11-14 superseded directive (no misread). All 11 `.csproj` targets, the Roslyn `RS1041`-only suppressions and `.timewarp/suppression-baseline.json` entries, generated `.nuspec` layouts, `Directory.Packages.props` pins, dev CLI `net11.0` layout/benchmark logic, CI `workflow.yml` steps, and recorded gates check out.
+
+Round 1 opened 3 findings (`bug`: 0; `suggestion`: 3 open / 0 fixed / 0 wontfix; `nit`: 0):
+- M1 (`suggestion`): `documentation/release-notes/15.0.0-beta.7.md:30` still claims `.NET Framework MSBuild` (`Visual Studio`, `MSBuild.exe`) builds compile via `Directory.Build.props:31-35`, contradicting `## Breaking` (`15.0.0-beta.7.md:8`).
+- M2 (`suggestion`): `documentation/architecture.md:229-240` (`## Benchmarks`) still describes the superseded task 021-003 `net10.0` baseline, removed reflection ratio column, and `net10.0` means instead of the `net11.0` `comparison-baseline.md` record.
+- M3 (`suggestion`): `documentation/benchmarks/comparison-baseline.md:31` records a noisy `+37%` spike on `TimeWarpCallSiteInliningPrototype` (`31.351 ns` vs steady-state `~22.6–23.0 ns`, raising its `+50%` ceiling to `47.03 ns`), and `documentation/benchmarks/comparison-baseline-aot.md:8` carries `(working tree had uncommitted changes)`.
+
+Review disposition: pending fix pass and round 2 (`review/disposition.md` is not yet written; operator approval of the clean `net11.0` gate numbers per `task.md:16,43` also remains). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
 
 ## Notes
 
