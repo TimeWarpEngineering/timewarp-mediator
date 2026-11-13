@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>TimeWarp.Mediator contracts and analyzers: IRequest, ICommand, IQuery, INotification, their handler and pipeline-behavior interfaces, ISender/IPublisher/IMediator, the membership attributes the source generator reads, and TWM001–TWM004. Reference it from message libraries without depending on a dispatcher.</Description>
-    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
+    <TargetFramework>net11.0</TargetFramework>
     <RootNamespace>TimeWarp.Mediator</RootNamespace>
     <AssemblyName>TimeWarp.Mediator</AssemblyName>
     <PackageId>TimeWarp.Mediator</PackageId>
@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- The analyzer is netstandard2.0 and must not become a compile reference of this library. -->
+    <!-- The analyzer is a compiler extension and must not become a compile reference of this library. -->
     <ProjectReference Include="..\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
   </ItemGroup>
 
@@ -21,7 +21,7 @@
        GenerateNuspec packs, so the item has to exist before that target. GetTargetPath
        follows the analyzer project's own output. RemoveProperties drops the caller's
        TargetFramework, RuntimeIdentifier, and SelfContained so pack -r or -f does not
-       retarget the netstandard2.0 analyzer. -->
+       retarget the analyzer. -->
   <Target Name="AddMediatorAnalyzerToPackage" BeforeTargets="_GetPackageFiles">
     <MSBuild Projects="$(MSBuildThisFileDirectory)..\timewarp-mediator-analyzers\timewarp-mediator-analyzers.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);DesignTimeBuild=false" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained">
       <Output TaskParameter="TargetOutputs" ItemName="MediatorAnalyzerTargetPath" />

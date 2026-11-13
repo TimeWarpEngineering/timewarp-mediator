@@ -8,16 +8,20 @@ Host, Aot, or Link profile.
 
 | Package | Project | Target | What a reference does |
 |---|---|---|---|
-| `TimeWarp.Mediator` | `source/timewarp-mediator` | `net10.0;net11.0` | Contracts, `Unit`, membership attributes, `GeneratedMediatorAttribute`, `GeneratedHandlerAttribute`, and the TWM001–TWM004 and TWM012 analyzer DLL at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` |
-| `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `netstandard2.0` | Source generator. Emits the dispatcher, `MediatorManifest`, and `AddGeneratedMediator`. Reports TWM007, TWM008, TWM010, and TWM011, TWM001–TWM003 in a generator host, and TWM012 when a declared handler name is not a constant |
+| `TimeWarp.Mediator` | `source/timewarp-mediator` | `net11.0` | Contracts, `Unit`, membership attributes, `GeneratedMediatorAttribute`, `GeneratedHandlerAttribute`, and the TWM001–TWM004 and TWM012 analyzer DLL at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` |
+| `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `net11.0` | Source generator. Emits the dispatcher, `MediatorManifest`, and `AddGeneratedMediator`. Reports TWM007, TWM008, TWM010, and TWM011, TWM001–TWM003 in a generator host, and TWM012 when a declared handler name is not a constant |
 
 The analyzer project `source/timewarp-mediator-analyzers` stays in the tree because the analyzer
-is `netstandard2.0` and the contracts library is `net10.0` and `net11.0`. It is not a NuGet package.
+is a compiler extension and must not become a compile reference of the contracts library. Both
+target `net11.0`. It is not a NuGet package.
 `TimeWarp.Mediator.Generators` does not bundle that analyzer DLL. A library that only declares
 messages references `TimeWarp.Mediator` and gets TWM001–TWM004 and TWM012. A host references both packages
 at the same version.
 
-Generators and the analyzer load inside Roslyn. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
+Generators and the analyzer load inside Roslyn. They target `net11.0` (since 15.0.0-beta.7), so the
+compiler must run on .NET 11: build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`. Visual
+Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn version
+the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 ## Contracts
 
@@ -128,7 +132,7 @@ uses the provider it was resolved from.
 `ServiceLifetime`. The dispatcher is transient. Handlers, behaviors, chains, and
 `HandlerCache` are scoped.
 
-A paired net10.0 measurement (task 020 `## Results`, BenchmarkDotNet 0.15.8,
+A paired .NET 10 measurement (task 020 `## Results`, BenchmarkDotNet 0.15.8,
 IterationCount=8) compares a singleton dispatcher with a transient dispatcher that the
 benchmark resolves once. The reused transient send is 10.320 ns (error 0.578 ns, 24 B).
 The singleton send is 9.776 ns (error 0.884 ns, 24 B). The ratio is 0.95 and the ratio
@@ -222,17 +226,17 @@ processor, and exception-handler kinds. Those three ids are retired.
 
 ## Benchmarks
 
-The comparison baseline re-recorded on task 021-003 is
-[benchmarks/comparison-baseline.md](benchmarks/comparison-baseline.md) (commit
-`c5e4a3a6a6155b6f5ed322379a59559be58fc69a`). The recorded Ratio column still uses the removed
-reflection row `TimeWarpLegacyMakeGenericType` as 1.00.
+The comparison baseline is
+[benchmarks/comparison-baseline.md](benchmarks/comparison-baseline.md), recorded on `net11.0`
+with BenchmarkDotNet `0.16.0-preview.2` (commit `9815fa71fec6ce990965f33c808e6d4d03d91510`).
+Its Ratio column uses `TimeWarpGeneratedInterfaceSend` as 1.00.
 
 | Row | Mean | Allocated |
 |---|---|---|
-| `TimeWarpGeneratedInterfaceSend` | 8.243 ns | 24 B |
-| `TimeWarpGeneratedInterfaceSendUnit` | 9.360 ns | 0 B |
-| `TimeWarpGeneratedStatePipeline` | 131.117 ns | 0 B |
-| `MartinothamarGenerated` | 8.314 ns | 24 B |
+| `TimeWarpGeneratedInterfaceSend` | 12.932 ns | 24 B |
+| `TimeWarpGeneratedInterfaceSendUnit` | 9.942 ns | 0 B |
+| `TimeWarpGeneratedStatePipeline` | 133.462 ns | 0 B |
+| `MartinothamarGenerated` | 11.701 ns | 24 B |
 
 `./bin/dev benchmark --project comparison --gate` fails when a `TimeWarp*` row exceeds that
 file. The gate is not part of `./bin/dev workflow`.

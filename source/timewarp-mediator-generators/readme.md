@@ -42,7 +42,7 @@ The host that references this package is a graph member. A library opts in with 
 15.0 is a breaking release.
 
 - Handlers and `ISender` / `IPublisher` return `ValueTask`. Behaviors take `MessageHandlerDelegate<TRequest, TResponse>` and call `next(request, cancellationToken)`.
-- `TimeWarp.Mediator` targets net10.0 and net11.0. The generator itself is netstandard2.0 because Roslyn loads it. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
+- `TimeWarp.Mediator` and this generator target net11.0 only (since 15.0.0-beta.7). `net10.0` consumers stay on 15.0.0-beta.6 or earlier. Build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`. Visual Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn version the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.
 - A missing or duplicate handler is a build error (TWM001, TWM002).
 - `TimeWarpMediatorProfile` is removed. Tooling reads `[assembly: GeneratedMediator(typeof(Mediator))]` and `MediatorManifest` version 2.
 

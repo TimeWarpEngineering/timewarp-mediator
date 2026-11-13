@@ -12,7 +12,7 @@
     </PackageVersion>
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="11.0.100" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.0" />
-    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.14" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.15" />
   </ItemGroup>
 
   <!-- tests/timewarp-mediator-package-smoke only: dev pack passes TimeWarpMediatorVersion (the
@@ -25,9 +25,9 @@
   <ItemGroup Label="Dev CLI">
     <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.12" />
     <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.12" />
-    <PackageVersion Include="TimeWarp.Amuru" Version="2.0.0" />
-    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="2.0.0" />
-    <PackageVersion Include="TimeWarp.Terminal" Version="1.0.2" />
+    <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.1" />
   </ItemGroup>
 
   <ItemGroup Label="Product">
@@ -36,9 +36,7 @@
          ReferencedCompiler_IsNotNewerThanTheSdkCompiler fails when the referenced
          compiler is newer than that SDK. -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
-    <!-- Conditioned on $(TargetFramework) so a net10.0 host never restores an 11 package. -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.15" Condition="'$(TargetFramework)' == 'net10.0'" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
@@ -52,17 +50,12 @@
 
   <ItemGroup Label="Benchmarks">
     <!-- 0.15.8 throws on a net11.0 host (RuntimeMoniker.NotRecognized) before it measures.
-         net10.0 stays on 0.15.8, the tool that recorded comparison-baseline.md, so the
-         regression gate measures with that tool. net11.0 uses 0.16.0-preview.2, which can
-         name the 11 runtime. -->
-    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" Condition="'$(TargetFramework)' == 'net10.0'" />
-    <PackageVersion Include="BenchmarkDotNet" Version="0.16.0-preview.2" Condition="'$(TargetFramework)' == 'net11.0'" />
+         0.16.0-preview.2 can name the 11 runtime; 0.16.0 stable is not on nuget.org yet. -->
+    <PackageVersion Include="BenchmarkDotNet" Version="0.16.0-preview.2" />
     <PackageVersion Include="Mediator.Abstractions" Version="3.0.2" />
     <PackageVersion Include="Mediator.SourceGenerator" Version="3.0.2" />
-    <!-- Latest stable. net10.0 asset; net11.0 restores it by framework roll-forward. Test-only.
-         MediatR 14 resolves ILoggerFactory when the mediator is constructed. -->
+    <!-- Latest stable. Test-only. MediatR 14 resolves ILoggerFactory when the mediator is constructed. -->
     <PackageVersion Include="MediatR" Version="14.3.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.15" Condition="'$(TargetFramework)' == 'net10.0'" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="11.0.0" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@
 // Compiles only if TimeWarp.Mediator ships the TWM001–TWM004 analyzer and Generators ships a
 // working generator plus its buildTransitive props (the generated type lands in the default
 // TimeWarp.Mediator.Generated namespace). Runs only if the TimeWarp.Mediator lib/ folder
-// for the host framework resolves. dev pack runs this project on net10.0 and net11.0.
+// for the host framework resolves. dev pack runs this project on net11.0.
 // Exit code 0 and a package-pong line are the pass signal.
 #endregion
 
