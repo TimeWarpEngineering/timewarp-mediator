@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 634
+- Lines changed: 260
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -17,6 +17,14 @@
 **Effort:** 2 (by-diff budget above)
 **Reviewer roster:** general
 **Session IDs:** review oracle round 1 (Cursor, vendor google, model gemini-4-carbon-high, session not reported), max-turns uncapped (no --max-turns flag; bound 120), headless `ganda task work`, 2026-11-14
+
+## Round 2 scope
+
+**Date:** 2026-11-14
+**Diff scope:** fix delta `94ad4022971c4c19df9633fc6f2253aee8fb3921..HEAD` (round-1 `base.sha` `94ad402` to `fc1fc1f`; commits `9815fa7`, `a0abd36`, `6351b9c`, and `fc1fc1f`, 260 lines changed including round-1 kitchen artifacts)
+**Effort:** 2 (by-diff budget above)
+**Reviewer roster:** general
+**Session IDs:** review oracle round 2 (Cursor, vendor google, model gemini-4-carbon-high, session not reported), max-turns uncapped (no --max-turns flag; bound 120), headless `ganda task work`, 2026-11-14
 
 ## Ground rules
 

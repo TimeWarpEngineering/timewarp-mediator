@@ -90,6 +90,7 @@ Fix pass for review round 1 (M1–M3): the non-Core MSBuild workaround in `Direc
 - Review oracle round 1: reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), effort 2, roster general, max-turns uncapped (no --max-turns flag; bound 120), Blocked (fix pass needed for open findings M1, M2, M3) — 2026-11-14
 - Review oracle: review by reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md — 2026-11-13T17:47:41Z
 - 2026-11-14 implement-fix-2: fixed round 1 M1 (dropped the non-Core MSBuild workaround and its release-note claim), M2 (the architecture.md benchmarks section now quotes the net11.0 record), and M3 (comparison and AOT baselines re-recorded on a clean tree, then the gate passed).
+- Review oracle round 2: reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), session not reported, effort 2, roster general, max-turns uncapped (no --max-turns flag; bound 120), Done (disposition clean; M1, M2, M3 verified fixed, 0 open) — 2026-11-14
 
 ## Results
 
@@ -187,10 +188,17 @@ Round 1 opened 3 findings (`bug`: 0; `suggestion`: 3 open / 0 fixed / 0 wontfix;
 
 Review disposition: pending fix pass and round 2 (`review/disposition.md` is not yet written; operator approval of the clean `net11.0` gate numbers per `task.md:16,43` also remains). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
+### Review disposition
+
+- **Rounds and roster:** 2 rounds, roster `general`, effort 2 in both rounds (round 2 scoped to fix delta `94ad402..fc1fc1f`).
+- **Final counts:** `bug`: 0 open / 0 fixed / 0 wontfix; `suggestion`: 0 open / 3 fixed (`M1`, `M2`, `M3`) / 0 wontfix; `nit`: 0 open / 0 fixed / 0 wontfix.
+- **Disposition:** `clean` (0 open, 0 `wontfix`, no escalations). `## Goal (implementer restatement)` matches the original task and Steven's 2026-11-14 superseded directive with no misread. Round 2 verified `M1` (`Directory.Build.props` non-Core MSBuild workaround removed and `15.0.0-beta.7.md:30` updated), `M2` (`documentation/architecture.md:229-240` quotes the `net11.0` baseline at `9815fa7`), and `M3` (`comparison-baseline.md` and `comparison-baseline-aot.md` re-recorded on clean trees with steady-state `TimeWarpCallSiteInliningPrototype` `22.850 ns` and green `--gate`), with clean side-by-side `net10.0` vs `net11.0` numbers in `## Results` and zero new findings.
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
-
+- Round 2: Done
 ## Notes
 
 - 2026-11-14: Steven reversed the netstandard2.0 exception mid-walk ("I don't care about supporting Visual Studio... everything"). The first implement run was stopped. Its uncommitted edits to workflow.yml, Directory.Packages.props, agent.md, and documentation/architecture.md are left in the tree to continue from.
