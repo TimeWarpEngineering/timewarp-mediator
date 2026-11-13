@@ -10,6 +10,7 @@ Ship 15.0.0-beta.7 with `net11.0` as the only runtime target. Nine projects (the
 
 Acceptance:
 
+- All 11 projects under `source/`, `tests/`, and `samples/` target `net11.0` only. The generator and analyzer drop `netstandard2.0`, `LangVersion latest`, and the `IsExternalInit` shim. Only the Roslyn "compiler extension must target netstandard2.0" rule is turned off in those two projects, with a comment. Packing still puts the generator in `analyzers/dotnet/cs` and the analyzer DLL inside `TimeWarp.Mediator`. The smoke consumer still prints `package-pong`, and the analyzer tests still see TWM001–TWM004 and TWM012.
 - `Directory.Packages.props` has one unconditioned pin each for `Microsoft.Extensions.DependencyInjection` 11.0.0, `Microsoft.Extensions.Logging` 11.0.0, and `BenchmarkDotNet` 0.16.0-preview.2 (0.16.0 stable is not on nuget.org on 2026-11-14), and no net10/net11 split comments.
 - The dev CLI gate framework (`RepoLayout.GateTargetFramework`) is `net11.0`, the only lib folder is `lib/net11.0`, `dev pack` rejects any other lib folder, and the smoke consumer runs once on net11.0 and prints `package-pong`.
 - `dev benchmark` defaults to net11.0; `--record` on net11.0 rewrites `comparison-baseline.md`; `comparison-baseline-net11.md` is removed; `--gate` passes on net11.0 against the new file with thresholds unchanged; `--aot` publishes net11.0. Old (net10.0, BDN 0.15.8) and new (net11.0) gate numbers sit side by side in `## Results` for Steven to approve.

@@ -5,16 +5,18 @@
 // Runs tests/<project> in Release through BenchmarkSwitcher, so --filter reaches
 // BenchmarkDotNet unchanged (its default config already exports the GitHub
 // markdown report). --framework selects the host TFM (default
-// RepoLayout.GateTargetFramework, net10.0). Results land in
+// RepoLayout.GateTargetFramework, net11.0; it must be one of
+// RepoLayout.LibTargetFrameworks). Results land in
 // artifacts/benchmarks/<name>/<framework>/ (not the BenchmarkDotNet.Artifacts/
-// default) so `dev clean` owns them. --record on net10.0 copies the
+// default) so `dev clean` owns them. --record on the gate framework copies the
 // GitHub-flavored report to documentation/benchmarks/<name>-baseline.md.
-// Any other framework writes <name>-baseline-<label>.md (net11.0 -> net11) and
-// leaves the net10.0 gate file alone. The header carries the commit SHA, the
-// framework, a dirty-tree flag and the UTC date; BenchmarkDotNet's own block
-// records the host (CPU, OS, runtime). Not part of `dev workflow`: shared CI
-// runners are too noisy for a stored number. --gate (comparison only) re-runs
-// net10.0 and fails when a TimeWarp* row exceeds comparison-baseline.md.
+// A framework other than the gate framework would write
+// <name>-baseline-<label>.md (net12.0 -> net12) and leave the gate file alone.
+// The header carries the commit SHA, the framework, a dirty-tree flag and the
+// UTC date; BenchmarkDotNet's own block records the host (CPU, OS, runtime).
+// Not part of `dev workflow`: shared CI runners are too noisy for a stored
+// number. --gate (comparison only) re-runs net11.0 and fails when a TimeWarp*
+// row exceeds comparison-baseline.md.
 // Tolerance and the 15.0 target table are written by --record; see BenchmarkGate.
 // --aot publishes the comparison project with PublishAot (BenchmarkAot=true)
 // and runs the TimeWarp* methods. BenchmarkDotNet is not in that compilation.
@@ -31,13 +33,13 @@ public sealed class BenchmarkCommand : ICommand<Unit>
   [Option("project", "p", Description = "Benchmark project: comparison (default)")]
   public string? Project { get; set; }
 
-  [Option("framework", Description = "Target framework: net10.0 (default) or net11.0. net11.0 --record writes comparison-baseline-net11.md")]
+  [Option("framework", Description = "Target framework: net11.0 (default, the only target)")]
   public string? Framework { get; set; }
 
   [Option("filter", "f", Description = "BenchmarkDotNet --filter glob (default: *)")]
   public string? Filter { get; set; }
 
-  [Option("record", "r", Description = "Write the report. net10.0 updates comparison-baseline.md; another TFM writes a separate file")]
+  [Option("record", "r", Description = "Write the report. net11.0 updates comparison-baseline.md, the gate file")]
   public bool Record { get; set; }
 
   [Option("gate", "g", Description = "Fail when a TimeWarp* comparison row exceeds the recorded baseline")]
@@ -415,8 +417,8 @@ public sealed class BenchmarkCommand : ICommand<Unit>
       return true;
     }
 
-    // net10.0 keeps comparison-baseline.md (the gate file). net11.0 writes
-    // comparison-baseline-net11.md and does not replace that gate file.
+    // The gate framework keeps comparison-baseline.md (the gate file). Any other
+    // framework writes comparison-baseline-<label>.md and does not replace it.
     private static string BaselineFileName(string name, string framework)
     {
       if (string.Equals(framework, RepoLayout.GateTargetFramework, StringComparison.Ordinal))

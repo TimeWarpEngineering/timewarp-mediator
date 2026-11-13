@@ -128,7 +128,7 @@ uses the provider it was resolved from.
 `ServiceLifetime`. The dispatcher is transient. Handlers, behaviors, chains, and
 `HandlerCache` are scoped.
 
-A paired net10.0 measurement (task 020 `## Results`, BenchmarkDotNet 0.15.8,
+A paired .NET 10 measurement (task 020 `## Results`, BenchmarkDotNet 0.15.8,
 IterationCount=8) compares a singleton dispatcher with a transient dispatcher that the
 benchmark resolves once. The reused transient send is 10.320 ns (error 0.578 ns, 24 B).
 The singleton send is 9.776 ns (error 0.884 ns, 24 B). The ratio is 0.95 and the ratio

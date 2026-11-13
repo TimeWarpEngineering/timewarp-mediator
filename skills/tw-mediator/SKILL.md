@@ -42,12 +42,12 @@ Keep both packages on the same version. Generators does not bring `TimeWarp.Medi
 <ItemGroup>
   <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.7" />
   <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.7" />
-  <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+  <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
 </ItemGroup>
 ```
 
 ```xml
-<!-- host .csproj (net10.0 or net11.0) -->
+<!-- host .csproj (net11.0) -->
 <ItemGroup>
   <PackageReference Include="TimeWarp.Mediator" />
   <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="all" />
@@ -103,7 +103,7 @@ public sealed class PingHandler : IRequestHandler<Ping, string>
 `TimeWarpMediatorGeneratedServiceCollectionExtensions`). Call it from the host. The
 dispatcher is transient. Handlers, behaviors, behavior chains, and `HandlerCache` are
 scoped. A singleton dispatcher was not faster than a reused transient instance on the
-net10.0 send benchmark, so the method does not take a `ServiceLifetime`
+.NET 10 send benchmark, so the method does not take a `ServiceLifetime`
 (why: task 020 measurement 2026-10-28). Resolve `ISender` from a scope.
 
 `ICommand`, `ICommand<T>`, `IQuery<T>`, `IAction`, and `IIdempotentCommand` /
