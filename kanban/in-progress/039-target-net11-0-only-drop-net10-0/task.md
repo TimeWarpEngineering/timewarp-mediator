@@ -84,6 +84,7 @@ Acceptance:
 - 2026-11-14 implement: finished the retarget, including the generator and analyzer on net11.0. Re-recorded the benchmark baselines on net11.0. Updated the docs and release notes.
 - Boy-scout fix: `ganda repo audit` `package-pin-currency` failed on the existing branch. The dev-only pins were behind nuget.org. `TimeWarp.SourceGenerators` moved 1.0.0-beta.14 → 1.0.0-beta.15, `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` 2.0.0 → 3.0.0-beta.2, and `TimeWarp.Terminal` 1.0.2 → 2.0.0-beta.1. The solution and the dev CLI (`self-install`) both build on those pins. They are listed in the beta.7 pin table.
 - Boy-scout fix: the `.githooks/*.cs` scaffolds were refreshed by `ganda repo audit --fix` (memsearch-scaffold advisory). The VS Code window-icon config was also generated; `.vscode/settings.json` is gitignored.
+- Implement oracle: implemented by implementer-cursor (cursor, vendor anthropic, model claude-opus-5-5-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-13T17:29:44Z
 
 ## Results
 
