@@ -8,16 +8,20 @@ Host, Aot, or Link profile.
 
 | Package | Project | Target | What a reference does |
 |---|---|---|---|
-| `TimeWarp.Mediator` | `source/timewarp-mediator` | `net10.0;net11.0` | Contracts, `Unit`, membership attributes, `GeneratedMediatorAttribute`, `GeneratedHandlerAttribute`, and the TWM001–TWM004 and TWM012 analyzer DLL at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` |
-| `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `netstandard2.0` | Source generator. Emits the dispatcher, `MediatorManifest`, and `AddGeneratedMediator`. Reports TWM007, TWM008, TWM010, and TWM011, TWM001–TWM003 in a generator host, and TWM012 when a declared handler name is not a constant |
+| `TimeWarp.Mediator` | `source/timewarp-mediator` | `net11.0` | Contracts, `Unit`, membership attributes, `GeneratedMediatorAttribute`, `GeneratedHandlerAttribute`, and the TWM001–TWM004 and TWM012 analyzer DLL at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` |
+| `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `net11.0` | Source generator. Emits the dispatcher, `MediatorManifest`, and `AddGeneratedMediator`. Reports TWM007, TWM008, TWM010, and TWM011, TWM001–TWM003 in a generator host, and TWM012 when a declared handler name is not a constant |
 
 The analyzer project `source/timewarp-mediator-analyzers` stays in the tree because the analyzer
-is `netstandard2.0` and the contracts library is `net10.0` and `net11.0`. It is not a NuGet package.
+is a compiler extension and must not become a compile reference of the contracts library. Both
+target `net11.0`. It is not a NuGet package.
 `TimeWarp.Mediator.Generators` does not bundle that analyzer DLL. A library that only declares
 messages references `TimeWarp.Mediator` and gets TWM001–TWM004 and TWM012. A host references both packages
 at the same version.
 
-Generators and the analyzer load inside Roslyn. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
+Generators and the analyzer load inside Roslyn. They target `net11.0` (since 15.0.0-beta.7), so the
+compiler must run on .NET 11: build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`. Visual
+Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn version
+the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 ## Contracts
 

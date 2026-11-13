@@ -43,8 +43,8 @@ dotnet test tests/timewarp-mediator-generators-tests/timewarp-mediator-generator
 | Project | Package | Target | Contents |
 |---|---|---|---|
 | `timewarp-mediator` | `TimeWarp.Mediator` | `net11.0` | `IRequest`, `ICommand`, `IQuery`, `IAction`, `IIdempotentCommand`, `INotification`, `IRequestHandler` / `INotificationHandler`, `ActionHandler<T>`, `IPipelineBehavior` / `MessageHandlerDelegate`, `ISender` / `IPublisher` / `IMediator` (and the `<TScope>` forms), `MediatorAssembly`, `MediatorScope`, `MediatorBehavior`, `GeneratedMediatorAttribute`, `GeneratedHandlerAttribute`, `NoHandlerException`, `Unit`. Packs the TWM001–TWM004 and TWM012 analyzer |
-| `timewarp-mediator-generators` | `TimeWarp.Mediator.Generators` | `netstandard2.0` | Source generator: compile-time message graph, `internal sealed Mediator`, named pipelines, `MediatorManifest` version 2, `AddGeneratedMediator()`. Reports TWM007, TWM008, TWM010, TWM011, TWM001–TWM003 in a host, and TWM012 when a declared handler name is not a constant or not a type name |
-| `timewarp-mediator-analyzers` | none (asset of `TimeWarp.Mediator`) | `netstandard2.0` | TWM001–TWM004 and TWM012. Not a NuGet package |
+| `timewarp-mediator-generators` | `TimeWarp.Mediator.Generators` | `net11.0` | Source generator: compile-time message graph, `internal sealed Mediator`, named pipelines, `MediatorManifest` version 2, `AddGeneratedMediator()`. Reports TWM007, TWM008, TWM010, TWM011, TWM001–TWM003 in a host, and TWM012 when a declared handler name is not a constant or not a type name |
+| `timewarp-mediator-analyzers` | none (asset of `TimeWarp.Mediator`) | `net11.0` | TWM001–TWM004 and TWM012. Not a NuGet package |
 
 ### Dispatcher
 
@@ -80,14 +80,14 @@ The reflection runtime tests and `timewarp-mediator-generators-roslyn-floor-test
 ### Target Frameworks
 
 - `TimeWarp.Mediator`: `net11.0` only (since 15.0.0-beta.7)
-- `TimeWarp.Mediator.Generators` and the analyzer project: `netstandard2.0` (Roslyn loads them in-process, including .NET Framework MSBuild and Visual Studio)
+- `TimeWarp.Mediator.Generators` and the analyzer project: `net11.0` (since 15.0.0-beta.7). The .NET 11 SDK compiler runs on .NET 11 and loads them. Visual Studio and .NET Framework MSBuild are not supported. RS1041 (compiler extension not on `netstandard2.0`) is off in those two projects only (Steven 2026-11-14)
 - Tests, benchmarks, samples, and the package smoke consumer: `net11.0`
 - Dev CLI (`tools/dev-cli/dev.cs`): `net11.0`, pinned with `#:property TargetFramework=net11.0`. `TimeWarp.Nuru` 4.0.0-beta.12 ships `lib/net11.0` only. `global.json` pins the GA SDK `11.0.100` (`rollForward: latestFeature`). CI installs `11.0.x` on the GA channel only.
 
 ### Key Dependencies
 
 - `Microsoft.Extensions.DependencyInjection` for test, benchmark, sample, and smoke hosts. `Directory.Packages.props` pins `11.0.0` (`Microsoft.Extensions.Logging` `11.0.0` for the MediatR benchmark row). A generated host needs `Microsoft.Extensions.DependencyInjection.Abstractions` (`IServiceCollection`, `IServiceProvider`). A missing reference is TWM008 and the generator emits nothing.
-- `Microsoft.CodeAnalysis.CSharp` for the shipped analyzer and generator, at the central pin. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
+- `Microsoft.CodeAnalysis.CSharp` for the shipped analyzer and generator, at the central pin. The packages need the .NET 11 SDK (11.0.100 or later) and `dotnet build`. The generator and analyzer target `net11.0`, so the compiler must run on .NET 11 and be at least the Roslyn version they reference. An older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 ### Build Properties
 
@@ -102,8 +102,8 @@ The reflection runtime tests and `timewarp-mediator-generators-roslyn-floor-test
 - `source/Directory.Build.props`: the single `<Version>` and the shared package metadata.
   `dev check-version` and `dev release` read that version for `TimeWarp.Mediator` and
   `TimeWarp.Mediator.Generators`.
-- No repo-wide `LangVersion` pin: `net11.0` projects use the SDK default; the netstandard2.0
-  Roslyn projects set `latest`. Generator-emitted code stays conservative so consumers on
+- No repo-wide `LangVersion` pin: `net11.0` projects, including the generator and analyzer,
+  use the SDK default. Generator-emitted code stays conservative so consumers on
   older language versions still compile it.
 - Generator MSBuild properties (from `TimeWarp.Mediator.Generators` buildTransitive props):
   `TimeWarpMediatorNamespace` (default `TimeWarp.Mediator.Generated`; the generator reads this),

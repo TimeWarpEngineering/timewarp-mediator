@@ -22,8 +22,10 @@ behaviors are woven. This project is a fork of
 
 ## Target framework
 
-`TimeWarp.Mediator` targets **net10.0 and net11.0**. The generator targets netstandard2.0 because it runs
-inside the compiler. The packages need a .NET SDK whose compiler is at least the Roslyn version they reference (11.0.100 or later; a 10.0.x band only if its compiler is at least that version); an older SDK reports CS8032/CS9057 and the generator emits nothing.
+`TimeWarp.Mediator` targets **net11.0** only (since 15.0.0-beta.7). `net10.0` consumers stay on 15.0.0-beta.6
+or earlier. The generator and analyzer also target net11.0, so build with the .NET 11 SDK (11.0.100 or later)
+and `dotnet build`. Visual Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at
+least the Roslyn version the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 ## Quick start
 
@@ -127,7 +129,7 @@ Package ids, `ValueTask` signatures, `Unit.ValueTask`, and the three consumer se
 - [architecture.md](documentation/architecture.md): contracts, dispatcher, registration, manifest, membership
 - [diagnostics.md](documentation/diagnostics.md): TWM001–TWM004, TWM007, TWM008, TWM010, TWM011, and TWM012
 - [m2-named-pipelines.md](documentation/m2-named-pipelines.md): `ISender<TScope>`
-- [benchmarks/comparison-baseline.md](documentation/benchmarks/comparison-baseline.md): net10.0 gate (`./bin/dev benchmark --gate`). [comparison-baseline-net11.md](documentation/benchmarks/comparison-baseline-net11.md) and [comparison-baseline-aot.md](documentation/benchmarks/comparison-baseline-aot.md) are records, not gates.
+- [benchmarks/comparison-baseline.md](documentation/benchmarks/comparison-baseline.md): net11.0 gate (`./bin/dev benchmark --gate`). [comparison-baseline-aot.md](documentation/benchmarks/comparison-baseline-aot.md) is a record, not a gate.
 - [overview.md](documentation/overview.md): versioning, CI and releasing
 - Release notes: [15.0.0](documentation/release-notes/15.0.0.md),
   [15.0.0-beta.7](documentation/release-notes/15.0.0-beta.7.md),
