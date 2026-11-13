@@ -226,17 +226,17 @@ processor, and exception-handler kinds. Those three ids are retired.
 
 ## Benchmarks
 
-The comparison baseline re-recorded on task 021-003 is
-[benchmarks/comparison-baseline.md](benchmarks/comparison-baseline.md) (commit
-`c5e4a3a6a6155b6f5ed322379a59559be58fc69a`). The recorded Ratio column still uses the removed
-reflection row `TimeWarpLegacyMakeGenericType` as 1.00.
+The comparison baseline is
+[benchmarks/comparison-baseline.md](benchmarks/comparison-baseline.md), recorded on `net11.0`
+with BenchmarkDotNet `0.16.0-preview.2` (commit `9815fa71fec6ce990965f33c808e6d4d03d91510`).
+Its Ratio column uses `TimeWarpGeneratedInterfaceSend` as 1.00.
 
 | Row | Mean | Allocated |
 |---|---|---|
-| `TimeWarpGeneratedInterfaceSend` | 8.243 ns | 24 B |
-| `TimeWarpGeneratedInterfaceSendUnit` | 9.360 ns | 0 B |
-| `TimeWarpGeneratedStatePipeline` | 131.117 ns | 0 B |
-| `MartinothamarGenerated` | 8.314 ns | 24 B |
+| `TimeWarpGeneratedInterfaceSend` | 12.932 ns | 24 B |
+| `TimeWarpGeneratedInterfaceSendUnit` | 9.942 ns | 0 B |
+| `TimeWarpGeneratedStatePipeline` | 133.462 ns | 0 B |
+| `MartinothamarGenerated` | 11.701 ns | 24 B |
 
 `./bin/dev benchmark --project comparison --gate` fails when a `TimeWarp*` row exceeds that
 file. The gate is not part of `./bin/dev workflow`.

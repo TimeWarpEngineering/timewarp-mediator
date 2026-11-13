@@ -89,6 +89,7 @@ Fix pass for review round 1 (M1–M3): the non-Core MSBuild workaround in `Direc
 - Implement oracle: implemented by implementer-cursor (cursor, vendor anthropic, model claude-opus-5-5-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-11-13T17:29:44Z
 - Review oracle round 1: reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), effort 2, roster general, max-turns uncapped (no --max-turns flag; bound 120), Blocked (fix pass needed for open findings M1, M2, M3) — 2026-11-14
 - Review oracle: review by reviewer-cursor (cursor, vendor google, model gemini-4-carbon-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md — 2026-11-13T17:47:41Z
+- 2026-11-14 implement-fix-2: fixed round 1 M1 (dropped the non-Core MSBuild workaround and its release-note claim), M2 (the architecture.md benchmarks section now quotes the net11.0 record), and M3 (comparison and AOT baselines re-recorded on a clean tree, then the gate passed).
 
 ## Results
 
@@ -106,29 +107,31 @@ Fix pass for review round 1 (M1–M3): the non-Core MSBuild workaround in `Direc
 ### Benchmark gate: old (net10.0) and new (net11.0) gate numbers — Steven approves at review
 
 Old: `comparison-baseline.md` on net10.0, BenchmarkDotNet 0.15.8, .NET 10.0.14, commit `a5129e1`, 2026-10-28.
-New: `comparison-baseline.md` on net11.0, BenchmarkDotNet 0.16.0-preview.2, .NET 11.0.0 GA, commit `eafa561`, recorded 2026-11-13 UTC. Same host (Ryzen 9 7950X3D). Thresholds unchanged: mean at most +50%, no extra bytes.
+New: `comparison-baseline.md` on net11.0, BenchmarkDotNet 0.16.0-preview.2, .NET 11.0.0 GA. It was re-recorded in the round 1 fix pass on a clean tree at commit `9815fa7` (no uncommitted-changes flag), on 2026-11-13 UTC, with load average 0.8 on 32 cores. Same host (Ryzen 9 7950X3D). Thresholds unchanged: mean at most +50%, no extra bytes.
 
 | Row | Old mean | Old alloc | New mean | New alloc |
 |---|---:|---:|---:|---:|
-| TimeWarpGeneratedMonomorphicSend | 5.061 ns | 24 B | 10.325 ns | 24 B |
-| TimeWarpGeneratedInterfaceSend | 8.480 ns | 24 B | 11.577 ns | 24 B |
-| TimeWarpGeneratedObjectSend | 16.546 ns | 96 B | 19.952 ns | 96 B |
-| TimeWarpGeneratedInterfaceSendUnit | 9.736 ns | 0 B | 9.796 ns | 0 B |
-| TimeWarpGeneratedMonomorphicSendUnit | 4.062 ns | 0 B | 7.988 ns | 0 B |
-| TimeWarpCallSiteInliningPrototype | 22.901 ns | 24 B | 31.351 ns | 24 B |
-| TimeWarpGeneratedScopedSend | 8.534 ns | 24 B | 11.716 ns | 24 B |
-| TimeWarpGeneratedInterfacePublish | 20.388 ns | 0 B | 21.566 ns | 0 B |
-| TimeWarpGeneratedScopedPublish | 26.678 ns | 0 B | 21.496 ns | 0 B |
-| TimeWarpGeneratedStatePipeline | 133.339 ns | 0 B | 133.604 ns | 0 B |
-| TimeWarpGeneratedArchitectureSend | 88.852 ns | 24 B | 86.959 ns | 24 B |
-| MartinothamarGenerated (not gated) | 9.370 ns | 24 B | 12.721 ns | 24 B |
-| MartinothamarScopedSend (not gated) | 47.457 ns | 88 B | 44.766 ns | 80 B |
-| MediatRSend (not gated) | 58.270 ns | 224 B | 50.196 ns | 216 B |
+| TimeWarpGeneratedMonomorphicSend | 5.061 ns | 24 B | 10.483 ns | 24 B |
+| TimeWarpGeneratedInterfaceSend | 8.480 ns | 24 B | 12.932 ns | 24 B |
+| TimeWarpGeneratedObjectSend | 16.546 ns | 96 B | 20.540 ns | 96 B |
+| TimeWarpGeneratedInterfaceSendUnit | 9.736 ns | 0 B | 9.942 ns | 0 B |
+| TimeWarpGeneratedMonomorphicSendUnit | 4.062 ns | 0 B | 8.087 ns | 0 B |
+| TimeWarpCallSiteInliningPrototype | 22.901 ns | 24 B | 22.850 ns | 24 B |
+| TimeWarpGeneratedScopedSend | 8.534 ns | 24 B | 11.884 ns | 24 B |
+| TimeWarpGeneratedInterfacePublish | 20.388 ns | 0 B | 21.592 ns | 0 B |
+| TimeWarpGeneratedScopedPublish | 26.678 ns | 0 B | 21.472 ns | 0 B |
+| TimeWarpGeneratedStatePipeline | 133.339 ns | 0 B | 133.462 ns | 0 B |
+| TimeWarpGeneratedArchitectureSend | 88.852 ns | 24 B | 87.036 ns | 24 B |
+| MartinothamarGenerated (not gated) | 9.370 ns | 24 B | 11.701 ns | 24 B |
+| MartinothamarScopedSend (not gated) | 47.457 ns | 88 B | 47.342 ns | 80 B |
+| MediatRSend (not gated) | 58.270 ns | 224 B | 48.821 ns | 216 B |
 
-- The small send rows are 3–5 ns slower on net11.0 with BenchmarkDotNet 0.16.0-preview.2. The October net11 rc.3 record (`comparison-baseline-net11.md`, now removed) showed the same thing: InterfaceSend 12.218 ns, MonomorphicSend 9.919 ns. martinothamar's generated send moved by about the same amount (9.37 → 12.72 ns). That points to the runtime and tool change, not a dispatcher change. Allocations are the same on every TimeWarp row.
-- `TimeWarpCallSiteInliningPrototype` was noisy in the record run (31.351 ns, error 4.3 ns). The gate run that followed measured 22.597 ns. Steven may want to re-record that row before approving.
-- `./bin/dev benchmark --gate` right after the record: **passed** on net11.0.
-- `./bin/dev benchmark --aot` published for net11.0 and rewrote `comparison-baseline-aot.md` (not gated). Example: InterfaceSend 35.295 → 14.641 ns.
+- The small send rows are 2–5 ns slower on net11.0 with BenchmarkDotNet 0.16.0-preview.2. The October net11 rc.3 record (`comparison-baseline-net11.md`, now removed) showed the same thing: InterfaceSend 12.218 ns, MonomorphicSend 9.919 ns. martinothamar's generated send moved by about the same amount (9.37 → 11.70 ns). That points to the runtime and tool change, not a dispatcher change. Allocations are the same on every TimeWarp row.
+- `TimeWarpCallSiteInliningPrototype` is at its steady state again: 22.850 ns with an error of 0.31 ns. The first record (commit `eafa561`) caught a spike of 31.351 ns with an error of 4.3 ns. The re-record fixes review M3, so that row's +50% ceiling is about 34.3 ns, not 47.0 ns.
+- `./bin/dev benchmark --project comparison --gate` right after the re-record: **passed** on net11.0. The gate run measured CallSiteInliningPrototype 22.604 ns, InterfaceSend 11.600 ns, and StatePipeline 132.284 ns.
+- `./bin/dev benchmark --project comparison --aot` ran on a clean tree at commit `a0abd36`, so the header has no uncommitted-changes flag. It published for net11.0 and rewrote `comparison-baseline-aot.md` (not gated). Example: InterfaceSend 14.517 ns, InterfaceSendUnit 9.201 ns.
+- `documentation/architecture.md` `## Benchmarks` now quotes the net11.0 record: commit `9815fa7`, with `TimeWarpGeneratedInterfaceSend` as the 1.00 ratio row (review M2).
+- `Directory.Build.props` no longer turns off `TimeWarpEnableGitMetadata` for non-Core MSBuild. Visual Studio and `MSBuild.exe` now stop with `TWBT0001` from `TimeWarp.Build.Tasks` 2.0.0. The beta.7 notes no longer say those builds compile (review M1).
 
 ### Gates
 
@@ -141,6 +144,17 @@ New: `comparison-baseline.md` on net11.0, BenchmarkDotNet 0.16.0-preview.2, .NET
 | `./bin/dev verify-samples --no-build` | Pass. The AOT sample published with NativeAOT on net11.0, and the named-pipelines sample ran |
 | `./bin/dev check-version --strict` | Pass. 15.0.0-beta.7 is one prerelease ahead of beta.6 on nuget.org |
 | `./bin/dev benchmark --gate` | Pass on net11.0 against the re-recorded `comparison-baseline.md` |
+
+Fix pass (review round 1, M1–M3). These gates ran after the last product edit:
+
+| Command | Result |
+|---|---|
+| `./bin/dev benchmark --project comparison --record` | Recorded on a clean tree at `9815fa7`. CallSiteInliningPrototype 22.850 ns |
+| `./bin/dev benchmark --project comparison --aot` | Recorded on a clean tree at `a0abd36` |
+| `./bin/dev benchmark --project comparison --gate` | Pass. `Benchmark gate passed.` |
+| `./bin/dev build` | Pass. 0 warnings, 0 errors |
+| `./bin/dev test` | Pass. generators-tests 61/61, analyzers-tests 50/50, compilation-tests 80/80, all on net11.0 |
+| `ganda repo audit` | Pass. "Repository passes all audit checks." |
 
 ### How to validate
 
@@ -159,6 +173,8 @@ Expect:
 - `dev pack` prints `Package layout verified` for both nupkgs, then `Package smoke (net11.0)...` and `package-smoke: package-pong via TimeWarp.Mediator.Generated.Mediator`.
 - Every `.csproj` under source, tests, and samples has `<TargetFramework>net11.0</TargetFramework>`. None has `TargetFrameworks` or `netstandard2.0`.
 - `dev benchmark --gate` ends with `Benchmark gate passed.` and writes to `artifacts/benchmarks/comparison/net11.0`.
+- `rg -n "Commit" documentation/benchmarks/comparison-baseline*.md` shows `9815fa7…` and `a0abd36…`. Neither line says "working tree had uncommitted changes".
+- `rg -n "MSBuildRuntimeType" Directory.Build.props documentation/release-notes/15.0.0-beta.7.md` finds nothing.
 
 ### Review (round 1)
 
