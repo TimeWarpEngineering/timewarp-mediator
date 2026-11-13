@@ -29,6 +29,19 @@ Filed 2026-11-11 at Steven's request ("Yes, create the timewarp-mediator task fo
 - A Copilot cloud-agent path (H)
 - Starting more than this one run, or launching workers before Steven says to start
 
+## Depends on
+
+- 038
+
+## Related
+
+- mediator 038 (conform `dev benchmark` to the shared contract; this run uses its `dev benchmark run <name> --base <ref>` verdict)
+- nuru 578 (shared `dev benchmark` contract and plumbing)
+- flow 204 (`tw-perf-sweep` skill; written alongside this run, drafted first)
+- ganda 599 (perf-sweep umbrella; supersedes the playbook-skill framing above, the judgment rules now live in flow 204)
+
+This is step 2 in the umbrella order: runs after mediator 038, with the draft skill from flow 204.
+
 ## Checklist
 
 - [ ] Confirm the ganda task 599 playbook exists and follow it
@@ -51,3 +64,5 @@ Filed 2026-11-11 at Steven's request ("Yes, create the timewarp-mediator task fo
 - Fowler issue: https://github.com/dotnet/aspnetcore/issues/70219
 - Fowler post: https://x.com/davidfowl/status/2117020540628340983
 - Filed only; not launched. Do not start until Steven says so, and not before the ganda 599 playbook exists.
+- Order: run after mediator 038 conforms `dev benchmark` to the shared contract. The verdict from `dev benchmark run`, not `--gate` baselines, decides whether a PR opens.
+- why: Steven 2026-11-13, perf-sweep split across repos
