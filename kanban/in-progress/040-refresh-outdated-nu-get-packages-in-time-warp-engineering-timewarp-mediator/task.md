@@ -35,6 +35,10 @@ Acceptance criteria:
 - `<Version>` in `source/Directory.Build.props` goes 15.0.0-beta.7 -> 15.0.0-beta.8.
 - `./bin/dev build`, `./bin/dev test`, and `ganda repo audit` pass (audit failures such as other
   stale pins are fixed here too).
+- Fix pass (review round 1, M1): `TimeWarp.Nuru.DevCli` 4.0.0-beta.13 has no content file at or over
+  the 500-line cap, so the dev CLI's TWA0038 silence (`#:property NoWarn` in `tools/dev-cli/dev.cs`)
+  and its `.timewarp/suppression-baseline.json` entry go. `self-install` must build with TWA0038 active.
+  This does task 037's work on this id; no sibling task.
 
 ## Session
 
@@ -42,6 +46,11 @@ Acceptance criteria:
 - Implementer (Claude Opus 5.5, 2026-11-14): merged origin/master (kanban-only), refreshed pins, bumped
   version, rebuilt the dev CLI with `self-install`, ran the gates.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b9fd91d6-173b-485b-9193-961f5ded1f3d, max-turns 500, Done — 2026-11-14T09:00:30Z
+- Review oracle round 1: grok 4.7 (xAI, headless), effort 1, roster general, max-turns 80, session 01a1d949-8539-7c52-adfb-bda69301a4aa. Result: Blocked, fix pass needed for open finding M1 — 2026-11-14
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1d949-8539-7c52-adfb-bda69301a4aa, max-turns 80, artifacts general.md, merged.md — 2026-11-14T09:09:23Z
+- Fix pass (implement-fix-2, Claude Opus 5.5, 2026-11-14): fixed M1. Removed the TWA0038 `NoWarn` line and
+  its comment from `tools/dev-cli/dev.cs` and the matching baseline entry, cleared the runfile cache, and
+  rebuilt the dev CLI with `self-install`. Reran build, test, and audit.
 
 ## Results
 
@@ -69,11 +78,20 @@ Also changed:
   (memsearch-scaffold warning). It also set the VS Code `window.title`, but `.vscode/settings.json`
   is git-ignored, so that fix stays local.
 
+- Review fix M1: `tools/dev-cli/dev.cs` no longer sets `#:property NoWarn=$(NoWarn);TWA0038`, and
+  `.timewarp/suppression-baseline.json` no longer lists `tools/dev-cli/dev.cs`. In `TimeWarp.Nuru.DevCli`
+  4.0.0-beta.13, `release-command.cs` is 356 lines and `nuget-version-service.cs` is 411 lines. The largest
+  `.cs` file under `tools/dev-cli/` plus that package's `content/` is `attestation-verifier.cs` at 441 lines.
+  The dev CLI now builds with TWA0038 active. Task 037 (to-do) asked for this same removal and is now
+  satisfied by this task; close it on the board after merge.
+
 ### How to validate
 
-Smoke: `./bin/dev build && ./bin/dev test`, then `dotnet run --file tools/dev-cli/dev.cs -- self-install && ./bin/dev --help`.
-Expect: the build has 0 warnings and 0 errors. Tests pass (generators 61, analyzers 50, compilation 80,
-each on net10.0 and net11.0). The dev CLI publishes on Nuru beta.13 / Amuru 3 and prints its help.
+Smoke: `ganda runfile cache --clear && dotnet run --file tools/dev-cli/dev.cs -- self-install && ./bin/dev --help`,
+then `./bin/dev build && ./bin/dev test`, then `grep -n TWA0038 tools/dev-cli/dev.cs .timewarp/suppression-baseline.json`.
+Expect: `self-install` publishes the dev CLI on Nuru beta.13 / Amuru 3 with TWA0038 active and prints its help.
+The build has 0 warnings and 0 errors. Tests pass (generators 61, analyzers 50, compilation 80, each on
+net10.0 and net11.0). The grep finds nothing.
 
 ### Gates
 
@@ -86,3 +104,21 @@ each on net10.0 and net11.0). The dev CLI publishes on Nuru beta.13 / Amuru 3 an
   - `./bin/dev build`: passed, 0 warnings, 0 errors.
   - `./bin/dev test`: passed, 382/382.
   - `ganda repo audit`: passed all checks (43 passed, 0 failed, 3 skipped).
+- Fix pass (M1), after the last product edit:
+  - `dotnet run --file tools/dev-cli/dev.cs -- self-install` (runfile cache cleared first): succeeded with TWA0038 active.
+  - `./bin/dev build`: passed, 0 warnings, 0 errors.
+  - `./bin/dev test`: passed, 382/382 (61+50+80 on net10.0 and on net11.0).
+  - `ganda repo audit`: "Repository passes all audit checks." (`source-file-line-cap`: no C# file exceeds the 500-line cap).
+
+### Review
+
+Round 1 (effort 1, roster general) is open. One bug, no suggestions, no nits. M1: `tools/dev-cli/dev.cs:7` still sets `#:property NoWarn=$(NoWarn);TWA0038`, and `.timewarp/suppression-baseline.json:60-61` still records it, after `TimeWarp.Nuru.DevCli` `4.0.0-beta.13` put `release-command.cs` at 356 lines and `nuget-version-service.cs` at 411 lines. Disposition is not written. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Learnings
+
+- Misread (Extensions pins): the wave task lists `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Logging` as `10.0.15 -> 11.0.0`. The restatement keeps the `net10.0` rows at `10.0.15` and treats the `net11.0` rows, already `11.0.0`, as done. The implementation follows that restatement and the standing split in `Directory.Packages.props` (a net10.0 host stays on the 10.0.x line; task 036 recorded the same outdated pair as ignored by design). `10.0.15` is the newest 10.0.x in the local NuGet cache. `11.0.0` does ship a `net10.0` asset, so the split is policy, not a missing lib folder. No finding: applying the wave arrow would put the 11 package on the net10.0 target, which this repo has already refused.
+
+## Review
+
+- Round 1: Blocked — open M1
+- Fix pass for round 2: M1 fixed (suppression and baseline entry removed; see Results).
