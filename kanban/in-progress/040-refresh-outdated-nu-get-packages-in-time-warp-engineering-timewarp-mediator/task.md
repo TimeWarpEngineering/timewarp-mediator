@@ -54,6 +54,7 @@ Pins changed in `Directory.Packages.props`:
 | TimeWarp.Terminal | 1.0.2 | 2.0.0-beta.1 | Nuru 4.0.0-beta.13 depends on it, and the same audit check flagged it |
 | Microsoft.CodeAnalysis.Analyzers / .CSharp / .CSharp.Workspaces | 5.9.0 | 5.12.0 | The SDK 11.0.100 compiler is Roslyn 5.12.0 (`csc.deps.json`), so the referenced-compiler test still holds |
 | MediatR | 14.3.0 | 15.0.0 | benchmark comparison only; compiles unchanged |
+| TimeWarp.Build.Tasks | 2.0.0 | 2.0.1-beta.1 | published 2026-11-14 after the first audit; the post-commit attest flagged it (package-pin-currency) |
 
 Left as is: `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Logging` stay on
 10.0.15 in the `net10.0` rows on purpose: a net10.0 host must not restore an 11 package. The
@@ -79,3 +80,8 @@ each on net10.0 and net11.0). The dev CLI publishes on Nuru beta.13 / Amuru 3 an
 - `./bin/dev test`: passed, 382/382 (61+50+80 on net10.0 and on net11.0).
 - `ganda repo audit`: passed, with 2 advisory warnings (memsearch-scaffold, vscode-window-icon).
   `ganda repo audit --fix` then fixed both: 43 passed, 0 failed, 3 skipped.
+- The post-commit attest then failed on package-pin-currency (TimeWarp.Build.Tasks 2.0.1-beta.1 was
+  published after that audit). After that pin was bumped, the gates were rerun:
+  - `./bin/dev build`: passed, 0 warnings, 0 errors.
+  - `./bin/dev test`: passed, 382/382.
+  - `ganda repo audit`: passed all checks (43 passed, 0 failed, 3 skipped).
