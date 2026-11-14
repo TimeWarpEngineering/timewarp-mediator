@@ -6,11 +6,11 @@
 **Plan / brief:** Refresh the outdated central NuGet pins in `Directory.Packages.props` and set `<Version>` in `source/Directory.Build.props` from `15.0.0-beta.7` to `15.0.0-beta.8`.
 **Effort:** 1 (general only)
 **Reviewer roster:** general
-**Session IDs:** review oracle grok 4.7, session `01a1d949-8539-7c52-adfb-bda69301a4aa` (2026-11-14). Implementer session `b9fd91d6-173b-485b-9193-961f5ded1f3d`.
+**Session IDs:** review oracle grok 4.7, session `01a1d949-8539-7c52-adfb-bda69301a4aa` (2026-11-14). Implementer session `b9fd91d6-173b-485b-9193-961f5ded1f3d`. Round 2 review oracle grok 4.7, session `01a1d954-30d9-7fa3-89d4-908710a1834f` (2026-11-14). Fix-pass session `9e801ac4-a2cd-47f5-b29c-fa52af1d004f`.
 
 ## Budget (by-diff)
 
-- Lines changed: 120
+- Lines changed: 117
 - Effort: 1
 - TCB hits: none
 - Roster axes: general
@@ -26,3 +26,7 @@
 - Exception: one targeted command may check one suspected bug; the finding names the command and the reason. A full build, full test run, or audit is never that command
 - A missing or thin recorded result is a finding, not a reason to run the gates
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 scope
+
+Re-review of `d6a7f9e..f68a938` (round-1 `base.sha` through HEAD). Product files: `.timewarp/suppression-baseline.json`, `tools/dev-cli/dev.cs`. Kitchen edits in that commit stay out of the product check except for the accuracy of `## Results`. Effort stays 1, roster general. Prior round files stay frozen.
