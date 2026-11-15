@@ -11,14 +11,14 @@ The packages share one version and are packed together by `dev pack`:
 
 | Package | Project | Target |
 |---|---|---|
-| `TimeWarp.Mediator` | `source/timewarp-mediator` (packs `TimeWarp.Mediator.Analyzers.dll` as an analyzer asset) | `net10.0;net11.0` |
-| `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `netstandard2.0` |
+| `TimeWarp.Mediator` | `source/timewarp-mediator` (packs `TimeWarp.Mediator.Analyzers.dll` as an analyzer asset) | `net11.0` |
+| `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `net11.0` |
 
 `source/timewarp-mediator-analyzers` builds the TWM001–TWM004 analyzer. It is not a NuGet package.
 
 `dev pack` writes the two nupkgs to `artifacts/packages` and fails if any other nupkg is there.
 `TimeWarp.Mediator` must contain `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` and exactly
-the `lib/net10.0/` and `lib/net11.0/` folders. `TimeWarp.Mediator.Generators` must contain its generator DLL and
+the `lib/net11.0/` folder; any other `lib/` folder fails. `TimeWarp.Mediator.Generators` must contain its generator DLL and
 `buildTransitive/TimeWarp.Mediator.Generators.props`. Each nupkg must contain `notice` and
 `unlicense`. Each package packs its own `source/<project>/readme.md` as the nuget.org readme;
 `dev pack` fails when that readme's first heading is not the package id or it contains a relative
@@ -52,14 +52,13 @@ Every step runs `dotnet run --file tools/dev-cli/dev.cs -- …`, so CI does not 
 pre-installed `./bin/dev`.
 
 `global.json` pins the GA SDK `11.0.100` with `rollForward: latestFeature`. Each job's
-`setup-dotnet` steps install `10.0.x` and `11.0.x` on the GA channel. The `10.0.x` install
-stays so the `net10.0` targeting pack and runtime restore.
+`setup-dotnet` step installs `11.0.x` on the GA channel.
 
 | Trigger | Job | What runs |
 |---|---|---|
 | push to `master`, pull request to `master` | `ci` | `dev workflow`: clean → build → test → verify-samples (runs every sample) → pack (layout gate and package smoke). Uploads `Packages-<run number>`. |
 | `workflow_dispatch` with `mode=merge` (default) | `ci` | Same as above. Never publishes. |
-| `workflow_dispatch` with `mode=benchmark`, and a weekly Monday schedule (`17 6 * * 1` UTC) | `benchmark` | `dev benchmark --gate` on `net10.0`. Not part of pull requests. The gate tolerance is 50% on mean time and no extra bytes. Three consecutive hosted-runner results inside that tolerance were not collected, so the job stays off the pull-request path. |
+| `workflow_dispatch` with `mode=benchmark`, and a weekly Monday schedule (`17 6 * * 1` UTC) | `benchmark` | `dev benchmark --gate` on `net11.0`. Not part of pull requests. The gate tolerance is 50% on mean time and no extra bytes. Three consecutive hosted-runner results inside that tolerance were not collected, so the job stays off the pull-request path. |
 | GitHub Release published | `publish` | Release guards → OIDC login → `dev workflow --mode release`: clean → build → pack → check-version → push. |
 | `workflow_dispatch` with `mode=release` and `confirm=release` | `publish` | Break-glass. Same as a release; see below. |
 | `workflow_dispatch` with `mode=probe` | `publish` | OIDC login only. No checkout, build or push. |

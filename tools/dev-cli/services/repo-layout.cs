@@ -7,7 +7,7 @@
 // PackageId/AssemblyName stay PascalCase (TimeWarp.Mediator*).
 // The package smoke project sits outside the slnx because it restores the
 // packed nupkgs from artifacts/packages, so it can only build after pack.
-// Two nupkgs: TimeWarp.Mediator (lib/net10.0 and lib/net11.0, plus the
+// Two nupkgs: TimeWarp.Mediator (lib/net11.0, plus the
 // TWM001–TWM004 analyzer) and TimeWarp.Mediator.Generators.
 // The analyzer project is not packed on its own.
 #endregion
@@ -31,7 +31,6 @@ internal static class RepoLayout
   [
     ("TimeWarp.Mediator",
     [
-      "lib/net10.0/TimeWarp.Mediator.dll",
       "lib/net11.0/TimeWarp.Mediator.dll",
       "analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll",
       .. LicenseEntries
@@ -44,11 +43,11 @@ internal static class RepoLayout
     ])
   ];
 
-  // Exact lib/ folders TimeWarp.Mediator may ship. net10.0 is the floor and the
+  // Exact lib/ folders TimeWarp.Mediator may ship. net11.0 is the only target and the
   // regression-gate runtime. A stray or missing folder changes what consumers resolve.
-  internal const string GateTargetFramework = "net10.0";
+  internal const string GateTargetFramework = "net11.0";
 
-  internal static readonly string[] LibTargetFrameworks = [GateTargetFramework, "net11.0"];
+  internal static readonly string[] LibTargetFrameworks = [GateTargetFramework];
 
   internal static readonly string[] LibPackageIds = ["TimeWarp.Mediator"];
 

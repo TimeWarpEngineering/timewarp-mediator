@@ -28,12 +28,6 @@
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
   </ItemGroup>
 
-  <!-- TimeWarp.Build.Tasks 2.x ships a net11.0-only task. .NET Framework MSBuild (Visual Studio,
-       MSBuild.exe) cannot load it and fails with TWBT0001, so those builds skip the git metadata stamp. -->
-  <PropertyGroup Condition="'$(MSBuildRuntimeType)' != 'Core'">
-    <TimeWarpEnableGitMetadata>false</TimeWarpEnableGitMetadata>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="TimeWarp.Build.Tasks" PrivateAssets="all" />
   </ItemGroup>

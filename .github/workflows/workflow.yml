@@ -12,8 +12,7 @@ name: CI/CD
 # No path filters: every master commit gets a CI run, which the release
 # green-CI guard depends on.
 # SDK: global.json pins 11.0.100 (latestFeature).
-# Each job installs 10.0.x and 11.0.x on the GA channel.
-# 10.0.x stays so the net10.0 targeting pack and runtime restore.
+# Each job installs 11.0.x on the GA channel.
 # benchmark job: weekly and workflow_dispatch mode=benchmark. Not on pull requests.
 on:
   push:
@@ -27,7 +26,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Pipeline mode. merge = build and test only (default). release = break-glass publish; also requires confirm and must run on the release tag. probe = trusted-publishing check only (OIDC login, no build, no publish). benchmark = net10.0 comparison gate only.'
+        description: 'Pipeline mode. merge = build and test only (default). release = break-glass publish; also requires confirm and must run on the release tag. probe = trusted-publishing check only (OIDC login, no build, no publish). benchmark = net11.0 comparison gate only.'
         type: choice
         options:
           - merge
@@ -73,11 +72,6 @@ jobs:
         with:
           fetch-depth: 0  # Full history required for SourceLink / version metadata
           persist-credentials: false
-
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
-        with:
-          dotnet-version: 10.0.x
 
       - name: Setup .NET 11
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
@@ -200,12 +194,6 @@ jobs:
           }
           Write-Output "Release guards passed ($green successful CI run(s) for $sha)."
 
-      - name: Setup .NET 10
-        if: inputs.mode != 'probe'
-        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
-        with:
-          dotnet-version: 10.0.x
-
       - name: Setup .NET 11
         if: inputs.mode != 'probe'
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
@@ -243,11 +231,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
-        with:
-          dotnet-version: 10.0.x
-
       - name: Setup .NET 11
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
@@ -260,5 +243,5 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj', 'tools/dev-cli/**', 'nuget.config') }}
           restore-keys: nuget-${{ runner.os }}-
 
-      - name: Benchmark gate (net10.0)
+      - name: Benchmark gate (net11.0)
         run: dotnet run --file tools/dev-cli/dev.cs -- benchmark --gate

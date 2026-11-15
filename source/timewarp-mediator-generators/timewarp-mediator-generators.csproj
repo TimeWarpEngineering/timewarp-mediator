@@ -1,9 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
+    <TargetFramework>net11.0</TargetFramework>
     <RootNamespace>TimeWarp.Mediator.Generators</RootNamespace>
     <AssemblyName>TimeWarp.Mediator.Generators</AssemblyName>
     <PackageId>TimeWarp.Mediator.Generators</PackageId>
@@ -17,6 +15,9 @@
     <!-- Repo-wide snupkg + no lib/ output yields an empty symbol package (NU5017). -->
     <IncludeSymbols>false</IncludeSymbols>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <!-- RS1041 wants compiler extensions on netstandard2.0. Steven 2026-11-14: net11.0 only;
+         Visual Studio and .NET Framework MSBuild are not supported, and the .NET 11 SDK compiler loads net11.0. -->
+    <NoWarn>$(NoWarn);RS1041</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

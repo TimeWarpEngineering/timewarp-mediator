@@ -10,12 +10,12 @@
 // the same way the PowerShell zip asserts did. NupkgReadmeCheck then requires
 // the package's own readme.md with only absolute links. TimeWarp.Mediator
 // must ship exactly the lib/ folders in RepoLayout.LibTargetFrameworks
-// (net10.0 and net11.0). The artifacts directory must contain exactly the two
-// PackageLayout nupkgs. Last, the package smoke project restores
-// TimeWarp.Mediator + Generators from artifacts/packages into a throwaway
-// packages folder (the version is not bumped per build, so the global cache
-// could hold a stale nupkg of the same version), then builds and runs on each
-// of those frameworks as an outside consumer would. Each run must print
+// (net11.0 only; a lib/net10.0 folder fails). The artifacts directory must
+// contain exactly the two PackageLayout nupkgs. Last, the package smoke project
+// restores TimeWarp.Mediator + Generators from artifacts/packages into a
+// throwaway packages folder (the version is not bumped per build, so the global
+// cache could hold a stale nupkg of the same version), then builds and runs on
+// each of those frameworks as an outside consumer would. Each run must print
 // package-pong.
 #endregion
 

@@ -28,10 +28,12 @@
       "RS0030": 1
     },
     "source/timewarp-mediator-analyzers/timewarp-mediator-analyzers.csproj": {
-      "NU5128": 1
+      "NU5128": 1,
+      "RS1041": 1
     },
     "source/timewarp-mediator-generators/timewarp-mediator-generators.csproj": {
-      "NU5128": 1
+      "NU5128": 1,
+      "RS1041": 1
     },
     "source/timewarp-mediator/timewarp-mediator.csproj": {
       "''))": 1

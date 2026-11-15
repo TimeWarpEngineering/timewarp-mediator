@@ -8,7 +8,7 @@ extern alias scopedmartin;
 #region Design
 // Each external row names its TimeWarp pair in a comment. MartinothamarGenerated keeps
 // that generator's default Singleton. Forcing Transient made the held instance about
-// five times slower on net10.0, which is not the path their users run. TimeWarp stays
+// five times slower on .NET 10 (task 020), which is not the path their users run. TimeWarp stays
 // transient; the benchmark resolves it once. The scoped row is the lifetime-aligned
 // pair and lives in another compilation because that generator emits one
 // ServiceLifetime. MediatR is excluded from the PublishAot build (BENCHMARK_AOT).
