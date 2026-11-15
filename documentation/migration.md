@@ -31,8 +31,8 @@ A host references `TimeWarp.Mediator` and `TimeWarp.Mediator.Generators`. A libr
 declares messages and does not emit a mediator references `TimeWarp.Mediator` only and keeps
 `[assembly: MediatorAssembly]`.
 
-`TimeWarp.Mediator`, the generator, and the analyzer target `net11.0` only (since 15.0.0-beta.7). `net10.0`
-consumers stay on 15.0.0-beta.6 or earlier. Build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`.
+`TimeWarp.Mediator`, the generator, and the analyzer target `net11.0` only (since 15.0.0-beta.9). `net10.0`
+consumers stay on 15.0.0-beta.8 or earlier. Build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`.
 Visual Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn
 version the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.
 

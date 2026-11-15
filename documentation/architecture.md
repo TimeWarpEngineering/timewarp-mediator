@@ -18,7 +18,7 @@ target `net11.0`. It is not a NuGet package.
 messages references `TimeWarp.Mediator` and gets TWM001–TWM004 and TWM012. A host references both packages
 at the same version.
 
-Generators and the analyzer load inside Roslyn. They target `net11.0` (since 15.0.0-beta.7), so the
+Generators and the analyzer load inside Roslyn. They target `net11.0` (since 15.0.0-beta.9), so the
 compiler must run on .NET 11: build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`. Visual
 Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn version
 the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.

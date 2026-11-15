@@ -40,8 +40,8 @@ Keep both packages on the same version. Generators does not bring `TimeWarp.Medi
 ```xml
 <!-- Directory.Packages.props -->
 <ItemGroup>
-  <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.7" />
-  <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.7" />
+  <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.9" />
+  <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.9" />
   <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
 </ItemGroup>
 ```
@@ -55,7 +55,7 @@ Keep both packages on the same version. Generators does not bring `TimeWarp.Medi
 </ItemGroup>
 ```
 
-Use the version this repo is packing, `15.0.0-beta.7`. 14.0.0 on nuget.org
+Use the version this repo is packing, `15.0.0-beta.9`. 14.0.0 on nuget.org
 is the previous surface: the id `TimeWarp.Mediator` was the reflection runtime (`AddMediator`),
 contracts were `TimeWarp.Mediator.Contracts`, analyzers were a separate package, and handlers
 returned `Task`.
@@ -223,7 +223,7 @@ A library reports TWM012 only for an unreadable name. TWM005, TWM006, and TWM009
   calls `AddGeneratedMediator()`.
 - **`TimeWarpMediatorNamespace`.** Default `TimeWarp.Mediator.Generated`. Set it when two
   hosts' generated types meet in one compilation.
-- **SDK compiler.** The packages, the generator, and the analyzer target net11.0 only (since 15.0.0-beta.7). Build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`. Visual Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn version the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing. `net10.0` hosts stay on 15.0.0-beta.6 or earlier.
+- **SDK compiler.** The packages, the generator, and the analyzer target net11.0 only (since 15.0.0-beta.9). Build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`. Visual Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn version the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing. `net10.0` hosts stay on 15.0.0-beta.8 or earlier.
 - **`using static TimeWarp.Mediator.Unit`.** Signatures are unaffected. A bare `ValueTask`
   in an expression is ambiguous (CS0229). Write `Unit.ValueTask` for the value and
   `System.Threading.Tasks.ValueTask` for the type's statics. The removed `Unit.Task`

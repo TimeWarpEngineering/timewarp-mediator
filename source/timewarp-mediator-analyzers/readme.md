@@ -17,7 +17,7 @@ A project that references `TimeWarp.Mediator.Generators` already runs the genera
 Reference the contracts package. The analyzer comes with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.7
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.9
 ```
 
 Without `--version`, that command resolves 14.0.0, the reflection runtime. Drop the flag when 15.0 is the stable package.
@@ -36,7 +36,7 @@ public sealed class PingHandler : IRequestHandler<Ping, string>
 }
 ```
 
-The analyzer and `TimeWarp.Mediator` target net11.0 only (since 15.0.0-beta.7). Build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`. Visual Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn version the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.
+The analyzer and `TimeWarp.Mediator` target net11.0 only (since 15.0.0-beta.9). Build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`. Visual Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn version the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.
 
 ## Migration
 

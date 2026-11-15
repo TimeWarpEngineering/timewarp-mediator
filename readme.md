@@ -22,7 +22,7 @@ behaviors are woven. This project is a fork of
 
 ## Target framework
 
-`TimeWarp.Mediator` targets **net11.0** only (since 15.0.0-beta.7). `net10.0` consumers stay on 15.0.0-beta.6
+`TimeWarp.Mediator` targets **net11.0** only (since 15.0.0-beta.9). `net10.0` consumers stay on 15.0.0-beta.8 or earlier
 or earlier. The generator and analyzer also target net11.0, so build with the .NET 11 SDK (11.0.100 or later)
 and `dotnet build`. Visual Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at
 least the Roslyn version the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.
@@ -32,8 +32,8 @@ least the Roslyn version the packages reference; an older SDK reports CS8032/CS9
 Keep both packages on the same version. Generators does not bring `TimeWarp.Mediator` with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.7
-dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.7
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.9
+dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.9
 ```
 
 Without `--version`, `dotnet add package TimeWarp.Mediator` resolves 14.0.0, the reflection
@@ -132,7 +132,7 @@ Package ids, `ValueTask` signatures, `Unit.ValueTask`, and the three consumer se
 - [benchmarks/comparison-baseline.md](documentation/benchmarks/comparison-baseline.md): net11.0 gate (`./bin/dev benchmark --gate`). [comparison-baseline-aot.md](documentation/benchmarks/comparison-baseline-aot.md) is a record, not a gate.
 - [overview.md](documentation/overview.md): versioning, CI and releasing
 - Release notes: [15.0.0](documentation/release-notes/15.0.0.md),
-  [15.0.0-beta.7](documentation/release-notes/15.0.0-beta.7.md),
+  [15.0.0-beta.9](documentation/release-notes/15.0.0-beta.9.md),
   [15.0.0-beta.6](documentation/release-notes/15.0.0-beta.6.md),
   [15.0.0-beta.5](documentation/release-notes/15.0.0-beta.5.md),
   [15.0.0-beta.4](documentation/release-notes/15.0.0-beta.4.md),

@@ -5,8 +5,8 @@ Source generator for TimeWarp Mediator 15.0. It emits one internal mediator. `Se
 ## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.7
-dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.7
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.9
+dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.9
 ```
 
 Without `--version`, `dotnet add package TimeWarp.Mediator` resolves 14.0.0, the reflection runtime. Drop the flag when 15.0 is the stable package.
@@ -42,7 +42,7 @@ The host that references this package is a graph member. A library opts in with 
 15.0 is a breaking release.
 
 - Handlers and `ISender` / `IPublisher` return `ValueTask`. Behaviors take `MessageHandlerDelegate<TRequest, TResponse>` and call `next(request, cancellationToken)`.
-- `TimeWarp.Mediator` and this generator target net11.0 only (since 15.0.0-beta.7). `net10.0` consumers stay on 15.0.0-beta.6 or earlier. Build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`. Visual Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn version the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.
+- `TimeWarp.Mediator` and this generator target net11.0 only (since 15.0.0-beta.9). `net10.0` consumers stay on 15.0.0-beta.8 or earlier. Build with the .NET 11 SDK (11.0.100 or later) and `dotnet build`. Visual Studio and .NET Framework MSBuild are not supported. The SDK compiler must be at least the Roslyn version the packages reference; an older SDK reports CS8032/CS9057 and the generator emits nothing.
 - A missing or duplicate handler is a build error (TWM001, TWM002).
 - `TimeWarpMediatorProfile` is removed. Tooling reads `[assembly: GeneratedMediator(typeof(Mediator))]` and `MediatorManifest` version 2.
 
