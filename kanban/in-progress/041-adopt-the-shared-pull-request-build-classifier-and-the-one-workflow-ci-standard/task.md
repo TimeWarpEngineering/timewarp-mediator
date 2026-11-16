@@ -119,3 +119,4 @@ Smoke-tested on this node: kanban-only range -> skip, exit 0; range `eafa561~1..
 
 - Created: 64677b22-d705-4b25-b537-4b53732bcb92 (2026-11-16)
 - Implement oracle 2026-11-16: classifier call, pins, dev.jsonc buildPaths; gates recorded under Results.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c956032c-0330-4502-8d82-8603e32af74f, max-turns 500, Done — 2026-11-16T16:07:35Z
