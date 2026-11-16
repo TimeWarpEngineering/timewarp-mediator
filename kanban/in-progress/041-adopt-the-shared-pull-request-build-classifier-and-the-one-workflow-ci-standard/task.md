@@ -53,6 +53,10 @@ Acceptance:
 - [x] `ganda repo audit` clean
 - [ ] This task's pull request shows a `CI` run (record the URL in Results)
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 
@@ -115,8 +119,24 @@ without building. Without `GITHUB_EVENT_NAME` (a local run) it always builds.
 Smoke-tested on this node: kanban-only range -> skip, exit 0; range `eafa561~1...eafa561` (touches
 `.github/workflows/workflow.yml` and source) -> `Build path changed: .github/workflows/workflow.yml. Full build.`
 
+### Review
+
+Round 1, effort 2, roster general. No findings. Disposition: **clean** (0 open, 0 wontfix).
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 0 | 0 |
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+The review read the diff and this Results record. It did not re-run `./bin/dev build`, `./bin/dev test`, or `ganda repo audit`.
+
 ## Session
 
 - Created: 64677b22-d705-4b25-b537-4b53732bcb92 (2026-11-16)
 - Implement oracle 2026-11-16: classifier call, pins, dev.jsonc buildPaths; gates recorded under Results.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c956032c-0330-4502-8d82-8603e32af74f, max-turns 500, Done — 2026-11-16T16:07:35Z
+- Review oracle 2026-11-16: general, effort 2, Grok session 01a1e51d-461b-7301-961e-5ee5f4af70d5, turn cap 120, disposition clean
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e51d-461b-7301-961e-5ee5f4af70d5, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-16T16:14:56Z
