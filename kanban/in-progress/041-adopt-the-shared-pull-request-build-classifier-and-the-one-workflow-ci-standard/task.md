@@ -65,7 +65,8 @@ Changes:
 
 - `Directory.Packages.props`: `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` 4.0.0-beta.14 -> 4.0.0-beta.15.
   `TimeWarp.Amuru` 3.0.0-beta.4 -> 3.0.0-beta.5, because Nuru beta.15 needs Amuru >= beta.5 and the
-  dev CLI restore failed with NU1605 (package downgrade) at beta.4.
+  dev CLI restore failed with NU1605 (package downgrade) at beta.4. `TimeWarp.Amuru.Tools`
+  3.0.0-beta.4 -> 3.0.0-beta.5: the commit-hook attest then failed `package-pin-currency` on it.
 - `tools/dev-cli/endpoints/workflow-command.cs`: `RunPrAsync` calls
   `PullRequestBuildClassifier.DecideAsync(RepoRoot, Ct)` first, prints `decision.Message`, and returns
   with exit 0 when `RequiresBuild` is false. Release mode is unchanged. No local copy of the rule.
@@ -86,6 +87,8 @@ Changes:
 | `dotnet run --file tools/dev-cli/dev.cs -- self-install` (dev CLI changed) | PASS after the Amuru bump |
 | `./bin/dev test` | PASS: generators 61/61, analyzers 50/50, compilation 80/80 |
 | `ganda repo audit` (ganda 1.0.0-beta.38) | PASS with 1 advisory (`vscode-window-icon`); `--fix` wrote the gitignored `.vscode/settings.json`; rerun: "Repository passes all audit checks", `dev-workflow-classifier` PASS |
+| commit-hook attest on the first commit | FAIL `package-pin-currency` (`TimeWarp.Amuru.Tools` 3.0.0-beta.4 behind beta.5) |
+| fix: bump `TimeWarp.Amuru.Tools`, `self-install`, `./bin/dev build`, `ganda repo audit` | PASS: "Repository passes all audit checks"; classifier skip smoke still exit 0 |
 
 The installed ganda has no separate `pull_request` paths-filter check. `workflow.yml` was checked
 by hand: no `paths` / `paths-ignore` anywhere.
