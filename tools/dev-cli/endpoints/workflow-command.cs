@@ -2,16 +2,21 @@
 // Mode-aware CI/CD pipeline for TimeWarp.Mediator
 #endregion
 #region Design
-// PR/merge: clean -> build -> test -> verify-samples -> pack (samples run from
-//           the build output; pack gates the nupkg layout and runs the package
-//           smoke; artifacts upload).
+// PR/merge: classify -> clean -> build -> test -> verify-samples -> pack
+//           (samples run from the build output; pack gates the nupkg layout and
+//           runs the package smoke; artifacts upload).
+// Classify is PullRequestBuildClassifier (TimeWarp.Nuru.DevCli): on a pull
+// request that changes only declared non-build paths it prints its message and
+// the run exits 0 without building. Every other event builds. Repo additions
+// (assets/logo.png is packed) live in .timewarp/dev.jsonc pullRequestBuild,
+// not here.
 // Release:  clean -> build -> pack -> check-version -> push (no test gate; pack
 //           still runs the layout gate and package smoke).
 // <Version> lives only in source/Directory.Build.props (read by pack and by the
 // shared check-version/release commands), so there is nothing to drift. Handlers are invoked directly so CI does not need a
 // pre-installed ./bin/dev. CI passes the OIDC key via NUGET_API_KEY env (never
 // argv). Push is skipped when no API key is supplied (local pack-only).
-// Handler is internal: TimeWarp.Nuru.DevCli 4.0.0-beta.13 ships NuGetVersionService,
+// Handler is internal: TimeWarp.Nuru.DevCli 4.0.0-beta.15 ships NuGetVersionService,
 // IRepoConfigService, and IPackableProjectService as internal, and a public
 // constructor cannot take them.
 #endregion
@@ -100,8 +105,16 @@ public sealed class WorkflowCommand : ICommand<Unit>
 
     private async Task RunPrAsync()
     {
-      Terminal.WriteLine("Pipeline: clean -> build -> test -> verify-samples -> pack\n");
       Environment.ExitCode = 0;
+
+      PullRequestBuildDecision decision = await PullRequestBuildClassifier.DecideAsync(RepoRoot, Ct);
+      Terminal.WriteLine(decision.Message);
+      if (!decision.RequiresBuild)
+      {
+        return;
+      }
+
+      Terminal.WriteLine("Pipeline: clean -> build -> test -> verify-samples -> pack\n");
 
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct)))
       {

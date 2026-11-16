@@ -1,7 +1,10 @@
 name: CI/CD
 
 # Thin trigger. The pipeline lives in C# — `dev workflow`.
-# ci job (push/PR/dispatch merge): clean -> build -> test -> pack; uploads Packages-* artifact.
+# ci job (push/PR/dispatch merge): clean -> build -> test -> verify-samples -> pack;
+#   uploads Packages-* artifact. On a pull request `dev workflow` first runs the
+#   shared PullRequestBuildClassifier (TimeWarp.Nuru.DevCli) and exits 0 without
+#   building when only non-build paths changed (kanban, documentation, ...).
 # publish job (release, dispatch release/probe): release guards -> OIDC login ->
 #   clean -> build -> pack -> check-version -> push. Tests are not re-run; the
 #   guards require a successful push CI run on the tagged master commit instead.
@@ -9,8 +12,9 @@ name: CI/CD
 # policy binds repo + workflow file `workflow.yml` (not job names), so keep the
 # file name stable. Actions are SHA-pinned; dependabot bumps them.
 #
-# No path filters: every master commit gets a CI run, which the release
-# green-CI guard depends on.
+# No path filters. pull_request has none so every pull request reports CI (the
+# classifier decides whether to build). push has none so every master commit
+# gets a CI run, which the release green-CI guard depends on.
 # SDK: global.json pins 11.0.100 (latestFeature).
 # Each job installs 11.0.x on the GA channel.
 # benchmark job: weekly and workflow_dispatch mode=benchmark. Not on pull requests.
