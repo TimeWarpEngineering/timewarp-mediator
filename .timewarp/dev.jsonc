@@ -2,5 +2,14 @@
   // Packable projects live under source/; package ids stay PascalCase.
   "checkVersionConfig": {
     "packages": "TimeWarp.Mediator,TimeWarp.Mediator.Generators"
+  },
+  // Additions to PullRequestBuildClassifier (dev workflow on a pull request).
+  // assets/logo.png is packed into both nupkgs, so a pull request that touches
+  // only it must still build and pack. The default rule skips assets/**.
+  // samples/ builds under the default rule (it is not a declared non-build path).
+  "pullRequestBuild": {
+    "buildPaths": [
+      "assets/logo.png"
+    ]
   }
 }
