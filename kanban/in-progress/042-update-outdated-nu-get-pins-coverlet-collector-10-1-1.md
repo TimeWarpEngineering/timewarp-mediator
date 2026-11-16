@@ -24,6 +24,9 @@ Dependabot PR #134 makes the same coverlet bump. After this task merges, close #
 
 - Created: 4bddab61-0b48-4f1d-8a19-57e7f9d047b3 (2026-11-17)
 
+## Review
+
+skip
 ## Notes
 
 - Requested by Steven 2026-11-17: "just create task to update `ganda nuget outdated`". Filed only; not launched.
