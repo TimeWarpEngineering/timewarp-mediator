@@ -17,6 +17,8 @@
 // handler and TWM002. An unreadable name is TWM012 here and suppresses TWM001. A readable name
 // that no symbol has yet is still emitted; the analyzer reports TWM012 after every generator has
 // run, so this step does not.
+// GeneratedRequestPatternAttribute expansions are added after every fact, with the same rules
+// (candidate-graph.request-patterns.cs).
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -185,6 +187,21 @@ internal static partial class CandidateGraph
         }
       }
     }
+
+    AddDeclaredRequests(
+        host.Patterns,
+        byKey,
+        referenced.HostAssemblyName,
+        diagnostics,
+        generatorDiagnostics,
+        reported,
+        dropped,
+        scopeByMessage,
+        handlersByRequest,
+        responseByRequest,
+        voidRequests,
+        requests,
+        declarationCovers);
 
     foreach (List<TypeModel> list in handlersByRequest.Values)
     {

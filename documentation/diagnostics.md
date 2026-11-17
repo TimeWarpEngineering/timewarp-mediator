@@ -1,12 +1,15 @@
 # TimeWarp.Mediator diagnostics
 
-`TimeWarp.Mediator` ships the analyzer (TWM001–TWM004 and TWM012) as an analyzer asset. A library that
+`TimeWarp.Mediator` ships the analyzer (TWM001–TWM004, TWM012, and TWM013) as an analyzer asset. A library that
 references that package and does not run the generator gets TWM001–TWM004, and TWM012 when a
 `GeneratedHandlerAttribute` name is not a constant. `TimeWarp.Mediator.Generators`
 reports TWM007, TWM008, TWM010, and TWM011, and in a generator host it also reports TWM001–TWM003
 and an unreadable TWM012. The analyzer skips TWM001–TWM003 when `TimeWarpMediatorGenerator=true`,
 so each is reported once. It still reports TWM012 there when the named handler does not exist
-after every generator has run. TWM004 stays with the analyzer in both hosts and libraries.
+after every generator has run. TWM013 is split the same way in a host: the generator reports a
+`GeneratedRequestPatternAttribute` it cannot read or expand, and the analyzer reports a declared
+request or handler that is missing or does not match after every generator has run.
+TWM004 stays with the analyzer in both hosts and libraries.
 Each descriptor's help link points to its section here.
 
 There is one emission. The host supplies `IServiceProvider`, and registered pipeline behaviors are
@@ -123,3 +126,49 @@ TWM012 is the diagnostic on the request. Requests without the attribute
 are unchanged. A declared name that exists and does not implement the request's
 `IRequestHandler` is TWM012. The message names that interface. A declared name that is the same
 type as the request's `IRequestHandler` is one handler. A different handler type is TWM002.
+
+## TWM013
+
+**Declared generated request does not match.** A source type carries a
+`GeneratedRequestPatternAttribute` (or a derived attribute). It declares, per contract type, a
+request and a handler that another generator emits into the host, and the request interface that
+request implements. The generated mediator emits a `Send` arm from those names without seeing the
+types, so drift between the declaration and the other generator shows up here.
+
+```csharp
+[GeneratedRequestPattern(
+  "{Host}.{Contract}ActionSet.Action",
+  "{Host}.{Contract}ActionSet.Handler",
+  "TimeWarp.Mediator.IRequest<{ContractType}.Response>",
+  typeof(CreateRole), typeof(UpdateRole))]
+public partial class RoleState { }
+```
+
+The generator reports TWM013 on the attribute when it cannot read or expand the pattern:
+
+- A template is not a constant. Each template comes from a constructor parameter with the same
+  name (`requestTypeName`, `handlerTypeName`, `requestInterfaceName`; a default value is enough)
+  or from a `const string` field named `RequestTypeName`, `HandlerTypeName`, or
+  `RequestInterfaceName` on the attribute class. The contracts come from a constructor parameter
+  named `contracts`. A getter body does not survive in a reference assembly, so properties are
+  not read.
+- A template uses a placeholder other than `{Host}`, `{Contract}`, or `{ContractType}`, or `{Host}`
+  is a generic type.
+- A contract is not a non-generic named type.
+- The request or handler name does not expand to a dotted type name.
+- The request interface does not resolve to an interface in the compilation, or it is not an
+  `IRequest` or `IRequest<T>`. The interface and its response must be visible to the generator:
+  in source or in a reference. Only the request and the handler may come from another generator.
+
+After every generator has run, the analyzer reports TWM013 on the attribute in a host when:
+
+- the declared request does not exist,
+- the declared handler does not exist,
+- the request does not implement the declared interface (a different response is this case), or
+- the handler does not implement `IRequestHandler` for that request and response. The message
+  names the interface.
+
+A missing request or handler is also `CS0234` or `CS0246` inside `Mediator.g.cs`. TWM013 is the
+diagnostic that names the declaration. A declared request is never TWM001. A declared handler
+that is the same type as a visible `IRequestHandler` for that request is one handler. A
+different handler type is TWM002.

@@ -16,6 +16,8 @@
 // Path is empty. SpanStart is the Assembly.GetAttributes index: source order for a host
 // attribute, metadata order for a referenced assembly.
 // HostIdentity is the compilation assembly name and public key. It is not an MSBuild property.
+// A RequestPatternFact is one source declaration's GeneratedRequestPatternAttribute expansions.
+// It has its own syntax provider: the attributed type may have no base list.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -83,7 +85,22 @@ internal sealed record BehaviorFact(
 internal sealed record HostInput(
     EquatableArray<TypeFact> Types,
     EquatableArray<BehaviorFact> Behaviors,
-    EquatableArray<string> DeclaredRuntime) : IEquatable<HostInput>;
+    EquatableArray<string> DeclaredRuntime,
+    EquatableArray<RequestPatternFact> Patterns) : IEquatable<HostInput>;
+
+// One GeneratedRequestPatternAttribute expansion. Request and Handler are declared names when
+// another generator emits them. Scope is the nearest existing container's pipeline.
+internal sealed record DeclaredRequestFact(
+    TypeModel Request,
+    TypeModel Handler,
+    TypeModel Response,
+    bool IsVoid,
+    TypeModel? Scope) : IEquatable<DeclaredRequestFact>;
+
+// Every expansion and TWM013 failure from one attributed type declaration.
+internal sealed record RequestPatternFact(
+    EquatableArray<DeclaredRequestFact> Requests,
+    EquatableArray<DiagnosticInfo> Failures) : IEquatable<RequestPatternFact>;
 
 internal sealed record ReferencedInput(
     EquatableArray<TypeFact> Types,

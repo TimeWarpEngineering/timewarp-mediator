@@ -53,7 +53,7 @@ public static partial class MessageGraphBuilder
         : GetScopeFromAttributes(type.ContainingAssembly.GetAttributes());
   }
 
-  private static INamedTypeSymbol? GetScopeFromAttributes(System.Collections.Immutable.ImmutableArray<AttributeData> attributes)
+  internal static INamedTypeSymbol? GetScopeFromAttributes(System.Collections.Immutable.ImmutableArray<AttributeData> attributes)
   {
     foreach (AttributeData attribute in attributes)
     {

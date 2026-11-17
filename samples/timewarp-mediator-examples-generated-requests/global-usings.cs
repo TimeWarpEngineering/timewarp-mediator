@@ -1,0 +1,11 @@
+#region Purpose
+// Project-wide usings. File-level usings stay only for aliases and static imports.
+#endregion
+
+global using System;
+global using System.Collections.Generic;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Microsoft.Extensions.DependencyInjection;
+global using TimeWarp.Mediator;
+global using TimeWarp.Mediator.Generated;

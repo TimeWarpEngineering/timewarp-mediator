@@ -12,6 +12,7 @@ Behaviors are woven.
 |--------|-------|-----------------|
 | `timewarp-mediator-examples-aot` | NativeAOT publish with trim and AOT analyzers as errors, `AddGeneratedMediator()`, and a behavior that runs on both sends | `aot-pong` |
 | `timewarp-mediator-examples-named-pipelines` | `ISender<TScope>` named pipelines with disjoint handlers and behaviors | `client:hello`, `server:hello` |
+| `timewarp-mediator-examples-generated-requests` | A sibling generator (`timewarp-mediator-examples-generated-requests-generator`) emits an Action and Handler per contract. `[ContractActions]` derives from `GeneratedRequestPatternAttribute`, so `Send` dispatches them and the woven behavior runs | `greet:Hello, Ada`, `add:5` |
 
 ## Packed-nupkg consumer
 

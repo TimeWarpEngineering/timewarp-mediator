@@ -1,14 +1,14 @@
 # TimeWarp.Mediator
 
-Message contracts and the TWM001–TWM004 and TWM012 analyzer for TimeWarp Mediator 15.0: requests, commands, queries, notifications, and pipeline types.
+Message contracts and the TWM001–TWM004, TWM012, and TWM013 analyzer for TimeWarp Mediator 15.0: requests, commands, queries, notifications, and pipeline types.
 
 ## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.9
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.10
 ```
 
-Without `--version`, that command resolves 14.0.0. Through 14.0.0 this package id was the reflection runtime (`AddMediator`). The 14.0.0 contracts were `TimeWarp.Mediator.Contracts`, and the analyzers were `TimeWarp.Mediator.Analyzers`. 15.0 reuses this id for the contracts and the analyzer. A host also references `TimeWarp.Mediator.Generators` at the same version. This package ships the TWM001–TWM004 and TWM012 analyzer, and `GeneratedHandlerAttribute` so a request can name a handler another generator emits. There is no separate analyzers package.
+Without `--version`, that command resolves 14.0.0. Through 14.0.0 this package id was the reflection runtime (`AddMediator`). The 14.0.0 contracts were `TimeWarp.Mediator.Contracts`, and the analyzers were `TimeWarp.Mediator.Analyzers`. 15.0 reuses this id for the contracts and the analyzer. A host also references `TimeWarp.Mediator.Generators` at the same version. This package ships the TWM001–TWM004, TWM012, and TWM013 analyzer, `GeneratedHandlerAttribute` so a request can name a handler another generator emits, and `GeneratedRequestPatternAttribute` so a source type can declare requests and handlers another generator emits. There is no separate analyzers package.
 
 ## Example
 
@@ -33,6 +33,34 @@ public sealed class PingHandler : IRequestHandler<Ping, string>
 ```
 
 `AddGeneratedMediator()` is emitted into the host project by `TimeWarp.Mediator.Generators`, in the generated namespace (`TimeWarp.Mediator.Generated` unless the host sets `TimeWarpMediatorNamespace`). Call it from the host. Reference only this package from a project that declares messages and does not dispatch them. That project still gets TWM001–TWM004, and it opts in with `[assembly: MediatorAssembly]`.
+
+## Requests another generator emits
+
+Source generators do not see each other's output. When another generator emits a request and its handler into the host, declare them on a source type so `Send` dispatches them:
+
+```csharp
+[GeneratedRequestPattern(
+  "{Host}.{Contract}ActionSet.Action",
+  "{Host}.{Contract}ActionSet.Handler",
+  "TimeWarp.Mediator.IRequest<{ContractType}.Response>",
+  typeof(CreateRole), typeof(UpdateRole))]
+public partial class RoleState { }
+```
+
+- `requestTypeName` and `handlerTypeName` are dotted type names. `{Host}` is the attributed type's full name, `{Contract}` the contract's simple name, `{ContractType}` the contract's full name. No other placeholder exists.
+- `requestInterfaceName` is the Mediator interface the emitted request implements. `TimeWarp.Mediator.IAction` or `TimeWarp.Mediator.IRequest` is a void request. `TimeWarp.Mediator.IRequest<{ContractType}.Response>` (or `IQuery<...>`, `ICommand<...>`, or a fixed type such as `IRequest<string>`) gives the response. Behaviors constrained on that interface close over the request. The interface and its response must be in source or in a reference.
+- The attribute allows multiple uses and can be derived. A derived attribute declares its templates as constructor parameters with the same names (a default value is enough) or as `const string` fields named `RequestTypeName`, `HandlerTypeName`, and `RequestInterfaceName`. Its contracts are a constructor parameter named `contracts`:
+
+```csharp
+public sealed class ContractStateAttribute(params Type[] contracts) : GeneratedRequestPatternAttribute(contracts)
+{
+  public const string RequestTypeName = "{Host}.{Contract}ActionSet.Action";
+  public const string HandlerTypeName = "{Host}.{Contract}ActionSet.Handler";
+  public const string RequestInterfaceName = "TimeWarp.Mediator.IAction";
+}
+```
+
+The send uses the same handler call and the same woven behaviors as a request written in source. After every generator has run, TWM013 reports a declared request or handler that does not exist, a request that does not implement the declared interface, or a handler that is not its `IRequestHandler`.
 
 ## Migration
 

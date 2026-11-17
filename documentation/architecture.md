@@ -8,7 +8,7 @@ Host, Aot, or Link profile.
 
 | Package | Project | Target | What a reference does |
 |---|---|---|---|
-| `TimeWarp.Mediator` | `source/timewarp-mediator` | `net11.0` | Contracts, `Unit`, membership attributes, `GeneratedMediatorAttribute`, `GeneratedHandlerAttribute`, and the TWM001–TWM004 and TWM012 analyzer DLL at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` |
+| `TimeWarp.Mediator` | `source/timewarp-mediator` | `net11.0` | Contracts, `Unit`, membership attributes, `GeneratedMediatorAttribute`, `GeneratedHandlerAttribute`, `GeneratedRequestPatternAttribute`, and the TWM001–TWM004, TWM012, and TWM013 analyzer DLL at `analyzers/dotnet/cs/TimeWarp.Mediator.Analyzers.dll` |
 | `TimeWarp.Mediator.Generators` | `source/timewarp-mediator-generators` | `net11.0` | Source generator. Emits the dispatcher, `MediatorManifest`, and `AddGeneratedMediator`. Reports TWM007, TWM008, TWM010, and TWM011, TWM001–TWM003 in a generator host, and TWM012 when a declared handler name is not a constant |
 
 The analyzer project `source/timewarp-mediator-analyzers` stays in the tree because the analyzer
@@ -34,6 +34,7 @@ Everything a caller awaits is a `ValueTask` or a `ValueTask<T>`.
 | Pipeline | `MessageHandlerDelegate<TRequest, TResponse>`, `IPipelineBehavior<TRequest, TResponse>` |
 | Dispatch | `ISender`, `IPublisher`, `IMediator : ISender, IPublisher`, and `ISender<TScope>` / `IPublisher<TScope>` |
 | Membership | `[assembly: MediatorAssembly]`, `[MediatorScope(typeof(TScope))]`, `[assembly: MediatorBehavior(typeof(B<,>), order)]` with optional `Scope` |
+| Other generators | `GeneratedHandlerAttribute` on a request names a handler another generator emits. `GeneratedRequestPatternAttribute` on a source type declares requests and handlers another generator emits |
 | Tooling | `[assembly: GeneratedMediator(typeof(Mediator))]` emitted on the host. `Unit` (`Unit.Value`, `Unit.ValueTask`). `NoHandlerException` |
 
 Markers do not change dispatch. A command, a query, an action, and an idempotent command all
@@ -104,6 +105,45 @@ The AOT sample (`samples/timewarp-mediator-examples-aot`) publishes with `Publis
 `IsAotCompatible`, and trim and AOT analyzers as errors. It calls `AddGeneratedMediator()`,
 resolves `IMediator` from a scope, and runs a pipeline behavior. Behaviors are woven on that
 path.
+
+## Requests another generator emits
+
+Roslyn generators do not see each other's output. A request another generator emits into the
+host has no syntax the Mediator generator can find, so it would get no `Send` arm and `Send`
+would throw `NoHandlerException`. A source type declares those requests with
+`GeneratedRequestPatternAttribute` (`AllowMultiple`, and a consuming repo may derive its own):
+
+```csharp
+[GeneratedRequestPattern(
+  "{Host}.{Contract}ActionSet.Action",
+  "{Host}.{Contract}ActionSet.Handler",
+  "TimeWarp.Mediator.IRequest<{ContractType}.Response>",
+  typeof(CreateRole), typeof(UpdateRole))]
+public partial class RoleState { }
+```
+
+The three templates are expanded once per contract. `{Host}` is the attributed type's dotted full
+name, `{Contract}` the contract's simple name, and `{ContractType}` the contract's dotted full
+name. Nothing else is a placeholder. The request interface is the Mediator interface the emitted
+request implements, such as `TimeWarp.Mediator.IAction` (void) or
+`TimeWarp.Mediator.IRequest<{ContractType}.Response>`. Its `IRequest<T>` argument is the
+response. The interface is part of the declaration so that a behavior constrained
+`where TRequest : IAction` still closes over the declared request.
+
+Each expansion becomes a request binding like a discovered request whose
+`GeneratedHandlerAttribute` names its handler: the same `Send` arm, the same handler cache or
+`Chain_*`, and the same woven behaviors. The pipeline is the nearest existing containing type's
+`[MediatorScope]` (here `RoleState`), else the assembly's. A scope attribute on the emitted request
+itself is not visible. There is no runtime handler table.
+
+A derived attribute is read the same way. Its templates are constructor parameters with the same
+names (a default value is enough) or `const string` fields named `RequestTypeName`,
+`HandlerTypeName`, and `RequestInterfaceName`. Its contracts are a constructor parameter named
+`contracts`, which can be `params`. Const fields survive in the reference assembly a
+ProjectReference passes to the compiler.
+
+The analyzer checks every expansion after all generators have run (TWM013). The sample is
+`samples/timewarp-mediator-examples-generated-requests`.
 
 ## Registration
 
@@ -220,6 +260,7 @@ Ids and ownership: [diagnostics.md](diagnostics.md).
 | TWM010 | generator | `[MediatorBehavior]` type is not a pipeline behavior |
 | TWM011 | generator | Behavior matches no request in its pipeline |
 | TWM012 | analyzer in a host when the named type is missing or is not an `IRequestHandler`; generator when the name is not a constant or not a type name; analyzer in a library for that unreadable name | `GeneratedHandlerAttribute` does not name a handler that exists after generation |
+| TWM013 | generator when a `GeneratedRequestPatternAttribute` cannot be read or expanded; analyzer in a host when a declared request or handler is missing or does not match | A declaration of requests another generator emits has drifted from what that generator emits |
 
 TWM005 and TWM006 described the removed Aot and Link profiles. TWM009 described stream,
 processor, and exception-handler kinds. Those three ids are retired.
