@@ -40,10 +40,18 @@ Acceptance:
 - Created: 3d261cef-4c88-4500-a89f-105b82c12ac0 (2026-11-17)
 - Implemented 2026-11-17 by the implement oracle (Claude Opus 5.5) under `ganda task work`
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 4e297d87-c0c9-4656-bc7a-51368a603563, max-turns 500, Done — 2026-11-17T14:03:49Z
+- Review oracle: grok session 01a1e9d2-5336-7e72-b155-d44611606a08 (2026-11-17), effort 1, roster general
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e9d2-5336-7e72-b155-d44611606a08, max-turns 80, artifacts general.md, merged.md, disposition.md — 2026-11-17T14:08:31Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
 Not a breaking change to a stable package (15.0 is beta), so a normal walk may merge.
+
+Review trail: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Results
 
@@ -93,4 +101,10 @@ grep TimeWarp.SourceGenerators Directory.Packages.props
 
 Expect: the pin reads `Version="1.0.0-beta.17"`. Build has 0 warnings, all 204 tests pass, and
 pack ends with `package-smoke: package-pong` and `Pack completed successfully!`.
+
+### Review
+
+Round 1, effort 1, reviewer `general`. Counts: bug 0 open / 0 fixed / 0 wontfix, suggestion 0/0/0, nit 0/0/0. Final open count 0. Disposition: clean. No wontfix and no escalation. The implementer restatement matches the original task, so there is no misread under Learnings.
+
+Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
