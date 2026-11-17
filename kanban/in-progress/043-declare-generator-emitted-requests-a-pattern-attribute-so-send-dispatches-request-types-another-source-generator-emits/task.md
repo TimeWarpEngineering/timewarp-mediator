@@ -101,6 +101,7 @@ Acceptance:
 - 2026-11-17 implementer (ganda task work, implement oracle): built `GeneratedRequestPatternAttribute`,
   generator emission, analyzer TWM013, tests, sample, docs, version 15.0.0-beta.10. Gates under Results.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 790bd376-89e2-476d-b96c-840dc5e86d97, max-turns 500, Done — 2026-11-17T06:19:46Z
+- Installed ganda changed during this walk: was 54567832 bytes 3b6af0ab7d2d461c290c2c2d8649fa6002401e1e1d7550e00e635d5a3ac48ae4; now 54729752 bytes 32d5877eda3601f3954f05f4920e3172a1cc151ccb95ea037716bf1d7d8539d6
 
 ## Results
 
