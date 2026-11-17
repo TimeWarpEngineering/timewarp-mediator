@@ -17,6 +17,9 @@
 // TimeWarpMediatorGenerator=true and skips them, so each is reported once. It also reports
 // TWM012 when a GeneratedHandlerAttribute name is not a constant. It does not report a missing
 // declared handler: another generator may emit that type, and the analyzer checks after they all run.
+// GeneratedRequestPatternAttribute has its own syntax provider over attributed type declarations.
+// Its expansions become Send arms here; a pattern that cannot be read or expanded is TWM013 here,
+// and a missing or mismatched request or handler is the analyzer's TWM013.
 #endregion
 
 namespace TimeWarp.Mediator.Generators;
@@ -48,14 +51,21 @@ public sealed class MediatorGenerator : IIncrementalGenerator
         .Where(static name => name is not null)
         .Select(static (name, _) => name!);
 
+    IncrementalValuesProvider<RequestPatternFact> patternFacts = context.SyntaxProvider
+        .CreateSyntaxProvider(CandidateExtractor.IsPatternCandidate, CandidateExtractor.ExtractPatterns)
+        .Where(static fact => fact is not null)
+        .Select(static (fact, _) => fact!);
+
     IncrementalValueProvider<HostInput> host = typeFacts
         .Collect()
         .Combine(behaviorFacts.Collect())
         .Combine(declaredRuntime.Collect())
+        .Combine(patternFacts.Collect())
         .Select(static (pair, _) => new HostInput(
-            new EquatableArray<TypeFact>(pair.Left.Left),
-            new EquatableArray<BehaviorFact>(pair.Left.Right),
-            new EquatableArray<string>(pair.Right)))
+            new EquatableArray<TypeFact>(pair.Left.Left.Left),
+            new EquatableArray<BehaviorFact>(pair.Left.Left.Right),
+            new EquatableArray<string>(pair.Left.Right),
+            new EquatableArray<RequestPatternFact>(pair.Right)))
         .WithTrackingName(TrackingNames.HostCandidates);
 
     IncrementalValueProvider<ReferencedInput> referenced = context.MetadataReferencesProvider

@@ -1,5 +1,5 @@
 #region Purpose
-// TWM001–TWM004, TWM007, TWM008, TWM010, TWM011, and TWM012 descriptors shared by the analyzer and the generator.
+// TWM001–TWM004, TWM007, TWM008, TWM010, TWM011, TWM012, and TWM013 descriptors shared by the analyzer and the generator.
 // TWM007, TWM008, TWM010, and TWM011 are generator-only: they describe what the host's generated mediator emits.
 #endregion
 
@@ -7,6 +7,9 @@
 // TWM001–TWM003 are reported from a compilation-end action in RequestHandlerAnalyzer, so they
 // carry WellKnownDiagnosticTags.CompilationEnd. Every descriptor links to its section in
 // documentation/diagnostics.md.
+// TWM013 has two reporters. The generator reports a GeneratedRequestPatternAttribute it cannot
+// read or expand. The analyzer reports, after every generator has run, an expansion whose request
+// or handler is missing or does not match the declared interface.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
@@ -144,6 +147,72 @@ internal static class DiagnosticDescriptors
       isEnabledByDefault: true,
       description: "A [MediatorBehavior] registration weaves only into requests in its pipeline (Scope, or the unscoped default) whose request and response satisfy the behavior's generic constraints. When no request qualifies, the registration has no effect.",
       helpLinkUri: HelpLink("TWM011"));
+
+  internal static readonly DiagnosticDescriptor RequestPatternUnreadable = new(
+      id: "TWM013",
+      title: "Request pattern value is not a constant",
+      messageFormat: "Request pattern '{1}' on '{0}' has no constant {2}. Add a constructor parameter named {2}, or a const string field named {3} on the attribute.",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "A GeneratedRequestPatternAttribute reads each template from a constructor parameter of the same name (a default value is enough) or from a const string field on the attribute class, and the contracts from a constructor parameter named contracts.",
+      helpLinkUri: HelpLink("TWM013"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+  internal static readonly DiagnosticDescriptor RequestPatternInvalid = new(
+      id: "TWM013",
+      title: "Request pattern cannot be expanded",
+      messageFormat: "Request pattern '{1}' on '{0}' cannot be expanded: {2}",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "Templates use only {Host}, {Contract}, and {ContractType}. Request and handler names expand to dotted type names. The request interface resolves in this compilation and is a Mediator request interface. Contracts and the host are non-generic types.",
+      helpLinkUri: HelpLink("TWM013"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+  internal static readonly DiagnosticDescriptor RequestPatternRequestMissing = new(
+      id: "TWM013",
+      title: "Declared generated request does not exist",
+      messageFormat: "'{0}' declares generated request '{1}' for contract '{2}', which does not exist after generation",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "Every request a GeneratedRequestPatternAttribute declares must exist after every generator has run. The declaration and the generator that emits the request have drifted.",
+      helpLinkUri: HelpLink("TWM013"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+  internal static readonly DiagnosticDescriptor RequestPatternHandlerMissing = new(
+      id: "TWM013",
+      title: "Declared generated handler does not exist",
+      messageFormat: "'{0}' declares generated handler '{1}' for request '{2}', which does not exist after generation",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "Every handler a GeneratedRequestPatternAttribute declares must exist after every generator has run. The declaration and the generator that emits the handler have drifted.",
+      helpLinkUri: HelpLink("TWM013"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+  internal static readonly DiagnosticDescriptor RequestPatternInterfaceMismatch = new(
+      id: "TWM013",
+      title: "Declared generated request does not implement the declared interface",
+      messageFormat: "'{0}' declares that generated request '{1}' implements '{2}', and it does not",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "The generated Send arm and the woven behaviors use the declared interface and its response. The emitted request must implement that interface.",
+      helpLinkUri: HelpLink("TWM013"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+  internal static readonly DiagnosticDescriptor RequestPatternNotAHandler = new(
+      id: "TWM013",
+      title: "Declared generated handler does not implement IRequestHandler",
+      messageFormat: "'{0}' declares '{1}' as the handler of '{2}', which is not an {3}",
+      category: Category,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "The declared handler must implement IRequestHandler for the declared request and response.",
+      helpLinkUri: HelpLink("TWM013"),
+      customTags: WellKnownDiagnosticTags.CompilationEnd);
 
   private static string HelpLink(string id) => HelpLinkBase + id.ToLowerInvariant();
 }

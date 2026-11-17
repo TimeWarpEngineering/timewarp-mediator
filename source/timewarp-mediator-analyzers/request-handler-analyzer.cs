@@ -21,6 +21,9 @@
 // this analyzer keeps only TWM004 there. TWM012 is the exception: a missing declared handler is
 // visible only after every generator has run, so this analyzer reports it in a generator host too.
 // An unreadable HandlerTypeName is left to the generator in that host.
+// TWM013 for a GeneratedRequestPatternAttribute expansion is reported here in a generator host
+// only, for the same reason: the declared request and handler exist only after every generator
+// has run. A pattern that cannot be read or expanded is the generator's TWM013.
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
@@ -37,7 +40,11 @@ public sealed class RequestHandlerAnalyzer : DiagnosticAnalyzer
           DiagnosticDescriptors.DeclaredHandlerDoesNotExist,
           DiagnosticDescriptors.DeclaredHandlerNameUnreadable,
           DiagnosticDescriptors.DeclaredHandlerNotATypeName,
-          DiagnosticDescriptors.DeclaredHandlerNotAHandler);
+          DiagnosticDescriptors.DeclaredHandlerNotAHandler,
+          DiagnosticDescriptors.RequestPatternRequestMissing,
+          DiagnosticDescriptors.RequestPatternHandlerMissing,
+          DiagnosticDescriptors.RequestPatternInterfaceMismatch,
+          DiagnosticDescriptors.RequestPatternNotAHandler);
 
   public override void Initialize(AnalysisContext context)
   {
@@ -62,6 +69,15 @@ public sealed class RequestHandlerAnalyzer : DiagnosticAnalyzer
       // TWM012 still belongs to this analyzer there, because only this compilation sees every generator.
       startContext.RegisterCompilationEndAction(endContext =>
           {
+            if (options.IsGeneratorHost
+                && RequestPatternAnalysis.HostDeclaresPattern(compilation, endContext.CancellationToken))
+            {
+              foreach (Diagnostic diagnostic in RequestPatternAnalysis.Check(compilation, endContext.CancellationToken))
+              {
+                endContext.ReportDiagnostic(diagnostic);
+              }
+            }
+
             if (options.IsGeneratorHost
                 && !HostDeclaresGeneratedHandler(compilation, options, endContext.CancellationToken))
             {

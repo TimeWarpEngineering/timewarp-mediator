@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/samples/">
     <Project Path="samples/timewarp-mediator-examples-aot/timewarp-mediator-examples-aot.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-generated-requests-generator/timewarp-mediator-examples-generated-requests-generator.csproj" />
+    <Project Path="samples/timewarp-mediator-examples-generated-requests/timewarp-mediator-examples-generated-requests.csproj" />
     <Project Path="samples/timewarp-mediator-examples-named-pipelines/timewarp-mediator-examples-named-pipelines.csproj" />
   </Folder>
   <Folder Name="/source/">

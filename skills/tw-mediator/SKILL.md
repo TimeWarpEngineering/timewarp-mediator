@@ -9,7 +9,7 @@ In-process messaging for .NET. `ISender.Send` reaches one handler. `IPublisher.P
 reaches many handlers, sequentially. The dispatcher is source-generated. A host calls
 `AddGeneratedMediator()`. Handlers and behaviors return `ValueTask`.
 
-**Packages:** `TimeWarp.Mediator` (contracts, `GeneratedHandlerAttribute`, and TWM001–TWM004 plus TWM012) and `TimeWarp.Mediator.Generators`.
+**Packages:** `TimeWarp.Mediator` (contracts, `GeneratedHandlerAttribute`, `GeneratedRequestPatternAttribute`, and TWM001–TWM004 plus TWM012 and TWM013) and `TimeWarp.Mediator.Generators`.
 **Repository:** https://github.com/TimeWarpEngineering/timewarp-mediator
 **Docs this skill links instead of repeating:**
 [architecture.md](https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/documentation/architecture.md),
@@ -26,6 +26,7 @@ reaches many handlers, sequentially. The dispatcher is source-generated. A host 
 | Handler discovery | compile time, member assemblies only |
 | Missing / duplicate handler | build error (TWM001 / TWM002) |
 | Handler emitted by another generator | A `GeneratedHandlerAttribute`-derived attribute on the request. `HandlerTypeName` is relative to the containing type. An attribute in another assembly passes it as a constructor parameter named `handlerTypeName` (a default value is enough). A bad or missing name is TWM012 |
+| Request and handler emitted by another generator | `[GeneratedRequestPattern(requestTypeName, handlerTypeName, requestInterfaceName, contracts)]` (or a derived attribute) on a source type. Templates use `{Host}`, `{Contract}`, `{ContractType}`. `requestInterfaceName` is the request's Mediator interface, such as `TimeWarp.Mediator.IAction` or `TimeWarp.Mediator.IRequest<{ContractType}.Response>`. A derived attribute in another assembly declares the templates as `const string` fields. Drift is TWM013 |
 | Behaviors | `[assembly: MediatorBehavior(typeof(B<,>))]`, always woven. The host supplies `IServiceProvider` |
 | Named pipelines (`ISender<TScope>`) | yes |
 | Streams, pre/post processors, exception handlers | removed with the reflection runtime |
@@ -40,8 +41,8 @@ Keep both packages on the same version. Generators does not bring `TimeWarp.Medi
 ```xml
 <!-- Directory.Packages.props -->
 <ItemGroup>
-  <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.9" />
-  <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.9" />
+  <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.10" />
+  <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.10" />
   <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
 </ItemGroup>
 ```
@@ -55,7 +56,7 @@ Keep both packages on the same version. Generators does not bring `TimeWarp.Medi
 </ItemGroup>
 ```
 
-Use the version this repo is packing, `15.0.0-beta.9`. 14.0.0 on nuget.org
+Use the version this repo is packing, `15.0.0-beta.10`. 14.0.0 on nuget.org
 is the previous surface: the id `TimeWarp.Mediator` was the reflection runtime (`AddMediator`),
 contracts were `TimeWarp.Mediator.Contracts`, analyzers were a separate package, and handlers
 returned `Task`.
@@ -203,6 +204,7 @@ Full text:
 | TWM010 (warning) | `[MediatorBehavior]` type is not an `IPipelineBehavior<,>` | Fix the type or remove the attribute |
 | TWM011 (warning) | Behavior constraints match no request in its pipeline | Fix the constraints or `Scope`, or remove it |
 | TWM012 | `GeneratedHandlerAttribute` names a handler that is not a constant, is not a type name, is not an `IRequestHandler` for that request, or still does not exist after generation | In another assembly, add a constructor parameter named `handlerTypeName`. Otherwise make the name a constant type name relative to the request's containing type, and emit that handler |
+| TWM013 | A `GeneratedRequestPatternAttribute` cannot be read or expanded, or after generation its request or handler is missing, the request does not implement the declared interface, or the handler is not its `IRequestHandler` | Fix the template or the contract list, or make the other generator emit the declared names and shapes |
 
 In a generator host the generator reports TWM001–TWM003 and an unreadable TWM012. The analyzer
 reports TWM004 there, TWM012 when the named handler is missing, and TWM001–TWM004 in a library.
