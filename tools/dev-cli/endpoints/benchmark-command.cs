@@ -193,16 +193,13 @@ public sealed class BenchmarkCommand : ICommand<Unit>
       }
 
       Terminal.WriteLine($"Publishing {project} ({framework}, {rid}, PublishAot)...");
-      CommandOutput publish = await Shell.Builder("dotnet")
-        .WithArguments(
-          "publish",
-          Path.Combine(repoRoot, project),
-          "-c", "Release",
-          "-f", framework,
-          "-r", rid,
-          "-p:BenchmarkAot=true",
-          "-o", output,
-          "--nologo")
+      CommandOutput publish = await DotNet.Publish()
+        .WithProject(Path.Combine(repoRoot, project))
+        .WithConfiguration("Release")
+        .WithFramework(framework)
+        .WithRuntime(rid)
+        .WithProperty("BenchmarkAot", "true")
+        .WithOutput(output)
         .WithWorkingDirectory(repoRoot)
         .WithNoValidation()
         .CaptureAsync(ct);

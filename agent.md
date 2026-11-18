@@ -82,7 +82,7 @@ The reflection runtime tests and `timewarp-mediator-generators-roslyn-floor-test
 - `TimeWarp.Mediator`: `net11.0` only (since 15.0.0-beta.9)
 - `TimeWarp.Mediator.Generators` and the analyzer project: `net11.0` (since 15.0.0-beta.9). The .NET 11 SDK compiler runs on .NET 11 and loads them. Visual Studio and .NET Framework MSBuild are not supported. RS1041 (compiler extension not on `netstandard2.0`) is off in those two projects only (Steven 2026-11-14)
 - Tests, benchmarks, samples, and the package smoke consumer: `net11.0`
-- Dev CLI (`tools/dev-cli/dev.cs`): `net11.0`, pinned with `#:property TargetFramework=net11.0`. `TimeWarp.Nuru` 4.0.0-beta.15 ships `lib/net11.0` only. `global.json` pins the GA SDK `11.0.100` (`rollForward: latestFeature`). CI installs `11.0.x` on the GA channel only.
+- Dev CLI (`tools/dev-cli/dev.cs`): `net11.0`, pinned with `#:property TargetFramework=net11.0`. `TimeWarp.Nuru` 4.0.0-beta.16 ships `lib/net11.0` only. `global.json` pins the GA SDK `11.0.100` (`rollForward: latestFeature`). CI installs `11.0.x` on the GA channel only.
 
 ### Key Dependencies
 
