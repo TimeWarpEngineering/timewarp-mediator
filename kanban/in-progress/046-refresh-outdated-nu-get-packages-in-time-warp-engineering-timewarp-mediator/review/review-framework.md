@@ -10,7 +10,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 90
+- Lines changed: 82
 - Effort: 1
 - TCB hits: none
 - Roster axes: general
@@ -26,3 +26,10 @@
 - Exception: one targeted command may check one suspected bug; the finding names the command and the reason. A full build, full test run, or audit is never that command
 - A missing or thin recorded result is a finding, not a reason to run the gates
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2
+
+**Date:** 2026-11-19
+**Diff scope:** `6e969be` vs round-1 base `a533117`. Product delta: the Design comment in `tools/dev-cli/endpoints/workflow-command.cs` (Nuru.DevCli `4.0.0-beta.15` to `4.0.0-beta.16`).
+**Session:** grok session 01a1efef-b34d-7442-9b9f-dc23bb05eb16
+**Effort:** 1 (general only). Budget.ByDiff: 82 lines, turn cap 80.
