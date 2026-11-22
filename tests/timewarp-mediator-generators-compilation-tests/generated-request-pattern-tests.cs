@@ -283,20 +283,22 @@ public sealed partial class GeneratedRequestPatternTests
     return response?.ToString();
   }
 
-  private static Assembly Load(HostCompilation host, byte[]? companion = null)
+  // Companions are the runtime images of referenced libraries, loaded beside the host.
+  private static Assembly Load(HostCompilation host, params byte[][] companions)
   {
     using MemoryStream stream = new();
     EmitResult result = host.Compilation.Emit(stream);
     result.Success.ShouldBeTrue(string.Join(Environment.NewLine, result.Diagnostics));
     stream.Position = 0;
     AssemblyLoadContext context = new(host.Compilation.AssemblyName, isCollectible: true);
-    if (companion is not null)
+    List<Assembly> loaded = new();
+    foreach (byte[] companion in companions)
     {
-      Assembly companionAssembly = context.LoadFromStream(new MemoryStream(companion));
-      context.Resolving += (_, name) =>
-          companionAssembly.GetName().Name == name.Name ? companionAssembly : null;
+      loaded.Add(context.LoadFromStream(new MemoryStream(companion)));
     }
 
+    context.Resolving += (_, name) =>
+        loaded.FirstOrDefault(companion => companion.GetName().Name == name.Name);
     return context.LoadFromStream(stream);
   }
 

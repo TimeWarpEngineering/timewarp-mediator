@@ -5,7 +5,7 @@ Message contracts and the TWM001–TWM004, TWM012, and TWM013 analyzer for TimeW
 ## Install
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.10
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.11
 ```
 
 Without `--version`, that command resolves 14.0.0. Through 14.0.0 this package id was the reflection runtime (`AddMediator`). The 14.0.0 contracts were `TimeWarp.Mediator.Contracts`, and the analyzers were `TimeWarp.Mediator.Analyzers`. 15.0 reuses this id for the contracts and the analyzer. A host also references `TimeWarp.Mediator.Generators` at the same version. This package ships the TWM001–TWM004, TWM012, and TWM013 analyzer, `GeneratedHandlerAttribute` so a request can name a handler another generator emits, and `GeneratedRequestPatternAttribute` so a source type can declare requests and handlers another generator emits. There is no separate analyzers package.
@@ -59,6 +59,8 @@ public sealed class ContractStateAttribute(params Type[] contracts) : GeneratedR
   public const string RequestInterfaceName = "TimeWarp.Mediator.IAction";
 }
 ```
+
+Contracts, the derived attribute, the request interface, and the response types may all live in referenced assemblies, for example a `Web.Contracts` project and an attributes package. A template such as `TimeWarp.Mediator.IRequest<OneOf.OneOf<{ContractType}.Response, SharedProblemDetails>>` resolves across references; a same-named type another reference keeps internal does not hide it. The emitted request is not visible when the Mediator generator runs, so a behavior closes over it only through the declared interface and the interfaces it extends: the declaration must name the interface the behavior is constrained on (`TimeWarp.State.IAction` for a `where TRequest : TimeWarp.State.IAction` behavior), not some other interface the emitted request also implements.
 
 The send uses the same handler call and the same woven behaviors as a request written in source. After every generator has run, TWM013 reports a declared request or handler that does not exist, a request that does not implement the declared interface, or a handler that is not its `IRequestHandler`.
 

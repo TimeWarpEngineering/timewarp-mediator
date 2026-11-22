@@ -7,6 +7,11 @@
 // namespace first. Display names stay dotted, which is what FullyQualifiedFormat prints. A type
 // such as TimeWarp.Mediator.IRequest<App.Ping.Response> is parsed with SyntaxFactory and resolved
 // part by part; only the last name segment may be generic.
+// Contracts, the request interface, and response arguments often live in referenced assemblies.
+// GetTypeByMetadataName returns null when two references define the same metadata name, even
+// when only one is accessible to the host, so a miss falls back to GetTypesByMetadataName and
+// takes the single type the host assembly can see. Two accessible types stay unresolved, as the
+// C# compiler would report CS0433 for them (task 044).
 #endregion
 
 namespace TimeWarp.Mediator.Analyzers;
@@ -46,7 +51,7 @@ internal static partial class RequestPatternReader
         metadata.Append(segments[index]);
       }
 
-      INamedTypeSymbol? found = compilation.GetTypeByMetadataName(metadata.ToString());
+      INamedTypeSymbol? found = ByMetadataName(compilation, metadata.ToString());
       if (found is not null)
       {
         return found;
@@ -54,6 +59,34 @@ internal static partial class RequestPatternReader
     }
 
     return null;
+  }
+
+  // The type with this metadata name; among duplicates, the only one accessible to the host.
+  private static INamedTypeSymbol? ByMetadataName(Compilation compilation, string metadataName)
+  {
+    INamedTypeSymbol? found = compilation.GetTypeByMetadataName(metadataName);
+    if (found is not null)
+    {
+      return found;
+    }
+
+    INamedTypeSymbol? accessible = null;
+    foreach (INamedTypeSymbol candidate in compilation.GetTypesByMetadataName(metadataName))
+    {
+      if (!compilation.IsSymbolAccessibleWithin(candidate, compilation.Assembly))
+      {
+        continue;
+      }
+
+      if (accessible is not null)
+      {
+        return null;
+      }
+
+      accessible = candidate;
+    }
+
+    return accessible;
   }
 
   // Scope of a declared request: the nearest existing containing type, then the host assembly.
