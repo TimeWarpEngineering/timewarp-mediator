@@ -108,12 +108,29 @@ Expect: build succeeds; 18 tests pass, including the five `Referenced*` / `VoidT
 tests. Reverting `ByMetadataName` in `request-pattern.type-names.cs` to a plain
 `GetTypeByMetadataName` makes `ReferencedNames_WithInaccessibleDuplicatesInAnotherReference_StillResolve` fail with TWM013.
 
+### Review
+
+Round 1, roster general, effort 2. Counts: bug 0 open / 0 fixed / 0 wontfix, suggestion 0, nit 0. Disposition: **clean**. `## Goal (implementer restatement)` matches the original checklist (referenced contracts, metadata-only derived attribute, two-arity OneOf response, referenced void interface and its behavior, TWM013 when `{ContractType}.Response` does not resolve, inaccessible duplicate-name fix with a Design-region note, docs paragraph, beta.11 bump). No misread. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`. Gates were not re-run; the implementer's record above covers build, the request-pattern compilation tests, version check, and audit.
+
+### Evidence boundaries
+
+- **Proved:** none.
+- **Trusted assumptions:** Roslyn `Compilation.GetTypeByMetadataName`, `GetTypesByMetadataName`, and `IsSymbolAccessibleWithin` match the accessibility the C# compiler uses when the host assembly names a type. The test `OneOf.OneOf<T0, T1>` (implicit conversions, `Index:Value` text) is the stand-in the task allowed instead of the OneOf package.
+- **Empirical checks:** recorded by the implementer, not re-run in review. `./bin/dev build` passed with 0 errors under TreatWarningsAsErrors. `dotnet test tests/timewarp-mediator-generators-compilation-tests/timewarp-mediator-generators-compilation-tests.csproj -c Release --filter "FullyQualifiedName~GeneratedRequestPatternTests"` passed 18/18. `./bin/dev check-version` reported `15.0.0-beta.11` as new. `ganda repo audit` passed after `--fix` wrote a local ignored `.vscode/settings.json`.
+- **Out of scope:** the other test suites (CI and the host audit node), two accessible duplicates of one metadata name (documented as unresolved; the consumer case is the inaccessible duplicate), and any edit in timewarp-state or timewarp-architecture.
+
 ## Session
 
 - 2026-11-22 implement oracle: tests + resolver fix + beta.11 bump; audit advisory fixed via `--fix`.
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-17)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 185bce2a-93a7-4d7b-bb06-2b65ebaf3c79, max-turns 500, Done — 2026-11-22T13:46:03Z
+- Review oracle: grok (xAI), session 01a20381-de97-7c62-a2fa-668d1dba30ac, effort 2, roster general, round 1, disposition clean — 2026-11-22
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a20381-de97-7c62-a2fa-668d1dba30ac, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-22T13:54:28Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
