@@ -142,6 +142,16 @@ names (a default value is enough) or `const string` fields named `RequestTypeNam
 `contracts`, which can be `params`. Const fields survive in the reference assembly a
 ProjectReference passes to the compiler.
 
+Contracts, the derived attribute, the request interface, and the response types may live in
+referenced assemblies (the consumer shape is a `Web.Contracts` project and an attributes package).
+Dotted names resolve by metadata name across references, and among same-named types the single
+one the host can access wins, so an internal copy in another reference does not hide a contract.
+Nested generic responses such as `IRequest<OneOf.OneOf<{ContractType}.Response, SharedProblemDetails>>`
+resolve argument by argument. A behavior closes over a declared request only through the declared
+interface and the interfaces it extends, so the declaration must name the interface the behavior
+is constrained on (for example `TimeWarp.State.IAction`), not another interface the emitted request
+also implements.
+
 The analyzer checks every expansion after all generators have run (TWM013). The sample is
 `samples/timewarp-mediator-examples-generated-requests`.
 

@@ -32,8 +32,8 @@ least the Roslyn version the packages reference; an older SDK reports CS8032/CS9
 Keep both packages on the same version. Generators does not bring `TimeWarp.Mediator` with it.
 
 ```bash
-dotnet add package TimeWarp.Mediator --version 15.0.0-beta.10
-dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.10
+dotnet add package TimeWarp.Mediator --version 15.0.0-beta.11
+dotnet add package TimeWarp.Mediator.Generators --version 15.0.0-beta.11
 ```
 
 Without `--version`, `dotnet add package TimeWarp.Mediator` resolves 14.0.0, the reflection
