@@ -113,6 +113,7 @@ tests. Reverting `ByMetadataName` in `request-pattern.type-names.cs` to a plain
 - 2026-11-22 implement oracle: tests + resolver fix + beta.11 bump; audit advisory fixed via `--fix`.
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-17)
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 185bce2a-93a7-4d7b-bb06-2b65ebaf3c79, max-turns 500, Done — 2026-11-22T13:46:03Z
 
 ## Notes
 
